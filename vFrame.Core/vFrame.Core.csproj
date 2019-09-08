@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>vFrame.Core</RootNamespace>
+    <AssemblyName>vFrame.Core</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>4</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Build\vFrame.Core\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;UNITY_EDITOR</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PostBuildEvent Condition=" '$(OS)' == 'Unix' ">cp -f vFrame.Core.* '$(SolutionDir)../Assets/Plugins/vFrame.Core/'</PostBuildEvent>
+    <PostBuildEvent Condition=" '$(OS)' != 'Unix' ">copy /Y vFrame.Core.* $(SolutionDir)..\Assets\Plugins\vFrame.Core\</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\Build\vFrame.Core\Release</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(OS)' != 'Unix' ">
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Condition="'$(Configuration)|$(Platform)' != 'Release|AnyCPU'" Include="UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Program Files\Unity\Editor\Data\Managed\UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Program Files\Unity\Editor\Data\UnityExtensions\Unity\GUISystem\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition=" '$(OS)' == 'Unix' ">
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Condition="'$(Configuration)|$(Platform)' != 'Release|AnyCPU'" Include="UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="3rd\BatterStreamingAssets\BSA_BetterStreamingAssets.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_PathUtil.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_SubReadOnlyStream.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_ZipArchive.cs" />
+    <Compile Include="3rd\SerializableDictionary.cs" />
+    <Compile Include="Base\BaseObject.cs" />
+    <Compile Include="Components\Bindable.cs" />
+    <Compile Include="Components\Component.cs" />
+    <Compile Include="Components\IBindable.cs" />
+    <Compile Include="Components\IComponent.cs" />
+    <Compile Include="Coroutines\CoroutineBehaviour.cs" />
+    <Compile Include="Coroutines\CoroutinePool.cs" />
+    <Compile Include="Coroutines\CoroutineTask.cs" />
+    <Compile Include="Crypto\CryptoService.cs" />
+    <Compile Include="Crypto\CryptoType.cs" />
+    <Compile Include="Crypto\ICryptoService.cs" />
+    <Compile Include="Crypto\PlainCryptoService.cs" />
+    <Compile Include="Crypto\XORCryptoService.cs" />
+    <Compile Include="Download\DownloadAgentBase.cs" />
+    <Compile Include="Download\DownloadAgentWebClient.cs" />
+    <Compile Include="Download\DownloadEventArgs.cs" />
+    <Compile Include="Download\DownloadManager.cs" />
+    <Compile Include="Download\DownloadSpeedCounter.cs" />
+    <Compile Include="Download\DownloadTask.cs" />
+    <Compile Include="Download\IDownloadAgent.cs" />
+    <Compile Include="Events\DelegateEventListener.cs" />
+    <Compile Include="Events\DelegateVoteListener.cs" />
+    <Compile Include="Events\Event.cs" />
+    <Compile Include="Events\EventDispatcher.cs" />
+    <Compile Include="Events\EventExecutor.cs" />
+    <Compile Include="Events\IEvent.cs" />
+    <Compile Include="Events\IEventDispatcher.cs" />
+    <Compile Include="Events\IEventListener.cs" />
+    <Compile Include="Events\IVote.cs" />
+    <Compile Include="Events\IVoteListener.cs" />
+    <Compile Include="Events\Vote.cs" />
+    <Compile Include="Events\VoteExecutor.cs" />
+    <Compile Include="Extensions\TransformExtension.cs" />
+    <Compile Include="FileReader\FileReader.cs" />
+    <Compile Include="FileReader\FileReaderAsync.cs" />
+    <Compile Include="FileReader\FileReaderRequest.cs" />
+    <Compile Include="FileReader\IAsync.cs" />
+    <Compile Include="FileReader\IFileReader.cs" />
+    <Compile Include="FileReader\IFileReaderAsync.cs" />
+    <Compile Include="Log\Logger.cs" />
+    <Compile Include="Log\LoggerSetting.cs" />
+    <Compile Include="Log\LogLevelDef.cs" />
+    <Compile Include="Network\DataCache.cs" />
+    <Compile Include="Network\MessageQueue.cs" />
+    <Compile Include="Network\NetworkDef.cs" />
+    <Compile Include="Network\TcpClient.cs" />
+    <Compile Include="Pool\ObjectPools.cs" />
+    <Compile Include="Pool\Poolable.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Singletons\MonoSingleton.cs" />
+    <Compile Include="Singletons\Singleton.cs" />
+    <Compile Include="SpawnPools\IAssetsProvider.cs" />
+    <Compile Include="SpawnPools\IPool.cs" />
+    <Compile Include="SpawnPools\ISpawnPools.cs" />
+    <Compile Include="SpawnPools\Pools\AssetPool.cs" />
+    <Compile Include="SpawnPools\Pools\PoolBase.cs" />
+    <Compile Include="SpawnPools\Pools\PrefabPool.cs" />
+    <Compile Include="SpawnPools\Provider\DefaultAssetsProvider.cs" />
+    <Compile Include="SpawnPools\Provider\DefaultAssetsProviderAsync.cs" />
+    <Compile Include="SpawnPools\SpawnPools.cs" />
+    <Compile Include="SpawnPools\SpawnPoolsSetting.cs" />
+    <Compile Include="ThreadPools\ThreadPool.cs" />
+    <Compile Include="Update\AssetsUpdater.cs" />
+    <Compile Include="Update\AssetsUpdater.UpdateState.cs" />
+    <Compile Include="Update\HashChecker.cs" />
+    <Compile Include="Update\Manifest.cs" />
+    <Compile Include="Update\Manifest.Json.cs" />
+    <Compile Include="Update\UpdateEvent.cs" />
+    <Compile Include="Utils\FixedStringBuilderPool.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="3rd\BatterStreamingAssets\README.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+</Project>
