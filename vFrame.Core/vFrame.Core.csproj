@@ -108,9 +108,9 @@
     <Compile Include="FileReader\IAsync.cs" />
     <Compile Include="FileReader\IFileReader.cs" />
     <Compile Include="FileReader\IFileReaderAsync.cs" />
-    <Compile Include="Log\Logger.cs" />
-    <Compile Include="Log\LoggerSetting.cs" />
-    <Compile Include="Log\LogLevelDef.cs" />
+    <Compile Include="Loggers\Logger.cs" />
+    <Compile Include="Loggers\LoggerSetting.cs" />
+    <Compile Include="Loggers\LogLevelDef.cs" />
     <Compile Include="Network\DataCache.cs" />
     <Compile Include="Network\MessageQueue.cs" />
     <Compile Include="Network\NetworkDef.cs" />
