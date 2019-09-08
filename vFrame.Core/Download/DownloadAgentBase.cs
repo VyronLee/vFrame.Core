@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core
+namespace vFrame.Core.Download
 {
     public abstract class DownloadAgentBase : IDownloadAgent
     {

@@ -7,11 +7,12 @@
 //    Modified:  2019-02-18 14:49
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
+
 using System;
 using System.Collections;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.Interface.SpawnPools
+namespace vFrame.Core.SpawnPools
 {
     public interface IAssetsProvider
     {

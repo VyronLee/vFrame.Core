@@ -8,7 +8,9 @@
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
 
-namespace vFrame.Core.Interface.Events
+using System;
+
+namespace vFrame.Core.Events
 {
     public interface IEventDispatcher
     {
@@ -18,33 +20,15 @@ namespace vFrame.Core.Interface.Events
         /// </summary>
         /// <param name="listener">侦听器</param>
         /// <param name="eventId">事件ID</param>
-        int AddEventListener(IEventListener listener, int eventId);
-        
-        /// <summary>
-        ///     添加事件侦听器
-        ///     - 如果在事件派发过程中添加事件，该侦听器会在下一个事件派发才生效
-        /// </summary>
-        /// <param name="listener">侦听器</param>
-        /// <param name="eventId">事件ID</param>
-        /// <param name="priority">优先级</param>
-        int AddEventListener(IEventListener listener, int eventId, int priority = 0);
-        
-        /// <summary>
-        ///     添加事件代理侦听器
-        ///     - 如果在事件派发过程中添加事件，该侦听器会在下一个事件派发才生效
-        /// </summary>
-        /// <param name="eventDelegate">侦听器</param>
-        /// <param name="eventId">事件ID</param>
-        int AddEventListener(EventDelegate eventDelegate, int eventId);
+        uint AddEventListener(IEventListener listener, int eventId);
 
         /// <summary>
         ///     添加事件代理侦听器
         ///     - 如果在事件派发过程中添加事件，该侦听器会在下一个事件派发才生效
         /// </summary>
-        /// <param name="eventDelegate">侦听器</param>
+        /// <param name="listener">侦听器</param>
         /// <param name="eventId">事件ID</param>
-        /// <param name="priority">优先级</param>
-        int AddEventListener(EventDelegate eventDelegate, int eventId, int priority = 0);
+        uint AddEventListener(Action<IEvent> listener, int eventId);
 
         /// <summary>
         ///     移除事件侦听器
@@ -70,12 +54,12 @@ namespace vFrame.Core.Interface.Events
         /// <summary>
         ///     添加投票侦听器
         /// </summary>
-        int AddVoteListener(IVoteListener listener, int voteId, int priority = 0);
+        uint AddVoteListener(IVoteListener listener, int voteId);
 
         /// <summary>
         ///     添加代理投票侦听器
         /// </summary>
-        int AddVoteListener(VoteDelegate voteDelegate, int voteId, int priority = 0);
+        uint AddVoteListener(Func<IVote, bool> voteDelegate, int voteId);
 
         /// <summary>
         ///     移除投票侦听器
@@ -114,14 +98,4 @@ namespace vFrame.Core.Interface.Events
         /// <returns>个数</returns>
         int GetVoteExecutorCount();
     }
-    
-    /// <summary>
-    /// 事件委托
-    /// </summary>
-    public delegate void EventDelegate(IEvent e);
-
-    /// <summary>
-    /// 投票委托
-    /// </summary>
-    public delegate bool VoteDelegate(IVote e);
 }

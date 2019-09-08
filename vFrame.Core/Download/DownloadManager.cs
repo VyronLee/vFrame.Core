@@ -4,7 +4,7 @@ using System.Net;
 using UnityEngine;
 using vFrame.Core.Singletons;
 
-namespace vFrame.Core
+namespace vFrame.Core.Download
 {
     public class DownloadManager : MonoSingleton<DownloadManager>
     {

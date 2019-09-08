@@ -9,26 +9,25 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class VoteExecutor : Poolable
+    public class VoteExecutor : BaseObject
     {
-        public bool activated;
-        public int handle;
-        public IVoteListener listener;
-        public int priority;
-        public bool stopped;
-        public int voteId;
+        public bool Activated { get; set; }
+        public bool Stopped { get; set; }
+
+        public uint Handle;
+        public IVoteListener Listener;
+        public int VoteId;
 
         /// <summary>
         ///     创建函数
         /// </summary>
         protected override void OnCreate()
         {
-            Reset();
+
         }
 
         /// <summary>
@@ -36,20 +35,7 @@ namespace vFrame.Core.Events
         /// </summary>
         protected override void OnDestroy()
         {
-            Reset();
-        }
-
-        /// <summary>
-        ///     重置
-        /// </summary>
-        public override void Reset()
-        {
-            handle = 0;
-            voteId = 0;
-            priority = 0;
-            listener = null;
-            activated = false;
-            stopped = false;
+            Listener = null;
         }
 
         /// <summary>
@@ -57,15 +43,7 @@ namespace vFrame.Core.Events
         /// </summary>
         public void Activate()
         {
-            activated = true;
-        }
-
-        /// <summary>
-        ///     是否已经激活
-        /// </summary>
-        public bool IsActivated()
-        {
-            return activated;
+            Activated = true;
         }
 
         /// <summary>
@@ -73,15 +51,7 @@ namespace vFrame.Core.Events
         /// </summary>
         public void Stop()
         {
-            stopped = true;
-        }
-
-        /// <summary>
-        ///     是否已经停止
-        /// </summary>
-        public bool IsStopped()
-        {
-            return stopped;
+            Stopped = true;
         }
 
         /// <summary>
@@ -89,8 +59,8 @@ namespace vFrame.Core.Events
         /// </summary>
         public bool Execute(IVote e)
         {
-            if (null != listener)
-                return listener.OnVote(e);
+            if (null != Listener)
+                return Listener.OnVote(e);
             return false;
         }
     }

@@ -8,10 +8,9 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
-using vFrame.Core.Bundler.Interface;
-using vFrame.Core.Interface.Crypto;
+using vFrame.Core.Crypto;
 
-namespace vFrame.Core.Bundler.FileReader
+namespace vFrame.Core.FileReader
 {
     public class FileReaderAsync : FileReader, IFileReaderAsync
     {

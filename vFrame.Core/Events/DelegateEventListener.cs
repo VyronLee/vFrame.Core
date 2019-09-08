@@ -9,34 +9,26 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using System;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class DelegateEventListener : Poolable, IEventListener
+    public class DelegateEventListener : BaseObject, IEventListener
     {
         /// <summary>
         /// 代理接口
         /// </summary>
-        public EventDelegate eventDelegate;
-
-        /// <summary>
-        /// 重置
-        /// </summary>
-        public override void Reset()
-        {
-            eventDelegate = null;
-        }
+        public Action<IEvent> Action;
 
         /// <summary>
         /// 事件响应接口
         /// </summary>
         public void OnEvent(IEvent e)
         {
-            if (null != eventDelegate)
+            if (null != Action)
             {
-                eventDelegate(e);
+                Action(e);
             }
         }
 
@@ -47,7 +39,7 @@ namespace vFrame.Core.Events
 
         protected override void OnDestroy()
         {
-
+            Action = null;
         }
     }
 }

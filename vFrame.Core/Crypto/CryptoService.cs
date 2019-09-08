@@ -9,7 +9,6 @@
 //============================================================
 
 using System;
-using vFrame.Core.Interface.Crypto;
 
 namespace vFrame.Core.Crypto
 {
@@ -22,10 +21,10 @@ namespace vFrame.Core.Crypto
         {
             switch (type)
             {
-                case CryptoType.PLAIN:
+                case CryptoType.Plain:
                     return new PlainCryptoService();
-                case CryptoType.XOR:
-                    return new XORCryptoService();
+                case CryptoType.Xor:
+                    return new XorCryptoService();
                 default:
                     throw new ArgumentOutOfRangeException("type", type, null);
             }

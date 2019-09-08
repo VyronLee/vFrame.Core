@@ -9,12 +9,11 @@
 //============================================================
 
 using System.IO;
-using vFrame.Core.Bundler.Interface;
-using vFrame.Core.Interface.Crypto;
+using vFrame.Core.Crypto;
+using vFrame.Core.Loggers;
 using vFrame.Core.ThreadPools;
-using Logger = vFrame.Core.Bundler.Log.Logger;
 
-namespace vFrame.Core.Bundler.FileReader
+namespace vFrame.Core.FileReader
 {
     public class FileReaderRequest : FileReader, IFileReaderRequest
     {
@@ -67,19 +66,19 @@ namespace vFrame.Core.Bundler.FileReader
 
         private void OnException(System.Exception e)
         {
-            Logger.LogError("!!! Read file failed: {0}, exception: {1}", _path, e);
+            Logger.Error("!!! Read file failed: {0}, exception: {1}", _path, e);
         }
 
         private void ReadBytesAndDecrypt(object stateInfo)
         {
-            Logger.LogInfo("Read buffer started: {0}", _path);
+            Logger.Info("Read buffer started: {0}", _path);
 
             _buffer = ReadAllBytes(_path);
 
             lock (_lockObject)
                 _finished = true;
 
-            Logger.LogInfo("Read buffer ended: {0}", _path);
+            Logger.Info("Read buffer ended: {0}", _path);
         }
 
         public byte[] GetBytes()

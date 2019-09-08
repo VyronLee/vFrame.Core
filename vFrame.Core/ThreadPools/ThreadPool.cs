@@ -12,12 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using vFrame.Core.Base;
-using vFrame.Core.Log;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.ThreadPools
 {
     public sealed class ThreadPool : BaseObject<int>
     {
+        private static readonly LogTag ThreadPoolLogTag = new LogTag("ThreadPool");
+
         private class TaskContext
         {
             public WaitCallback callback;
@@ -114,7 +116,7 @@ namespace vFrame.Core.ThreadPools
                     if (task.handler != null)
                         task.handler(e);
                     else
-                        Logger.Error("ThreadPool", "Error occured in thread, exception: {0}", e);
+                        Logger.Error(ThreadPoolLogTag, "Error occured in thread, exception: {0}", e);
                 }
             }
         }

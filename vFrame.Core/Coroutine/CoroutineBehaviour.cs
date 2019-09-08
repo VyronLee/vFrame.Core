@@ -1,17 +1,18 @@
 //------------------------------------------------------------
-//        File:  CryptoType.cs
-//       Brief:  CryptoType
+//        File:  CoroutineBehaviour.cs
+//       Brief:  Coroutine behaviour
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-05-24 20:44
+//    Modified:  2019-09-08 22:09
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
-namespace vFrame.Core.Crypto
+using UnityEngine;
+
+namespace vFrame.Core.Coroutine
 {
-    public enum CryptoType
+    internal class CoroutineBehaviour : MonoBehaviour
     {
-        Plain = 0,
-        Xor = 1,
+        
     }
 }

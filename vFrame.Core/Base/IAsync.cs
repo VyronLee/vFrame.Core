@@ -7,9 +7,10 @@
 //    Modified:  2019-02-15 20:05
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 using System.Collections;
 
-namespace vFrame.Core.Bundler.Interface
+namespace vFrame.Core.Base
 {
     public interface IAsync : IEnumerator
     {

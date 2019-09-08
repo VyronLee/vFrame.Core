@@ -9,39 +9,22 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class Event : Poolable, IEvent
+    public class Event : BaseObject, IEvent
     {
-        public int eventId;
-        public EventDispatcher target;
-        public object context;
-
-        /// <summary>
-        /// 创建函数
-        /// </summary>
-        protected override void OnCreate()
-        {
-            Reset();
-        }
-
-        /// <summary>
-        /// 销毁函数
-        /// </summary>
-        protected override void OnDestroy()
-        {
-            Reset();
-        }
+        public int EventId;
+        public EventDispatcher Target;
+        public object Context;
 
         /// <summary>
         /// 获取事件ID
         /// </summary>
         public int GetEventID()
         {
-            return eventId;
+            return EventId;
         }
 
         /// <summary>
@@ -49,26 +32,31 @@ namespace vFrame.Core.Events
         /// </summary>
         public object GetContext()
         {
-            return context;
+            return Context;
         }
 
         /// <summary>
         /// 获取事件发送者
         /// </summary>
-        public object GetTarget()
+        public object GetEventTarget()
         {
-            return target;
+            return Target;
         }
 
         /// <summary>
-        /// 重置
+        /// 创建函数
         /// </summary>
-        public override void Reset()
+        protected override void OnCreate()
         {
-            context = null;
-            eventId = 0;
-            target = null;
+
         }
 
+        /// <summary>
+        /// 销毁函数
+        /// </summary>
+        protected override void OnDestroy()
+        {
+            Target = null;
+        }
     }
 }

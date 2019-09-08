@@ -7,7 +7,10 @@
 //     Modified:  2019-05-14 10:26
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
-namespace vFrame.Core.Bundler.Interface
+
+using vFrame.Core.Base;
+
+namespace vFrame.Core.FileReader
 {
     public interface IFileReaderRequest : IAsync
     {

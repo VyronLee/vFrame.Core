@@ -143,12 +143,12 @@ namespace vFrame.Core.SpawnPools.Pools
             if (!go)
                 return;
 
-            switch (SpawnPoolsSetting.kPoolObjectHiddenType)
+            switch (SpawnPoolsSetting.HiddenType)
             {
-                case SpawnPoolsSetting.PoolObjectHiddenType.DEACTIVE:
+                case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(true);
                     break;
-                case SpawnPoolsSetting.PoolObjectHiddenType.POSITION:
+                case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     go.transform.localPosition = _originLocalPosition;
                     go.transform.localScale = _originLocalScale;
                     go.transform.localRotation = _originLocalRotation;
@@ -159,7 +159,7 @@ namespace vFrame.Core.SpawnPools.Pools
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + SpawnPoolsSetting.kPoolObjectHiddenType);
+                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
             }
         }
 
@@ -171,12 +171,12 @@ namespace vFrame.Core.SpawnPools.Pools
 
             go.transform.SetParent(_poolGo.transform, false);
 
-            switch (SpawnPoolsSetting.kPoolObjectHiddenType)
+            switch (SpawnPoolsSetting.HiddenType)
             {
-                case SpawnPoolsSetting.PoolObjectHiddenType.DEACTIVE:
+                case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(false);
                     break;
-                case SpawnPoolsSetting.PoolObjectHiddenType.POSITION:
+                case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     go.transform.localPosition = Vector3.zero;
                     go.transform.DisableAllAnimators();
                     go.transform.DisableAllAnimations();
@@ -184,7 +184,7 @@ namespace vFrame.Core.SpawnPools.Pools
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + SpawnPoolsSetting.kPoolObjectHiddenType);
+                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
             }
         }
 

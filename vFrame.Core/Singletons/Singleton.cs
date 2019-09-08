@@ -14,13 +14,13 @@ using vFrame.Core.Base;
 
 namespace vFrame.Core.Singletons
 {
-    public abstract class Singleton<T> : BaseObject where T: BaseObject, new()
+    public class Singleton<T>: BaseObject where T: BaseObject, new()
     {
-        /// <summary>
-        ///     单例对象
-        /// </summary>
         private static T _instance;
 
+        /// <summary>
+        /// 构造函数
+        /// </summary>
         protected Singleton()
         {
             Debug.Assert(null == _instance, "Singleton duplicate.");
@@ -28,12 +28,28 @@ namespace vFrame.Core.Singletons
         }
 
         /// <summary>
+        /// 创建函数
+        /// </summary>
+        protected override void OnCreate()
+        {
+
+        }
+
+        /// <summary>
+        /// 销毁函数
+        /// </summary>
+        protected override void OnDestroy()
+        {
+            if (_instance == this)
+                _instance = null;
+        }
+
+        /// <summary>
         ///     获取单例
         /// </summary>
         public static T Instance()
         {
-            _instance = _instance ?? NewInstance();
-            return _instance;
+            return _instance ?? (_instance = NewInstance());
         }
 
         /// <summary>
@@ -41,8 +57,6 @@ namespace vFrame.Core.Singletons
         /// </summary>
         public static T NewInstance()
         {
-            Debug.Assert(null == _instance, "Singleton duplicate.");
-
             _instance = new T();
             _instance.Create();
             return _instance;

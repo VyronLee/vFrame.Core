@@ -1,8 +1,8 @@
-﻿﻿using System;
+﻿using System;
 using System.ComponentModel;
 using System.Net;
 
-namespace vFrame.Core
+namespace vFrame.Core.Download
 {
     public class DownloadAgentWebClient : DownloadAgentBase
     {

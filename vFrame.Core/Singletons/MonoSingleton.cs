@@ -1,3 +1,12 @@
+//------------------------------------------------------------
+//        File:  MonoSingleton.cs
+//       Brief:  Mono singleton
+//
+//      Author:  VyronLee, lwz_jz@hotmail.com
+//
+//    Modified:  2019-09-08 23:37
+//   Copyright:  Copyright (c) 2019, VyronLee
+//============================================================
 using UnityEngine;
 
 namespace vFrame.Core.Singletons

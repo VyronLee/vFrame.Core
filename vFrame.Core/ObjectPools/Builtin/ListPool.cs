@@ -1,17 +1,19 @@
 //------------------------------------------------------------
-//        File:  CryptoType.cs
-//       Brief:  CryptoType
+//        File:  ListPool.cs
+//       Brief:  ListPool
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-05-24 20:44
+//    Modified:  2019-07-09 19:44
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
-namespace vFrame.Core.Crypto
+
+using System.Collections.Generic;
+
+namespace vFrame.Core.ObjectPools.Builtin
 {
-    public enum CryptoType
+    public class ListPool<T> : ObjectPool<List<T>, ListAllocator<T>>
     {
-        Plain = 0,
-        Xor = 1,
+
     }
 }

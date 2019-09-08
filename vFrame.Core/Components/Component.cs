@@ -11,7 +11,6 @@
 
 using System.Diagnostics;
 using vFrame.Core.Base;
-using vFrame.Core.Interface.Components;
 
 namespace vFrame.Core.Components
 {
@@ -20,44 +19,50 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     绑定对象
         /// </summary>
-        private IBindable _parent;
+        private IContainer _container;
 
         /// <summary>
         ///     绑定处理
         /// </summary>
-        public void BindTo(IBindable target)
+        public void BindTo(IContainer target)
         {
-            _parent = target;
+            _container = target;
             OnBind(target);
         }
 
         /// <summary>
         ///     解绑处理
         /// </summary>
-        public void UnBindFrom(IBindable target)
+        public void UnBindFrom(IContainer target)
         {
-            Debug.Assert(_parent == target, "Unbind target is not the same as parent.");
+            Debug.Assert(_container == target, "Unbind target is not the same as parent.");
 
             OnUnbind(target);
-            _parent = null;
+            _container = null;
         }
 
         /// <summary>
         ///     获取绑定目标
         /// </summary>
-        public IBindable GetTarget()
+        public IContainer GetContainer()
         {
-            return _parent;
+            return _container;
         }
 
         /// <summary>
         ///     绑定处理
         /// </summary>
-        protected abstract void OnBind(IBindable target);
+        protected virtual void OnBind(IContainer target)
+        {
+
+        }
 
         /// <summary>
         ///     解绑处理
         /// </summary>
-        protected abstract void OnUnbind(IBindable target);
+        protected virtual void OnUnbind(IContainer target)
+        {
+
+        }
     }
 }

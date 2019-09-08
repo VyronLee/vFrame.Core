@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using UnityEngine;
+using vFrame.Core.Loggers;
+using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Update
 {
@@ -88,7 +90,7 @@ namespace vFrame.Core.Update
             }
             catch (Exception e)
             {
-                Log.Logger.Info("HotFix", e.Message);
+                Logger.Info(new LogTag("AssetsUpdater"), e.Message);
                 return false;
             }
         }

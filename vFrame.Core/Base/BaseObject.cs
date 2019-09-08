@@ -11,7 +11,7 @@
 
 namespace vFrame.Core.Base
 {
-    public abstract class BaseObject
+    public abstract class BaseObject : IBaseObject
     {
         /// <summary>
         ///     创建函数
@@ -40,7 +40,7 @@ namespace vFrame.Core.Base
         protected abstract void OnDestroy();
     }
 
-    public abstract class BaseObject<T1> : BaseObject
+    public abstract class BaseObject<T1> : BaseObject, IBaseObject<T1>
     {
         public void Create(T1 arg1)
         {
@@ -55,7 +55,7 @@ namespace vFrame.Core.Base
         }
     }
 
-    public abstract class BaseObject<T1, T2> : BaseObject
+    public abstract class BaseObject<T1, T2> : BaseObject, IBaseObject<T1, T2>
     {
         public void Create(T1 arg1, T2 arg2)
         {
@@ -70,7 +70,7 @@ namespace vFrame.Core.Base
         }
     }
 
-    public abstract class BaseObject<T1, T2, T3> : BaseObject
+    public abstract class BaseObject<T1, T2, T3> : BaseObject, IBaseObject<T1, T2, T3>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3)
         {

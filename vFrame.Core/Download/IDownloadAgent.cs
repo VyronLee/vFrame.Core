@@ -1,6 +1,6 @@
-﻿﻿using System;
+﻿using System;
 
-namespace vFrame.Core
+namespace vFrame.Core.Download
 {
     public interface IDownloadAgent
     {

@@ -9,10 +9,10 @@
 //============================================================
 
 using System.IO;
-using vFrame.Core.Bundler.Interface;
-using vFrame.Core.Interface.Crypto;
+using vFrame.Core.Crypto;
+using vFrame.Core.Loggers;
 
-namespace vFrame.Core.Bundler.FileReader
+namespace vFrame.Core.FileReader
 {
     public class FileReader : IFileReader
     {
@@ -69,12 +69,12 @@ namespace vFrame.Core.Bundler.FileReader
             if (null == _crypto)
                 return bytes;
 
-            Logger.LogInfo("Decrypt data started: {0}", path);
+            Logger.Info("Decrypt data started: {0}", path);
 
             var output = new byte[bytes.Length];
             _crypto.Decrypt(bytes, output, _key, _keyLength);
 
-            Logger.LogInfo("Decrypt data finished: {0}", path);
+            Logger.Info("Decrypt data finished: {0}", path);
 
             return output;
         }

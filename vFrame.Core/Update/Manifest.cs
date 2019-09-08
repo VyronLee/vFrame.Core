@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using vFrame.Core.Loggers;
+using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Update
 {
     public partial class Manifest
     {
+        private static readonly LogTag AssetsUpdaterLogTag = new LogTag("AssetsUpdater");
+
         /// <summary>
         /// The type of difference
         /// </summary>
@@ -233,7 +237,7 @@ namespace vFrame.Core.Update
                 }
                 catch (Exception e)
                 {
-                    Log.Logger.Error("HotFix", "Load json failed, url: {0}, message: {1}", url, e.Message);
+                    Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
                 }
             }
             else
@@ -245,7 +249,7 @@ namespace vFrame.Core.Update
                 }
                 catch (Exception e)
                 {
-                    Log.Logger.Error("HotFix", "Load json failed, url: {0}, message: {1}", url, e.Message);
+                    Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
                 }
             }
         }

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("vFrame.Core")]
-[assembly: AssemblyDescription("EGame vFrame.Core Library")]
+[assembly: AssemblyDescription("vFrame.Core Library")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Shenzhen Xckoo Ltd.")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("vFrame.Core")]
-[assembly: AssemblyCopyright("Copyright © Xckoo Ltd. 2018")]
+[assembly: AssemblyCopyright("Copyright © VyronLee 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.1")]
-[assembly: AssemblyFileVersion("1.0.0.1")]
+[assembly: AssemblyVersion("1.0.1")]
+[assembly: AssemblyFileVersion("1.0.1")]

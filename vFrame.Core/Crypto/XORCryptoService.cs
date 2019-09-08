@@ -9,7 +9,7 @@
 //============================================================
 namespace vFrame.Core.Crypto
 {
-    public sealed class XORCryptoService : CryptoService
+    public sealed class XorCryptoService : CryptoService
     {
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength)
         {

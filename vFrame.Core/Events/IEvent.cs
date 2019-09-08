@@ -9,7 +9,7 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-namespace vFrame.Core.Interface.Events
+namespace vFrame.Core.Events
 {
     public interface IEvent
     {
@@ -26,6 +26,6 @@ namespace vFrame.Core.Interface.Events
         /// <summary>
         /// 获取事件发送者
         /// </summary>
-        object GetTarget();
+        object GetEventTarget();
     }
 }

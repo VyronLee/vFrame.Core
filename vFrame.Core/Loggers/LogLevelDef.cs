@@ -7,11 +7,11 @@
 //    Modified:  2018-10-20 18:06
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
-namespace Kernel.Log
+namespace vFrame.Core.Loggers
 {
     public enum LogLevelDef
     {
-        Verbose = 1,
+        Debug = 1,
         Info = 2,
         Warning = 4,
         Error = 8,

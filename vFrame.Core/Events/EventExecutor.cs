@@ -9,26 +9,25 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class EventExecutor : Poolable
+    public class EventExecutor : BaseObject
     {
-        public bool activated;
-        public int eventId;
-        public int handle;
-        public IEventListener listener;
-        public int priority;
-        public bool stopped;
+        public bool Activated { get; set; }
+        public bool Stopped { get; set; }
+
+        public int EventId;
+        public uint Handle;
+        public IEventListener Listener;
 
         /// <summary>
         ///     创建函数
         /// </summary>
         protected override void OnCreate()
         {
-            Reset();
+
         }
 
         /// <summary>
@@ -36,20 +35,7 @@ namespace vFrame.Core.Events
         /// </summary>
         protected override void OnDestroy()
         {
-            Reset();
-        }
-
-        /// <summary>
-        ///     重置
-        /// </summary>
-        public override void Reset()
-        {
-            handle = 0;
-            eventId = 0;
-            priority = 0;
-            listener = null;
-            activated = false;
-            stopped = false;
+            Listener = null;
         }
 
         /// <summary>
@@ -57,15 +43,7 @@ namespace vFrame.Core.Events
         /// </summary>
         public void Activate()
         {
-            activated = true;
-        }
-
-        /// <summary>
-        ///     是否已经激活
-        /// </summary>
-        public bool IsActivated()
-        {
-            return activated;
+            Activated = true;
         }
 
         /// <summary>
@@ -73,15 +51,7 @@ namespace vFrame.Core.Events
         /// </summary>
         public void Stop()
         {
-            stopped = true;
-        }
-
-        /// <summary>
-        ///     是否已经停止
-        /// </summary>
-        public bool IsStopped()
-        {
-            return stopped;
+            Stopped = true;
         }
 
         /// <summary>
@@ -89,8 +59,8 @@ namespace vFrame.Core.Events
         /// </summary>
         public void Execute(IEvent e)
         {
-            if (null != listener)
-                listener.OnEvent(e);
+            if (null != Listener)
+                Listener.OnEvent(e);
         }
 
     }

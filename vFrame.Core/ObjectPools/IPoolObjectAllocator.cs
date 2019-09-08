@@ -1,17 +1,18 @@
 //------------------------------------------------------------
-//        File:  CryptoType.cs
-//       Brief:  CryptoType
+//        File:  IPoolObjectAllocator.cs
+//       Brief:  IPoolObjectAllocator
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-05-24 20:44
+//    Modified:  2019-07-09 19:19
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
-namespace vFrame.Core.Crypto
+namespace vFrame.Core.ObjectPools
 {
-    public enum CryptoType
+    public interface IPoolObjectAllocator<T>
     {
-        Plain = 0,
-        Xor = 1,
+        T Alloc();
+
+        void Reset(T obj);
     }
 }

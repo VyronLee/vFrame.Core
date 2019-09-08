@@ -9,7 +9,7 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-namespace vFrame.Core.Interface.Events
+namespace vFrame.Core.Events
 {
     public interface IEventListener
     {

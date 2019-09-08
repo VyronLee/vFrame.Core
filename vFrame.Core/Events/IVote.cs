@@ -9,7 +9,7 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-namespace vFrame.Core.Interface.Events
+namespace vFrame.Core.Events
 {
     public interface IVote
     {
@@ -26,6 +26,6 @@ namespace vFrame.Core.Interface.Events
         /// <summary>
         /// 获取投票发送者
         /// </summary>
-        object GetTarget();
+        object GetVoteTarget();
     }
 }

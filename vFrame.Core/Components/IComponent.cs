@@ -9,23 +9,13 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-namespace vFrame.Core.Interface.Components
+namespace vFrame.Core.Components
 {
     public interface IComponent
     {
         /// <summary>
-        ///     绑定处理
-        /// </summary>
-        void BindTo(IBindable target);
-
-        /// <summary>
-        ///     解绑处理
-        /// </summary>
-        void UnBindFrom(IBindable target);
-
-        /// <summary>
         ///     获取绑定目标
         /// </summary>
-        IBindable GetTarget();
+        IContainer GetContainer();
     }
 }

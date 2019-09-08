@@ -9,47 +9,40 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using System;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class DelegateVoteListener : Poolable, IVoteListener
+    public class DelegateVoteListener : BaseObject, IVoteListener
     {
         /// <summary>
         /// 代理接口
         /// </summary>
-        public VoteDelegate voteDelegate;
-
-        /// <summary>
-        /// 重置
-        /// </summary>
-        public override void Reset()
-        {
-            voteDelegate = null;
-        }
+        public Func<IVote, bool> VoteAction;
 
         /// <summary>
         /// 投票响应接口
         /// </summary>
         public bool OnVote(IVote e)
         {
-            if (null != voteDelegate)
-            {
-                return voteDelegate(e);
-            }
-
-            return false;
+            return null != VoteAction && VoteAction(e);
         }
 
+        /// <summary>
+        /// 创建函数
+        /// </summary>
         protected override void OnCreate()
         {
 
         }
 
+        /// <summary>
+        /// 销毁函数
+        /// </summary>
         protected override void OnDestroy()
         {
-
+            VoteAction = null;
         }
     }
 }

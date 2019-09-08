@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core
+﻿namespace vFrame.Core.Download
 {
     public struct DownloadEventArgs
     {

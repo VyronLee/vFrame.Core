@@ -14,7 +14,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace Kernel.Log
+namespace vFrame.Core.Loggers
 {
     public static class Logger
     {
@@ -44,32 +44,32 @@ namespace Kernel.Log
 
         public static event Action<LogContext> OnLogReceived;
 
-        public static void Verbose(string tag, string text, params object[] args)
+        public static void Verbose(LogTag tag, string text, params object[] args)
         {
-            Log(LogLevelDef.Verbose, tag, text, args);
+            Log(LogLevelDef.Debug, tag, text, args);
         }
 
-        public static void Info(string tag, string text, params object[] args)
+        public static void Info(LogTag tag, string text, params object[] args)
         {
             Log(LogLevelDef.Info, tag, text, args);
         }
 
-        public static void Warning(string tag, string text, params object[] args)
+        public static void Warning(LogTag tag, string text, params object[] args)
         {
             Log(LogLevelDef.Warning, tag, text, args);
         }
 
-        public static void Error(string tag, string text, params object[] args)
+        public static void Error(LogTag tag, string text, params object[] args)
         {
             Log(LogLevelDef.Error, tag, text, args);
         }
 
-        public static void Fatal(string tag, string text, params object[] args)
+        public static void Fatal(LogTag tag, string text, params object[] args)
         {
             Log(LogLevelDef.Fatal, tag, text, args);
         }
 
-        private static void Log(LogLevelDef level, string tag, string text, params object[] args)
+        private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args)
         {
             if (_level > level)
                 return;
@@ -100,7 +100,7 @@ namespace Kernel.Log
 
             switch (level)
             {
-                case LogLevelDef.Verbose:
+                case LogLevelDef.Debug:
                 case LogLevelDef.Info:
                     Debug.Log(content);
                     break;
@@ -119,6 +119,26 @@ namespace Kernel.Log
                 OnLogReceived(context);
         }
 
+        public static void Verbose(string text, params object[] args)
+        {
+            Log(LogLevelDef.Debug, new LogTag(), text, args);
+        }
+
+        public static void Info(string text, params object[] args)
+        {
+            Log(LogLevelDef.Info, new LogTag(), text, args);
+        }
+
+        public static void Warning(string text, params object[] args)
+        {
+            Log(LogLevelDef.Warning, new LogTag(), text, args);
+        }
+
+        public static void Error(string text, params object[] args)
+        {
+            Log(LogLevelDef.Error, new LogTag(), text, args);
+        }
+
         public static IEnumerable<LogContext> Logs(int logMask)
         {
             var logs = new Queue<LogContext>();
@@ -133,14 +153,16 @@ namespace Kernel.Log
             return logs;
         }
 
+
+
         public struct LogContext
         {
             public LogLevelDef Level;
             public string Content;
-            public string Tag;
+            public LogTag Tag;
             public string StackTrace;
 
-            public LogContext(LogLevelDef level, string tag, string content, string stackTrace) : this()
+            public LogContext(LogLevelDef level, LogTag tag, string content, string stackTrace) : this()
             {
                 Level = level;
                 Content = content;

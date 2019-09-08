@@ -1,17 +1,25 @@
+//------------------------------------------------------------
+//        File:  SpawnPools.cs
+//       Brief:  Spawn pools.
+//
+//      Author:  VyronLee, lwz_jz@hotmail.com
+//
+//    Modified:  2019-09-08 23:44
+//   Copyright:  Copyright (c) 2019, VyronLee
+//============================================================
 //#define DEBUG_SPAWNPOOLS
 
 using System.Collections.Generic;
 using UnityEngine;
-using vFrame.Core.Interface.SpawnPools;
 using vFrame.Core.SpawnPools.Pools;
 
 namespace vFrame.Core.SpawnPools
 {
     public class SpawnPools<T> : ISpawnPools<T> where T: Object
     {
-        private const int kDefaultCapacity = 40;
-        private const int kDefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
-        private const int kGCInterval = 600;     // 600 frames, 20s by 30fps
+        private const int DefaultCapacity = 40;
+        private const int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
+        private const int GCInterval = 600;     // 600 frames, 20s by 30fps
 
         private static GameObject _poolsParent;
         public static GameObject PoolsParent
@@ -21,7 +29,7 @@ namespace vFrame.Core.SpawnPools
                 if (!_poolsParent)
                 {
                     _poolsParent = new GameObject("Pools");
-                    _poolsParent.transform.position = SpawnPoolsSetting.kPoolsRootPosition;
+                    _poolsParent.transform.position = SpawnPoolsSetting.RootPosition;
                     Object.DontDestroyOnLoad(PoolsParent);
                 }
                 return _poolsParent;
@@ -38,7 +46,7 @@ namespace vFrame.Core.SpawnPools
         private int _lastGC;
 
         public ISpawnPools<T> Initialize(IAssetsProvider provider, IAssetsProviderAsync providerAsync = null,
-            int lifetime = kDefaultLifeTime, int capacity = kDefaultCapacity)
+            int lifetime = DefaultLifeTime, int capacity = DefaultCapacity)
         {
             _provider = provider;
             _providerAsync = providerAsync;
@@ -84,7 +92,7 @@ namespace vFrame.Core.SpawnPools
 
         public void Update()
         {
-            if (++_lastGC < kGCInterval)
+            if (++_lastGC < GCInterval)
                 return;
             _lastGC = 0;
             

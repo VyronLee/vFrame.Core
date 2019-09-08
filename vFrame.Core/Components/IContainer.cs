@@ -9,27 +9,31 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using System.Collections.Generic;
-using vFrame.Core.Components;
+using System;
 
-namespace vFrame.Core.Interface.Components
+namespace vFrame.Core.Components
 {
-    public interface IBindable
+    public interface IContainer
     {
         /// <summary>
         ///     绑定组件
         /// </summary>
-        T AddComponent<T>() where T : Component, new();
+        T AddComponent<T>() where T : Component;
 
         /// <summary>
         ///     绑定组件
         /// </summary>
-        IComponent AddComponent(IComponent comp);
+        IComponent AddComponent(Type type);
 
         /// <summary>
         ///     解绑组件
         /// </summary>
-        void RemoveComponent<T>() where T : Component, new();
+        void RemoveComponent<T>() where T : Component;
+
+        /// <summary>
+        ///     解绑组件
+        /// </summary>
+        void RemoveComponent(Type type);
 
         /// <summary>
         ///     解绑所有组件
@@ -39,17 +43,17 @@ namespace vFrame.Core.Interface.Components
         /// <summary>
         ///     获取组件
         /// </summary>
-        T GetComponent<T>() where T : Component, new();
+        T GetComponent<T>() where T : Component;
 
         /// <summary>
         ///     获取组件
         /// </summary>
-        IComponent GetComponent(string name);
+        IComponent GetComponent(Type type);
 
         /// <summary>
         ///     获取所有组件
         /// </summary>
-        Dictionary<string, IComponent> GetAllComponents();
+        IComponent[] GetAllComponents();
 
         /// <summary>
         ///     像所有组件广播消息

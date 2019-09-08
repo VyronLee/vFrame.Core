@@ -9,23 +9,22 @@
 //   Copyright  Copyright (c) 2016, VyronLee
 //============================================================
 
-using vFrame.Core.Interface.Events;
-using vFrame.Core.Pool;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Events
 {
-    public class Vote : Poolable, IVote
+    public class Vote : BaseObject, IVote
     {
-        public int voteId;
-        public EventDispatcher target;
-        public object context;
+        public int VoteId;
+        public EventDispatcher Target;
+        public object Context;
 
         /// <summary>
         /// 创建函数
         /// </summary>
         protected override void OnCreate()
         {
-            Reset();
+
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace vFrame.Core.Events
         /// </summary>
         protected override void OnDestroy()
         {
-            Reset();
+            Target = null;
         }
 
         /// <summary>
@@ -41,7 +40,7 @@ namespace vFrame.Core.Events
         /// </summary>
         public int GetVoteID()
         {
-            return voteId;
+            return VoteId;
         }
 
         /// <summary>
@@ -49,25 +48,15 @@ namespace vFrame.Core.Events
         /// </summary>
         public object GetContext()
         {
-            return context;
+            return Context;
         }
 
         /// <summary>
         ///     获取投票发送者
         /// </summary>
-        public object GetTarget()
+        public object GetVoteTarget()
         {
-            return target;
-        }
-
-        /// <summary>
-        ///     重置
-        /// </summary>
-        public override void Reset()
-        {
-            context = null;
-            voteId = 0;
-            target = null;
+            return Target;
         }
     }
 }
