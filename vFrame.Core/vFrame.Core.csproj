@@ -105,7 +105,13 @@
     <Compile Include="Events\VoteExecutor.cs" />
     <Compile Include="Events\VoteExecutorPool.cs" />
     <Compile Include="Events\VotePool.cs" />
-    <Compile Include="Extensions\TransformExtension.cs" />
+    <Compile Include="Extensions\ByteExtension.cs" />
+    <Compile Include="Extensions\StringExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\AnimationExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\ComponentExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\GameObjectExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\TransformExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\UI\RectTransformExtension.cs" />
     <Compile Include="FileReader\FileReader.cs" />
     <Compile Include="FileReader\FileReaderAsync.cs" />
     <Compile Include="FileReader\FileReaderRequest.cs" />
@@ -141,7 +147,10 @@
     <Compile Include="Update\Manifest.cs" />
     <Compile Include="Update\Manifest.Json.cs" />
     <Compile Include="Update\UpdateEvent.cs" />
+    <Compile Include="Utils\EnumUtils.cs" />
+    <Compile Include="Utils\MessageDigestUtils.cs" />
     <Compile Include="Utils\PathUtils.cs" />
+    <Compile Include="Utils\TimeUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rd\BatterStreamingAssets\README.txt" />

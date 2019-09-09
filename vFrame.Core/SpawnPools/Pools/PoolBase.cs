@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.Generic;
 using vFrame.Core.Extensions;
 using UnityEngine;
+using vFrame.Core.Extensions.UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools.Pools

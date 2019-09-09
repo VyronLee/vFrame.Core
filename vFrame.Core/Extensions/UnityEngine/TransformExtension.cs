@@ -12,7 +12,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace vFrame.Core.Extensions
+namespace vFrame.Core.Extensions.UnityEngine
 {
     public static class TransformExtension
     {
