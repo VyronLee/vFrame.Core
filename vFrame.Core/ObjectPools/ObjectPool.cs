@@ -12,22 +12,22 @@ using System.Collections.Generic;
 
 namespace vFrame.Core.ObjectPools
 {
-    public abstract class ObjectPool<TClass> where TClass : class
+    public abstract class ObjectPool<TClass> where TClass : class, new()
     {
-        private const int Capacity = 128;
+        private const int InitSize = 128;
         private static readonly Stack<TClass> Objects;
 
         static ObjectPool()
         {
-            Objects = new Stack<TClass>(Capacity);
+            Objects = new Stack<TClass>(InitSize);
 
-            for (var i = 0; i < Capacity; i++)
-                Objects.Push(default(TClass));
+            for (var i = 0; i < InitSize; i++)
+                Objects.Push(new TClass());
         }
 
         public static TClass Get()
         {
-            return Objects.Count > 0 ? Objects.Pop() : default(TClass);
+            return Objects.Count > 0 ? Objects.Pop() : new TClass();
         }
 
         public static void Return(TClass obj)
@@ -40,21 +40,18 @@ namespace vFrame.Core.ObjectPools
 
     public abstract class ObjectPool<TClass, TAllocator>
         where TClass: class, new()
-        where TAllocator: IPoolObjectAllocator<TClass>
+        where TAllocator: IPoolObjectAllocator<TClass>, new()
     {
-        private const int Capacity = 128;
+        private const int InitSize = 128;
         private static readonly Stack<TClass> Objects;
         private static readonly TAllocator Allocator;
 
         static ObjectPool()
         {
-            Objects = new Stack<TClass>(Capacity);
-            Allocator = default(TAllocator);
+            Objects = new Stack<TClass>(InitSize);
+            Allocator = new TAllocator();
 
-            if (Allocator == null)
-                return;
-
-            for (var i = 0; i < Capacity; i++)
+            for (var i = 0; i < InitSize; i++)
                 Objects.Push(Allocator.Alloc());
         }
 
