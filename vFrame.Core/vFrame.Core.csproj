@@ -22,8 +22,6 @@
     <DefineConstants>DEBUG;TRACE;UNITY_EDITOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PostBuildEvent Condition=" '$(OS)' == 'Unix' ">cp -f vFrame.Core.* '$(SolutionDir)../Assets/Plugins/vFrame.Core/'</PostBuildEvent>
-    <PostBuildEvent Condition=" '$(OS)' != 'Unix' ">copy /Y vFrame.Core.* $(SolutionDir)..\Assets\Plugins\vFrame.Core\</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -143,12 +141,10 @@
     <Compile Include="Update\Manifest.cs" />
     <Compile Include="Update\Manifest.Json.cs" />
     <Compile Include="Update\UpdateEvent.cs" />
+    <Compile Include="Utils\PathUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rd\BatterStreamingAssets\README.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Utils" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

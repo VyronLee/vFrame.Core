@@ -11,6 +11,7 @@
 using System.IO;
 using vFrame.Core.Crypto;
 using vFrame.Core.Loggers;
+using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileReader
 {
@@ -36,9 +37,9 @@ namespace vFrame.Core.FileReader
         {
             byte[] bytes = null;
 #if UNITY_ANDROID
-            if (!PathUtility.IsFileInPersistentDataPath(path))
+            if (!PathUtils.IsFileInPersistentDataPath(path))
             {
-                var relativePath = PathUtility.AbsolutePathToRelativeStreamingAssetsPath(path);
+                var relativePath = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(path);
                 bytes = BetterStreamingAssets.ReadAllBytes(relativePath);
             }
             else
@@ -52,9 +53,9 @@ namespace vFrame.Core.FileReader
         public bool IsFileExist(string path)
         {
 #if UNITY_ANDROID
-            if (!PathUtility.IsFileInPersistentDataPath(path))
+            if (!PathUtils.IsFileInPersistentDataPath(path))
             {
-                var relativePath = PathUtility.AbsolutePathToRelativeStreamingAssetsPath(path);
+                var relativePath = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(path);
                 return BetterStreamingAssets.FileExists(relativePath);
             }
             else
