@@ -2,17 +2,25 @@
 
 CUR_DIR=$(pwd)
 
+echo "Building for platform: Editor"
+msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Debug /p:Platform="Any CPU" /p:DefineConstants="TRACE DEBUG UNITY_EDITOR"
+mkdir -p ${CUR_DIR}/Output/vFrame.Core/Runtime
+cp -f ${CUR_DIR}/Build/vFrame.Core/Debug/vFrame.Core.* ${CUR_DIR}/Output/vFrame.Core/Runtime/
+
 echo "Building for platform: Standalone"
-msbuild Kernel.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_STANDALONE"
-cp -f ${CUR_DIR}/Build/Kernel/Release/Kernel.* ../Assets/Plugins/Kernel/Standalone/
+msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_STANDALONE"
+mkdir -p ${CUR_DIR}/Output/vFrame.Core/Runtime/Standalone
+cp -f ${CUR_DIR}/Build/vFrame.Core/Release/vFrame.Core.* ${CUR_DIR}/Output/vFrame.Core/Runtime/Standalone/
 
 echo "Building for platform: Android"
-msbuild Kernel.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_ANDROID"
-cp -f ${CUR_DIR}/Build/Kernel/Release/Kernel.* ../Assets/Plugins/Kernel/Android/
+msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_ANDROID"
+mkdir -p ${CUR_DIR}/Output/vFrame.Core/Runtime/Android
+cp -f ${CUR_DIR}/Build/vFrame.Core/Release/vFrame.Core.* ${CUR_DIR}/Output/vFrame.Core/Runtime/Android/
 
 echo "Building for platform: iOS"
-msbuild Kernel.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_IOS"
-cp -f ${CUR_DIR}/Build/Kernel/Release/Kernel.* ../Assets/Plugins/Kernel/iOS/
+msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_IOS"
+mkdir -p ${CUR_DIR}/Output/vFrame.Core/Runtime/iOS
+cp -f ${CUR_DIR}/Build/vFrame.Core/Release/vFrame.Core.* ${CUR_DIR}/Output/vFrame.Core/Runtime/iOS/
 
 echo "Build finished!"
 echo

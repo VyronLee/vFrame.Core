@@ -11,6 +11,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Pools;
 
 namespace vFrame.Core.SpawnPools
@@ -95,21 +96,20 @@ namespace vFrame.Core.SpawnPools
             if (++_lastGC < GCInterval)
                 return;
             _lastGC = 0;
-            
-            var pools = new List<string>();
+
+            var pools = ListPool<string>.Get();
             
             // Clear overtime pools
             foreach (var kv in _pools)
             {
                 var pool = kv.Value;
-                if (pool.IsTimeout())
-                {
+                if (!pool.IsTimeout())
+                    continue;
 #if DEBUG_SPAWNPOOLS
-                    Debug.LogFormat("Pool({0}) timeout, destroying..", kv.Key);
+                Debug.LogFormat("Pool({0}) timeout, destroying..", kv.Key);
 #endif
-                    pool.Clear();
-                    pools.Add(kv.Key);
-                }
+                pool.Clear();
+                pools.Add(kv.Key);
             }
             pools.Clear();
             
@@ -128,6 +128,8 @@ namespace vFrame.Core.SpawnPools
 #endif
                 _pools[pools[i]].Clear();
             }
+            
+            ListPool<string>.Return(pools);
         }
     }
 }
