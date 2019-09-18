@@ -118,7 +118,7 @@ namespace vFrame.Core.Events
             foreach (var executor in executorList)
             {
                 if (!executor.Activated || executor.Stopped)
-                    return;
+                    continue;
 
                 try
                 {
