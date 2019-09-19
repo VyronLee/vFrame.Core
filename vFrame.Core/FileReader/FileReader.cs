@@ -50,6 +50,23 @@ namespace vFrame.Core.FileReader
             return DecryptIfRequired(bytes, path);
         }
 
+        public virtual string ReadAllText(string path)
+        {
+            var text = string.Empty;
+#if UNITY_ANDROID
+            if (!PathUtils.IsFileInPersistentDataPath(path))
+            {
+                var relativePath = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(path);
+                text = BetterStreamingAssets.ReadAllText(relativePath);
+            }
+            else
+#endif
+            {
+                text = File.ReadAllText(path);
+            }
+            return text;
+        }
+
         public bool IsFileExist(string path)
         {
 #if UNITY_ANDROID

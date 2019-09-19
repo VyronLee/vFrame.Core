@@ -231,8 +231,8 @@ namespace vFrame.Core.Update
 
             try
             {
-                var bytes = new FileReader.FileReader().ReadAllBytes(url);
-                _json = JsonUtility.FromJson<ManifestJson>(bytes.Utf8ToStr());
+                var text = new FileReader.FileReader().ReadAllText(url);
+                _json = JsonUtility.FromJson<ManifestJson>(text);
             }
             catch (Exception e)
             {

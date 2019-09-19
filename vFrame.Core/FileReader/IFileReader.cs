@@ -12,5 +12,7 @@ namespace vFrame.Core.FileReader
     public interface IFileReader
     {
         byte[] ReadAllBytes(string path);
+
+        string ReadAllText(string path);
     }
 }
