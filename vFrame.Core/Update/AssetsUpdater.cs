@@ -236,7 +236,7 @@ namespace vFrame.Core.Update
             // Load local manifest in app package
             Logger.Info(AssetsUpdaterLogTag, "Load local manifest at streaming assets: {0}, parsing..", MANIFEST_FILENAME);
 
-            _localManifest.Parse(MANIFEST_FILENAME, true);
+            _localManifest.Parse(Path.Combine(Application.streamingAssetsPath, MANIFEST_FILENAME));
             if (_localManifest.Loaded)
                 if (cachedManifest != null)
                 {
@@ -321,7 +321,7 @@ namespace vFrame.Core.Update
                 {
                     Logger.Info(AssetsUpdaterLogTag, "Local Game Version({0}) > Remote Game Version({1})",
                         _localManifest.GameVersion, _remoteManifest.GameVersion);
-                    
+
                     _updateState = UpdateState.UP_TO_DATE;
                     DispatchUpdateEvent(UpdateEvent.EventCode.ALREADY_UP_TO_DATE);
                 }
@@ -333,7 +333,7 @@ namespace vFrame.Core.Update
             var url = _hotFixUrl + MANIFEST_FILENAME;
 
             Logger.Info(AssetsUpdaterLogTag, "Start to download manifest file: {0}, to path: {1}", url, _tempManifestPath);
-            
+
             var task = DownloadManager.Instance.AddDownload(_tempManifestPath, url);
             task.DownloadSuccess += args =>
             {

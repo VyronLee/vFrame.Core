@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using vFrame.Core.Extensions;
 using vFrame.Core.Loggers;
 using Logger = vFrame.Core.Loggers.Logger;
 
@@ -42,7 +43,7 @@ namespace vFrame.Core.Update
         /// The game engine version
         /// </summary>
         public System.Version GameVersion { get; private set; }
-        
+
         /// <summary>
         /// The build number
         /// </summary>
@@ -74,9 +75,9 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Parse the whole file, caller should check where the file exist
         /// </summary>
-        public void Parse(string manifestUrl, bool fromStreamingAssets = false)
+        public void Parse(string manifestUrl)
         {
-            LoadJson(manifestUrl, fromStreamingAssets);
+            LoadJson(manifestUrl);
 
             if (_json != null)
             {
@@ -128,7 +129,7 @@ namespace vFrame.Core.Update
         public List<AssetInfo> GenResumeAssetsList()
         {
             var list = new List<AssetInfo>();
-            
+
             foreach (var assetKV in _assets)
             {
                 var asset = assetKV.Value;
@@ -140,11 +141,11 @@ namespace vFrame.Core.Update
 
             return list;
         }
-        
+
         public List<AssetInfo> GetDownloadedAssets()
         {
             var list = new List<AssetInfo>();
-            
+
             foreach (var assetKV in _assets)
             {
                 var asset = assetKV.Value;
@@ -224,33 +225,18 @@ namespace vFrame.Core.Update
 
         #region private methods
 
-        private void LoadJson(string url, bool fromStreamingAssets = false)
+        private void LoadJson(string url)
         {
             Clear();
 
-            if (fromStreamingAssets)
-            {  
-                try
-                {
-                    var text = BetterStreamingAssets.ReadAllText(url);
-                    _json = JsonUtility.FromJson<ManifestJson>(text);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
-                }
-            }
-            else
+            try
             {
-                try
-                {
-                    var text = File.ReadAllText(url);
-                    _json = JsonUtility.FromJson<ManifestJson>(text);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
-                }
+                var bytes = new FileReader.FileReader().ReadAllBytes(url);
+                _json = JsonUtility.FromJson<ManifestJson>(bytes.Utf8ToStr());
+            }
+            catch (Exception e)
+            {
+                Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
             }
         }
 
@@ -260,10 +246,10 @@ namespace vFrame.Core.Update
         private void LoadVersion()
         {
             AssetsVersion = int.Parse(_json.assets_version);
-            GameVersion = string.IsNullOrEmpty(_json.game_version) 
-                ? new System.Version("0.0.0") 
+            GameVersion = string.IsNullOrEmpty(_json.game_version)
+                ? new System.Version("0.0.0")
                 : new System.Version(_json.game_version);
-            
+
             VersionLoaded = true;
         }
 
