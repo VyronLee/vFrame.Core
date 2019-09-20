@@ -14,5 +14,7 @@ namespace vFrame.Core.FileReader
         byte[] ReadAllBytes(string path);
 
         string ReadAllText(string path);
+
+        bool FileExist(string path);
     }
 }

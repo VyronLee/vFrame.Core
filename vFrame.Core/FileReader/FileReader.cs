@@ -33,6 +33,21 @@ namespace vFrame.Core.FileReader
             _keyLength = keyLength;
         }
 
+        public bool FileExist(string path)
+        {
+#if UNITY_ANDROID
+            if (!PathUtils.IsFileInPersistentDataPath(path))
+            {
+                var relativePath = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(path);
+                return BetterStreamingAssets.FileExists(relativePath);
+            }
+            else
+#endif
+            {
+                return File.Exists(path);
+            }
+        }
+
         public virtual byte[] ReadAllBytes(string path)
         {
             byte[] bytes = null;
