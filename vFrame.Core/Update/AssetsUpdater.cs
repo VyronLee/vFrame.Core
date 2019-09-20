@@ -100,7 +100,8 @@ namespace vFrame.Core.Update
             _storagePath = storagePath.EndsWith("/") ? storagePath : storagePath + "/";
             _hotFixUrl = hotFixUrl.EndsWith("/") ? hotFixUrl : hotFixUrl + "/";
 
-            if (!Directory.Exists(_storagePath)) Directory.CreateDirectory(_storagePath);
+            if (!Directory.Exists(_storagePath))
+                Directory.CreateDirectory(_storagePath);
 
             _cacheVersionPath = _storagePath + VERSION_FILENAME;
             _cacheManifestPath = _storagePath + MANIFEST_FILENAME;
@@ -212,7 +213,8 @@ namespace vFrame.Core.Update
             if (File.Exists(_tempManifestPath))
             {
                 _tempManifest.Parse(_tempManifestPath);
-                if (!_tempManifest.Loaded) File.Delete(_tempManifestPath);
+                if (!_tempManifest.Loaded)
+                    File.Delete(_tempManifestPath);
             }
         }
 
@@ -388,6 +390,12 @@ namespace vFrame.Core.Update
                 _remoteManifest = _tempManifest;
                 _downloadUnits = _remoteManifest.GenResumeAssetsList();
                 _totalWaitToDownload = _totalToDownload = _downloadUnits.Count;
+                if (_totalWaitToDownload <= 0)
+                {
+                    OnDownloadUnitsFinished();
+                    return;
+                }
+
                 _totalSize = CalculateTotalSize(_downloadUnits);
                 _remoteManifest.SaveToFile(_tempManifestPath);
 
@@ -489,7 +497,11 @@ namespace vFrame.Core.Update
 
         private void BatchDownload()
         {
-            if (_downloadUnits.Count <= 0) return;
+            if (_downloadUnits.Count <= 0)
+            {
+                OnDownloadUnitsFinished();
+                return;
+            }
 
             foreach (var asset in _downloadUnits)
             {
@@ -537,7 +549,8 @@ namespace vFrame.Core.Update
             _remoteManifest = null;
 
             // rename temporary manifest to valid manifest
-            if (File.Exists(_cacheManifestPath)) File.Delete(_cacheManifestPath);
+            if (File.Exists(_cacheManifestPath))
+                File.Delete(_cacheManifestPath);
 
             File.Move(_tempManifestPath, _cacheManifestPath);
 
@@ -637,6 +650,7 @@ namespace vFrame.Core.Update
 
                 Logger.Error(AssetsUpdaterLogTag, "Hash Invalid : {0}", asset.fileName);
             }
+            _remoteManifest.SaveToFile(_tempManifestPath);
 
             DispatchUpdateEvent(UpdateEvent.EventCode.HASH_PROGRESSION);
         }
