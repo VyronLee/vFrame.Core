@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace vFrame.Core.Loggers
 {
@@ -102,14 +101,14 @@ namespace vFrame.Core.Loggers
             {
                 case LogLevelDef.Debug:
                 case LogLevelDef.Info:
-                    Debug.Log(content);
+                    UnityEngine.Debug.Log(content);
                     break;
                 case LogLevelDef.Warning:
-                    Debug.LogWarning(content);
+                    UnityEngine.Debug.LogWarning(content);
                     break;
                 case LogLevelDef.Error:
                 case LogLevelDef.Fatal:
-                    Debug.LogError(content);
+                    UnityEngine.Debug.LogError(content);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("level", level, null);
@@ -119,7 +118,7 @@ namespace vFrame.Core.Loggers
                 OnLogReceived(context);
         }
 
-        public static void Verbose(string text, params object[] args)
+        public static void Debug(string text, params object[] args)
         {
             Log(LogLevelDef.Debug, new LogTag(), text, args);
         }
