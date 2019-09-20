@@ -550,13 +550,15 @@ namespace vFrame.Core.Update
             var asset = (Manifest.AssetInfo) args.UserData;
 
             _remoteManifest.SetAssetDownloadState(asset.fileName, Manifest.DownloadState.DOWNLOADED);
+            _remoteManifest.SaveToFile(_tempManifestPath);
 
             _totalWaitToDownload--;
             RecordDownloadedSize(asset.fileName, asset.size);
             DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
             DispatchUpdateEvent(UpdateEvent.EventCode.ASSET_UPDATED, asset.fileName);
 
-            if (_totalWaitToDownload <= 0) OnDownloadUnitsFinished();
+            if (_totalWaitToDownload <= 0)
+                OnDownloadUnitsFinished();
         }
 
         private void OnDownloadProgress(DownloadEventArgs args)
