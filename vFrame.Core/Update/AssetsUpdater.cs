@@ -15,9 +15,9 @@ namespace vFrame.Core.Update
 
         private const float UPDATE_PROGRESS_INTERVAL = 0.2f;
 
-        private const string VERSION_FILENAME = "GameVersion.json.unity3d";
+        private const string VERSION_FILENAME = "GameVersion.json";
         private const string TEMP_MANIFEST_FILENAME = "GameAssets.json.temp";
-        private const string MANIFEST_FILENAME = "GameAssets.json.unity3d";
+        private const string MANIFEST_FILENAME = "GameAssets.json";
 
         /// <summary>
         ///     The local path of cached manifest file

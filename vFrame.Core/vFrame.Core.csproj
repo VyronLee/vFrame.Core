@@ -142,7 +142,7 @@
     <Compile Include="SpawnPools\SpawnPoolsSetting.cs" />
     <Compile Include="ThreadPools\ThreadPool.cs" />
     <Compile Include="Update\AssetsUpdater.cs" />
-    <Compile Include="Update\AssetsUpdater.UpdateState.cs" />
+    <Compile Include="Update\UpdateState.cs" />
     <Compile Include="Update\HashChecker.cs" />
     <Compile Include="Update\Manifest.cs" />
     <Compile Include="Update\Manifest.Json.cs" />
