@@ -43,7 +43,7 @@ namespace vFrame.Core.Loggers
 
         public static event Action<LogContext> OnLogReceived;
 
-        public static void Verbose(LogTag tag, string text, params object[] args)
+        public static void Debug(LogTag tag, string text, params object[] args)
         {
             Log(LogLevelDef.Debug, tag, text, args);
         }
