@@ -66,6 +66,15 @@
     <Compile Include="3rd\BatterStreamingAssets\BSA_PathUtil.cs" />
     <Compile Include="3rd\BatterStreamingAssets\BSA_SubReadOnlyStream.cs" />
     <Compile Include="3rd\BatterStreamingAssets\BSA_ZipArchive.cs" />
+    <Compile Include="3rd\LitJson\IJsonWrapper.cs" />
+    <Compile Include="3rd\LitJson\JsonData.cs" />
+    <Compile Include="3rd\LitJson\JsonException.cs" />
+    <Compile Include="3rd\LitJson\JsonMapper.cs" />
+    <Compile Include="3rd\LitJson\JsonMockWrapper.cs" />
+    <Compile Include="3rd\LitJson\JsonReader.cs" />
+    <Compile Include="3rd\LitJson\JsonWriter.cs" />
+    <Compile Include="3rd\LitJson\Lexer.cs" />
+    <Compile Include="3rd\LitJson\ParserToken.cs" />
     <Compile Include="3rd\SerializableDictionary.cs" />
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />
@@ -117,6 +126,8 @@
     <Compile Include="FileReader\FileReaderRequest.cs" />
     <Compile Include="FileReader\IFileReader.cs" />
     <Compile Include="FileReader\IFileReaderAsync.cs" />
+    <Compile Include="Localize\Localization.cs" />
+    <Compile Include="Localize\ILocalizationReader.cs" />
     <Compile Include="Loggers\Logger.cs" />
     <Compile Include="Loggers\LoggerSetting.cs" />
     <Compile Include="Loggers\LogLevelDef.cs" />
