@@ -129,6 +129,7 @@
     <Compile Include="Localize\ILocalization.cs" />
     <Compile Include="Localize\Localization.cs" />
     <Compile Include="Localize\ILocalizationReader.cs" />
+    <Compile Include="Loggers\LogFormatType.cs" />
     <Compile Include="Loggers\Logger.cs" />
     <Compile Include="Loggers\LoggerSetting.cs" />
     <Compile Include="Loggers\LogLevelDef.cs" />

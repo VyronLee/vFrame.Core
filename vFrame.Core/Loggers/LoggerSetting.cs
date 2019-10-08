@@ -7,11 +7,23 @@
 //    Modified:  2018-10-20 18:10
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
+
 namespace vFrame.Core.Loggers
 {
     public static class LoggerSetting
     {
-        public const int DefaultCapacity = 1000;
-        public const string DefaultTagFormatter = "#{0}#";
+        public static int Capacity = 1000;
+
+        public static string TagFormatter = "#{0}#";
+
+        public static int LogFormatMask = LogFormatType.Tag |
+                                          LogFormatType.Time |
+                                          LogFormatType.Class |
+                                          LogFormatType.Function;
+
+        public static readonly int DefaultLogFormatMask = LogFormatType.Tag |
+                                                          LogFormatType.Time |
+                                                          LogFormatType.Class |
+                                                          LogFormatType.Function;
     }
 }

@@ -12,13 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using vFrame.Core.ObjectPools.Builtin;
 
 namespace vFrame.Core.Loggers
 {
     public static class Logger
     {
         private static LogLevelDef _level = LogLevelDef.Error;
-        private static int _capacity = LoggerSetting.DefaultCapacity;
+        private static int _capacity = LoggerSetting.Capacity;
 
         private static readonly Queue<LogContext> LogQueue;
         private static readonly object QueueLock;
@@ -74,22 +75,10 @@ namespace vFrame.Core.Loggers
                 return;
 
             var logText = args != null && args.Length > 0 ? string.Format(text, args) : text;
+            var content = GetFormattedLogText(tag, logText);
+            var stack = GetLogStack();
 
-            var stackTrace = StackTraceUtility.ExtractStackTrace();
-            // Remove first two lines, Log() and LogInfo()/LogWarning(), etc.
-            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
-            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
-
-            var stackFrame = new StackFrame(2);
-
-            var content = string.Format("{0} [{1:HH:mm:ss:fff}] [{2}::{3}] {4}",
-                string.Format(LoggerSetting.DefaultTagFormatter, tag),
-                DateTime.Now,
-                stackFrame.GetMethod().ReflectedType,
-                stackFrame.GetMethod().Name,
-                logText);
-
-            var context = new LogContext(level, tag, content, stackTrace);
+            var context = new LogContext(level, tag, content, stack);
             lock (QueueLock)
             {
                 if (LogQueue.Count >= _capacity)
@@ -116,6 +105,73 @@ namespace vFrame.Core.Loggers
 
             if (OnLogReceived != null)
                 OnLogReceived(context);
+        }
+
+        private static string GetFormattedLogText(LogTag tag, string log)
+        {
+            var stackFrame = new StackFrame(3);
+
+            var builder = StringBuilderPool.Get();
+            if ((LoggerSetting.LogFormatMask & LogFormatType.Tag) > 0)
+            {
+                builder.Append(string.Format(LoggerSetting.TagFormatter, tag.ToString()));
+                builder.Append(" ");
+            }
+
+            if ((LoggerSetting.LogFormatMask & LogFormatType.Time) > 0)
+            {
+                builder.Append(DateTime.Now.ToString("[HH:mm:ss:fff]"));
+                builder.Append(" ");
+            }
+
+            if ((LoggerSetting.LogFormatMask & LogFormatType.Frame) > 0)
+            {
+                builder.Append("[");
+                builder.Append(Time.frameCount);
+                builder.Append("] ");
+            }
+
+            if ((LoggerSetting.LogFormatMask & LogFormatType.Class) > 0)
+            {
+                if ((LoggerSetting.LogFormatMask & LogFormatType.Function) > 0)
+                {
+                    builder.Append("[");
+                    builder.Append(stackFrame.GetMethod().ReflectedType);
+                    builder.Append("::");
+                    builder.Append(stackFrame.GetMethod().Name);
+                    builder.Append("]");
+                }
+                else
+                {
+                    builder.Append("[");
+                    builder.Append(stackFrame.GetMethod().ReflectedType);
+                    builder.Append("]");
+                }
+            }
+            else if ((LoggerSetting.LogFormatMask & LogFormatType.Function) > 0)
+            {
+                builder.Append("[");
+                builder.Append(stackFrame.GetMethod().Name);
+                builder.Append("]");
+            }
+
+            builder.Append(" ");
+            builder.Append(log);
+
+            var text = builder.ToString();
+            StringBuilderPool.Return(builder);
+
+            return text;
+        }
+
+        private static string GetLogStack()
+        {
+            var stackTrace = StackTraceUtility.ExtractStackTrace();
+            // Remove first three lines, GetLogStack(), Log() and LogInfo()/LogWarning(), etc.
+            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
+            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
+            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
+            return stackTrace;
         }
 
         public static void Debug(string text, params object[] args)
