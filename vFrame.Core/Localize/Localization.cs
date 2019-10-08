@@ -16,8 +16,10 @@ using vFrame.Core.Loggers;
 
 namespace vFrame.Core.Localize
 {
-    public class Localization : BaseObject<ILocalizationReader>
+    public class Localization : BaseObject<ILocalizationReader>, ILocalization
     {
+        private static readonly LogTag LogTag = new LogTag("Localization");
+
         /// <summary>
         /// 当前语言代码
         /// </summary>
@@ -81,7 +83,17 @@ namespace vFrame.Core.Localize
         {
             LazyLoad();
 
-            return _langTextIdMap[Language][textId].ToString();
+            JsonData lang;
+            if (!_langTextIdMap.TryGetValue(Language, out lang))
+                return string.Empty;
+
+            if (!lang.ContainsKey(textId))
+            {
+                Logger.Error(LogTag, "No text Id defined in dict: {0}", textId);
+                return string.Empty;
+            }
+
+            return lang[textId].ToString();
         }
 
         /// <summary>
@@ -104,7 +116,7 @@ namespace vFrame.Core.Localize
             var data = _reader.ReadData(lang);
             if (string.IsNullOrEmpty(data))
             {
-                Logger.Error("Localization", "Read localization data failed: " + lang);
+                Logger.Error(LogTag, "Read localization data failed: " + lang);
                 return;
             }
 
@@ -114,7 +126,7 @@ namespace vFrame.Core.Localize
             }
             catch (Exception e)
             {
-                Logger.Error("Localization", "Parse localization data failed: {0}, exception: {1}", lang, e);
+                Logger.Error(LogTag, "Parse localization data failed: {0}, exception: {1}", lang, e);
             }
         }
     }

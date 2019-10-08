@@ -126,6 +126,7 @@
     <Compile Include="FileReader\FileReaderRequest.cs" />
     <Compile Include="FileReader\IFileReader.cs" />
     <Compile Include="FileReader\IFileReaderAsync.cs" />
+    <Compile Include="Localize\ILocalization.cs" />
     <Compile Include="Localize\Localization.cs" />
     <Compile Include="Localize\ILocalizationReader.cs" />
     <Compile Include="Loggers\Logger.cs" />
