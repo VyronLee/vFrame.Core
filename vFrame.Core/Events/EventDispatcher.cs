@@ -63,7 +63,7 @@ namespace vFrame.Core.Events
             return AddEventListener(delegateEventListener, eventId);
         }
 
-        public IEventListener RemoveEventListener(int handle)
+        public IEventListener RemoveEventListener(uint handle)
         {
             IEventListener listener = null;
             foreach (var item in _eventExecutorLists)
@@ -156,7 +156,7 @@ namespace vFrame.Core.Events
             return AddVoteListener(listener, voteId);
         }
 
-        public IVoteListener RemoveVoteListener(int handle)
+        public IVoteListener RemoveVoteListener(uint handle)
         {
             IVoteListener listener = null;
             foreach (var item in _voteExecutorLists)

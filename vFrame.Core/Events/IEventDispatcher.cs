@@ -36,7 +36,7 @@ namespace vFrame.Core.Events
         ///     但该侦听器会立即失效。
         /// </summary>
         /// <param name="handle">事件句柄</param>
-        IEventListener RemoveEventListener(int handle);
+        IEventListener RemoveEventListener(uint handle);
 
         /// <summary>
         ///     派发事件
@@ -64,7 +64,7 @@ namespace vFrame.Core.Events
         /// <summary>
         ///     移除投票侦听器
         /// </summary>
-        IVoteListener RemoveVoteListener(int handle);
+        IVoteListener RemoveVoteListener(uint handle);
 
         /// <summary>
         ///     派发投票
@@ -73,7 +73,7 @@ namespace vFrame.Core.Events
         /// <param name="context">投票现场</param>
         /// <returns>投票是否通过</returns>
         bool DispatchVote(int voteId, object context);
-        
+
         /// <summary>
         ///     派发投票
         /// </summary>
@@ -91,7 +91,7 @@ namespace vFrame.Core.Events
         /// </summary>
         /// <returns>个数</returns>
         int GetEventExecutorCount();
-        
+
         /// <summary>
         ///     获取投票侦听器总个数
         /// </summary>
