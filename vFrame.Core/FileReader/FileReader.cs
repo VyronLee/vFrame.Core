@@ -21,9 +21,15 @@ namespace vFrame.Core.FileReader
         protected byte[] _key;
         protected int _keyLength;
 
+        private static bool _betterStreamingAssetsInited;
+
         public FileReader()
         {
+            if (_betterStreamingAssetsInited)
+                return;
+            _betterStreamingAssetsInited = true;
 
+            BetterStreamingAssets.Initialize();
         }
 
         public FileReader(ICryptoService crypto, byte[] key, int keyLength)
@@ -72,6 +78,7 @@ namespace vFrame.Core.FileReader
             if (!PathUtils.IsFileInPersistentDataPath(path))
             {
                 var relativePath = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(path);
+                //Logger.Error("relativePath: {0}", relativePath);
                 text = BetterStreamingAssets.ReadAllText(relativePath);
             }
             else

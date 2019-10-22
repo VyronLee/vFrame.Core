@@ -62,9 +62,9 @@ namespace vFrame.Core.Utils
 
         public static string AbsolutePathToRelativeStreamingAssetsPath(string fullPath)
         {
+            //Debug.LogError("AbsolutePathToRelativeStreamingAssetsPath - fullPath: " + fullPath);
             fullPath = NormalizePath(fullPath);
-            var streamingAssetsPath = Path.Combine(Application.dataPath, "StreamingAssets");
-            var projDataFullPath = NormalizePath(streamingAssetsPath + "/");
+            var projDataFullPath = NormalizePath(Application.streamingAssetsPath + "/");
             var relativePath = fullPath.Replace(projDataFullPath, "");
             return NormalizePath(relativePath);
         }

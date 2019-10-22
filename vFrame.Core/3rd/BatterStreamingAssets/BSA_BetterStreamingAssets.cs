@@ -103,6 +103,7 @@ public static class BetterStreamingAssets
 
     public static string ReadAllText(string path)
     {
+        //Debug.LogError("BetterStreamingAssets:ReadAllText - " + path);
         using ( var sr = OpenText(path) )
         {
             return sr.ReadToEnd();
@@ -348,7 +349,7 @@ public static class BetterStreamingAssets
 
             s_paths = paths.ToArray();
             s_streamingAssets = parts.ToArray();
-            
+
             //Debug.Log("s_paths, length: " + s_paths.Length + "\n" + string.Join("\n", s_paths));
         }
 
