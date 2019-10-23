@@ -49,7 +49,7 @@ namespace vFrame.Core.Update
         /// </summary>
         public string BuildNumber
         {
-            get { return _json != null ? _json.build_number : null; }
+            get { return _json != null ? _json.buildNumber : null; }
         }
 
         /// <summary>
@@ -245,10 +245,10 @@ namespace vFrame.Core.Update
         /// </summary>
         private void LoadVersion()
         {
-            AssetsVersion = int.Parse(_json.assets_version);
-            GameVersion = string.IsNullOrEmpty(_json.game_version)
+            AssetsVersion = int.Parse(_json.assetsVersion);
+            GameVersion = string.IsNullOrEmpty(_json.gameVersion)
                 ? new System.Version("0.0.0")
-                : new System.Version(_json.game_version);
+                : new System.Version(_json.gameVersion);
 
             VersionLoaded = true;
         }

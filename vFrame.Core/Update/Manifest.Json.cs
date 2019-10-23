@@ -8,12 +8,12 @@ namespace vFrame.Core.Update
         [Serializable]
         public class ManifestJson
         {
-            public string build_number;
-            public string game_version;
-            public string assets_version;
+            public string buildNumber;
+            public string gameVersion;
+            public string assetsVersion;
             public List<AssetInfo> assets = new List<AssetInfo>();
         }
-        
+
         [Serializable]
         public class AssetInfo
         {
