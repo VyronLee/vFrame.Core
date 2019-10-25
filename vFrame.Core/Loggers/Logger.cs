@@ -136,7 +136,7 @@ namespace vFrame.Core.Loggers
                 if ((LoggerSetting.LogFormatMask & LogFormatType.Function) > 0)
                 {
                     builder.Append("[");
-                    builder.Append(stackFrame.GetMethod().ReflectedType);
+                    builder.Append(stackFrame.GetMethod().ReflectedType.Name);
                     builder.Append("::");
                     builder.Append(stackFrame.GetMethod().Name);
                     builder.Append("]");
@@ -144,7 +144,7 @@ namespace vFrame.Core.Loggers
                 else
                 {
                     builder.Append("[");
-                    builder.Append(stackFrame.GetMethod().ReflectedType);
+                    builder.Append(stackFrame.GetMethod().ReflectedType.Name);
                     builder.Append("]");
                 }
             }
