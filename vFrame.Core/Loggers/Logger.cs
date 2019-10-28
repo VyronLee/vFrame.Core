@@ -69,14 +69,44 @@ namespace vFrame.Core.Loggers
             Log(LogLevelDef.Fatal, tag, text, args);
         }
 
+        public static void Debug(int skip, LogTag tag, string text, params object[] args)
+        {
+            Log(skip, LogLevelDef.Debug, tag, text, args);
+        }
+
+        public static void Info(int skip, LogTag tag, string text, params object[] args)
+        {
+            Log(skip, LogLevelDef.Info, tag, text, args);
+        }
+
+        public static void Warning(int skip, LogTag tag, string text, params object[] args)
+        {
+            Log(skip, LogLevelDef.Warning, tag, text, args);
+        }
+
+        public static void Error(int skip, LogTag tag, string text, params object[] args)
+        {
+            Log(skip, LogLevelDef.Error, tag, text, args);
+        }
+
+        public static void Fatal(int skip, LogTag tag, string text, params object[] args)
+        {
+            Log(skip, LogLevelDef.Fatal, tag, text, args);
+        }
+
         private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args)
+        {
+            Log(0, level, tag, text, args);
+        }
+
+        private static void Log(int skip, LogLevelDef level, LogTag tag, string text, params object[] args)
         {
             if (_level > level)
                 return;
 
             var logText = args != null && args.Length > 0 ? string.Format(text, args) : text;
-            var content = GetFormattedLogText(tag, logText);
-            var stack = GetLogStack();
+            var content = GetFormattedLogText(skip, tag, logText);
+            var stack = GetLogStack(skip);
 
             var context = new LogContext(level, tag, content, stack);
             lock (QueueLock)
@@ -107,9 +137,9 @@ namespace vFrame.Core.Loggers
                 OnLogReceived(context);
         }
 
-        private static string GetFormattedLogText(LogTag tag, string log)
+        private static string GetFormattedLogText(int skip, LogTag tag, string log)
         {
-            var stackFrame = new StackFrame(3);
+            var stackFrame = new StackFrame(skip + 3);
 
             var builder = StringBuilderPool.Get();
             if ((LoggerSetting.LogFormatMask & LogFormatType.Tag) > 0)
@@ -164,13 +194,13 @@ namespace vFrame.Core.Loggers
             return text;
         }
 
-        private static string GetLogStack()
+        private static string GetLogStack(int skip)
         {
             var stackTrace = StackTraceUtility.ExtractStackTrace();
             // Remove first three lines, GetLogStack(), Log() and LogInfo()/LogWarning(), etc.
-            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
-            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
-            stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
+            skip += 3;
+            while (skip-- > 0)
+                stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
             return stackTrace;
         }
 
@@ -207,8 +237,6 @@ namespace vFrame.Core.Loggers
 
             return logs;
         }
-
-
 
         public struct LogContext
         {
