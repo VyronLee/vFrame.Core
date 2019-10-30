@@ -96,7 +96,7 @@ namespace vFrame.Core.Loggers
 
         private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args)
         {
-            Log(0, level, tag, text, args);
+            Log(1, level, tag, text, args);
         }
 
         private static void Log(int skip, LogLevelDef level, LogTag tag, string text, params object[] args)
