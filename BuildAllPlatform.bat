@@ -6,6 +6,8 @@ echo Building for platform: Editor
 msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Debug /p:Platform="Any CPU" /p:DefineConstants="TRACE DEBUG UNITY_EDITOR"
 if not exist "%CURDIR%\Output\vFrame.Core\Runtime" mkdir %CURDIR%\Output\vFrame.Core\Runtime
 copy /Y %CURDIR%\Build\vFrame.Core\Debug\vFrame.Core.* %CURDIR%\Output\vFrame.Core\Runtime\
+if not exist "%CURDIR%\Output\vFrame.Core\Editor" mkdir %CURDIR%\Output\vFrame.Core\Editor
+copy /Y %CURDIR%\Build\vFrame.Core.Editor\Debug\vFrame.Core.Editor.* %CURDIR%\Output\vFrame.Core\Editor\
 
 echo Building for platform: Standalone
 msbuild vFrame.Core.sln /t:Clean,Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:DefineConstants="TRACE UNITY_STANDALONE"
