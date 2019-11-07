@@ -33,7 +33,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// <param name="animation"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static IEnumerator WaitUntilPlayFinished(this Animation animation, string name)
+        public static IEnumerator PlayUntilFinished(this Animation animation, string name)
         {
             var clip = animation.GetClip(name);
             animation.Reset();

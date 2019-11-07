@@ -93,6 +93,7 @@
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />
     <Compile Include="Base\IBaseObject.cs" />
+    <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Components\Container.cs" />
     <Compile Include="Components\Component.cs" />
     <Compile Include="Components\IContainer.cs" />
