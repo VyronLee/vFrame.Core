@@ -22,40 +22,34 @@ namespace vFrame.Core.Events
         /// <summary>
         /// 创建函数
         /// </summary>
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
 
         /// <summary>
         /// 销毁函数
         /// </summary>
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             Target = null;
         }
 
         /// <summary>
         ///     获取投票ID
         /// </summary>
-        public int GetVoteID()
-        {
+        public int GetVoteID() {
             return VoteId;
         }
 
         /// <summary>
         ///     获取事件现场
         /// </summary>
-        public object GetContext()
-        {
+        public object GetContext() {
             return Context;
         }
 
         /// <summary>
         ///     获取投票发送者
         /// </summary>
-        public object GetVoteTarget()
-        {
+        public object GetVoteTarget() {
             return Target;
         }
     }

@@ -18,23 +18,19 @@ namespace vFrame.Core.Download
         private Exception m_Error;
         private WebClient m_WebClient;
 
-        public override ulong DownloadedSize
-        {
+        public override ulong DownloadedSize {
             get { return m_DownloadedSize; }
         }
 
-        public override ulong TotalSize
-        {
+        public override ulong TotalSize {
             get { return m_TotalSize; }
         }
 
-        public override float Progress
-        {
+        public override float Progress {
             get { return m_Progress; }
         }
 
-        protected override void OnStart()
-        {
+        protected override void OnStart() {
             m_LastDownloadedSize = 0;
             m_DownloadedSize = 0;
             m_TotalSize = 0;
@@ -52,37 +48,29 @@ namespace vFrame.Core.Download
             m_WebClient.DownloadProgressChanged += OnDownloadProgressChanged;
         }
 
-        protected override void OnStop()
-        {
-            if (m_WebClient != null)
-            {
+        protected override void OnStop() {
+            if (m_WebClient != null) {
                 m_WebClient.CancelAsync();
                 m_WebClient.Dispose();
                 m_WebClient = null;
             }
         }
 
-        protected override void OnUpdate(float elapseSeconds)
-        {
-            if (m_WebClient == null)
-            {
+        protected override void OnUpdate(float elapseSeconds) {
+            if (m_WebClient == null) {
                 return;
             }
 
-            if (!m_Done)
-            {
+            if (!m_Done) {
                 m_WaitTime += elapseSeconds;
-                if (Timeout > 0 && m_WaitTime >= Timeout)
-                {
+                if (Timeout > 0 && m_WaitTime >= Timeout) {
                     NotifyError("Timeout");
                     return;
                 }
 
                 m_ProgressCheckTime += elapseSeconds;
-                if (m_ProgressCheckTime >= ProgressUpdateInterval)
-                {
-                    if (m_LastDownloadedSize < m_DownloadedSize)
-                    {
+                if (m_ProgressCheckTime >= ProgressUpdateInterval) {
+                    if (m_LastDownloadedSize < m_DownloadedSize) {
                         m_LastDownloadedSize = m_DownloadedSize;
                         m_WaitTime = 0f;
                         NotifyUpdate();
@@ -94,32 +82,25 @@ namespace vFrame.Core.Download
                 return;
             }
 
-            lock (m_LockObj)
-            {
-                if (m_Error != null)
-                {
+            lock (m_LockObj) {
+                if (m_Error != null) {
                     NotifyError(m_Error.Message);
                 }
-                else
-                {
+                else {
                     NotifyComplete();
                 }
             }
         }
 
-        private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
+        private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) {
             m_DownloadedSize = (ulong) e.BytesReceived;
             m_TotalSize = (ulong) e.TotalBytesToReceive;
             m_Progress = (float) e.ProgressPercentage / 100;
         }
 
-        private void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
-        {
-            lock (m_LockObj)
-            {
-                if (e.Error != null)
-                {
+        private void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs e) {
+            lock (m_LockObj) {
+                if (e.Error != null) {
                     m_Error = e.Error;
                 }
 

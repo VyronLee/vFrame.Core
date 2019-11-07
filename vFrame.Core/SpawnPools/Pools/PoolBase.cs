@@ -33,8 +33,7 @@ namespace vFrame.Core.SpawnPools.Pools
 
         public int SpawnedTimes { get; private set; }
 
-        protected PoolBase(string poolName, int lifetime)
-        {
+        protected PoolBase(string poolName, int lifetime) {
             _lifetime = lifetime;
             _lasttime = Time.frameCount;
             _poolName = poolName;
@@ -43,25 +42,21 @@ namespace vFrame.Core.SpawnPools.Pools
             _poolGo.transform.SetParent(SpawnPools<T>.PoolsParent.transform, false);
         }
 
-        public void Clear()
-        {
+        public void Clear() {
             foreach (var obj in _objects)
                 Object.Destroy(obj);
             _objects.Clear();
         }
 
-        public T Spawn()
-        {
+        public T Spawn() {
             T obj;
-            if (_objects.Count > 0)
-            {
+            if (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
                 obj = _objects.Pop();
             }
-            else
-            {
+            else {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
@@ -79,37 +74,33 @@ namespace vFrame.Core.SpawnPools.Pools
             return OnSpawn(obj);
         }
 
-        public IEnumerator SpawnAsync(Action<Object> callback)
-        {
+        public IEnumerator SpawnAsync(Action<Object> callback) {
             T obj = null;
-            if (_objects.Count > 0)
-            {
+            if (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
                 obj = _objects.Pop();
             }
-            else
-            {
+            else {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
                 yield return DoSpawnAsync(v => obj = v);
 
                 var go = obj as GameObject;
-                if (go)
-                {
+                if (go) {
                     _originLocalPosition = go.transform.localPosition;
                     _originLocalScale = go.transform.localScale;
                     _originLocalRotation = go.transform.localRotation;
                 }
             }
+
             OnSpawn(obj);
             callback(obj);
         }
 
-        private T OnSpawn(T obj)
-        {
+        private T OnSpawn(T obj) {
             ++SpawnedTimes;
             _lasttime = Time.frameCount;
 
@@ -118,8 +109,7 @@ namespace vFrame.Core.SpawnPools.Pools
             return obj;
         }
 
-        public void Recycle(T obj)
-        {
+        public void Recycle(T obj) {
 #if DEBUG_SPAWNPOOLS
             Debug.LogFormat("Recycling object into pool({0})", _assetName);
 #endif
@@ -128,24 +118,20 @@ namespace vFrame.Core.SpawnPools.Pools
             ObjectPostprocessAfterRecycle(obj);
         }
 
-        public int Count
-        {
+        public int Count {
             get { return _objects.Count; }
         }
 
-        public bool IsTimeout()
-        {
+        public bool IsTimeout() {
             return Time.frameCount - _lasttime > _lifetime;
         }
 
-        private void ObjectPreprocessBeforeReturn(Object obj)
-        {
+        private void ObjectPreprocessBeforeReturn(Object obj) {
             var go = obj as GameObject;
             if (!go)
                 return;
 
-            switch (SpawnPoolsSetting.HiddenType)
-            {
+            switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(true);
                     break;
@@ -164,16 +150,14 @@ namespace vFrame.Core.SpawnPools.Pools
             }
         }
 
-        private void ObjectPostprocessAfterRecycle(Object obj)
-        {
+        private void ObjectPostprocessAfterRecycle(Object obj) {
             var go = obj as GameObject;
             if (!go)
                 return;
 
             go.transform.SetParent(_poolGo.transform, false);
 
-            switch (SpawnPoolsSetting.HiddenType)
-            {
+            switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(false);
                     break;

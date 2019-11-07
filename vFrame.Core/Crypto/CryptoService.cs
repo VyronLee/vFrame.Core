@@ -17,10 +17,8 @@ namespace vFrame.Core.Crypto
         public abstract void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength);
         public abstract void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
-        public static ICryptoService CreateCrypto(CryptoType type)
-        {
-            switch (type)
-            {
+        public static ICryptoService CreateCrypto(CryptoType type) {
+            switch (type) {
                 case CryptoType.Plain:
                     return new PlainCryptoService();
                 case CryptoType.Xor:

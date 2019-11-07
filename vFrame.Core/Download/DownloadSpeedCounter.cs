@@ -10,31 +10,26 @@
         private float m_ElapseSeconds;
 
         public float Speed { get; private set; }
-        
-        public void Update(float elapseSeconds)
-        {
+
+        public void Update(float elapseSeconds) {
             m_TotalElapseSeconds += elapseSeconds;
-            if (m_TotalElapseSeconds < UPDATE_INTERVAL)
-            {
+            if (m_TotalElapseSeconds < UPDATE_INTERVAL) {
                 Speed = m_CurrentDownloadSize / m_TotalElapseSeconds;
             }
-            
+
             m_ElapseSeconds += elapseSeconds;
-            if (m_ElapseSeconds >= UPDATE_INTERVAL)
-            {
+            if (m_ElapseSeconds >= UPDATE_INTERVAL) {
                 Speed = (m_CurrentDownloadSize - m_LastDownloadSize) / m_ElapseSeconds;
                 m_ElapseSeconds = 0;
                 m_LastDownloadSize = m_CurrentDownloadSize;
             }
         }
 
-        public void RecordDownloadSize(ulong size)
-        {
+        public void RecordDownloadSize(ulong size) {
             m_CurrentDownloadSize = size;
         }
 
-        public void Reset()
-        {
+        public void Reset() {
             Speed = 0f;
             m_TotalElapseSeconds = 0f;
             m_ElapseSeconds = 0f;

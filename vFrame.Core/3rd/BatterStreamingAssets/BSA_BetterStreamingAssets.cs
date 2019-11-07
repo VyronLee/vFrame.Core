@@ -10,9 +10,9 @@ using System.Text.RegularExpressions;
 using Better;
 using Better.StreamingAssets;
 using Better.StreamingAssets.ZipArchive;
-
 #if UNITY_EDITOR
 using BetterStreamingAssetsImp = BetterStreamingAssets.EditorImpl;
+
 #elif UNITY_ANDROID
 using BetterStreamingAssetsImp = BetterStreamingAssets.ApkImpl;
 #else
@@ -29,96 +29,79 @@ public static class BetterStreamingAssets
         public uint crc32;
     }
 
-    public static string Root
-    {
+    public static string Root {
         get { return BetterStreamingAssetsImp.s_root; }
     }
 
-    public static void Initialize()
-    {
+    public static void Initialize() {
         BetterStreamingAssetsImp.Initialize(Application.dataPath, Application.streamingAssetsPath);
     }
 
 #if UNITY_EDITOR
-    public static void InitializeWithExternalApk(string apkPath)
-    {
+    public static void InitializeWithExternalApk(string apkPath) {
         BetterStreamingAssetsImp.ApkMode = true;
         BetterStreamingAssetsImp.Initialize(apkPath, "jar:file://" + apkPath + "!/assets/");
     }
 
-    public static void InitializeWithExternalDirectories(string dataPath, string streamingAssetsPath)
-    {
+    public static void InitializeWithExternalDirectories(string dataPath, string streamingAssetsPath) {
         BetterStreamingAssetsImp.ApkMode = false;
         BetterStreamingAssetsImp.Initialize(dataPath, streamingAssetsPath);
     }
 #endif
 
-    public static bool FileExists(string path)
-    {
+    public static bool FileExists(string path) {
         ReadInfo info;
         return BetterStreamingAssetsImp.TryGetInfo(path, out info);
     }
 
-    public static bool DirectoryExists(string path)
-    {
+    public static bool DirectoryExists(string path) {
         return BetterStreamingAssetsImp.DirectoryExists(path);
     }
 
-    public static AssetBundleCreateRequest LoadAssetBundleAsync(string path, uint crc = 0)
-    {
+    public static AssetBundleCreateRequest LoadAssetBundleAsync(string path, uint crc = 0) {
         var info = GetInfoOrThrow(path);
-        return AssetBundle.LoadFromFileAsync(info.readPath, crc, (ulong)info.offset);
+        return AssetBundle.LoadFromFileAsync(info.readPath, crc, (ulong) info.offset);
     }
 
-    public static AssetBundle LoadAssetBundle(string path, uint crc = 0)
-    {
+    public static AssetBundle LoadAssetBundle(string path, uint crc = 0) {
         var info = GetInfoOrThrow(path);
-        return AssetBundle.LoadFromFile(info.readPath, crc, (ulong)info.offset);
+        return AssetBundle.LoadFromFile(info.readPath, crc, (ulong) info.offset);
     }
 
-    public static System.IO.Stream OpenRead(string path)
-    {
-        if ( path == null )
+    public static System.IO.Stream OpenRead(string path) {
+        if (path == null)
             throw new ArgumentNullException("path");
-        if ( path.Length == 0 )
+        if (path.Length == 0)
             throw new ArgumentException("Empty path", "path");
 
         return BetterStreamingAssetsImp.OpenRead(path);
     }
 
-    public static System.IO.StreamReader OpenText(string path)
-    {
+    public static System.IO.StreamReader OpenText(string path) {
         Stream str = OpenRead(path);
-        try
-        {
+        try {
             return new StreamReader(str);
         }
-        catch (System.Exception)
-        {
+        catch (System.Exception) {
             if (str != null)
                 str.Dispose();
             throw;
         }
     }
 
-    public static string ReadAllText(string path)
-    {
+    public static string ReadAllText(string path) {
         //Debug.LogError("BetterStreamingAssets:ReadAllText - " + path);
-        using ( var sr = OpenText(path) )
-        {
+        using (var sr = OpenText(path)) {
             return sr.ReadToEnd();
         }
     }
 
-    public static string[] ReadAllLines(string path)
-    {
+    public static string[] ReadAllLines(string path) {
         string line;
         var lines = new List<string>();
 
-        using ( var sr = OpenText(path) )
-        {
-            while ( ( line = sr.ReadLine() ) != null )
-            {
+        using (var sr = OpenText(path)) {
+            while ((line = sr.ReadLine()) != null) {
                 lines.Add(line);
             }
         }
@@ -126,41 +109,35 @@ public static class BetterStreamingAssets
         return lines.ToArray();
     }
 
-    public static byte[] ReadAllBytes(string path)
-    {
-        if ( path == null )
+    public static byte[] ReadAllBytes(string path) {
+        if (path == null)
             throw new ArgumentNullException("path");
-        if ( path.Length == 0 )
+        if (path.Length == 0)
             throw new ArgumentException("Empty path");
 
         return BetterStreamingAssetsImp.ReadAllBytes(path);
     }
 
-    public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
-    {
+    public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption) {
         return BetterStreamingAssetsImp.GetFiles(path, searchPattern, searchOption);
     }
 
-    public static string[] GetFiles(string path)
-    {
+    public static string[] GetFiles(string path) {
         return GetFiles(path, null);
     }
 
-    public static string[] GetFiles(string path, string searchPattern)
-    {
+    public static string[] GetFiles(string path, string searchPattern) {
         return GetFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
     }
 
-    private static ReadInfo GetInfoOrThrow(string path)
-    {
+    private static ReadInfo GetInfoOrThrow(string path) {
         ReadInfo result;
-        if ( !BetterStreamingAssetsImp.TryGetInfo(path, out result) )
+        if (!BetterStreamingAssetsImp.TryGetInfo(path, out result))
             ThrowFileNotFound(path);
         return result;
     }
 
-    private static void ThrowFileNotFound(string path)
-    {
+    private static void ThrowFileNotFound(string path) {
         throw new FileNotFoundException("File not found", path);
     }
 
@@ -169,58 +146,49 @@ public static class BetterStreamingAssets
     {
         public static bool ApkMode = false;
 
-        public static string s_root
-        {
+        public static string s_root {
             get { return ApkMode ? ApkImpl.s_root : LooseFilesImpl.s_root; }
         }
 
-        internal static void Initialize(string dataPath, string streamingAssetsPath)
-        {
-            if ( ApkMode )
-            {
+        internal static void Initialize(string dataPath, string streamingAssetsPath) {
+            if (ApkMode) {
                 ApkImpl.Initialize(dataPath, streamingAssetsPath);
             }
-            else
-            {
+            else {
                 LooseFilesImpl.Initialize(dataPath, streamingAssetsPath);
             }
         }
 
-        internal static bool TryGetInfo(string path, out ReadInfo info)
-        {
-            if ( ApkMode )
+        internal static bool TryGetInfo(string path, out ReadInfo info) {
+            if (ApkMode)
                 return ApkImpl.TryGetInfo(path, out info);
             else
                 return LooseFilesImpl.TryGetInfo(path, out info);
         }
 
-        internal static bool DirectoryExists(string path)
-        {
-            if ( ApkMode )
+        internal static bool DirectoryExists(string path) {
+            if (ApkMode)
                 return ApkImpl.DirectoryExists(path);
             else
                 return LooseFilesImpl.DirectoryExists(path);
         }
 
-        internal static Stream OpenRead(string path)
-        {
-            if ( ApkMode )
+        internal static Stream OpenRead(string path) {
+            if (ApkMode)
                 return ApkImpl.OpenRead(path);
             else
                 return LooseFilesImpl.OpenRead(path);
         }
 
-        internal static byte[] ReadAllBytes(string path)
-        {
-            if ( ApkMode )
+        internal static byte[] ReadAllBytes(string path) {
+            if (ApkMode)
                 return ApkImpl.ReadAllBytes(path);
             else
                 return LooseFilesImpl.ReadAllBytes(path);
         }
 
-        internal static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
-        {
-            if ( ApkMode )
+        internal static string[] GetFiles(string path, string searchPattern, SearchOption searchOption) {
+            if (ApkMode)
                 return ApkImpl.GetFiles(path, searchPattern, searchOption);
             else
                 return LooseFilesImpl.GetFiles(path, searchPattern, searchOption);
@@ -234,24 +202,22 @@ public static class BetterStreamingAssets
         public static string s_root;
         private static string[] s_emptyArray = new string[0];
 
-        public static void Initialize(string dataPath, string streamingAssetsPath)
-        {
-            s_root = Path.GetFullPath(streamingAssetsPath + "/").Replace("\\", "/"); ;
+        public static void Initialize(string dataPath, string streamingAssetsPath) {
+            s_root = Path.GetFullPath(streamingAssetsPath + "/").Replace("\\", "/");
+            ;
         }
 
-        public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
-        {
+        public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption) {
             if (!Directory.Exists(s_root))
                 return s_emptyArray;
 
             // this will throw if something is fishy
-            PathUtil.NormalizeRelativePath(path, forceTrailingSlash : true);
+            PathUtil.NormalizeRelativePath(path, forceTrailingSlash: true);
 
             Debug.Assert(s_root.Last() == '\\' || s_root.Last() == '/');
             var files = Directory.GetFiles(s_root + path, searchPattern ?? "*", searchOption);
 
-            for ( int i = 0; i < files.Length; ++i )
-            {
+            for (int i = 0; i < files.Length; ++i) {
                 Debug.Assert(files[i].StartsWith(s_root));
                 files[i] = files[i].Substring(s_root.Length).Replace('\\', '/');
             }
@@ -260,13 +226,12 @@ public static class BetterStreamingAssets
             // purge meta files
             {
                 int j = 0;
-                for ( int i = 0; i < files.Length; ++i )
-                {
-                    if ( !files[i].EndsWith(".meta") )
-                    {
+                for (int i = 0; i < files.Length; ++i) {
+                    if (!files[i].EndsWith(".meta")) {
                         files[j++] = files[i];
                     }
                 }
+
                 Array.Resize(ref files, j);
             }
 
@@ -274,49 +239,43 @@ public static class BetterStreamingAssets
             return files;
         }
 
-        public static bool TryGetInfo(string path, out ReadInfo info)
-        {
+        public static bool TryGetInfo(string path, out ReadInfo info) {
             path = PathUtil.NormalizeRelativePath(path);
 
             info = new ReadInfo();
 
             var fullPath = s_root + path;
-            if ( !File.Exists(fullPath) )
+            if (!File.Exists(fullPath))
                 return false;
 
             info.readPath = fullPath;
             return true;
         }
 
-        public static bool DirectoryExists(string path)
-        {
+        public static bool DirectoryExists(string path) {
             var normalized = PathUtil.NormalizeRelativePath(path);
             return Directory.Exists(s_root + normalized);
         }
 
-        public static byte[] ReadAllBytes(string path)
-        {
+        public static byte[] ReadAllBytes(string path) {
             ReadInfo info;
 
-            if ( !TryGetInfo(path, out info) )
+            if (!TryGetInfo(path, out info))
                 ThrowFileNotFound(path);
 
             return File.ReadAllBytes(info.readPath);
         }
 
-        public static System.IO.Stream OpenRead(string path)
-        {
+        public static System.IO.Stream OpenRead(string path) {
             ReadInfo info;
-            if ( !TryGetInfo(path, out info) )
+            if (!TryGetInfo(path, out info))
                 ThrowFileNotFound(path);
 
             Stream fileStream = File.OpenRead(info.readPath);
-            try
-            {
+            try {
                 return new SubReadOnlyStream(fileStream, leaveOpen: false);
             }
-            catch ( System.Exception )
-            {
+            catch (System.Exception) {
                 fileStream.Dispose();
                 throw;
             }
@@ -338,8 +297,7 @@ public static class BetterStreamingAssets
             public uint crc32;
         }
 
-        public static void Initialize(string dataPath, string streamingAssetsPath)
-        {
+        public static void Initialize(string dataPath, string streamingAssetsPath) {
             s_root = dataPath;
 
             List<string> paths = new List<string>();
@@ -353,13 +311,12 @@ public static class BetterStreamingAssets
             //Debug.Log("s_paths, length: " + s_paths.Length + "\n" + string.Join("\n", s_paths));
         }
 
-        public static bool TryGetInfo(string path, out ReadInfo info)
-        {
+        public static bool TryGetInfo(string path, out ReadInfo info) {
             path = PathUtil.NormalizeRelativePath(path);
             info = new ReadInfo();
 
             var index = Array.BinarySearch(s_paths, path, StringComparer.OrdinalIgnoreCase);
-            if ( index < 0 )
+            if (index < 0)
                 return false;
 
             var dataInfo = s_streamingAssets[index];
@@ -370,76 +327,67 @@ public static class BetterStreamingAssets
             return true;
         }
 
-        public static bool DirectoryExists(string path)
-        {
-            var normalized = PathUtil.NormalizeRelativePath(path, forceTrailingSlash : true);
+        public static bool DirectoryExists(string path) {
+            var normalized = PathUtil.NormalizeRelativePath(path, forceTrailingSlash: true);
             var dirIndex = GetDirectoryIndex(normalized);
             return dirIndex >= 0 && dirIndex < s_paths.Length;
         }
 
-        public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
-        {
-            if ( path == null )
+        public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption) {
+            if (path == null)
                 throw new ArgumentException("path");
 
-            var actualDirPath = PathUtil.NormalizeRelativePath(path, forceTrailingSlash : true);
+            var actualDirPath = PathUtil.NormalizeRelativePath(path, forceTrailingSlash: true);
 
             // find first file there
             var index = GetDirectoryIndex(actualDirPath);
-            if ( index < 0 )
+            if (index < 0)
                 throw new IOException();
-            if ( index == s_paths.Length )
+            if (index == s_paths.Length)
                 throw new DirectoryNotFoundException();
 
             Predicate<string> filter;
-            if ( string.IsNullOrEmpty(searchPattern) || searchPattern == "*" )
-            {
+            if (string.IsNullOrEmpty(searchPattern) || searchPattern == "*") {
                 filter = null;
             }
-            else if ( searchPattern.IndexOf('*') >= 0 || searchPattern.IndexOf('?') >= 0 )
-            {
+            else if (searchPattern.IndexOf('*') >= 0 || searchPattern.IndexOf('?') >= 0) {
                 var regex = PathUtil.WildcardToRegex(searchPattern);
                 filter = (x) => regex.IsMatch(x);
             }
-            else
-            {
+            else {
                 filter = (x) => string.Compare(x, searchPattern, true) == 0;
             }
 
             List<string> results = new List<string>();
             string fixedPath = null;
 
-            for ( int i = index; i < s_paths.Length; ++i )
-            {
+            for (int i = index; i < s_paths.Length; ++i) {
                 var filePath = s_paths[i];
 
-                if ( !filePath.StartsWith(actualDirPath) )
+                if (!filePath.StartsWith(actualDirPath))
                     break;
 
                 string fileName;
 
-                var dirSeparatorIndex = filePath.LastIndexOf('/', filePath.Length - 1, filePath.Length - actualDirPath.Length);
-                if ( dirSeparatorIndex >= 0 )
-                {
-                    if ( searchOption == SearchOption.TopDirectoryOnly )
+                var dirSeparatorIndex =
+                    filePath.LastIndexOf('/', filePath.Length - 1, filePath.Length - actualDirPath.Length);
+                if (dirSeparatorIndex >= 0) {
+                    if (searchOption == SearchOption.TopDirectoryOnly)
                         continue;
 
                     fileName = filePath.Substring(dirSeparatorIndex + 1);
                 }
-                else
-                {
+                else {
                     fileName = filePath.Substring(actualDirPath.Length);
                 }
 
                 // now do a match
-                if ( filter == null || filter(fileName) )
-                {
+                if (filter == null || filter(fileName)) {
                     var normalizedPart = filePath.Substring(actualDirPath.Length);
 
-                    if ( fixedPath == null )
-                    {
+                    if (fixedPath == null) {
                         fixedPath = PathUtil.FixTrailingDirectorySeparators(path);
-                        if ( fixedPath == "/" )
+                        if (fixedPath == "/")
                             fixedPath = string.Empty;
                     }
 
@@ -451,32 +399,28 @@ public static class BetterStreamingAssets
             return results.ToArray();
         }
 
-        public static byte[] ReadAllBytes(string path)
-        {
+        public static byte[] ReadAllBytes(string path) {
             ReadInfo info;
-            if ( !TryGetInfo(path, out info) )
+            if (!TryGetInfo(path, out info))
                 ThrowFileNotFound(path);
 
             byte[] buffer;
-            using ( var fileStream = File.OpenRead(info.readPath) )
-            {
-                if ( info.offset != 0 )
-                {
-                    if ( fileStream.Seek(info.offset, SeekOrigin.Begin) != info.offset )
+            using (var fileStream = File.OpenRead(info.readPath)) {
+                if (info.offset != 0) {
+                    if (fileStream.Seek(info.offset, SeekOrigin.Begin) != info.offset)
                         throw new IOException();
                 }
 
-                if ( info.size > (long)int.MaxValue )
+                if (info.size > (long) int.MaxValue)
                     throw new IOException();
 
-                int count = (int)info.size;
+                int count = (int) info.size;
                 int offset = 0;
 
                 buffer = new byte[count];
-                while ( count > 0 )
-                {
+                while (count > 0) {
                     int num = fileStream.Read(buffer, offset, count);
-                    if ( num == 0 )
+                    if (num == 0)
                         throw new EndOfStreamException();
                     offset += num;
                     count -= num;
@@ -486,69 +430,62 @@ public static class BetterStreamingAssets
             return buffer;
         }
 
-        public static System.IO.Stream OpenRead(string path)
-        {
+        public static System.IO.Stream OpenRead(string path) {
             ReadInfo info;
-            if ( !TryGetInfo(path, out info) )
+            if (!TryGetInfo(path, out info))
                 ThrowFileNotFound(path);
 
             Stream fileStream = File.OpenRead(info.readPath);
-            try
-            {
-                return new SubReadOnlyStream(fileStream, info.offset, info.size, leaveOpen : false);
+            try {
+                return new SubReadOnlyStream(fileStream, info.offset, info.size, leaveOpen: false);
             }
-            catch ( System.Exception )
-            {
+            catch (System.Exception) {
                 fileStream.Dispose();
                 throw;
             }
         }
 
-        private static int GetDirectoryIndex(string path)
-        {
+        private static int GetDirectoryIndex(string path) {
             Debug.Assert(s_paths != null);
 
             // find first file there
             var index = Array.BinarySearch(s_paths, path, StringComparer.OrdinalIgnoreCase);
-            if ( index > 0 )
+            if (index > 0)
                 return ~index;
 
             // if the end, no such directory exists
             index = ~index;
-            if ( index == s_paths.Length )
+            if (index == s_paths.Length)
                 return index;
 
-            for ( int i = index; i < s_paths.Length && s_paths[i].StartsWith(path); ++i )
-            {
+            for (int i = index; i < s_paths.Length && s_paths[i].StartsWith(path); ++i) {
                 // because otherwise there would be a match
                 Debug.Assert(s_paths[i].Length > path.Length);
 
-                if ( path[path.Length - 1] == '/' )
+                if (path[path.Length - 1] == '/')
                     return i;
 
-                if ( s_paths[i][path.Length] == '/' )
+                if (s_paths[i][path.Length] == '/')
                     return i;
             }
 
             return s_paths.Length;
         }
 
-        private static void GetStreamingAssetsInfoFromJar(string apkPath, List<string> paths, List<PartInfo> parts)
-        {
-            using ( var stream = File.OpenRead(apkPath) )
-            using ( var reader = new BinaryReader(stream) )
-            {
-                if ( !stream.CanRead )
+        private static void GetStreamingAssetsInfoFromJar(string apkPath, List<string> paths, List<PartInfo> parts) {
+            using (var stream = File.OpenRead(apkPath))
+            using (var reader = new BinaryReader(stream)) {
+                if (!stream.CanRead)
                     throw new ArgumentException();
-                if ( !stream.CanSeek )
+                if (!stream.CanSeek)
                     throw new ArgumentException();
 
                 long expectedNumberOfEntries;
                 long centralDirectoryStart;
-                ZipArchiveUtils.ReadEndOfCentralDirectory(stream, reader, out expectedNumberOfEntries, out centralDirectoryStart);
+                ZipArchiveUtils.ReadEndOfCentralDirectory(stream, reader, out expectedNumberOfEntries,
+                    out centralDirectoryStart);
 
-                try
-                {
+                try {
                     stream.Seek(centralDirectoryStart, SeekOrigin.Begin);
 
                     long numberOfEntries = 0;
@@ -560,34 +497,28 @@ public static class BetterStreamingAssets
                     const string assetsPrefix = "assets/bin/";
                     Debug.Assert(prefixLength == prefix.Length);
 
-                    while ( ZipCentralDirectoryFileHeader.TryReadBlock(reader, out header) )
-                    {
-                        if ( header.CompressedSize != header.UncompressedSize )
-                        {
+                    while (ZipCentralDirectoryFileHeader.TryReadBlock(reader, out header)) {
+                        if (header.CompressedSize != header.UncompressedSize) {
                             // we only want uncompressed files
                         }
-                        else
-                        {
+                        else {
                             var fileName = Encoding.UTF8.GetString(header.Filename);
-                            if ( fileName.StartsWith(prefix) )
-                            {
+                            if (fileName.StartsWith(prefix)) {
                                 // ignore normal assets...
-                                if ( fileName.StartsWith(assetsPrefix) )
-                                {
+                                if (fileName.StartsWith(assetsPrefix)) {
                                     // Note: if you put bin directory in your StreamingAssets you will get false negative here
                                 }
-                                else
-                                {
+                                else {
                                     var relativePath = fileName.Substring(prefixLength - 1);
-                                    var entry = new PartInfo()
-                                    {
+                                    var entry = new PartInfo() {
                                         crc32 = header.Crc32,
-                                        offset = header.RelativeOffsetOfLocalHeader, // this offset will need fixing later on
+                                        offset = header
+                                            .RelativeOffsetOfLocalHeader, // this offset will need fixing later on
                                         size = header.UncompressedSize
                                     };
 
                                     var index = paths.BinarySearch(relativePath, StringComparer.OrdinalIgnoreCase);
-                                    if ( index >= 0 )
+                                    if (index >= 0)
                                         throw new System.InvalidOperationException("Paths duplicate! " + fileName);
 
                                     paths.Insert(~index, relativePath);
@@ -599,22 +530,19 @@ public static class BetterStreamingAssets
                         numberOfEntries++;
                     }
 
-                    if ( numberOfEntries != expectedNumberOfEntries )
+                    if (numberOfEntries != expectedNumberOfEntries)
                         throw new ZipArchiveException("Number of entries does not match");
-
                 }
-                catch ( EndOfStreamException ex )
-                {
+                catch (EndOfStreamException ex) {
                     throw new ZipArchiveException("CentralDirectoryInvalid", ex);
                 }
 
                 // now fix offsets
-                for ( int i = 0; i < parts.Count; ++i )
-                {
+                for (int i = 0; i < parts.Count; ++i) {
                     var entry = parts[i];
                     stream.Seek(entry.offset, SeekOrigin.Begin);
 
-                    if ( !ZipLocalFileHeader.TrySkipBlock(reader) )
+                    if (!ZipLocalFileHeader.TrySkipBlock(reader))
                         throw new ZipArchiveException("Local file header corrupt");
 
                     entry.offset = stream.Position;
@@ -626,4 +554,3 @@ public static class BetterStreamingAssets
     }
 #endif
 }
-

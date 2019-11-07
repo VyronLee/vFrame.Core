@@ -19,21 +19,19 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// </summary>
         /// <param name="go"></param>
         /// <param name="layer"></param>
-        public static void SetLayerRecursive(this GameObject go, int layer)
-        {
+        public static void SetLayerRecursive(this GameObject go, int layer) {
             for (var i = 0; i < go.transform.childCount; ++i)
                 SetLayerRecursive(go.transform.GetChild(i).gameObject, layer);
 
             go.layer = layer;
         }
-        
+
         /// <summary>
         /// 设置物件以及子物件的Tag
         /// </summary>
         /// <param name="go"></param>
         /// <param name="tag"></param>
-        public static void SetTagRecursive(this GameObject go, string tag)
-        {
+        public static void SetTagRecursive(this GameObject go, string tag) {
             for (var i = 0; i < go.transform.childCount; ++i)
                 SetTagRecursive(go.transform.GetChild(i).gameObject, tag);
 

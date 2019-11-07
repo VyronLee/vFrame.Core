@@ -16,16 +16,14 @@ namespace vFrame.Core.Base
         /// <summary>
         ///     创建函数
         /// </summary>
-        public void Create()
-        {
+        public void Create() {
             OnCreate();
         }
 
         /// <summary>
         ///     释放函数
         /// </summary>
-        public void Destroy()
-        {
+        public void Destroy() {
             OnDestroy();
         }
 
@@ -42,46 +40,37 @@ namespace vFrame.Core.Base
 
     public abstract class BaseObject<T1> : BaseObject, IBaseObject<T1>
     {
-        public void Create(T1 arg1)
-        {
+        public void Create(T1 arg1) {
             OnCreate(arg1);
         }
 
         protected abstract void OnCreate(T1 arg1);
 
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
     }
 
     public abstract class BaseObject<T1, T2> : BaseObject, IBaseObject<T1, T2>
     {
-        public void Create(T1 arg1, T2 arg2)
-        {
+        public void Create(T1 arg1, T2 arg2) {
             OnCreate(arg1, arg2);
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2);
 
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
     }
 
     public abstract class BaseObject<T1, T2, T3> : BaseObject, IBaseObject<T1, T2, T3>
     {
-        public void Create(T1 arg1, T2 arg2, T3 arg3)
-        {
+        public void Create(T1 arg1, T2 arg2, T3 arg3) {
             OnCreate(arg1, arg2, arg3);
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3);
 
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
     }
 }

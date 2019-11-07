@@ -15,12 +15,10 @@ namespace vFrame.Core.FileReader
     public class FileReaderAsync : FileReader, IFileReaderAsync
     {
         public FileReaderAsync(ICryptoService crypto, byte[] key, int keyLength)
-            :base(crypto, key, keyLength)
-        {
+            : base(crypto, key, keyLength) {
         }
 
-        public IFileReaderRequest ReadAllBytesAsync(string path)
-        {
+        public IFileReaderRequest ReadAllBytesAsync(string path) {
             return new FileReaderRequest(path, _crypto, _key, _keyLength);
         }
     }

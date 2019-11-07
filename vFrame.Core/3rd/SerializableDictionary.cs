@@ -1,5 +1,6 @@
 ﻿// From https://raw.githubusercontent.com/TheOddler/unity-helpers/master/SerializableDictionary.cs
 //
+
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,19 +25,17 @@ using System.Collections.Generic;
 // Now you can use it in exactly the same way as a notmal Dictionary. Everything just works.
 
 [System.Serializable]
-public class SerializableDictionary<TKey,TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver {
-
+public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
+{
     // We save the keys and values in two lists because Unity does understand those.
-    [SerializeField, HideInInspector]
-        private List<TKey> _keys;
-    [SerializeField, HideInInspector]
-        private List<TValue> _values;
+    [SerializeField, HideInInspector] private List<TKey> _keys;
+    [SerializeField, HideInInspector] private List<TValue> _values;
 
     // Before the serialization we fill these lists
     public void OnBeforeSerialize() {
         _keys = new List<TKey>(this.Count);
         _values = new List<TValue>(this.Count);
-        foreach(var kvp in this) {
+        foreach (var kvp in this) {
             _keys.Add(kvp.Key);
             _values.Add(kvp.Value);
         }
@@ -45,14 +44,15 @@ public class SerializableDictionary<TKey,TValue> : Dictionary<TKey, TValue>, ISe
     // After the serialization we create the dictionary from the two lists
     public void OnAfterDeserialize() {
         this.Clear();
-        for (int i=0; i!= Mathf.Min(_keys.Count,_values.Count); i++) {
-            this.Add(_keys[i],_values[i]);
+        for (int i = 0; i != Mathf.Min(_keys.Count, _values.Count); i++) {
+            this.Add(_keys[i], _values[i]);
         }
     }
 
-    public SerializableDictionary() {}
+    public SerializableDictionary() {
+    }
 
-    public SerializableDictionary(SerializableDictionary<TKey,TValue> other) {
+    public SerializableDictionary(SerializableDictionary<TKey, TValue> other) {
         foreach (var item in other) {
             this.Add(item.Key, item.Value);
         }

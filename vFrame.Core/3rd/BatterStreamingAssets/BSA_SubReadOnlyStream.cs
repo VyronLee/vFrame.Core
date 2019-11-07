@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Better.StreamingAssets
 {
-    internal class SubReadOnlyStream: Stream
+    internal class SubReadOnlyStream : Stream
     {
         private readonly long m_offset;
         private readonly bool m_leaveOpen;
@@ -17,9 +17,8 @@ namespace Better.StreamingAssets
         private long? m_length;
         private Stream m_actualStream;
         private long m_position;
-        
-        public SubReadOnlyStream(Stream actualStream, bool leaveOpen = false)
-        {
+
+        public SubReadOnlyStream(Stream actualStream, bool leaveOpen = false) {
             if (actualStream == null)
                 throw new ArgumentNullException("superStream");
 
@@ -28,8 +27,7 @@ namespace Better.StreamingAssets
         }
 
         public SubReadOnlyStream(Stream actualStream, long offset, long length, bool leaveOpen = false)
-            : this(actualStream, leaveOpen)
-        {
+            : this(actualStream, leaveOpen) {
             if (offset < 0)
                 throw new ArgumentOutOfRangeException("offset");
 
@@ -45,53 +43,52 @@ namespace Better.StreamingAssets
             m_length = length;
         }
 
-        public override long Length
-        {
-            get
-            {
+        public override long Length {
+            get {
                 ThrowIfDisposed();
 
                 if (!m_length.HasValue)
                     m_length = m_actualStream.Length - m_offset;
-                
-                return m_length.Value; ;
+
+                return m_length.Value;
+                ;
             }
         }
 
-        public override long Position
-        {
-            get
-            {
+        public override long Position {
+            get {
                 ThrowIfDisposed();
                 return m_position - m_offset;
             }
-            set
-            {
+            set {
                 ThrowIfDisposed();
                 throw new NotSupportedException();
             }
         }
 
-        public override bool CanRead { get { return m_actualStream.CanRead; } }
+        public override bool CanRead {
+            get { return m_actualStream.CanRead; }
+        }
 
-        public override bool CanSeek { get { return m_actualStream.CanSeek; } }
+        public override bool CanSeek {
+            get { return m_actualStream.CanSeek; }
+        }
 
-        public override bool CanWrite { get { return false; } }
+        public override bool CanWrite {
+            get { return false; }
+        }
 
-        public override int Read(byte[] buffer, int offset, int count)
-        {
+        public override int Read(byte[] buffer, int offset, int count) {
             ThrowIfCantRead();
             ThrowIfDisposed();
 
-            if ( m_actualStream.Position != m_position )
+            if (m_actualStream.Position != m_position)
                 m_actualStream.Seek(m_position, SeekOrigin.Begin);
 
-            if ( m_length.HasValue )
-            {
+            if (m_length.HasValue) {
                 var endPosition = m_offset + m_length.Value;
-                if (m_position + count > endPosition)
-                {
-                    count = (int)(endPosition - m_position);
+                if (m_position + count > endPosition) {
+                    count = (int) (endPosition - m_position);
                 }
             }
 
@@ -100,48 +97,39 @@ namespace Better.StreamingAssets
             return bytesRead;
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
+        public override long Seek(long offset, SeekOrigin origin) {
             ThrowIfDisposed();
 
-            if ( origin == SeekOrigin.Begin )
-            {
+            if (origin == SeekOrigin.Begin) {
                 m_position = m_actualStream.Seek(m_offset + offset, SeekOrigin.Begin);
             }
-            else if ( origin == SeekOrigin.End )
-            {
+            else if (origin == SeekOrigin.End) {
                 m_position = m_actualStream.Seek(m_offset + Length + offset, SeekOrigin.End);
             }
-            else
-            {
+            else {
                 m_position = m_actualStream.Seek(offset, SeekOrigin.Current);
             }
+
             return m_position;
         }
 
-        public override void SetLength(long value)
-        {
+        public override void SetLength(long value) {
             throw new NotSupportedException();
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
+        public override void Write(byte[] buffer, int offset, int count) {
             throw new NotSupportedException();
         }
 
-        public override void Flush()
-        {
+        public override void Flush() {
             throw new NotSupportedException();
         }
 
         // Close the stream for reading.  Note that this does NOT close the superStream (since
         // the substream is just 'a chunk' of the super-stream
-        protected override void Dispose(bool disposing)
-        {
-            if ( disposing )
-            {
-                if (m_actualStream != null)
-                {
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                if (m_actualStream != null) {
                     if (!m_leaveOpen)
                         m_actualStream.Dispose();
 
@@ -153,14 +141,12 @@ namespace Better.StreamingAssets
             base.Dispose(disposing);
         }
 
-        private void ThrowIfDisposed()
-        {
+        private void ThrowIfDisposed() {
             if (m_actualStream == null)
                 throw new ObjectDisposedException(GetType().ToString(), "");
         }
 
-        private void ThrowIfCantRead()
-        {
+        private void ThrowIfCantRead() {
             if (!CanRead)
                 throw new NotSupportedException();
         }

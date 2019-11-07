@@ -11,8 +11,7 @@ namespace vFrame.Core.Update
 {
     public class HashChecker : MonoBehaviour
     {
-        public static HashChecker Create(string storagePath)
-        {
+        public static HashChecker Create(string storagePath) {
             var go = new GameObject("HashChecker");
             var instance = go.AddComponent<HashChecker>();
             instance._storagePath = storagePath;
@@ -33,8 +32,7 @@ namespace vFrame.Core.Update
         public int HashNum { get; private set; }
         public int HashTotal { get; private set; }
 
-        public void Check(List<Manifest.AssetInfo> assets)
-        {
+        public void Check(List<Manifest.AssetInfo> assets) {
             Valid = true;
             _assets = assets;
             HashNum = 0;
@@ -44,22 +42,18 @@ namespace vFrame.Core.Update
             StartCoroutine(CO_Check());
         }
 
-        private IEnumerator CO_Check()
-        {
+        private IEnumerator CO_Check() {
             yield return new WaitForSeconds(0.2f);
-            
-            if (OnCheckStarted != null)
-            {
+
+            if (OnCheckStarted != null) {
                 OnCheckStarted();
             }
 
-            for (HashNum = 1; HashNum <= HashTotal; HashNum++)
-            {
+            for (HashNum = 1; HashNum <= HashTotal; HashNum++) {
                 var asset = _assets[HashNum - 1];
                 var valid = HashValid(asset);
 
-                if (OnCheckProgress != null)
-                {
+                if (OnCheckProgress != null) {
                     OnCheckProgress(asset, valid);
                 }
 
@@ -71,34 +65,27 @@ namespace vFrame.Core.Update
             }
 
             yield return null;
-            if (OnCheckFinished != null)
-            {
+            if (OnCheckFinished != null) {
                 OnCheckFinished();
             }
         }
 
-        private bool HashValid(Manifest.AssetInfo asset)
-        {
+        private bool HashValid(Manifest.AssetInfo asset) {
             var fileName = _storagePath + asset.fileName;
 
-            try
-            {
-                using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-                {
+            try {
+                using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
                     return CalculateMd5(fileStream) == asset.md5;
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Logger.Info(new LogTag("AssetsUpdater"), e.Message);
                 return false;
             }
         }
-        
-        private static string CalculateMd5(Stream stream)
-        {
-            using (var md5 = MD5.Create())
-            {
+
+        private static string CalculateMd5(Stream stream) {
+            using (var md5 = MD5.Create()) {
                 var hash = md5.ComputeHash(stream);
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }

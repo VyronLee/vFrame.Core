@@ -16,15 +16,12 @@ namespace vFrame.Core.ObjectPools.Builtin
     {
         public static int ListLength = 64;
 
-        public List<T> Alloc()
-        {
+        public List<T> Alloc() {
             return new List<T>(ListLength);
         }
 
-        public void Reset(List<T> obj)
-        {
+        public void Reset(List<T> obj) {
             obj.Clear();
         }
-
     }
 }

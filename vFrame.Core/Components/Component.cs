@@ -24,8 +24,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     绑定处理
         /// </summary>
-        public void BindTo(IContainer target)
-        {
+        public void BindTo(IContainer target) {
             _container = target;
             OnBind(target);
         }
@@ -33,8 +32,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     解绑处理
         /// </summary>
-        public void UnBindFrom(IContainer target)
-        {
+        public void UnBindFrom(IContainer target) {
             Debug.Assert(_container == target, "Unbind target is not the same as parent.");
 
             OnUnbind(target);
@@ -44,25 +42,20 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     获取绑定目标
         /// </summary>
-        public IContainer GetContainer()
-        {
+        public IContainer GetContainer() {
             return _container;
         }
 
         /// <summary>
         ///     绑定处理
         /// </summary>
-        protected virtual void OnBind(IContainer target)
-        {
-
+        protected virtual void OnBind(IContainer target) {
         }
 
         /// <summary>
         ///     解绑处理
         /// </summary>
-        protected virtual void OnUnbind(IContainer target)
-        {
-
+        protected virtual void OnUnbind(IContainer target) {
         }
     }
 }

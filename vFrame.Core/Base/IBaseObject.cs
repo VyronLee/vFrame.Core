@@ -7,6 +7,7 @@
 //    Modified:  2019-09-08 23:31
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 namespace vFrame.Core.Base
 {
     public interface IBaseObject

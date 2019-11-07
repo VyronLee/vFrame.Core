@@ -47,8 +47,7 @@ namespace vFrame.Core.Update
         /// <summary>
         /// The build number
         /// </summary>
-        public string BuildNumber
-        {
+        public string BuildNumber {
             get { return _json != null ? _json.buildNumber : null; }
         }
 
@@ -67,20 +66,17 @@ namespace vFrame.Core.Update
         /// </summary>
         private readonly Dictionary<string, AssetInfo> _assets = new Dictionary<string, AssetInfo>();
 
-        public Dictionary<string, AssetInfo> GetAssets()
-        {
+        public Dictionary<string, AssetInfo> GetAssets() {
             return _assets;
         }
 
         /// <summary>
         /// Parse the whole file, caller should check where the file exist
         /// </summary>
-        public void Parse(string manifestUrl)
-        {
+        public void Parse(string manifestUrl) {
             LoadJson(manifestUrl);
 
-            if (_json != null)
-            {
+            if (_json != null) {
                 LoadManifest();
             }
         }
@@ -88,12 +84,10 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Parse the version part, caller should check where the file exist
         /// </summary>
-        public void ParseVersion(string versionUrl)
-        {
+        public void ParseVersion(string versionUrl) {
             LoadJson(versionUrl);
 
-            if (_json != null)
-            {
+            if (_json != null) {
                 LoadVersion();
             }
         }
@@ -101,24 +95,20 @@ namespace vFrame.Core.Update
         /// <summary>
         /// assets version compare
         /// </summary>
-        public int AssetsVersionCompareTo(Manifest other)
-        {
+        public int AssetsVersionCompareTo(Manifest other) {
             return AssetsVersion.CompareTo(other.AssetsVersion);
         }
 
         /// <summary>
         /// game version compare
         /// </summary>
-        public int GameVersionCompareTo(Manifest other)
-        {
+        public int GameVersionCompareTo(Manifest other) {
             return GameVersion.CompareTo(other.GameVersion);
         }
 
-        public void SetAssetDownloadState(string fileName, DownloadState state)
-        {
+        public void SetAssetDownloadState(string fileName, DownloadState state) {
             AssetInfo asset;
-            if (_assets.TryGetValue(fileName, out asset))
-            {
+            if (_assets.TryGetValue(fileName, out asset)) {
                 asset.downloadState = state;
             }
         }
@@ -126,15 +116,12 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Generate resuming download assets list
         /// </summary>
-        public List<AssetInfo> GenResumeAssetsList()
-        {
+        public List<AssetInfo> GenResumeAssetsList() {
             var list = new List<AssetInfo>();
 
-            foreach (var assetKV in _assets)
-            {
+            foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
-                if (asset.downloadState < DownloadState.DOWNLOADED)
-                {
+                if (asset.downloadState < DownloadState.DOWNLOADED) {
                     list.Add(asset);
                 }
             }
@@ -142,15 +129,12 @@ namespace vFrame.Core.Update
             return list;
         }
 
-        public List<AssetInfo> GetDownloadedAssets()
-        {
+        public List<AssetInfo> GetDownloadedAssets() {
             var list = new List<AssetInfo>();
 
-            foreach (var assetKV in _assets)
-            {
+            foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
-                if (asset.downloadState == DownloadState.DOWNLOADED)
-                {
+                if (asset.downloadState == DownloadState.DOWNLOADED) {
                     list.Add(asset);
                 }
             }
@@ -161,21 +145,17 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Generate difference between this Manifest and another
         /// </summary>
-        public Dictionary<string, AssetDiff> GenDiff(Manifest other)
-        {
+        public Dictionary<string, AssetDiff> GenDiff(Manifest other) {
             var diffDic = new Dictionary<string, AssetDiff>();
 
             var otherAssets = other.GetAssets();
-            foreach (var assetKV in _assets)
-            {
+            foreach (var assetKV in _assets) {
                 var key = assetKV.Key;
                 var valueA = assetKV.Value;
 
                 // Deleted
-                if (!otherAssets.ContainsKey(key))
-                {
-                    var diff = new AssetDiff
-                    {
+                if (!otherAssets.ContainsKey(key)) {
+                    var diff = new AssetDiff {
                         asset = valueA,
                         diffType = DiffType.DELETED
                     };
@@ -185,10 +165,8 @@ namespace vFrame.Core.Update
 
                 // Modified
                 var valueB = otherAssets[key];
-                if (valueA.md5 != valueB.md5)
-                {
-                    var diff = new AssetDiff
-                    {
+                if (valueA.md5 != valueB.md5) {
+                    var diff = new AssetDiff {
                         asset = valueB,
                         diffType = DiffType.MODIFIED
                     };
@@ -196,16 +174,13 @@ namespace vFrame.Core.Update
                 }
             }
 
-            foreach (var otherKV in otherAssets)
-            {
+            foreach (var otherKV in otherAssets) {
                 var key = otherKV.Key;
                 var valueB = otherKV.Value;
 
                 // Added
-                if (!_assets.ContainsKey(key))
-                {
-                    var diff = new AssetDiff
-                    {
+                if (!_assets.ContainsKey(key)) {
+                    var diff = new AssetDiff {
                         asset = valueB,
                         diffType = DiffType.ADDED
                     };
@@ -216,8 +191,7 @@ namespace vFrame.Core.Update
             return diffDic;
         }
 
-        public void SaveToFile(string path)
-        {
+        public void SaveToFile(string path) {
             _json.assets = new List<AssetInfo>(_assets.Values);
             var jsonStr = JsonUtility.ToJson(_json);
             File.WriteAllText(path, jsonStr, Encoding.UTF8);
@@ -225,17 +199,14 @@ namespace vFrame.Core.Update
 
         #region private methods
 
-        private void LoadJson(string url)
-        {
+        private void LoadJson(string url) {
             Clear();
 
-            try
-            {
+            try {
                 var text = new FileReader.FileReader().ReadAllText(url);
                 _json = JsonUtility.FromJson<ManifestJson>(text);
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
             }
         }
@@ -243,8 +214,7 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Load the version part
         /// </summary>
-        private void LoadVersion()
-        {
+        private void LoadVersion() {
             AssetsVersion = int.Parse(_json.assetsVersion);
             GameVersion = string.IsNullOrEmpty(_json.gameVersion)
                 ? new System.Version("0.0.0")
@@ -256,20 +226,17 @@ namespace vFrame.Core.Update
         /// <summary>
         /// Load all
         /// </summary>
-        private void LoadManifest()
-        {
+        private void LoadManifest() {
             LoadVersion();
 
-            foreach (var asset in _json.assets)
-            {
+            foreach (var asset in _json.assets) {
                 _assets.Add(asset.fileName, asset);
             }
 
             Loaded = true;
         }
 
-        private void Clear()
-        {
+        private void Clear() {
             _assets.Clear();
             _json = null;
             AssetsVersion = 0;

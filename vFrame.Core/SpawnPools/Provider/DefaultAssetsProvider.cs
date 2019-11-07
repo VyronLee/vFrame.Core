@@ -7,6 +7,7 @@
 //    Modified:  2019-02-18 15:04
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
+
 using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,8 +16,7 @@ namespace vFrame.Core.SpawnPools.Provider
 {
     public class DefaultAssetsProvider : IAssetsProvider
     {
-        public Object Load(string assetPath, Type type)
-        {
+        public Object Load(string assetPath, Type type) {
             var prefab = Resources.Load(assetPath, type);
             if (!prefab)
                 throw new Exception("Load asset failed: " + assetPath);

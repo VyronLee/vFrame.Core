@@ -25,40 +25,34 @@ namespace vFrame.Core.Events
         /// <summary>
         ///     创建函数
         /// </summary>
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
 
         /// <summary>
         ///     创建函数
         /// </summary>
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             Listener = null;
         }
 
         /// <summary>
         ///     激活
         /// </summary>
-        public void Activate()
-        {
+        public void Activate() {
             Activated = true;
         }
 
         /// <summary>
         ///     停止
         /// </summary>
-        public void Stop()
-        {
+        public void Stop() {
             Stopped = true;
         }
 
         /// <summary>
         ///     执行
         /// </summary>
-        public bool Execute(IVote e)
-        {
+        public bool Execute(IVote e) {
             if (null != Listener)
                 return Listener.OnVote(e);
             return false;

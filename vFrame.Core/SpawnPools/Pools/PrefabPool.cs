@@ -14,22 +14,20 @@ using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools.Pools
 {
-    public class PrefabPool<T> : PoolBase<T>, IPool<T> where T: Object
+    public class PrefabPool<T> : PoolBase<T>, IPool<T> where T : Object
     {
         private readonly T _prefab;
+
         public PrefabPool(string poolName, T prefab, int lifetime)
-            :base(poolName, lifetime)
-        {
+            : base(poolName, lifetime) {
             _prefab = prefab;
         }
 
-        protected override T DoSpawn()
-        {
+        protected override T DoSpawn() {
             return Object.Instantiate(_prefab);
         }
 
-        protected override IEnumerator DoSpawnAsync(Action<T> callback)
-        {
+        protected override IEnumerator DoSpawnAsync(Action<T> callback) {
             var obj = Object.Instantiate(_prefab);
             callback(obj);
             yield break;

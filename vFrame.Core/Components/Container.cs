@@ -26,8 +26,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     绑定组件
         /// </summary>
-        public T AddComponent<T>() where T : Component
-        {
+        public T AddComponent<T>() where T : Component {
             var type = typeof(T);
             return AddComponent(type) as T;
         }
@@ -35,13 +34,11 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     绑定组件
         /// </summary>
-        public IComponent AddComponent(Type type)
-        {
+        public IComponent AddComponent(Type type) {
             Debug.Assert(type.IsSubclassOf(typeof(Component)));
 
             Component component;
-            if (_components.TryGetValue(type, out component))
-            {
+            if (_components.TryGetValue(type, out component)) {
                 Loggers.Logger.Error("Component '{0}' has already exist.", type.Name);
                 return component;
             }
@@ -58,8 +55,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     解绑组件
         /// </summary>
-        public void RemoveComponent<T>() where T : Component
-        {
+        public void RemoveComponent<T>() where T : Component {
             var type = typeof(T);
             RemoveComponent(type);
         }
@@ -67,8 +63,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     解绑组件
         /// </summary>
-        public void RemoveComponent(Type type)
-        {
+        public void RemoveComponent(Type type) {
             Component component;
             if (!_components.TryGetValue(type, out component))
                 return;
@@ -82,8 +77,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     解绑所有组件
         /// </summary>
-        public void RemoveAllComponents()
-        {
+        public void RemoveAllComponents() {
             foreach (var item in _components)
                 item.Value.Destroy();
             _components.Clear();
@@ -92,8 +86,7 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     获取组件
         /// </summary>
-        public T GetComponent<T>() where T : Component
-        {
+        public T GetComponent<T>() where T : Component {
             var type = typeof(T);
             Component component;
             if (_components.TryGetValue(type, out component))
@@ -105,16 +98,14 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     获取组件
         /// </summary>
-        public IComponent GetComponent(Type type)
-        {
+        public IComponent GetComponent(Type type) {
             return _components[type];
         }
 
         /// <summary>
         ///     获取所有组件
         /// </summary>
-        public IComponent[] GetAllComponents()
-        {
+        public IComponent[] GetAllComponents() {
             var components = new IComponent[_components.Count];
             var index = 0;
             foreach (var kv in _components)
@@ -127,10 +118,8 @@ namespace vFrame.Core.Components
         /// </summary>
         /// <param name="method">函数名</param>
         /// <param name="args">参数列表</param>
-        public void Broadcast(string method, params object[] args)
-        {
-            foreach (var kv in _components)
-            {
+        public void Broadcast(string method, params object[] args) {
+            foreach (var kv in _components) {
                 var comp = kv.Value;
                 var methodInfo = comp.GetType().GetMethod(method,
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -142,19 +131,16 @@ namespace vFrame.Core.Components
         /// <summary>
         ///     构造处理
         /// </summary>
-        protected override void OnCreate()
-        {
+        protected override void OnCreate() {
             _components = new Dictionary<Type, Component>();
         }
 
         /// <summary>
         ///     析构处理
         /// </summary>
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             RemoveAllComponents();
             _components = null;
         }
-
     }
 }

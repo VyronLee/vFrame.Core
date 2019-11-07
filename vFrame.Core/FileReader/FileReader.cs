@@ -23,8 +23,7 @@ namespace vFrame.Core.FileReader
 
         private static bool _betterStreamingAssetsInited;
 
-        public FileReader()
-        {
+        public FileReader() {
             if (_betterStreamingAssetsInited)
                 return;
             _betterStreamingAssetsInited = true;
@@ -32,15 +31,13 @@ namespace vFrame.Core.FileReader
             BetterStreamingAssets.Initialize();
         }
 
-        public FileReader(ICryptoService crypto, byte[] key, int keyLength)
-        {
+        public FileReader(ICryptoService crypto, byte[] key, int keyLength) {
             _crypto = crypto;
             _key = key;
             _keyLength = keyLength;
         }
 
-        public bool FileExist(string path)
-        {
+        public bool FileExist(string path) {
 #if UNITY_ANDROID
             if (!PathUtils.IsFileInPersistentDataPath(path))
             {
@@ -54,8 +51,7 @@ namespace vFrame.Core.FileReader
             }
         }
 
-        public virtual byte[] ReadAllBytes(string path)
-        {
+        public virtual byte[] ReadAllBytes(string path) {
             byte[] bytes = null;
 #if UNITY_ANDROID
             if (!PathUtils.IsFileInPersistentDataPath(path))
@@ -71,8 +67,7 @@ namespace vFrame.Core.FileReader
             return DecryptIfRequired(bytes, path);
         }
 
-        public virtual string ReadAllText(string path)
-        {
+        public virtual string ReadAllText(string path) {
             var text = string.Empty;
 #if UNITY_ANDROID
             if (!PathUtils.IsFileInPersistentDataPath(path))
@@ -89,8 +84,7 @@ namespace vFrame.Core.FileReader
             return text;
         }
 
-        public bool IsFileExist(string path)
-        {
+        public bool IsFileExist(string path) {
 #if UNITY_ANDROID
             if (!PathUtils.IsFileInPersistentDataPath(path))
             {
@@ -104,8 +98,7 @@ namespace vFrame.Core.FileReader
             }
         }
 
-        private byte[] DecryptIfRequired(byte[] bytes, string path)
-        {
+        private byte[] DecryptIfRequired(byte[] bytes, string path) {
             if (null == _crypto)
                 return bytes;
 
@@ -118,6 +111,5 @@ namespace vFrame.Core.FileReader
 
             return output;
         }
-
     }
 }

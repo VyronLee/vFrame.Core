@@ -19,8 +19,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// 重置到动画开头
         /// </summary>
         /// <param name="animation"></param>
-        public static void Reset(this Animation animation)
-        {
+        public static void Reset(this Animation animation) {
             animation.Rewind();
             animation.Play();
             animation.Sample();
@@ -33,8 +32,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// <param name="animation"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static IEnumerator PlayUntilFinished(this Animation animation, string name)
-        {
+        public static IEnumerator PlayUntilFinished(this Animation animation, string name) {
             var clip = animation.GetClip(name);
             animation.Reset();
             animation.Play(name);

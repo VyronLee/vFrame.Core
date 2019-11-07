@@ -40,14 +40,13 @@ namespace vFrame.Core.ThreadPools
         private List<ThreadContext> _threads;
 
         private Queue<TaskContext> _waitingTask;
-        protected override void OnCreate(int threadCount)
-        {
+
+        protected override void OnCreate(int threadCount) {
             lock (_lockObject)
                 _waitingTask = new Queue<TaskContext>();
 
             _threads = new List<ThreadContext>(threadCount);
-            for (var i = 0; i < threadCount; i++)
-            {
+            for (var i = 0; i < threadCount; i++) {
                 var thread = new Thread(ThreadProc);
                 var context = new ThreadContext {thread = thread, stopped = false};
                 _threads.Add(context);
@@ -56,19 +55,15 @@ namespace vFrame.Core.ThreadPools
             }
         }
 
-        protected override void OnDestroy()
-        {
-            foreach (var threadContext in _threads)
-            {
+        protected override void OnDestroy() {
+            foreach (var threadContext in _threads) {
                 threadContext.stopped = true;
                 threadContext.thread.Join();
             }
         }
 
-        public void AddTask(WaitCallback callBack, object param = null, ExceptionHandler handler = null)
-        {
-            var context = new TaskContext
-            {
+        public void AddTask(WaitCallback callBack, object param = null, ExceptionHandler handler = null) {
+            var context = new TaskContext {
                 callback = callBack,
                 param = param,
                 handler = handler,
@@ -78,41 +73,34 @@ namespace vFrame.Core.ThreadPools
                 _waitingTask.Enqueue(context);
         }
 
-        public void ResumeStoppedThreads()
-        {
-            foreach (var threadContext in _threads)
-            {
+        public void ResumeStoppedThreads() {
+            foreach (var threadContext in _threads) {
                 if (threadContext.stopped)
                     threadContext.thread.Start(threadContext);
             }
         }
 
-        private void ThreadProc(object stateInfo)
-        {
+        private void ThreadProc(object stateInfo) {
             var threadContext = stateInfo as ThreadContext;
             if (threadContext == null)
                 throw new ArgumentNullException("stateInfo");
 
-            while (!threadContext.stopped)
-            {
+            while (!threadContext.stopped) {
                 Thread.Sleep(1);
 
                 TaskContext task = null;
-                lock (_lockObject)
-                {
-                    if(_waitingTask.Count > 0)
+                lock (_lockObject) {
+                    if (_waitingTask.Count > 0)
                         task = _waitingTask.Dequeue();
                 }
 
                 if (task == null)
                     continue;
 
-                try
-                {
+                try {
                     task.callback(task.param);
                 }
-                catch (Exception e)
-                {
+                catch (Exception e) {
                     if (task.handler != null)
                         task.handler(e);
                     else

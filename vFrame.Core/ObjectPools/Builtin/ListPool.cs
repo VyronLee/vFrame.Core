@@ -14,6 +14,5 @@ namespace vFrame.Core.ObjectPools.Builtin
 {
     public class ListPool<T> : ObjectPool<List<T>, ListAllocator<T>>
     {
-
     }
 }

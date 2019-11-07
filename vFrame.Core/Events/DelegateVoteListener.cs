@@ -24,24 +24,20 @@ namespace vFrame.Core.Events
         /// <summary>
         /// 投票响应接口
         /// </summary>
-        public bool OnVote(IVote e)
-        {
+        public bool OnVote(IVote e) {
             return null != VoteAction && VoteAction(e);
         }
 
         /// <summary>
         /// 创建函数
         /// </summary>
-        protected override void OnCreate()
-        {
-
+        protected override void OnCreate() {
         }
 
         /// <summary>
         /// 销毁函数
         /// </summary>
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             VoteAction = null;
         }
     }

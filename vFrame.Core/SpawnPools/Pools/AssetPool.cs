@@ -22,20 +22,17 @@ namespace vFrame.Core.SpawnPools.Pools
         private readonly IAssetsProviderAsync _providerAsync;
 
         public AssetPool(string assetName, IAssetsProvider provider, IAssetsProviderAsync providerAsync, int lifetime)
-            : base(assetName, lifetime)
-        {
+            : base(assetName, lifetime) {
             _assetName = assetName;
             _provider = provider ?? new DefaultAssetsProvider();
             _providerAsync = providerAsync ?? new DefaultAssetsProviderAsync();
         }
 
-        protected override T DoSpawn()
-        {
+        protected override T DoSpawn() {
             return _provider.Load(_assetName, typeof(T)) as T;
         }
 
-        protected override IEnumerator DoSpawnAsync(Action<T> callback)
-        {
+        protected override IEnumerator DoSpawnAsync(Action<T> callback) {
             T obj = null;
             yield return _providerAsync.LoadAsync(_assetName, typeof(T), v => obj = v as T);
 

@@ -18,7 +18,7 @@ namespace vFrame.Core.SpawnPools
     {
         Object Load(string assetPath, Type type);
     }
-    
+
     public interface IAssetsProviderAsync
     {
         IEnumerator LoadAsync(string assetPath, Type type, Action<Object> callback);

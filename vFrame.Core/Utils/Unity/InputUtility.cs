@@ -21,8 +21,7 @@ namespace vFrame.Core.Utils.Unity
         /// </summary>
         /// <param name="screenPosition">屏幕坐标</param>
         /// <returns></returns>
-        public static bool IsPointOverUIObject(Vector2 screenPosition)
-        {
+        public static bool IsPointOverUIObject(Vector2 screenPosition) {
             var eventData = new PointerEventData(EventSystem.current) {
                 position = new Vector2(screenPosition.x, screenPosition.y)
             };

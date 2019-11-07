@@ -7,19 +7,18 @@
 //    Modified:  2019-09-08 19:50
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 namespace vFrame.Core.Loggers
 {
     public struct LogTag
     {
         private readonly string _name;
 
-        public LogTag(string name = "undefined")
-        {
+        public LogTag(string name = "undefined") {
             _name = name;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return _name;
         }
     }

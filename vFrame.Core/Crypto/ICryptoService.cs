@@ -7,6 +7,7 @@
 //     Modified:  2019-05-13 20:35
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 namespace vFrame.Core.Crypto
 {
     public interface ICryptoService

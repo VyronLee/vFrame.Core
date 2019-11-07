@@ -23,10 +23,8 @@ namespace vFrame.Core.Loggers
 
     public static class LogLevelExtension
     {
-        public static UnityEngine.LogType ToUnityLogLevel(this LogLevelDef level)
-        {
-            switch (Logger.LogLevel)
-            {
+        public static UnityEngine.LogType ToUnityLogLevel(this LogLevelDef level) {
+            switch (Logger.LogLevel) {
                 case LogLevelDef.Debug:
                 case LogLevelDef.Info:
                     return UnityEngine.LogType.Log;

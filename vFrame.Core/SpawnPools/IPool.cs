@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools
 {
-    public interface IPool<T> where T: Object
+    public interface IPool<T> where T : Object
     {
         T Spawn();
         IEnumerator SpawnAsync(Action<Object> callback);

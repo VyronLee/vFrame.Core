@@ -27,13 +27,11 @@ namespace vFrame.Core.Behaviours
             public AnimationClip clip;
         }
 
-        [SerializeField]
-        private List<AnimationSet> _animations;
+        [SerializeField] private List<AnimationSet> _animations;
 
         private Animation _animation;
 
-        private void Awake()
-        {
+        private void Awake() {
             _animation = GetComponent<Animation>();
         }
 
@@ -59,8 +57,7 @@ namespace vFrame.Core.Behaviours
         /// </summary>
         /// <param name="animationName"></param>
         /// <returns></returns>
-        public bool Play(string animationName)
-        {
+        public bool Play(string animationName) {
             var clip = GetAnimation(animationName);
             return clip && _animation.Play(clip.name);
         }
@@ -70,11 +67,10 @@ namespace vFrame.Core.Behaviours
         /// </summary>
         /// <param name="animationName"></param>
         /// <returns></returns>
-        public IEnumerator PlayUntilFinished(string animationName)
-        {
+        public IEnumerator PlayUntilFinished(string animationName) {
             var clip = GetAnimation(animationName);
             if (clip)
-                 yield return _animation.PlayUntilFinished(clip.name);
+                yield return _animation.PlayUntilFinished(clip.name);
         }
     }
 }

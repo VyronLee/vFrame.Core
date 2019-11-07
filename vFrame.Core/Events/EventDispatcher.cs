@@ -25,20 +25,17 @@ namespace vFrame.Core.Events
         private Dictionary<int, List<EventExecutor>> _eventExecutorLists;
         private Dictionary<int, List<VoteExecutor>> _voteExecutorLists;
 
-        protected override void OnCreate()
-        {
+        protected override void OnCreate() {
             _eventExecutorLists = new Dictionary<int, List<EventExecutor>>();
             _voteExecutorLists = new Dictionary<int, List<VoteExecutor>>();
         }
 
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             _eventExecutorLists = null;
             _voteExecutorLists = null;
         }
 
-        public uint AddEventListener(IEventListener listener, int eventId)
-        {
+        public uint AddEventListener(IEventListener listener, int eventId) {
             if (listener == null)
                 throw new ArgumentNullException("listener");
 
@@ -55,23 +52,19 @@ namespace vFrame.Core.Events
             return executor.Handle;
         }
 
-        public uint AddEventListener(Action<IEvent> action, int eventId)
-        {
+        public uint AddEventListener(Action<IEvent> action, int eventId) {
             var delegateEventListener = ObjectPool<DelegateEventListener>.Get();
             delegateEventListener.Action = action;
 
             return AddEventListener(delegateEventListener, eventId);
         }
 
-        public IEventListener RemoveEventListener(uint handle)
-        {
+        public IEventListener RemoveEventListener(uint handle) {
             IEventListener listener = null;
-            foreach (var item in _eventExecutorLists)
-            {
+            foreach (var item in _eventExecutorLists) {
                 var list = item.Value;
                 foreach (var e in list)
-                    if (e.Handle == handle)
-                    {
+                    if (e.Handle == handle) {
                         e.Stop();
                         listener = e.Listener;
                     }
@@ -84,13 +77,11 @@ namespace vFrame.Core.Events
             return null;
         }
 
-        public void DispatchEvent(int eventId)
-        {
+        public void DispatchEvent(int eventId) {
             DispatchEvent(eventId, null);
         }
 
-        public void DispatchEvent(int eventId, object context)
-        {
+        public void DispatchEvent(int eventId, object context) {
             if (!_eventExecutorLists.ContainsKey(eventId))
                 return;
 
@@ -99,8 +90,7 @@ namespace vFrame.Core.Events
             // 移除已经停止的执行器
             var len = executorList.Count;
             for (var i = len - 1; i >= 0; --i)
-                if (executorList[i].Stopped)
-                {
+                if (executorList[i].Stopped) {
                     EventExecutorPool.Return(executorList[i]);
                     executorList.RemoveAt(i);
                 }
@@ -115,26 +105,23 @@ namespace vFrame.Core.Events
             e.Context = context;
             e.Target = this;
 
-            foreach (var executor in executorList)
-            {
+            foreach (var executor in executorList) {
                 if (!executor.Activated || executor.Stopped)
                     continue;
 
-                try
-                {
+                try {
                     executor.Execute(e);
                 }
-                catch (Exception exception)
-                {
+                catch (Exception exception) {
                     Logger.Error(EventLogTag, "Exception occur, event id: {0}, msg: {1}",
                         eventId, exception);
                 }
             }
+
             EventPool.Return(e);
         }
 
-        public uint AddVoteListener(IVoteListener listener, int voteId)
-        {
+        public uint AddVoteListener(IVoteListener listener, int voteId) {
             var executor = VoteExecutorPool.Get();
             executor.VoteId = voteId;
             executor.Listener = listener;
@@ -148,23 +135,19 @@ namespace vFrame.Core.Events
             return executor.Handle;
         }
 
-        public uint AddVoteListener(Func<IVote, bool> func, int voteId)
-        {
+        public uint AddVoteListener(Func<IVote, bool> func, int voteId) {
             var listener = ObjectPool<DelegateVoteListener>.Get();
             listener.VoteAction = func;
 
             return AddVoteListener(listener, voteId);
         }
 
-        public IVoteListener RemoveVoteListener(uint handle)
-        {
+        public IVoteListener RemoveVoteListener(uint handle) {
             IVoteListener listener = null;
-            foreach (var item in _voteExecutorLists)
-            {
+            foreach (var item in _voteExecutorLists) {
                 var list = item.Value;
                 foreach (var v in list)
-                    if (v.Handle == handle)
-                    {
+                    if (v.Handle == handle) {
                         v.Stop();
                         listener = v.Listener;
                         break;
@@ -178,13 +161,11 @@ namespace vFrame.Core.Events
             return null;
         }
 
-        public bool DispatchVote(int voteId)
-        {
+        public bool DispatchVote(int voteId) {
             return DispatchVote(voteId, null);
         }
 
-        public bool DispatchVote(int voteId, object context)
-        {
+        public bool DispatchVote(int voteId, object context) {
             if (!_voteExecutorLists.ContainsKey(voteId))
                 return true;
 
@@ -193,8 +174,7 @@ namespace vFrame.Core.Events
             // 移除已经停止的执行器
             var len = executorList.Count;
             for (var i = len - 1; i >= 0; --i)
-                if (executorList[i].Stopped)
-                {
+                if (executorList[i].Stopped) {
                     VoteExecutorPool.Return(executorList[i]);
                     executorList.RemoveAt(i);
                 }
@@ -210,21 +190,18 @@ namespace vFrame.Core.Events
             e.Target = this;
 
             var pass = true;
-            foreach (var executor in executorList)
-            {
+            foreach (var executor in executorList) {
                 if (!executor.Activated || executor.Stopped)
                     continue;
 
-                try
-                {
+                try {
                     if (executor.Execute(e))
                         continue;
 
                     pass = false;
                     break;
                 }
-                catch (Exception exception)
-                {
+                catch (Exception exception) {
                     Logger.Error(EventLogTag, "Exception occur, vote id: {0}, msg: {1}",
                         voteId, exception);
                 }
@@ -234,14 +211,12 @@ namespace vFrame.Core.Events
             return pass;
         }
 
-        public void RemoveAllListeners()
-        {
+        public void RemoveAllListeners() {
             _eventExecutorLists.Clear();
             _voteExecutorLists.Clear();
         }
 
-        public int GetEventExecutorCount()
-        {
+        public int GetEventExecutorCount() {
             var count = 0;
             foreach (var kv in _eventExecutorLists)
                 count += kv.Value.Count;
@@ -249,8 +224,7 @@ namespace vFrame.Core.Events
             return count;
         }
 
-        public int GetVoteExecutorCount()
-        {
+        public int GetVoteExecutorCount() {
             var count = 0;
             foreach (var kv in _voteExecutorLists)
                 count += kv.Value.Count;

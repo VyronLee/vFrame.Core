@@ -7,6 +7,7 @@
 //    Modified:  2019-09-30 21:05
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 namespace vFrame.Core.Localize
 {
     public interface ILocalizationReader

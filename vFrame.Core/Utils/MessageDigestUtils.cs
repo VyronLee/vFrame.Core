@@ -16,32 +16,27 @@ namespace vFrame.Core.Utils
 {
     public static class MessageDigestUtils
     {
-        public static string MD5(byte[] data)
-        {
+        public static string MD5(byte[] data) {
             var md5 = new MD5CryptoServiceProvider();
             var ret = md5.ComputeHash(data);
             return ret.ToHex("x2");
         }
 
-        public static string SHA256(byte[] data)
-        {
+        public static string SHA256(byte[] data) {
             var sha = new SHA256CryptoServiceProvider();
             var ret = sha.ComputeHash(data);
             return ret.ToHex("x2");
         }
 
-        public static string SHA512(byte[] data)
-        {
+        public static string SHA512(byte[] data) {
             var sha = new SHA512CryptoServiceProvider();
             var ret = sha.ComputeHash(data);
             return ret.ToHex("x2");
         }
 
-        public static string FileMD5(string filePath)
-        {
+        public static string FileMD5(string filePath) {
             byte[] retVal;
-            using (var file = new FileStream(filePath, FileMode.Open))
-            {
+            using (var file = new FileStream(filePath, FileMode.Open)) {
                 var md5 = new MD5CryptoServiceProvider();
                 retVal = md5.ComputeHash(file);
             }

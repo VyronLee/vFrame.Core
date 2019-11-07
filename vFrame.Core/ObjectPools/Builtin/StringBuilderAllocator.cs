@@ -16,13 +16,11 @@ namespace vFrame.Core.ObjectPools.Builtin
     {
         public static int BuilderLength = 1024;
 
-        public StringBuilder Alloc()
-        {
+        public StringBuilder Alloc() {
             return new StringBuilder(BuilderLength);
         }
 
-        public void Reset(StringBuilder obj)
-        {
+        public void Reset(StringBuilder obj) {
             obj.Length = 0;
         }
     }

@@ -43,8 +43,7 @@ namespace vFrame.Core.Localize
         /// <summary>
         /// 创建
         /// </summary>
-        protected override void OnCreate(ILocalizationReader arg1)
-        {
+        protected override void OnCreate(ILocalizationReader arg1) {
             _langTextIdMap = new Dictionary<string, JsonData>();
             _reader = arg1;
         }
@@ -52,8 +51,7 @@ namespace vFrame.Core.Localize
         /// <summary>
         /// 销毁
         /// </summary>
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             _reader = null;
             _langTextIdMap = null;
         }
@@ -61,11 +59,9 @@ namespace vFrame.Core.Localize
         /// <summary>
         /// 获取/设置语言代码
         /// </summary>
-        public string Language
-        {
+        public string Language {
             get { return _langCode; }
-            set
-            {
+            set {
                 var changed = _langCode != value;
                 _langCode = value;
 
@@ -79,16 +75,14 @@ namespace vFrame.Core.Localize
         /// </summary>
         /// <param name="textId"></param>
         /// <returns>文本内容</returns>
-        public string GetText(string textId)
-        {
+        public string GetText(string textId) {
             LazyLoad();
 
             JsonData lang;
             if (!_langTextIdMap.TryGetValue(Language, out lang))
                 return string.Empty;
 
-            if (!lang.ContainsKey(textId))
-            {
+            if (!lang.ContainsKey(textId)) {
                 Logger.Error(LogTag, "No text Id defined in dict: {0}", textId);
                 return string.Empty;
             }
@@ -99,8 +93,7 @@ namespace vFrame.Core.Localize
         /// <summary>
         /// 懒加载
         /// </summary>
-        private void LazyLoad()
-        {
+        private void LazyLoad() {
             if (_langTextIdMap.ContainsKey(Language))
                 return;
 
@@ -111,21 +104,17 @@ namespace vFrame.Core.Localize
         /// 加载语言数据
         /// </summary>
         /// <param name="lang"></param>
-        private void LoadLanguage(string lang)
-        {
+        private void LoadLanguage(string lang) {
             var data = _reader.ReadData(lang);
-            if (string.IsNullOrEmpty(data))
-            {
+            if (string.IsNullOrEmpty(data)) {
                 Logger.Error(LogTag, "Read localization data failed: " + lang);
                 return;
             }
 
-            try
-            {
+            try {
                 _langTextIdMap[lang] = JsonMapper.ToObject(data);
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Logger.Error(LogTag, "Parse localization data failed: {0}, exception: {1}", lang, e);
             }
         }
