@@ -180,7 +180,8 @@
     <Compile Include="Utils\MessageDigestUtils.cs" />
     <Compile Include="Utils\PathUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
-    <Compile Include="Utils\Unity\InputUtility.cs" />
+    <Compile Include="Utils\Unity\GameObjectUtils.cs" />
+    <Compile Include="Utils\Unity\InputUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rd\BatterStreamingAssets\README.txt" />

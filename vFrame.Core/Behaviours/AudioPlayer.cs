@@ -96,6 +96,25 @@ namespace vFrame.Core.Behaviours
             _isDirty = true;
         }
 
+        public void Play(bool loop, float volume, bool destroyWhenFinished) {
+            if (null == _audioSource.clip) {
+                Logger.Error("AudioClip not set.");
+                return;
+            }
+
+            if (IsPlaying) {
+                Stop();
+            }
+
+            if (destroyWhenFinished) {
+                _onPlayFinished = () => { Destroy(gameObject); };
+            }
+            _audioSource.loop = loop;
+            _audioSource.volume = volume;
+            _audioSource.Play();
+            _isDirty = true;
+        }
+
         public void Play(AudioClip clip, bool loop, float volume, Action onPlayFinished = null) {
             if (IsPlaying) {
                 Stop();
