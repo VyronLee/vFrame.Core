@@ -152,6 +152,10 @@
     <Compile Include="Loggers\LogTag.cs" />
     <Compile Include="ObjectPools\Builtin\ListAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\ListPool.cs" />
+    <Compile Include="ObjectPools\Builtin\QueueAllocator.cs" />
+    <Compile Include="ObjectPools\Builtin\QueuePool.cs" />
+    <Compile Include="ObjectPools\Builtin\StackAllocator.cs" />
+    <Compile Include="ObjectPools\Builtin\StackPool.cs" />
     <Compile Include="ObjectPools\Builtin\StringBuilderAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\StringBuilderPool.cs" />
     <Compile Include="ObjectPools\IPoolObjectAllocator.cs" />
