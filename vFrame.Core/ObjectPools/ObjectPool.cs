@@ -12,55 +12,125 @@ using System.Collections.Generic;
 
 namespace vFrame.Core.ObjectPools
 {
-    public abstract class ObjectPool<TClass> where TClass : class, new()
+    public abstract class ObjectPool : IObjectPool
+    {
+        internal void Initialize() {
+            OnInitialize();
+        }
+
+        protected abstract void OnInitialize();
+    }
+
+    public class ObjectPool<TClass> : ObjectPool, IObjectPool<TClass> where TClass : class, new()
     {
         private const int InitSize = 128;
-        private static readonly Stack<TClass> Objects;
+        private Stack<TClass> _objects;
 
-        static ObjectPool() {
-            Objects = new Stack<TClass>(InitSize);
+        private readonly object _lockObject = new object();
 
-            for (var i = 0; i < InitSize; i++)
-                Objects.Push(new TClass());
+        private static ObjectPool<TClass> _instance;
+
+        private static ObjectPool<TClass> Instance {
+            get {
+                if (null == _instance) {
+                    _instance = new ObjectPool<TClass>();
+                    _instance.Initialize();
+                }
+                return _instance;
+            }
+        }
+
+        protected override void OnInitialize() {
+            lock (_lockObject) {
+                _objects = new Stack<TClass>(InitSize);
+                for (var i = 0; i < InitSize; i++) {
+                    _objects.Push(new TClass());
+                }
+            }
+            _instance = this;
+
+            ObjectPoolManager.Instance().RegisterPool(this);
+        }
+
+        public void ReturnObject(TClass obj) {
+            lock (_lockObject) {
+                if (_objects.Contains(obj))
+                    return;
+                _objects.Push(obj);
+            }
+        }
+
+        public TClass GetObject() {
+            lock (_lockObject) {
+                return _objects.Count > 0 ? _objects.Pop() : new TClass();
+            }
         }
 
         public static TClass Get() {
-            return Objects.Count > 0 ? Objects.Pop() : new TClass();
+            return Instance.GetObject();
         }
 
         public static void Return(TClass obj) {
-            if (Objects.Contains(obj))
-                return;
-            Objects.Push(obj);
+            Instance.ReturnObject(obj);
         }
     }
 
-    public abstract class ObjectPool<TClass, TAllocator>
+    public class ObjectPool<TClass, TAllocator> : ObjectPool, IObjectPool<TClass>
         where TClass : class, new()
         where TAllocator : IPoolObjectAllocator<TClass>, new()
     {
         private const int InitSize = 128;
-        private static readonly Stack<TClass> Objects;
-        private static readonly TAllocator Allocator;
+        private Stack<TClass> _objects;
+        private TAllocator _allocator;
 
-        static ObjectPool() {
-            Objects = new Stack<TClass>(InitSize);
-            Allocator = new TAllocator();
+        private readonly object _lockObject = new object();
 
-            for (var i = 0; i < InitSize; i++)
-                Objects.Push(Allocator.Alloc());
+        private static ObjectPool<TClass, TAllocator> _instance;
+        private static ObjectPool<TClass, TAllocator> Instance {
+            get {
+                if (null == _instance) {
+                    _instance = new ObjectPool<TClass, TAllocator>();
+                    _instance.Initialize();
+                }
+                return _instance;
+            }
+        }
+
+        protected override void OnInitialize() {
+            _allocator = new TAllocator();
+            lock (_lockObject) {
+                _objects = new Stack<TClass>(InitSize);
+                for (var i = 0; i < InitSize; i++) {
+                    _objects.Push(_allocator.Alloc());
+                }
+            }
+            _instance = this;
+
+            ObjectPoolManager.Instance().RegisterPool(this);
+        }
+
+        public TClass GetObject() {
+            lock (_lockObject) {
+                return _objects.Count > 0 ? _objects.Pop() : _allocator.Alloc();
+            }
+        }
+
+        public void ReturnObject(TClass obj) {
+            _allocator.Reset(obj);
+
+            lock (_lockObject) {
+                if (_objects.Contains(obj))
+                    return;
+                _objects.Push(obj);
+            }
         }
 
         public static TClass Get() {
-            return Objects.Count > 0 ? Objects.Pop() : Allocator.Alloc();
+            return Instance.GetObject();
         }
 
         public static void Return(TClass obj) {
-            Allocator.Reset(obj);
-
-            if (Objects.Contains(obj))
-                return;
-            Objects.Push(obj);
+            Instance.ReturnObject(obj);
         }
     }
 }

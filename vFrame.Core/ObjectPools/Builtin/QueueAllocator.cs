@@ -14,10 +14,10 @@ namespace vFrame.Core.ObjectPools.Builtin
 {
     public class QueueAllocator<T> : IPoolObjectAllocator<Queue<T>>
     {
-        public static int QueueLength = 64;
+        public static int PresetLength = 64;
 
         public Queue<T> Alloc() {
-            return new Queue<T>(QueueLength);
+            return new Queue<T>(PresetLength);
         }
 
         public void Reset(Queue<T> obj) {

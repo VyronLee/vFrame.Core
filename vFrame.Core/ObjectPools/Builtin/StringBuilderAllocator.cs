@@ -14,10 +14,10 @@ namespace vFrame.Core.ObjectPools.Builtin
 {
     public class StringBuilderAllocator : IPoolObjectAllocator<StringBuilder>
     {
-        public static int BuilderLength = 1024;
+        public static int PresetLength = 1024;
 
         public StringBuilder Alloc() {
-            return new StringBuilder(BuilderLength);
+            return new StringBuilder(PresetLength);
         }
 
         public void Reset(StringBuilder obj) {

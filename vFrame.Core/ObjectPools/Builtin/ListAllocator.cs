@@ -14,10 +14,10 @@ namespace vFrame.Core.ObjectPools.Builtin
 {
     public class ListAllocator<T> : IPoolObjectAllocator<List<T>>
     {
-        public static int ListLength = 64;
+        public static int PresetLength = 64;
 
         public List<T> Alloc() {
-            return new List<T>(ListLength);
+            return new List<T>(PresetLength);
         }
 
         public void Reset(List<T> obj) {

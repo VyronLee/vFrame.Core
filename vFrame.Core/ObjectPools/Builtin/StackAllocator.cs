@@ -13,10 +13,10 @@ namespace vFrame.Core.ObjectPools.Builtin
 {
     public class StackAllocator<T> : IPoolObjectAllocator<Stack<T>>
     {
-        public static int StackLength = 64;
+        public static int PresetLength = 64;
 
         public Stack<T> Alloc() {
-            return new Stack<T>(StackLength);
+            return new Stack<T>(PresetLength);
         }
 
         public void Reset(Stack<T> obj) {

@@ -14,7 +14,7 @@ using vFrame.Core.Base;
 
 namespace vFrame.Core.Singletons
 {
-    public class Singleton<T> : BaseObject where T : BaseObject, new()
+    public abstract class Singleton<T> : BaseObject where T : BaseObject, new()
     {
         private static T _instance;
 
@@ -24,12 +24,6 @@ namespace vFrame.Core.Singletons
         protected Singleton() {
             Debug.Assert(null == _instance, "Singleton duplicate.");
             _instance = this as T;
-        }
-
-        /// <summary>
-        /// 创建函数
-        /// </summary>
-        protected override void OnCreate() {
         }
 
         /// <summary>

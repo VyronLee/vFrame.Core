@@ -150,6 +150,10 @@
     <Compile Include="Loggers\LoggerSetting.cs" />
     <Compile Include="Loggers\LogLevelDef.cs" />
     <Compile Include="Loggers\LogTag.cs" />
+    <Compile Include="ObjectPools\Builtin\DictionaryAllocator.cs" />
+    <Compile Include="ObjectPools\Builtin\DictionaryPool.cs" />
+    <Compile Include="ObjectPools\Builtin\HashSetAllocator.cs" />
+    <Compile Include="ObjectPools\Builtin\HashSetPool.cs" />
     <Compile Include="ObjectPools\Builtin\ListAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\ListPool.cs" />
     <Compile Include="ObjectPools\Builtin\QueueAllocator.cs" />
@@ -158,8 +162,10 @@
     <Compile Include="ObjectPools\Builtin\StackPool.cs" />
     <Compile Include="ObjectPools\Builtin\StringBuilderAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\StringBuilderPool.cs" />
+    <Compile Include="ObjectPools\IObjectPool.cs" />
     <Compile Include="ObjectPools\IPoolObjectAllocator.cs" />
     <Compile Include="ObjectPools\ObjectPool.cs" />
+    <Compile Include="ObjectPools\ObjectPoolManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Singletons\MonoSingleton.cs" />
     <Compile Include="Singletons\Singleton.cs" />
