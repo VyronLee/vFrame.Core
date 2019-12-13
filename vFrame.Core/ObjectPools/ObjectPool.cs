@@ -19,6 +19,10 @@ namespace vFrame.Core.ObjectPools
         }
 
         protected abstract void OnInitialize();
+
+        public abstract T GetObject<T>() where T : class;
+
+        public abstract void ReturnObject<T>(T obj);
     }
 
     public class ObjectPool<TClass> : ObjectPool, IObjectPool<TClass> where TClass : class, new()
@@ -64,6 +68,16 @@ namespace vFrame.Core.ObjectPools
             lock (_lockObject) {
                 return _objects.Count > 0 ? _objects.Pop() : new TClass();
             }
+        }
+
+        public override T GetObject<T>() {
+            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
+            return GetObject() as T;
+        }
+
+        public override void ReturnObject<T>(T obj) {
+            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
+            Return(obj as TClass);
         }
 
         public static TClass Get() {
@@ -123,6 +137,16 @@ namespace vFrame.Core.ObjectPools
                     return;
                 _objects.Push(obj);
             }
+        }
+
+        public override T GetObject<T>() {
+            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
+            return GetObject() as T;
+        }
+
+        public override void ReturnObject<T>(T obj) {
+            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
+            Return(obj as TClass);
         }
 
         public static TClass Get() {

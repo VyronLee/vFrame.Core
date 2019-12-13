@@ -26,8 +26,8 @@ namespace vFrame.Core.ObjectPools
 
         public void Return<T>(T obj) {
             IObjectPool pool = null;
-            if (_pools.TryGetValue(typeof(T), out pool)) {
-                ((IObjectPool<T>) pool).ReturnObject(obj);
+            if (_pools.TryGetValue(obj.GetType(), out pool)) {
+                pool.ReturnObject(obj);
                 return;
             }
             throw new ArgumentOutOfRangeException("obj", "No object pool of type: " + obj.GetType().Name);
