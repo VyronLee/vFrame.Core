@@ -9,11 +9,14 @@
 //============================================================
 
 using System.Collections.Generic;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.ObjectPools
 {
     public abstract class ObjectPool : IObjectPool
     {
+        protected readonly LogTag LogTag = new LogTag("ObjectPool");
+
         internal void Initialize() {
             OnInitialize();
         }
@@ -57,6 +60,10 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void ReturnObject(TClass obj) {
+            if (null == obj) {
+                Logger.Error(LogTag, "Return object cannot be null.");
+                return;
+            }
             lock (_lockObject) {
                 if (_objects.Contains(obj))
                     return;
@@ -71,12 +78,10 @@ namespace vFrame.Core.ObjectPools
         }
 
         public override T GetObject<T>() {
-            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
             return GetObject() as T;
         }
 
         public override void ReturnObject<T>(T obj) {
-            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
             Return(obj as TClass);
         }
 
@@ -130,6 +135,10 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void ReturnObject(TClass obj) {
+            if (null == obj) {
+                Logger.Error(LogTag, "Return object cannot be null.");
+                return;
+            }
             _allocator.Reset(obj);
 
             lock (_lockObject) {
@@ -140,12 +149,10 @@ namespace vFrame.Core.ObjectPools
         }
 
         public override T GetObject<T>() {
-            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
             return GetObject() as T;
         }
 
         public override void ReturnObject<T>(T obj) {
-            System.Diagnostics.Debug.Assert(typeof(T) == typeof(TClass));
             Return(obj as TClass);
         }
 
