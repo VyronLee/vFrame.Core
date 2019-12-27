@@ -27,7 +27,7 @@ namespace vFrame.Core.Behaviours
             public AnimationClip clip;
         }
 
-        [SerializeField] private List<AnimationSet> _animations;
+        [SerializeField] private List<AnimationSet> _animations = null;
 
         private Animation _animation;
 

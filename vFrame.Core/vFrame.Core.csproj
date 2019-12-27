@@ -11,7 +11,8 @@
     <AssemblyName>vFrame.Core</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>4</LangVersion>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -90,6 +91,7 @@
     <Compile Include="3rd\LitJson\Lexer.cs" />
     <Compile Include="3rd\LitJson\ParserToken.cs" />
     <Compile Include="3rd\SerializableDictionary.cs" />
+    <Compile Include="3rd\StringBuffer.cs" />
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />
     <Compile Include="Base\IBaseObject.cs" />
@@ -195,6 +197,18 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="3rd\BatterStreamingAssets\README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>C:\Program Files\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\Facades\System.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
