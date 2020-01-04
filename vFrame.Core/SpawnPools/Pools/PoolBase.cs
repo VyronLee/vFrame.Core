@@ -20,7 +20,7 @@ namespace vFrame.Core.SpawnPools.Pools
 {
     public abstract class PoolBase<T> where T : Object
     {
-        protected readonly Stack<T> _objects = new Stack<T>();
+        protected readonly Queue<T> _objects = new Queue<T>();
         protected int _lasttime;
         protected GameObject _poolGo;
 
@@ -49,14 +49,22 @@ namespace vFrame.Core.SpawnPools.Pools
         }
 
         public T Spawn() {
-            T obj;
-            if (_objects.Count > 0) {
+            T obj = null;
+            while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
-                obj = _objects.Pop();
+                obj = _objects.Dequeue();
+                if (null == obj) {
+                    Loggers.Logger.Warning(
+                        "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
+                }
+                else {
+                    break;
+                }
             }
-            else {
+
+            if (null == obj) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
@@ -76,13 +84,21 @@ namespace vFrame.Core.SpawnPools.Pools
 
         public IEnumerator SpawnAsync(Action<Object> callback) {
             T obj = null;
-            if (_objects.Count > 0) {
+            while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
-                obj = _objects.Pop();
+                obj = _objects.Dequeue();
+                if (null == obj) {
+                    Loggers.Logger.Warning(
+                        "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
+                }
+                else {
+                    break;
+                }
             }
-            else {
+
+            if (null == obj) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
@@ -110,10 +126,14 @@ namespace vFrame.Core.SpawnPools.Pools
         }
 
         public void Recycle(T obj) {
+            if (null == obj) {
+                Loggers.Logger.Error("Item to recycle cannot be null!");
+                return;
+            }
 #if DEBUG_SPAWNPOOLS
             Debug.LogFormat("Recycling object into pool({0})", _assetName);
 #endif
-            _objects.Push(obj);
+            _objects.Enqueue(obj);
 
             ObjectPostprocessAfterRecycle(obj);
         }
@@ -128,7 +148,7 @@ namespace vFrame.Core.SpawnPools.Pools
 
         private void ObjectPreprocessBeforeReturn(Object obj) {
             var go = obj as GameObject;
-            if (!go)
+            if (null == go)
                 return;
 
             switch (SpawnPoolsSetting.HiddenType) {
@@ -152,7 +172,7 @@ namespace vFrame.Core.SpawnPools.Pools
 
         private void ObjectPostprocessAfterRecycle(Object obj) {
             var go = obj as GameObject;
-            if (!go)
+            if (null == go)
                 return;
 
             go.transform.SetParent(_poolGo.transform, false);
