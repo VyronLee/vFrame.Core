@@ -11,7 +11,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using vFrame.Core.Extensions;
 using UnityEngine;
 using vFrame.Core.Extensions.UnityEngine;
 using Object = UnityEngine.Object;
@@ -43,8 +42,10 @@ namespace vFrame.Core.SpawnPools.Pools
         }
 
         public void Clear() {
-            foreach (var obj in _objects)
+            foreach (var obj in _objects) {
+                ObjectPreprocessBeforeDestroy(obj);
                 Object.Destroy(obj);
+            }
             _objects.Clear();
         }
 
@@ -133,6 +134,10 @@ namespace vFrame.Core.SpawnPools.Pools
 #if DEBUG_SPAWNPOOLS
             Debug.LogFormat("Recycling object into pool({0})", _assetName);
 #endif
+            if (!ObjectPreprocessBeforeRecycle(obj)) {
+                return;
+            }
+
             _objects.Enqueue(obj);
 
             ObjectPostprocessAfterRecycle(obj);
@@ -146,7 +151,7 @@ namespace vFrame.Core.SpawnPools.Pools
             return Time.frameCount - _lasttime > _lifetime;
         }
 
-        private void ObjectPreprocessBeforeReturn(Object obj) {
+        protected virtual void ObjectPreprocessBeforeReturn(Object obj) {
             var go = obj as GameObject;
             if (null == go)
                 return;
@@ -170,7 +175,11 @@ namespace vFrame.Core.SpawnPools.Pools
             }
         }
 
-        private void ObjectPostprocessAfterRecycle(Object obj) {
+        protected virtual bool ObjectPreprocessBeforeRecycle(Object obj) {
+            return true;
+        }
+
+        protected virtual void ObjectPostprocessAfterRecycle(Object obj) {
             var go = obj as GameObject;
             if (null == go)
                 return;
@@ -191,6 +200,10 @@ namespace vFrame.Core.SpawnPools.Pools
                     throw new ArgumentOutOfRangeException(
                         "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
             }
+        }
+
+        protected virtual void ObjectPreprocessBeforeDestroy(Object obj) {
+
         }
 
         protected abstract T DoSpawn();

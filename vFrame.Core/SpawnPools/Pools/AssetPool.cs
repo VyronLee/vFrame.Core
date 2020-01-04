@@ -10,7 +10,10 @@
 
 using System;
 using System.Collections;
+using UnityEngine;
+using vFrame.Core.SpawnPools.Behaviours;
 using vFrame.Core.SpawnPools.Provider;
+using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools.Pools
@@ -37,6 +40,50 @@ namespace vFrame.Core.SpawnPools.Pools
             yield return _providerAsync.LoadAsync(_assetName, typeof(T), v => obj = v as T);
 
             callback(obj);
+        }
+
+        protected override void ObjectPreprocessBeforeReturn(Object obj) {
+            base.ObjectPreprocessBeforeReturn(obj);
+
+            var go = obj as GameObject;
+            if (null == go)
+                return;
+
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (null == identity) {
+                identity = go.AddComponent<PoolObjectIdentity>();
+            }
+            identity.AssetPath = _assetName;
+        }
+
+        protected override bool ObjectPreprocessBeforeRecycle(Object obj) {
+            var go = obj as GameObject;
+            if (null == go)
+                return true;
+
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (null == identity) {
+                Logger.Error("Not a valid pool object: " + obj);
+                return false;
+            }
+
+            if (identity.AssetPath != _assetName) {
+                Logger.Error("Object to recycle does not match the pool name, require: {0}, get: {1}",
+                    _assetName, identity.AssetPath);
+                return false;
+            }
+            return base.ObjectPreprocessBeforeRecycle(obj);
+        }
+
+        protected override void ObjectPreprocessBeforeDestroy(Object obj) {
+            var go = obj as GameObject;
+            if (null == go)
+                return;
+
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (identity) {
+                Object.Destroy(identity);
+            }
         }
     }
 }
