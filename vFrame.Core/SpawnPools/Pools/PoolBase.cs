@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Extensions.UnityEngine;
+using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools.Pools
@@ -29,6 +30,9 @@ namespace vFrame.Core.SpawnPools.Pools
         private Vector3 _originLocalPosition;
         private Vector3 _originLocalScale;
         private Quaternion _originLocalRotation;
+
+        private int _uniqueId;
+        protected int NewUniqueId => ++_uniqueId;
 
         public int SpawnedTimes { get; private set; }
 
@@ -47,6 +51,10 @@ namespace vFrame.Core.SpawnPools.Pools
                 Object.Destroy(obj);
             }
             _objects.Clear();
+
+#if DEBUG_SPAWNPOOLS
+            Logger.Info("Spawn pool cleared: {0}", _poolName);
+#endif
         }
 
         public T Spawn() {
@@ -128,7 +136,7 @@ namespace vFrame.Core.SpawnPools.Pools
 
         public void Recycle(T obj) {
             if (null == obj) {
-                Loggers.Logger.Error("Item to recycle cannot be null!");
+                Logger.Error("Item to recycle cannot be null!");
                 return;
             }
 #if DEBUG_SPAWNPOOLS

@@ -52,8 +52,14 @@ namespace vFrame.Core.SpawnPools.Pools
             var identity = go.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
                 identity = go.AddComponent<PoolObjectIdentity>();
+                identity.AssetPath = _assetName;
+                identity.UniqueId = NewUniqueId;
+#if DEBUG_SPAWNPOOLS
+                Logger.Info("Pool object(id: {0}, path: {1}) created.",
+                    identity.UniqueId, identity.AssetPath);
+#endif
             }
-            identity.AssetPath = _assetName;
+            identity.IsPooling = false;
         }
 
         protected override bool ObjectPreprocessBeforeRecycle(Object obj) {
@@ -72,6 +78,8 @@ namespace vFrame.Core.SpawnPools.Pools
                     _assetName, identity.AssetPath);
                 return false;
             }
+            identity.IsPooling = true;
+
             return base.ObjectPreprocessBeforeRecycle(obj);
         }
 
@@ -81,9 +89,17 @@ namespace vFrame.Core.SpawnPools.Pools
                 return;
 
             var identity = go.GetComponent<PoolObjectIdentity>();
-            if (identity) {
-                Object.Destroy(identity);
-            }
+            if (!identity)
+                return;
+
+#if DEBUG_SPAWNPOOLS
+            Logger.Info("Pool object(id: {0}, path: {1}) destroyed.",
+                identity.UniqueId, identity.AssetPath);
+#endif
+
+            identity.Destroyed = true;
+            Object.Destroy(identity);
+
         }
     }
 }

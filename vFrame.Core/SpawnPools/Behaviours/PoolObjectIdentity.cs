@@ -6,14 +6,31 @@ namespace vFrame.Core.SpawnPools.Behaviours
     public class PoolObjectIdentity : MonoBehaviour
     {
         [SerializeField] private string _assetPath;
+        [SerializeField] private bool _pooling;
+        [SerializeField] private int _uniqueId;
 
         public string AssetPath {
             get => _assetPath;
             internal set => _assetPath = value;
         }
 
+        public bool IsPooling {
+            get => _pooling;
+            internal set => _pooling = value;
+        }
+
+        public int UniqueId {
+            get => _uniqueId;
+            internal set => _uniqueId = value;
+        }
+
+        internal bool Destroyed { get; set; }
+
         private void OnDestroy() {
-            Logger.Warning("Pool object({0}) get destroyed outside the pool!!!!", _assetPath);
+            if (IsPooling && !Destroyed) {
+                Logger.Warning("Pool object(id: {0}, path: {1}) get destroyed outside the pool!!!!",
+                    _uniqueId, _assetPath);
+            }
         }
     }
 }

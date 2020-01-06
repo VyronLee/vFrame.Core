@@ -7,12 +7,12 @@
 //    Modified:  2019-09-08 23:44
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
-//#define DEBUG_SPAWNPOOLS
 
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Pools;
+using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -59,6 +59,10 @@ namespace vFrame.Core.SpawnPools
             foreach (var kv in _pools)
                 kv.Value.Clear();
             _pools.Clear();
+
+#if DEBUG_SPAWNPOOLS
+            Logger.Info("Spawn pools destroyed: {0}", typeof(T).Name);
+#endif
         }
 
         public IPool<T> this[string assetName] {
