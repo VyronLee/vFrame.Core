@@ -164,6 +164,8 @@ namespace vFrame.Core.SpawnPools.Pools
             if (null == go)
                 return;
 
+            go.transform.SetParent(null, false);
+
             switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(true);
@@ -175,7 +177,6 @@ namespace vFrame.Core.SpawnPools.Pools
                     go.transform.EnableAllAnimations();
                     go.transform.EnableAllAnimators();
                     go.transform.EnableAllParticleSystems();
-                    go.transform.SetParent(_poolGo.transform, false);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -199,7 +200,9 @@ namespace vFrame.Core.SpawnPools.Pools
                     go.SetActive(false);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.localPosition = Vector3.zero;
+                    go.transform.localPosition = _originLocalPosition;
+                    go.transform.localScale = _originLocalScale;
+                    go.transform.localRotation = _originLocalRotation;
                     go.transform.DisableAllAnimators();
                     go.transform.DisableAllAnimations();
                     go.transform.DisableAllParticleSystems();
