@@ -206,6 +206,7 @@ namespace vFrame.Core.SpawnPools.Pools
                     go.transform.DisableAllAnimators();
                     go.transform.DisableAllAnimations();
                     go.transform.DisableAllParticleSystems();
+                    go.transform.ClearAllTrailRenderers();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(

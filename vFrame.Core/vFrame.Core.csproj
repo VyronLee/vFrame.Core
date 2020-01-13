@@ -97,6 +97,7 @@
     <Compile Include="Base\IBaseObject.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
+    <Compile Include="Behaviours\TrailRendererEx.cs" />
     <Compile Include="Components\Container.cs" />
     <Compile Include="Components\Component.cs" />
     <Compile Include="Components\IContainer.cs" />

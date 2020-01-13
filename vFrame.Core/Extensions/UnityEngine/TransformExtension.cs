@@ -90,5 +90,9 @@ namespace vFrame.Core.Extensions.UnityEngine
         public static void StopAllAnimators(this Transform transform) {
             TravelSelfAndChildren<Animator>(transform, v => v.enabled = false);
         }
+
+        public static void ClearAllTrailRenderers(this Transform transform) {
+            TravelSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
+        }
     }
 }
