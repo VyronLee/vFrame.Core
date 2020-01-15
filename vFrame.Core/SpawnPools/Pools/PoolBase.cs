@@ -52,6 +52,11 @@ namespace vFrame.Core.SpawnPools.Pools
             }
             _objects.Clear();
 
+            if (_poolGo) {
+                Object.Destroy(_poolGo);
+            }
+            _poolGo = null;
+
 #if DEBUG_SPAWNPOOLS
             Logger.Info("Spawn pool cleared: {0}", _poolName);
 #endif

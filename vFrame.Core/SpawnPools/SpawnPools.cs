@@ -55,10 +55,14 @@ namespace vFrame.Core.SpawnPools
             return this;
         }
 
-        public void Destroy() {
+        public void Clear() {
             foreach (var kv in _pools)
                 kv.Value.Clear();
             _pools.Clear();
+        }
+
+        public void Destroy() {
+            Clear();
 
 #if DEBUG_SPAWNPOOLS
             Logger.Info("Spawn pools destroyed: {0}", typeof(T).Name);
