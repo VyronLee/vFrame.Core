@@ -12,13 +12,10 @@ using UnityEngine;
 
 namespace vFrame.Core.SpawnPools
 {
-    public interface ISpawnPools<T> where T : Object
+    public interface ISpawnPools
     {
-        ISpawnPools<T> Initialize(IAssetsProvider provider, IAssetsProviderAsync providerAsync, int lifetime,
-            int capacity);
-
-        IPool<T> this[string assetName] { get; }
-        IPool<T> this[T prefab] { get; }
+        IPool this[string assetName] { get; }
+        IPool this[GameObject prefab] { get; }
         void Update();
     }
 }

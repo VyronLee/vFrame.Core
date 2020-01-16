@@ -10,15 +10,16 @@
 
 using System;
 using System.Collections;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools
 {
-    public interface IPool<T> where T : Object
+    public interface IPool
     {
-        T Spawn();
+        GameObject Spawn();
         IEnumerator SpawnAsync(Action<Object> callback);
-        void Recycle(T obj);
+        void Recycle(GameObject obj);
         int Count { get; }
     }
 }

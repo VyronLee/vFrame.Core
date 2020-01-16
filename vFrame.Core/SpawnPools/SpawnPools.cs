@@ -10,18 +10,15 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.Base;
 using vFrame.Core.ObjectPools.Builtin;
-using vFrame.Core.SpawnPools.Pools;
+using vFrame.Core.SpawnPools.Builders;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.SpawnPools
 {
-    public class SpawnPools<T> : ISpawnPools<T> where T : Object
+    public class SpawnPools : BaseObject<IGameObjectBuilderFactory, int, int>, ISpawnPools
     {
-        private const int DefaultCapacity = 40;
-        private const int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
-        private const int GCInterval = 600; // 600 frames, 20s by 30fps
-
         private static GameObject _poolsParent;
 
         public static GameObject PoolsParent {
@@ -36,23 +33,29 @@ namespace vFrame.Core.SpawnPools
             }
         }
 
-        private readonly Dictionary<string, PoolBase<T>> _pools = new Dictionary<string, PoolBase<T>>();
+        private readonly Dictionary<string, Pool> _pools = new Dictionary<string, Pool>();
 
-        private IAssetsProvider _provider;
-        private IAssetsProviderAsync _providerAsync;
+        private IGameObjectBuilderFactory _builderFromPathFactory;
+        private IGameObjectBuilderFactory _builderFromPrefabInstanceFactory;
+
         private int _lifetime;
         private int _capacity;
 
         private int _lastGC;
 
-        public ISpawnPools<T> Initialize(IAssetsProvider provider, IAssetsProviderAsync providerAsync = null,
-            int lifetime = DefaultLifeTime, int capacity = DefaultCapacity) {
-            _provider = provider;
-            _providerAsync = providerAsync;
+        protected override void OnCreate(IGameObjectBuilderFactory factory, int lifetime, int capacity) {
+            _builderFromPathFactory = factory ?? new DefaultGameObjectBuilderFromPathFactory();
+            _builderFromPrefabInstanceFactory = new DefaultGameObjectBuilderFromPrefabInstanceFactory();
             _lifetime = lifetime;
             _capacity = capacity;
+        }
 
-            return this;
+        protected override void OnDestroy() {
+            Clear();
+
+#if DEBUG_SPAWNPOOLS
+            Logger.Info("Spawn pools destroyed.");
+#endif
         }
 
         public void Clear() {
@@ -61,39 +64,49 @@ namespace vFrame.Core.SpawnPools
             _pools.Clear();
         }
 
-        public void Destroy() {
-            Clear();
-
-#if DEBUG_SPAWNPOOLS
-            Logger.Info("Spawn pools destroyed: {0}", typeof(T).Name);
-#endif
-        }
-
-        public IPool<T> this[string assetName] {
+        public IPool this[string assetName] {
             get {
                 if (_pools.ContainsKey(assetName))
-                    return _pools[assetName] as IPool<T>;
+                    return _pools[assetName];
 
-                _pools.Add(assetName, new AssetPool<T>(assetName, _provider, _providerAsync, _lifetime));
-                PoolsParent.name = string.Format("Pools({0})", PoolsParent.transform.childCount);
-                return _pools[assetName] as IPool<T>;
+                if (!(_builderFromPathFactory.CreateBuilder() is IGameObjectBuilderFromPath builder))
+                    return null;
+
+                builder.Create(assetName);
+
+                var pool = new Pool();
+                pool.Create(assetName, _lifetime, builder);
+
+                _pools.Add(assetName, pool);
+                PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
+
+                return pool;
             }
         }
 
-        public IPool<T> this[T prefab] {
+        public IPool this[GameObject prefab] {
             get {
-                var prefabCode = string.Format("Prefab-{0}-{1}", prefab.name, prefab.GetInstanceID());
+                var prefabCode = $"Prefab-{prefab.name}-{prefab.GetInstanceID()}";
                 if (_pools.ContainsKey(prefabCode))
-                    return _pools[prefabCode] as IPool<T>;
+                    return _pools[prefabCode];
 
-                _pools.Add(prefabCode, new PrefabPool<T>(prefabCode, prefab, _lifetime));
-                PoolsParent.name = string.Format("Pools({0})", PoolsParent.transform.childCount);
-                return _pools[prefabCode] as IPool<T>;
+                if (!(_builderFromPrefabInstanceFactory.CreateBuilder() is IGameObjectBuilderFromPrefabInstance builder))
+                    return null;
+
+                builder.Create(prefab);
+
+                var pool = new Pool();
+                pool.Create(prefabCode, _lifetime, builder);
+
+                _pools.Add(prefabCode, pool);
+                PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
+
+                return pool;
             }
         }
 
         public void Update() {
-            if (++_lastGC < GCInterval)
+            if (++_lastGC < SpawnPoolsSetting.GCInterval)
                 return;
             _lastGC = 0;
 

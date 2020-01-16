@@ -12,41 +12,58 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.Base;
 using vFrame.Core.Extensions.UnityEngine;
+using vFrame.Core.SpawnPools.Behaviours;
+using vFrame.Core.SpawnPools.Builders;
+using vFrame.Core.SpawnPools.Snapshots;
 using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.SpawnPools.Pools
+namespace vFrame.Core.SpawnPools
 {
-    public abstract class PoolBase<T> where T : Object
+    public class Pool : BaseObject<string, int, IGameObjectBuilder>, IPool
     {
-        protected readonly Queue<T> _objects = new Queue<T>();
-        protected int _lasttime;
-        protected GameObject _poolGo;
+        private readonly Queue<GameObject> _objects = new Queue<GameObject>();
+        private int _lastTime;
+        private GameObject _poolGo;
 
-        private readonly int _lifetime;
-        private readonly string _poolName;
-
-        private Vector3 _originLocalPosition;
-        private Vector3 _originLocalScale;
-        private Quaternion _originLocalRotation;
+        private int _lifetime;
+        private string _poolName;
+        private IGameObjectBuilder _builder;
 
         private int _uniqueId;
-        protected int NewUniqueId => ++_uniqueId;
+        private int NewUniqueId => ++_uniqueId;
+        private Dictionary<GameObject, PoolObjectSnapshot> _snapshots;
 
         public int SpawnedTimes { get; private set; }
 
-        protected PoolBase(string poolName, int lifetime) {
+        protected override void OnCreate(string poolName, int lifetime, IGameObjectBuilder builder) {
             _lifetime = lifetime;
-            _lasttime = Time.frameCount;
+            _lastTime = Time.frameCount;
             _poolName = poolName;
+            _builder = builder;
+            _snapshots = new Dictionary<GameObject, PoolObjectSnapshot>(32);
 
             _poolGo = new GameObject(string.Format("Pool({0})", poolName));
-            _poolGo.transform.SetParent(SpawnPools<T>.PoolsParent.transform, false);
+            _poolGo.transform.SetParent(SpawnPools.PoolsParent.transform, false);
+        }
+
+        protected override void OnDestroy() {
+            _snapshots?.Clear();
+            _snapshots = null;
         }
 
         public void Clear() {
             foreach (var obj in _objects) {
+                if (_snapshots.TryGetValue(obj, out var snapshot)) {
+                    snapshot.Destroy();
+                    _snapshots.Remove(obj);
+                }
+
+                if (!obj) {
+                    continue;
+                }
                 ObjectPreprocessBeforeDestroy(obj);
                 Object.Destroy(obj);
             }
@@ -62,15 +79,15 @@ namespace vFrame.Core.SpawnPools.Pools
 #endif
         }
 
-        public T Spawn() {
-            T obj = null;
+        public GameObject Spawn() {
+            GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
                 obj = _objects.Dequeue();
                 if (null == obj) {
-                    Loggers.Logger.Warning(
+                    Logger.Warning(
                         "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
                 }
                 else {
@@ -82,29 +99,26 @@ namespace vFrame.Core.SpawnPools.Pools
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
-                obj = DoSpawn();
+                obj = _builder.Spawn();
 
-                var go = obj as GameObject;
-                if (!go)
-                    return OnSpawn(obj);
-
-                _originLocalPosition = go.transform.localPosition;
-                _originLocalScale = go.transform.localScale;
-                _originLocalRotation = go.transform.localRotation;
+                var snapshot = new PoolObjectSnapshot();
+                snapshot.Create(obj);
+                snapshot.Take();
+                _snapshots.Add(obj, snapshot);
             }
 
             return OnSpawn(obj);
         }
 
         public IEnumerator SpawnAsync(Action<Object> callback) {
-            T obj = null;
+            GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
 #endif
                 obj = _objects.Dequeue();
                 if (null == obj) {
-                    Loggers.Logger.Warning(
+                    Logger.Warning(
                         "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
                 }
                 else {
@@ -116,30 +130,28 @@ namespace vFrame.Core.SpawnPools.Pools
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
-                yield return DoSpawnAsync(v => obj = v);
+                yield return _builder.SpawnAsync(v => obj = v);
 
-                var go = obj as GameObject;
-                if (go) {
-                    _originLocalPosition = go.transform.localPosition;
-                    _originLocalScale = go.transform.localScale;
-                    _originLocalRotation = go.transform.localRotation;
-                }
+                var snapshot = new PoolObjectSnapshot();
+                snapshot.Create(obj);
+                snapshot.Take();
+                _snapshots.Add(obj, snapshot);
             }
 
             OnSpawn(obj);
             callback(obj);
         }
 
-        private T OnSpawn(T obj) {
+        private GameObject OnSpawn(GameObject obj) {
             ++SpawnedTimes;
-            _lasttime = Time.frameCount;
+            _lastTime = Time.frameCount;
 
             ObjectPreprocessBeforeReturn(obj);
 
             return obj;
         }
 
-        public void Recycle(T obj) {
+        public void Recycle(GameObject obj) {
             if (null == obj) {
                 Logger.Error("Item to recycle cannot be null!");
                 return;
@@ -148,6 +160,8 @@ namespace vFrame.Core.SpawnPools.Pools
             Debug.LogFormat("Recycling object into pool({0})", _assetName);
 #endif
             if (!ObjectPreprocessBeforeRecycle(obj)) {
+                // Cannot recycle, destroy it directly.
+                Object.Destroy(obj);
                 return;
             }
 
@@ -156,19 +170,13 @@ namespace vFrame.Core.SpawnPools.Pools
             ObjectPostprocessAfterRecycle(obj);
         }
 
-        public int Count {
-            get { return _objects.Count; }
-        }
+        public int Count => _objects.Count;
 
         public bool IsTimeout() {
-            return Time.frameCount - _lasttime > _lifetime;
+            return Time.frameCount - _lastTime > _lifetime;
         }
 
-        protected virtual void ObjectPreprocessBeforeReturn(Object obj) {
-            var go = obj as GameObject;
-            if (null == go)
-                return;
-
+        protected virtual void ObjectPreprocessBeforeReturn(GameObject go) {
             go.transform.SetParent(null, false);
 
             switch (SpawnPoolsSetting.HiddenType) {
@@ -176,9 +184,6 @@ namespace vFrame.Core.SpawnPools.Pools
                     go.SetActive(true);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.localPosition = _originLocalPosition;
-                    go.transform.localScale = _originLocalScale;
-                    go.transform.localRotation = _originLocalRotation;
                     go.transform.EnableAllAnimations();
                     go.transform.EnableAllAnimators();
                     go.transform.EnableAllParticleSystems();
@@ -187,27 +192,55 @@ namespace vFrame.Core.SpawnPools.Pools
                     throw new ArgumentOutOfRangeException(
                         "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
             }
+
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (null == identity) {
+                identity = go.AddComponent<PoolObjectIdentity>();
+                identity.AssetPath = _poolName;
+                identity.UniqueId = NewUniqueId;
+#if DEBUG_SPAWNPOOLS
+                Logger.Info("Pool object(id: {0}, path: {1}) created.",
+                    identity.UniqueId, identity.AssetPath);
+#endif
+            }
+            identity.IsPooling = false;
         }
 
-        protected virtual bool ObjectPreprocessBeforeRecycle(Object obj) {
+        protected virtual bool ObjectPreprocessBeforeRecycle(GameObject go) {
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (null == identity) {
+                Logger.Error("Not a valid pool object: " + go);
+                return false;
+            }
+
+            if (identity.AssetPath != _poolName) {
+                Logger.Error("Object to recycle does not match the pool name, require: {0}, get: {1}",
+                    _poolName, identity.AssetPath);
+                return false;
+            }
+            identity.IsPooling = true;
+
+            if (!_snapshots.TryGetValue(go, out _)) {
+                //Logger.Warning("No target snapshot in the pool: " + go);
+                identity.Destroyed = true;
+                return false;
+            }
+
             return true;
         }
 
-        protected virtual void ObjectPostprocessAfterRecycle(Object obj) {
-            var go = obj as GameObject;
-            if (null == go)
-                return;
-
+        protected virtual void ObjectPostprocessAfterRecycle(GameObject go) {
             go.transform.SetParent(_poolGo.transform, false);
+
+            if (_snapshots.TryGetValue(go, out var snapshot)) {
+                snapshot.Restore();
+            }
 
             switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(false);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.localPosition = _originLocalPosition;
-                    go.transform.localScale = _originLocalScale;
-                    go.transform.localRotation = _originLocalRotation;
                     go.transform.DisableAllAnimators();
                     go.transform.DisableAllAnimations();
                     go.transform.DisableAllParticleSystems();
@@ -219,11 +252,22 @@ namespace vFrame.Core.SpawnPools.Pools
             }
         }
 
-        protected virtual void ObjectPreprocessBeforeDestroy(Object obj) {
+        protected virtual void ObjectPreprocessBeforeDestroy(GameObject go) {
+            if (!go) {
+                return;
+            }
 
+            var identity = go.GetComponent<PoolObjectIdentity>();
+            if (!identity)
+                return;
+
+#if DEBUG_SPAWNPOOLS
+            Logger.Info("Pool object(id: {0}, path: {1}) destroyed.",
+                identity.UniqueId, identity.AssetPath);
+#endif
+
+            identity.Destroyed = true;
+            Object.Destroy(identity);
         }
-
-        protected abstract T DoSpawn();
-        protected abstract IEnumerator DoSpawnAsync(Action<T> callback);
     }
 }
