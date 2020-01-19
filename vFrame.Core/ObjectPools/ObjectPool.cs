@@ -67,6 +67,9 @@ namespace vFrame.Core.ObjectPools
             lock (_lockObject) {
                 if (_objects.Contains(obj))
                     return;
+                if (obj is IPoolObjectResetable resetable) {
+                    resetable.Reset();
+                }
                 _objects.Push(obj);
             }
         }

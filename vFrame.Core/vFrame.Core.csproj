@@ -167,6 +167,7 @@
     <Compile Include="ObjectPools\Builtin\StringBuilderPool.cs" />
     <Compile Include="ObjectPools\IObjectPool.cs" />
     <Compile Include="ObjectPools\IPoolObjectAllocator.cs" />
+    <Compile Include="ObjectPools\IPoolObjectResetable.cs" />
     <Compile Include="ObjectPools\ObjectPool.cs" />
     <Compile Include="ObjectPools\ObjectPoolManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
