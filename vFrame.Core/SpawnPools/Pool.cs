@@ -193,6 +193,10 @@ namespace vFrame.Core.SpawnPools
                         "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
             }
 
+            if (_snapshots.TryGetValue(go, out var snapshot)) {
+                snapshot.Restore();
+            }
+
             var identity = go.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
                 identity = go.AddComponent<PoolObjectIdentity>();
@@ -231,10 +235,6 @@ namespace vFrame.Core.SpawnPools
 
         protected virtual void ObjectPostprocessAfterRecycle(GameObject go) {
             go.transform.SetParent(_poolGo.transform, false);
-
-            if (_snapshots.TryGetValue(go, out var snapshot)) {
-                snapshot.Restore();
-            }
 
             switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:

@@ -60,11 +60,17 @@ namespace vFrame.Core.Extensions.UnityEngine
         }
 
         public static void EnableAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform, v => v.gameObject.SetActive(true));
+            TravelSelfAndChildren<ParticleSystem>(transform, v => {
+                var emission = v.emission;
+                emission.enabled = true;
+            });
         }
 
         public static void DisableAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform, v => v.gameObject.SetActive(false));
+            TravelSelfAndChildren<ParticleSystem>(transform, v => {
+                var emission = v.emission;
+                emission.enabled = false;
+            });
         }
 
         public static void EnableAllAnimations(this Transform transform) {
