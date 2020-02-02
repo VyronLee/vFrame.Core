@@ -8,10 +8,12 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System;
 using System.Collections;
 
 namespace vFrame.Core.Coroutine
 {
+    [Serializable]
     internal struct CoroutineTask
     {
         public int Handle;

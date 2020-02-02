@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\Build\vFrame.Core\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;UNITY_EDITOR</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;UNITY_EDITOR;DEBUG_COROUTINE_POOL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -117,6 +117,8 @@
     <Compile Include="Components\IComponent.cs" />
     <Compile Include="Coroutine\CoroutineBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePool.cs" />
+    <Compile Include="Coroutine\CoroutinePoolBehaviour.cs" />
+    <Compile Include="Coroutine\CoroutineState.cs" />
     <Compile Include="Coroutine\CoroutineTask.cs" />
     <Compile Include="Crypto\CryptoService.cs" />
     <Compile Include="Crypto\CryptoType.cs" />

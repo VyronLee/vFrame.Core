@@ -11,6 +11,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.Loggers;
+using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Coroutine
 {
@@ -34,22 +36,24 @@ namespace vFrame.Core.Coroutine
             }
         }
 
-        private readonly int _capacity;
-        private readonly GameObject _holder;
-        private readonly List<CoroutineBehaviour> _coroutineList;
-        private int _taskHandle;
+        internal readonly int Capacity;
+        internal readonly List<CoroutineBehaviour> CoroutineList;
+        internal readonly List<CoroutineTask> TasksRunning;
+        internal readonly List<CoroutineTask> TasksWaiting;
 
-        private readonly Dictionary<int, CoroutineTask> _tasksRunning;
-        private readonly LinkedList<CoroutineTask> _tasksWaiting;
+        private readonly GameObject _holder;
+        private int _taskHandle;
+        private static readonly LogTag LogTag = new LogTag("CoroutinePool");
 
         public CoroutinePool(string name = null, int capacity = int.MaxValue) {
-            _capacity = capacity;
-            _coroutineList = new List<CoroutineBehaviour>();
+            Capacity = capacity;
+            CoroutineList = new List<CoroutineBehaviour>();
 
-            _tasksRunning = new Dictionary<int, CoroutineTask>();
-            _tasksWaiting = new LinkedList<CoroutineTask>();
+            TasksRunning = new List<CoroutineTask>(16);
+            TasksWaiting = new List<CoroutineTask>(16);
 
             _holder = new GameObject(string.Format("Pool_{0}({1})", ++_index, name ?? "Unnamed"));
+            _holder.AddComponent<CoroutinePoolBehaviour>().Pool = this;
             _holder.transform.SetParent(PoolParent.transform);
         }
 
@@ -57,22 +61,22 @@ namespace vFrame.Core.Coroutine
             var handle = GenerateTaskHandle();
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:StartCoroutine - handle: " + handle);
+           Logger.Info(LogTag, "CoroutinePool:StartCoroutine - handle: " + handle);
 #endif
 
             var context = new CoroutineTask {Handle = handle, Task = task};
 
-            if (_tasksRunning.Count < _capacity) {
+            if (TasksRunning.Count < Capacity) {
 #if DEBUG_COROUTINE_POOL
-                Debug.Log("CoroutinePool:StartCoroutine - pool not full, start running task ..");
+                Logger.Info(LogTag, "CoroutinePool:StartCoroutine - pool not full, start running task ..");
 #endif
                 RunTask(context);
             }
             else {
 #if DEBUG_COROUTINE_POOL
-                Debug.Log("CoroutinePool:StartCoroutine - pool is full, add to waiting list ..");
+                Logger.Info(LogTag, "CoroutinePool:StartCoroutine - pool is full, add to waiting list ..");
 #endif
-                _tasksWaiting.AddLast(context);
+                TasksWaiting.Add(context);
             }
 
             return handle;
@@ -80,31 +84,54 @@ namespace vFrame.Core.Coroutine
 
         public void StopCoroutine(int handle) {
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine: " + handle);
+            Logger.Info(LogTag, "CoroutinePool:StopCoroutine - Stopping coroutine: " + handle);
 #endif
             // Remove from waiting list
-            foreach (var context in _tasksWaiting) {
+            foreach (var context in TasksWaiting) {
                 if (context.Handle != handle)
                     continue;
-                _tasksWaiting.Remove(context);
+                TasksWaiting.Remove(context);
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
+                Logger.Info(LogTag, "CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
 #endif
                 break;
             }
 
             // Remove from running list
-            foreach (var kv in _tasksRunning) {
-                if (kv.Key != handle)
+            foreach (var task in TasksRunning) {
+                if (task.Handle != handle)
                     continue;
 
-                var runner = _coroutineList[kv.Value.RunnerId];
-                runner.StopAllCoroutines();
-                _tasksRunning.Remove(handle);
+                var runner = CoroutineList[task.RunnerId];
+                runner.CoStop();
+
+                TasksRunning.Remove(task);
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine, remove from running list: " + handle);
+                Logger.Info(LogTag, "CoroutinePool:StopCoroutine - Stopping coroutine, remove from running list: " + handle);
 #endif
+                break;
+            }
+        }
+
+        public void PauseCoroutine(int handle) {
+            foreach (var task in TasksRunning) {
+                if (task.Handle != handle)
+                    continue;
+
+                var runner = CoroutineList[task.RunnerId];
+                runner.Pause();
+                break;
+            }
+        }
+
+        public void UnPauseCoroutine(int handle) {
+            foreach (var task in TasksRunning) {
+                if (task.Handle != handle)
+                    continue;
+
+                var runner = CoroutineList[task.RunnerId];
+                runner.UnPause();
                 break;
             }
         }
@@ -117,39 +144,43 @@ namespace vFrame.Core.Coroutine
             context.RunnerId = FindIdleRunner();
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:RunTask - Run task, runnerId: " + context.runnerId);
+            Logger.Info(LogTag, "CoroutinePool:RunTask - Run task, runnerId: " + context.RunnerId);
 #endif
 
             var runner = GetOrSpawnRunner(context.RunnerId);
-            runner.StartCoroutine(TaskProcessWrap(context));
+            runner.CoStart(TaskProcessWrap(context));
 
-            _tasksRunning.Add(context.Handle, context);
+            if (runner.IsRunning()) {
+                TasksRunning.Add(context);
+            }
         }
 
         private CoroutineBehaviour GetOrSpawnRunner(int runnerId) {
-            if (runnerId < _coroutineList.Count) {
+            if (runnerId < CoroutineList.Count) {
 #if DEBUG_COROUTINE_POOL
-                Debug.Log("CoroutinePool:GetOrSpawnRunner - runner exist: " + runnerId);
+                Logger.Info(LogTag, "CoroutinePool:GetOrSpawnRunner - runner exist: " + runnerId);
 #endif
-                return _coroutineList[runnerId];
+                return CoroutineList[runnerId];
             }
 
             var runner = new GameObject("Coroutine_" + runnerId).AddComponent<CoroutineBehaviour>();
+            runner.OnFinished = PopupAndRunNext;
             runner.transform.SetParent(_holder.transform);
-            _coroutineList.Add(runner);
+
+            CoroutineList.Add(runner);
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:GetOrSpawnRunner - spawning new runner: " + runnerId);
+            Logger.Info(LogTag, "CoroutinePool:GetOrSpawnRunner - spawning new runner: " + runnerId);
 #endif
 
             return runner;
         }
 
         private int FindIdleRunner() {
-            for (var i = 0; i < _capacity; i++) {
+            for (var i = 0; i < Capacity; i++) {
                 var running = false;
-                foreach (var kv in _tasksRunning) {
-                    if (kv.Value.RunnerId != i)
+                foreach (var task in TasksRunning) {
+                    if (task.RunnerId != i)
                         continue;
                     running = true;
                     break;
@@ -163,33 +194,26 @@ namespace vFrame.Core.Coroutine
         }
 
         private IEnumerator TaskProcessWrap(CoroutineTask context) {
-            // Avoid finishing immediately
-            yield return null;
-
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:TaskProcessWrap - task starting: " + context.task.GetHashCode());
+            Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task starting: " + context.Task.GetHashCode());
 #endif
             yield return context.Task;
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:TaskProcessWrap - task finished: " + context.task.GetHashCode());
+            Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task finished: " + context.Task.GetHashCode());
 #endif
-
-            _coroutineList[context.RunnerId].StopAllCoroutines();
-            _tasksRunning.Remove(context.Handle);
-
-            PopupAndRunNext();
+            TasksRunning.Remove(context);
         }
 
         private void PopupAndRunNext() {
-            if (_tasksWaiting.Count <= 0)
+            if (TasksWaiting.Count <= 0)
                 return;
 
-            var context = _tasksWaiting.First.Value;
-            _tasksWaiting.RemoveFirst();
+            var context = TasksWaiting[0];
+            TasksWaiting.RemoveAt(0);
 
 #if DEBUG_COROUTINE_POOL
-            Debug.Log("CoroutinePool:PopupAndRunNext - popup new task: " + context.handle);
+            Logger.Info(LogTag, "CoroutinePool:PopupAndRunNext - popup new task: " + context.Handle);
 #endif
 
             RunTask(context);
