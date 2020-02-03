@@ -130,12 +130,17 @@ namespace vFrame.Core.SpawnPools
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
-                yield return _builder.SpawnAsync(v => obj = v);
+                yield return _builder.SpawnAsync(v => {
+                    obj = v;
 
-                var snapshot = new PoolObjectSnapshot();
-                snapshot.Create(obj);
-                snapshot.Take();
-                _snapshots.Add(obj, snapshot);
+                    var snapshot = new PoolObjectSnapshot();
+                    snapshot.Create(obj);
+                    snapshot.Take();
+                    _snapshots.Add(obj, snapshot);
+
+                    obj.transform.DisableAllRenderer();
+                });
+                obj.transform.EnableAllRenderer();
             }
 
             OnSpawn(obj);
