@@ -191,7 +191,8 @@ namespace vFrame.Core.SpawnPools
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     go.transform.EnableAllAnimations();
                     go.transform.EnableAllAnimators();
-                    go.transform.EnableAllParticleSystems();
+                    go.transform.ClearAllTrailRendererEx();
+                    go.transform.StartAllParticleSystems();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -248,8 +249,8 @@ namespace vFrame.Core.SpawnPools
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     go.transform.DisableAllAnimators();
                     go.transform.DisableAllAnimations();
-                    go.transform.DisableAllParticleSystems();
-                    go.transform.ClearAllTrailRenderers();
+                    go.transform.StopAllParticleSystems();
+                    go.transform.ClearAllTrailRendererEx();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(

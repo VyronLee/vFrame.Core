@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 namespace vFrame.Core.Behaviours
 {
@@ -36,6 +37,12 @@ namespace vFrame.Core.Behaviours
             return _paused;
         }
 
+        public void Clear()
+        {
+            _trailRender.time = 0;
+            StartCoroutine(ResetTrail());
+        }
+
         public float TimeScale {
             get => _timeScale;
             set {
@@ -50,6 +57,11 @@ namespace vFrame.Core.Behaviours
             if (_paused) {
                 return;
             }
+            _trailRender.time = _trailTime / _timeScale;
+        }
+
+        private IEnumerator ResetTrail() {
+            yield return null;
             _trailRender.time = _trailTime / _timeScale;
         }
     }

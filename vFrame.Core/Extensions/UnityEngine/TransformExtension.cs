@@ -11,6 +11,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using vFrame.Core.Behaviours;
 
 namespace vFrame.Core.Extensions.UnityEngine
 {
@@ -59,17 +60,9 @@ namespace vFrame.Core.Extensions.UnityEngine
                 v => v.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear));
         }
 
-        public static void EnableAllParticleSystems(this Transform transform) {
+        public static void ClearAllParticleSystems(this Transform transform) {
             TravelSelfAndChildren<ParticleSystem>(transform, v => {
-                var emission = v.emission;
-                emission.enabled = true;
-            });
-        }
-
-        public static void DisableAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform, v => {
-                var emission = v.emission;
-                emission.enabled = false;
+                v.Clear(true);
             });
         }
 
@@ -97,8 +90,34 @@ namespace vFrame.Core.Extensions.UnityEngine
             TravelSelfAndChildren<Animator>(transform, v => v.enabled = false);
         }
 
+        public static void EnableAllTrailRenderers(this Transform transform) {
+            TravelSelfAndChildren<TrailRenderer>(transform, v => v.enabled = true);
+        }
+
+        public static void DisableAllTrailRenderers(this Transform transform) {
+            TravelSelfAndChildren<TrailRenderer>(transform, v => v.enabled = false);
+        }
+
+        public static void EnableAndClearAllTrailRenderers(this Transform transform) {
+            TravelSelfAndChildren<TrailRenderer>(transform, v => {
+                v.enabled = true;
+                v.Clear();
+            });
+        }
+
+        public static void DisableAndClearAllTrailRenderers(this Transform transform) {
+            TravelSelfAndChildren<TrailRenderer>(transform, v => {
+                v.enabled = false;
+                v.Clear();
+            });
+        }
+
         public static void ClearAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
+            TravelSelfAndChildren<TrailRendererEx>(transform, v => v.Clear());
+        }
+
+        public static void ClearAllTrailRendererEx(this Transform transform) {
+            TravelSelfAndChildren<TrailRendererEx>(transform, v => v.Clear());
         }
     }
 }
