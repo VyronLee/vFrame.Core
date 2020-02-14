@@ -28,7 +28,9 @@ namespace vFrame.Core.FileReader
                 return;
             _betterStreamingAssetsInited = true;
 
+#if UNITY_ANDROID
             BetterStreamingAssets.Initialize();
+#endif
         }
 
         public FileReader(ICryptoService crypto, byte[] key, int keyLength) {

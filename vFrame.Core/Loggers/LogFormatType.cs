@@ -14,8 +14,7 @@ namespace vFrame.Core.Loggers
     {
         public const int Tag = 1;
         public const int Time = 1 << 1;
-        public const int Frame = 1 << 2;
-        public const int Class = 1 << 3;
-        public const int Function = 1 << 4;
+        public const int Class = 1 << 2;
+        public const int Function = 1 << 3;
     }
 }

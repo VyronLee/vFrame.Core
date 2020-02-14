@@ -8,8 +8,6 @@
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
 
-using System;
-
 namespace vFrame.Core.Loggers
 {
     public enum LogLevelDef
@@ -19,24 +17,5 @@ namespace vFrame.Core.Loggers
         Warning = 4,
         Error = 8,
         Fatal = 16,
-    }
-
-    public static class LogLevelExtension
-    {
-        public static UnityEngine.LogType ToUnityLogLevel(this LogLevelDef level) {
-            switch (Logger.LogLevel) {
-                case LogLevelDef.Debug:
-                case LogLevelDef.Info:
-                    return UnityEngine.LogType.Log;
-                case LogLevelDef.Warning:
-                    return UnityEngine.LogType.Warning;
-                case LogLevelDef.Error:
-                    return UnityEngine.LogType.Assert;
-                case LogLevelDef.Fatal:
-                    return UnityEngine.LogType.Exception;
-                default:
-                    throw new ArgumentOutOfRangeException("level");
-            }
-        }
     }
 }

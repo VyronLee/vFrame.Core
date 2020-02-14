@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine;
 using vFrame.Core.ObjectPools.Builtin;
 
 namespace vFrame.Core.Loggers
@@ -100,24 +99,7 @@ namespace vFrame.Core.Loggers
                 LogQueue.Enqueue(context);
             }
 
-            switch (level) {
-                case LogLevelDef.Debug:
-                case LogLevelDef.Info:
-                    UnityEngine.Debug.Log(content);
-                    break;
-                case LogLevelDef.Warning:
-                    UnityEngine.Debug.LogWarning(content);
-                    break;
-                case LogLevelDef.Error:
-                case LogLevelDef.Fatal:
-                    UnityEngine.Debug.LogError(content);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("level", level, null);
-            }
-
-            if (OnLogReceived != null)
-                OnLogReceived(context);
+            OnLogReceived?.Invoke(context);
         }
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
@@ -132,12 +114,6 @@ namespace vFrame.Core.Loggers
             if ((LoggerSetting.LogFormatMask & LogFormatType.Time) > 0) {
                 builder.Append(DateTime.Now.ToString("[HH:mm:ss:fff]"));
                 builder.Append(" ");
-            }
-
-            if ((LoggerSetting.LogFormatMask & LogFormatType.Frame) > 0) {
-                builder.Append("[");
-                builder.Append(Time.frameCount);
-                builder.Append("] ");
             }
 
             if ((LoggerSetting.LogFormatMask & LogFormatType.Class) > 0) {

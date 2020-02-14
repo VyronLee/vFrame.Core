@@ -42,6 +42,9 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release(Lite)|AnyCPU' ">
+    <OutputPath>bin\Release(Lite)\</OutputPath>
+  </PropertyGroup>
   <PropertyGroup>
     <NoConfig>true</NoConfig>
     <NoStdLib>true</NoStdLib>
