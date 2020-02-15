@@ -4,23 +4,21 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}</ProjectGuid>
+    <ProjectGuid>{95047269-9482-43B6-923C-5B7899385702}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>vFrame.Core</RootNamespace>
-    <AssemblyName>vFrame.Core.Lite</AssemblyName>
+    <AssemblyName>vFrame.Core.Unity</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\Build\vFrame.Core.Lite\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <OutputPath>..\Build\Debug\Runtime</OutputPath>
+    <DefineConstants>DEBUG;TRACE;UNITY_EDITOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -28,13 +26,10 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Build\vFrame.Core\Release</OutputPath>
+    <OutputPath>..\Build\Release\Runtime</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
     <NoConfig>true</NoConfig>
@@ -76,97 +71,89 @@
     <Reference Include="System">
       <HintPath>/Applications/Unity.app/Contents/NetStandard/compat/2.0.0/shims/netfx/System.dll</HintPath>
     </Reference>
+    <Reference Condition="'$(Configuration)|$(Platform)' != 'Release|AnyCPU'" Include="UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>/Applications/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>/Applications/Unity.app/Contents/MonoBleedingEdge/lib/mono/4.7.1-api/Facades/System.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="3rd\LitJson\IJsonWrapper.cs" />
-    <Compile Include="3rd\LitJson\JsonData.cs" />
-    <Compile Include="3rd\LitJson\JsonException.cs" />
-    <Compile Include="3rd\LitJson\JsonMapper.cs" />
-    <Compile Include="3rd\LitJson\JsonMockWrapper.cs" />
-    <Compile Include="3rd\LitJson\JsonReader.cs" />
-    <Compile Include="3rd\LitJson\JsonWriter.cs" />
-    <Compile Include="3rd\LitJson\Lexer.cs" />
-    <Compile Include="3rd\LitJson\ParserToken.cs" />
-    <Compile Include="3rd\StringBuffer.cs" />
-    <Compile Include="Base\BaseObject.cs" />
-    <Compile Include="Base\IAsync.cs" />
-    <Compile Include="Base\IBaseObject.cs" />
-    <Compile Include="Components\Container.cs" />
-    <Compile Include="Components\Component.cs" />
-    <Compile Include="Components\IContainer.cs" />
-    <Compile Include="Components\IComponent.cs" />
-    <Compile Include="Crypto\CryptoService.cs" />
-    <Compile Include="Crypto\CryptoType.cs" />
-    <Compile Include="Crypto\ICryptoService.cs" />
-    <Compile Include="Crypto\PlainCryptoService.cs" />
-    <Compile Include="Crypto\XORCryptoService.cs" />
-    <Compile Include="Events\DelegateEventListener.cs" />
-    <Compile Include="Events\DelegateVoteListener.cs" />
-    <Compile Include="Events\Event.cs" />
-    <Compile Include="Events\EventDispatcher.cs" />
-    <Compile Include="Events\EventExecutor.cs" />
-    <Compile Include="Events\EventExecutorPool.cs" />
-    <Compile Include="Events\EventPool.cs" />
-    <Compile Include="Events\IEvent.cs" />
-    <Compile Include="Events\IEventDispatcher.cs" />
-    <Compile Include="Events\IEventListener.cs" />
-    <Compile Include="Events\IVote.cs" />
-    <Compile Include="Events\IVoteListener.cs" />
-    <Compile Include="Events\Vote.cs" />
-    <Compile Include="Events\VoteExecutor.cs" />
-    <Compile Include="Events\VoteExecutorPool.cs" />
-    <Compile Include="Events\VotePool.cs" />
-    <Compile Include="Extensions\ByteExtension.cs" />
-    <Compile Include="Extensions\StringExtension.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_BetterStreamingAssets.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_PathUtil.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_SubReadOnlyStream.cs" />
+    <Compile Include="3rd\BatterStreamingAssets\BSA_ZipArchive.cs" />
+    <Compile Include="3rd\SerializableDictionary.cs" />
+    <Compile Include="Behaviours\AnimationList.cs" />
+    <Compile Include="Behaviours\AudioPlayer.cs" />
+    <Compile Include="Behaviours\TrailRendererEx.cs" />
+    <Compile Include="Coroutine\CoroutineBehaviour.cs" />
+    <Compile Include="Coroutine\CoroutinePool.cs" />
+    <Compile Include="Coroutine\CoroutinePoolBehaviour.cs" />
+    <Compile Include="Coroutine\CoroutineState.cs" />
+    <Compile Include="Coroutine\CoroutineTask.cs" />
+    <Compile Include="Download\DownloadAgentBase.cs" />
+    <Compile Include="Download\DownloadAgentWebClient.cs" />
+    <Compile Include="Download\DownloadEventArgs.cs" />
+    <Compile Include="Download\DownloadManager.cs" />
+    <Compile Include="Download\DownloadSpeedCounter.cs" />
+    <Compile Include="Download\DownloadTask.cs" />
+    <Compile Include="Download\IDownloadAgent.cs" />
+    <Compile Include="Extensions\UnityEngine\AnimationExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\ComponentExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\GameObjectExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\TransformExtension.cs" />
+    <Compile Include="Extensions\UnityEngine\UI\RectTransformExtension.cs" />
     <Compile Include="FileReader\FileReader.cs" />
     <Compile Include="FileReader\FileReaderAsync.cs" />
     <Compile Include="FileReader\FileReaderRequest.cs" />
     <Compile Include="FileReader\IFileReader.cs" />
     <Compile Include="FileReader\IFileReaderAsync.cs" />
-    <Compile Include="Localize\ILocalization.cs" />
-    <Compile Include="Localize\Localization.cs" />
-    <Compile Include="Localize\ILocalizationReader.cs" />
-    <Compile Include="Loggers\LogFormatType.cs" />
-    <Compile Include="Loggers\Logger.cs" />
-    <Compile Include="Loggers\LoggerSetting.cs" />
-    <Compile Include="Loggers\LogLevelDef.cs" />
-    <Compile Include="Loggers\LogTag.cs" />
-    <Compile Include="Loggers\StackTraceUtility.cs" />
-    <Compile Include="ObjectPools\Builtin\DictionaryAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\DictionaryPool.cs" />
-    <Compile Include="ObjectPools\Builtin\HashSetAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\HashSetPool.cs" />
-    <Compile Include="ObjectPools\Builtin\ListAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\ListPool.cs" />
-    <Compile Include="ObjectPools\Builtin\QueueAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\QueuePool.cs" />
-    <Compile Include="ObjectPools\Builtin\StackAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\StackPool.cs" />
-    <Compile Include="ObjectPools\Builtin\StringBuilderAllocator.cs" />
-    <Compile Include="ObjectPools\Builtin\StringBuilderPool.cs" />
-    <Compile Include="ObjectPools\IObjectPool.cs" />
-    <Compile Include="ObjectPools\IPoolObjectAllocator.cs" />
-    <Compile Include="ObjectPools\IPoolObjectResetable.cs" />
-    <Compile Include="ObjectPools\ObjectPool.cs" />
-    <Compile Include="ObjectPools\ObjectPoolManager.cs" />
+    <Compile Include="Loggers\LogLevelExtension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Singletons\Singleton.cs" />
-    <Compile Include="ThreadPools\ThreadPool.cs" />
-    <Compile Include="Utils\EnumUtils.cs" />
-    <Compile Include="Utils\MessageDigestUtils.cs" />
-    <Compile Include="Utils\TimeUtils.cs" />
+    <Compile Include="Singletons\MonoSingleton.cs" />
+    <Compile Include="SpawnPools\Behaviours\PoolObjectIdentity.cs" />
+    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPath.cs" />
+    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPathFactory.cs" />
+    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPrefabInstance.cs" />
+    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPrefabInstanceFactory.cs" />
+    <Compile Include="SpawnPools\Builders\IGameObjectBuilder.cs" />
+    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFactory.cs" />
+    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFromPath.cs" />
+    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFromPrefabInstance.cs" />
+    <Compile Include="SpawnPools\IPool.cs" />
+    <Compile Include="SpawnPools\ISpawnPools.cs" />
+    <Compile Include="SpawnPools\Pool.cs" />
+    <Compile Include="SpawnPools\Snapshots\GameObjectSnapshot.cs" />
+    <Compile Include="SpawnPools\Snapshots\PoolObjectSnapshot.cs" />
+    <Compile Include="SpawnPools\Snapshots\Snapshot.cs" />
+    <Compile Include="SpawnPools\Snapshots\TransformSnapshot.cs" />
+    <Compile Include="SpawnPools\SpawnPools.cs" />
+    <Compile Include="SpawnPools\SpawnPoolsSetting.cs" />
+    <Compile Include="Update\AssetsUpdater.cs" />
+    <Compile Include="Update\HashChecker.cs" />
+    <Compile Include="Update\Manifest.cs" />
+    <Compile Include="Update\Manifest.Json.cs" />
+    <Compile Include="Update\UpdateEvent.cs" />
+    <Compile Include="Update\UpdateState.cs" />
+    <Compile Include="Utils\PathUtils.cs" />
+    <Compile Include="Utils\Unity\GameObjectUtils.cs" />
+    <Compile Include="Utils\Unity\InputUtils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <Content Include="3rd\BatterStreamingAssets\README.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\vFrame.Core.Lite\vFrame.Core.Lite.csproj">
+      <Project>{a2711064-b77a-47d1-bd1d-581be4ed1fce}</Project>
+      <Name>vFrame.Core.Lite</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

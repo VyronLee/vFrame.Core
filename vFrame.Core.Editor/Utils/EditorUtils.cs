@@ -7,10 +7,11 @@
 //    Modified:  2019-11-07 20:47
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
+
 using System.IO;
 using UnityEditor;
 
-namespace vFrame.Core.Editor
+namespace vFrame.Core.Utils
 {
     public static class EditorUtils
     {

@@ -1,8 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core", "vFrame.Core\vFrame.Core.csproj", "{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Unity", "vFrame.Core.Unity\vFrame.Core.Unity.csproj", "{95047269-9482-43B6-923C-5B7899385702}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Editor", "vFrame.Core\vFrame.Core.Editor.csproj", "{ED00D69B-14DC-56F3-FB90-057D40F89F3F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Lite", "vFrame.Core.Lite\vFrame.Core.Lite.csproj", "{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Editor", "vFrame.Core.Editor\vFrame.Core.Editor.csproj", "{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,13 +12,17 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95047269-9482-43B6-923C-5B7899385702}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95047269-9482-43B6-923C-5B7899385702}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95047269-9482-43B6-923C-5B7899385702}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95047269-9482-43B6-923C-5B7899385702}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ED00D69B-14DC-56F3-FB90-057D40F89F3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED00D69B-14DC-56F3-FB90-057D40F89F3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED00D69B-14DC-56F3-FB90-057D40F89F3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED00D69B-14DC-56F3-FB90-057D40F89F3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>vFrame.Core</RootNamespace>
-    <AssemblyName>vFrame.Core</AssemblyName>
+    <AssemblyName>vFrame.Core.Lite</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <LangVersion>latest</LangVersion>
@@ -19,8 +19,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\Build\vFrame.Core\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;UNITY_EDITOR;DEBUG_COROUTINE_POOL</DefineConstants>
+    <OutputPath>..\Build\Debug\Runtime</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -28,7 +28,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Build\vFrame.Core\Release</OutputPath>
+    <OutputPath>..\Build\Release\Runtime</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -53,17 +53,8 @@
     <Reference Include="System">
       <HintPath>C:/Program Files/Unity/Editor/Data/NetStandard/compat/2.0.0/shims/netfx/System.dll</HintPath>
     </Reference>
-    <Reference Condition="'$(Configuration)|$(Platform)' != 'Release|AnyCPU'" Include="UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>C:\Program Files\Unity\Editor\Data\Managed\UnityEditor.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>C:\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>C:\Program Files\Unity\Editor\Data\UnityExtensions\Unity\GUISystem\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>C:\Program Files\Unity\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\Facades\System.Runtime.dll</HintPath>
+      <HintPath>C:/Program Files/Unity/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/Facades/System.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(OS)' == 'Unix' ">
@@ -76,24 +67,11 @@
     <Reference Include="System">
       <HintPath>/Applications/Unity.app/Contents/NetStandard/compat/2.0.0/shims/netfx/System.dll</HintPath>
     </Reference>
-    <Reference Condition="'$(Configuration)|$(Platform)' != 'Release|AnyCPU'" Include="UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEditor.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>/Applications/Unity.app/Contents/Managed/UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>/Applications/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>/Applications/Unity.app/Contents/MonoBleedingEdge/lib/mono/4.7.1-api/Facades/System.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="3rd\BatterStreamingAssets\BSA_BetterStreamingAssets.cs" />
-    <Compile Include="3rd\BatterStreamingAssets\BSA_PathUtil.cs" />
-    <Compile Include="3rd\BatterStreamingAssets\BSA_SubReadOnlyStream.cs" />
-    <Compile Include="3rd\BatterStreamingAssets\BSA_ZipArchive.cs" />
     <Compile Include="3rd\LitJson\IJsonWrapper.cs" />
     <Compile Include="3rd\LitJson\JsonData.cs" />
     <Compile Include="3rd\LitJson\JsonException.cs" />
@@ -103,35 +81,19 @@
     <Compile Include="3rd\LitJson\JsonWriter.cs" />
     <Compile Include="3rd\LitJson\Lexer.cs" />
     <Compile Include="3rd\LitJson\ParserToken.cs" />
-    <Compile Include="3rd\SerializableDictionary.cs" />
     <Compile Include="3rd\StringBuffer.cs" />
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />
     <Compile Include="Base\IBaseObject.cs" />
-    <Compile Include="Behaviours\AnimationList.cs" />
-    <Compile Include="Behaviours\AudioPlayer.cs" />
-    <Compile Include="Behaviours\TrailRendererEx.cs" />
     <Compile Include="Components\Container.cs" />
     <Compile Include="Components\Component.cs" />
     <Compile Include="Components\IContainer.cs" />
     <Compile Include="Components\IComponent.cs" />
-    <Compile Include="Coroutine\CoroutineBehaviour.cs" />
-    <Compile Include="Coroutine\CoroutinePool.cs" />
-    <Compile Include="Coroutine\CoroutinePoolBehaviour.cs" />
-    <Compile Include="Coroutine\CoroutineState.cs" />
-    <Compile Include="Coroutine\CoroutineTask.cs" />
     <Compile Include="Crypto\CryptoService.cs" />
     <Compile Include="Crypto\CryptoType.cs" />
     <Compile Include="Crypto\ICryptoService.cs" />
     <Compile Include="Crypto\PlainCryptoService.cs" />
     <Compile Include="Crypto\XORCryptoService.cs" />
-    <Compile Include="Download\DownloadAgentBase.cs" />
-    <Compile Include="Download\DownloadAgentWebClient.cs" />
-    <Compile Include="Download\DownloadEventArgs.cs" />
-    <Compile Include="Download\DownloadManager.cs" />
-    <Compile Include="Download\DownloadSpeedCounter.cs" />
-    <Compile Include="Download\DownloadTask.cs" />
-    <Compile Include="Download\IDownloadAgent.cs" />
     <Compile Include="Events\DelegateEventListener.cs" />
     <Compile Include="Events\DelegateVoteListener.cs" />
     <Compile Include="Events\Event.cs" />
@@ -150,16 +112,6 @@
     <Compile Include="Events\VotePool.cs" />
     <Compile Include="Extensions\ByteExtension.cs" />
     <Compile Include="Extensions\StringExtension.cs" />
-    <Compile Include="Extensions\UnityEngine\AnimationExtension.cs" />
-    <Compile Include="Extensions\UnityEngine\ComponentExtension.cs" />
-    <Compile Include="Extensions\UnityEngine\GameObjectExtension.cs" />
-    <Compile Include="Extensions\UnityEngine\TransformExtension.cs" />
-    <Compile Include="Extensions\UnityEngine\UI\RectTransformExtension.cs" />
-    <Compile Include="FileReader\FileReader.cs" />
-    <Compile Include="FileReader\FileReaderAsync.cs" />
-    <Compile Include="FileReader\FileReaderRequest.cs" />
-    <Compile Include="FileReader\IFileReader.cs" />
-    <Compile Include="FileReader\IFileReaderAsync.cs" />
     <Compile Include="Localize\ILocalization.cs" />
     <Compile Include="Localize\Localization.cs" />
     <Compile Include="Localize\ILocalizationReader.cs" />
@@ -167,7 +119,6 @@
     <Compile Include="Loggers\Logger.cs" />
     <Compile Include="Loggers\LoggerSetting.cs" />
     <Compile Include="Loggers\LogLevelDef.cs" />
-    <Compile Include="Loggers\LogLevelExtension.cs" />
     <Compile Include="Loggers\LogTag.cs" />
     <Compile Include="Loggers\StackTraceUtility.cs" />
     <Compile Include="ObjectPools\Builtin\DictionaryAllocator.cs" />
@@ -187,43 +138,12 @@
     <Compile Include="ObjectPools\IPoolObjectResetable.cs" />
     <Compile Include="ObjectPools\ObjectPool.cs" />
     <Compile Include="ObjectPools\ObjectPoolManager.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Singletons\MonoSingleton.cs" />
+    <Compile Include="Properties\AssemblyInfo.Lite.cs" />
     <Compile Include="Singletons\Singleton.cs" />
-    <Compile Include="SpawnPools\Behaviours\PoolObjectIdentity.cs" />
-    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPathFactory.cs" />
-    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPrefabInstance.cs" />
-    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPrefabInstanceFactory.cs" />
-    <Compile Include="SpawnPools\Builders\IGameObjectBuilder.cs" />
-    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFromPath.cs" />
-    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFromPrefabInstance.cs" />
-    <Compile Include="SpawnPools\Builders\IGameObjectBuilderFactory.cs" />
-    <Compile Include="SpawnPools\IPool.cs" />
-    <Compile Include="SpawnPools\ISpawnPools.cs" />
-    <Compile Include="SpawnPools\Builders\DefaultGameObjectBuilderFromPath.cs" />
-    <Compile Include="SpawnPools\Pool.cs" />
-    <Compile Include="SpawnPools\Snapshots\GameObjectSnapshot.cs" />
-    <Compile Include="SpawnPools\Snapshots\PoolObjectSnapshot.cs" />
-    <Compile Include="SpawnPools\Snapshots\Snapshot.cs" />
-    <Compile Include="SpawnPools\Snapshots\TransformSnapshot.cs" />
-    <Compile Include="SpawnPools\SpawnPools.cs" />
-    <Compile Include="SpawnPools\SpawnPoolsSetting.cs" />
     <Compile Include="ThreadPools\ThreadPool.cs" />
-    <Compile Include="Update\AssetsUpdater.cs" />
-    <Compile Include="Update\UpdateState.cs" />
-    <Compile Include="Update\HashChecker.cs" />
-    <Compile Include="Update\Manifest.cs" />
-    <Compile Include="Update\Manifest.Json.cs" />
-    <Compile Include="Update\UpdateEvent.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\MessageDigestUtils.cs" />
-    <Compile Include="Utils\PathUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
-    <Compile Include="Utils\Unity\GameObjectUtils.cs" />
-    <Compile Include="Utils\Unity\InputUtils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="3rd\BatterStreamingAssets\README.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
