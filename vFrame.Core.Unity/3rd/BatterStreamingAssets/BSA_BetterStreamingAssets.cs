@@ -23,10 +23,12 @@ public static class BetterStreamingAssets
 {
     internal struct ReadInfo
     {
+        #pragma warning disable CS0649
         public string readPath;
         public long size;
         public long offset;
         public uint crc32;
+        #pragma warning restore CS0649
     }
 
     public static string Root {

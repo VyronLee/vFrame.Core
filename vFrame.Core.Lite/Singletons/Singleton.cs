@@ -18,6 +18,8 @@ namespace vFrame.Core.Singletons
     {
         private static T _instance;
 
+        private static readonly object _lockObject = new object();
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -38,7 +40,14 @@ namespace vFrame.Core.Singletons
         ///     获取单例
         /// </summary>
         public static T Instance() {
-            return _instance ?? (_instance = NewInstance());
+            if (null == _instance) {
+                lock (_lockObject) {
+                    if (null == _instance) {
+                        _instance = NewInstance();
+                    }
+                }
+            }
+            return _instance;
         }
 
         /// <summary>

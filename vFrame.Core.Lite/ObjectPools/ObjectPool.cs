@@ -34,14 +34,19 @@ namespace vFrame.Core.ObjectPools
         private Stack<TClass> _objects;
 
         private readonly object _lockObject = new object();
+        private static readonly object _instanceLockObject = new object();
 
         private static ObjectPool<TClass> _instance;
 
         private static ObjectPool<TClass> Instance {
             get {
                 if (null == _instance) {
-                    _instance = new ObjectPool<TClass>();
-                    _instance.Initialize();
+                    lock (_instanceLockObject) {
+                        if (null == _instance) {
+                            _instance = new ObjectPool<TClass>();
+                            _instance.Initialize();
+                        }
+                    }
                 }
                 return _instance;
             }
@@ -106,13 +111,18 @@ namespace vFrame.Core.ObjectPools
         private TAllocator _allocator;
 
         private readonly object _lockObject = new object();
+        private static readonly object _instanceLockObject = new object();
 
         private static ObjectPool<TClass, TAllocator> _instance;
         private static ObjectPool<TClass, TAllocator> Instance {
             get {
                 if (null == _instance) {
-                    _instance = new ObjectPool<TClass, TAllocator>();
-                    _instance.Initialize();
+                    lock (_instanceLockObject) {
+                        if (null == _instance) {
+                            _instance = new ObjectPool<TClass, TAllocator>();
+                            _instance.Initialize();
+                        }
+                    }
                 }
                 return _instance;
             }
