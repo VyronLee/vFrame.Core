@@ -59,7 +59,10 @@ namespace vFrame.Core.Behaviours
         /// <returns></returns>
         public bool Play(string animationName) {
             var clip = GetAnimation(animationName);
-            return clip && _animation.Play(clip.name);
+            if(!clip)
+                return false;
+            _animation.Reset();
+            return _animation.Play(clip.name);
         }
 
         /// <summary>

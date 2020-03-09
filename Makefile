@@ -4,7 +4,7 @@ Compiler = msbuild /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
 PlatformContantsDefined_Editor = /p:DefineConstants="TRACE UNITY_EDITOR"
 PlatformContantsDefined_Android = /p:DefineConstants="TRACE UNITY_ANDROID"
 PlatformContantsDefined_IOS = /p:DefineConstants="TRACE UNITY_IOS"
-PlatformContantsDefined_STANDALONE = /p:DefineConstants="TRACE UNITY_STANDALONE"
+PlatformContantsDefined_Standalone = /p:DefineConstants="TRACE UNITY_STANDALONE"
 
 BuildDir = Build
 BuildReleaseDir = $(BuildDir)/Release
