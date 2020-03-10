@@ -112,6 +112,15 @@
     <Compile Include="Events\VotePool.cs" />
     <Compile Include="Extensions\ByteExtension.cs" />
     <Compile Include="Extensions\StringExtension.cs" />
+    <Compile Include="FileSystems\Constants\PackageConstants.cs" />
+    <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
+    <Compile Include="FileSystems\FileSystem.cs" />
+    <Compile Include="FileSystems\IFileSystem.cs" />
+    <Compile Include="FileSystems\Package\PackageStruct.cs" />
+    <Compile Include="FileSystems\Package\PackageFileSystem.cs" />
+    <Compile Include="FileSystems\Package\PackageStream.cs" />
+    <Compile Include="FileSystems\Path.cs" />
+    <Compile Include="FileSystems\Standard\StandardFileSystem.cs" />
     <Compile Include="Localize\ILocalization.cs" />
     <Compile Include="Localize\Localization.cs" />
     <Compile Include="Localize\ILocalizationReader.cs" />

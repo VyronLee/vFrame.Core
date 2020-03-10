@@ -33,7 +33,7 @@ namespace vFrame.Core.FileReader
 #endif
         }
 
-        public FileReader(ICryptoService crypto, byte[] key, int keyLength) {
+        public FileReader(ICryptoService crypto, byte[] key, int keyLength) : this() {
             _crypto = crypto;
             _key = key;
             _keyLength = keyLength;
