@@ -1,19 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems
 {
     public abstract class FileSystem : IFileSystem
     {
-        public abstract bool Open(string streamPath);
+        protected FileStreamFactory FileStreamFactory { get; set; }
 
-        public abstract bool Close();
+        public abstract void Open(Path streamPath);
 
-        public abstract bool Exist(string relativePath);
+        public abstract void Close();
 
-        public abstract Stream GetStream(string fileName, FileMode mode = FileMode.Open);
+        public abstract bool Exist(Path relativePath);
 
+        public Stream GetStream(Path fileName) {
+            return GetStream(fileName, FileMode.Open);
+        }
+
+        public Stream GetStream(Path fileName, FileMode mode) {
+            return GetStream(fileName, mode, FileAccess.ReadWrite);
+        }
+
+        public Stream GetStream(Path fileName, FileMode mode, FileAccess access) {
+            return GetStream(fileName, mode, access, FileShare.Read);
+        }
+
+        public abstract Stream GetStream(Path fileName, FileMode mode, FileAccess access, FileShare share);
 
         public virtual IList<Path> List() {
             return List(new List<Path>());

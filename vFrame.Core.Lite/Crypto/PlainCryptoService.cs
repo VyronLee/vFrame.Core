@@ -9,6 +9,7 @@
 //============================================================
 
 using System;
+using System.IO;
 
 namespace vFrame.Core.Crypto
 {
@@ -20,6 +21,14 @@ namespace vFrame.Core.Crypto
 
         public override void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             Array.Copy(input, output, input.Length);
+        }
+
+        public override void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
+            input.CopyTo(output);
+        }
+
+        public override void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
+            input.CopyTo(output);
         }
     }
 }

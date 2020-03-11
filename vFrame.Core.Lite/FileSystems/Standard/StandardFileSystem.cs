@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems.Standard
 {
@@ -8,25 +9,28 @@ namespace vFrame.Core.FileSystems.Standard
     {
         private Path _workingDir;
 
-        public override bool Open(string streamPath) {
-            _workingDir = new Path(streamPath);
-            Debug.Assert(_workingDir.IsAbsolute());
-            return true;
+        public StandardFileSystem(FileStreamFactory factory) {
+            FileStreamFactory = factory;
         }
 
-        public override bool Close() {
-            return true;
+        public override void Open(Path streamPath) {
+            Debug.Assert(streamPath.IsAbsolute());
+            _workingDir = streamPath;
         }
 
-        public override bool Exist(string relativePath) {
+        public override void Close() {
+
+        }
+
+        public override bool Exist(Path relativePath) {
             return File.Exists((_workingDir + relativePath).GetValue());
         }
 
-        public override Stream GetStream(string fileName, FileMode mode = FileMode.Open) {
+        public override Stream GetStream(Path fileName, FileMode mode, FileAccess access, FileShare share) {
             if (!Exist(fileName)) {
-                throw new FileNotFoundException("File not found: " + fileName);
+                throw new FileNotFoundException("File not found: " + fileName.GetValue());
             }
-            return new FileStream(fileName, mode);
+            return FileStreamFactory.Create(fileName.GetValue(), mode, access, share);
         }
 
         public override IList<Path> List(IList<Path> refs) {

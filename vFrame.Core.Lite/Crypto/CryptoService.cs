@@ -9,23 +9,42 @@
 //============================================================
 
 using System;
+using System.IO;
+using vFrame.Core.Base;
+using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Crypto
 {
-    public abstract class CryptoService : ICryptoService
+    public abstract class CryptoService : BaseObject, ICryptoService
     {
         public abstract void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength);
         public abstract void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
+        public abstract void Encrypt(Stream input, Stream output, byte[] key, int keyLength);
+        public abstract void Decrypt(Stream input, Stream output, byte[] key, int keyLength);
+
+        protected override void OnCreate() {
+
+        }
+
+        protected override void OnDestroy() {
+
+        }
+
         public static ICryptoService CreateCrypto(CryptoType type) {
+            CryptoService service;
             switch (type) {
                 case CryptoType.Plain:
-                    return new PlainCryptoService();
+                    service = ObjectPool<PlainCryptoService>.Get();
+                    break;
                 case CryptoType.Xor:
-                    return new XorCryptoService();
+                    service = new XorCryptoService();
+                    break;
                 default:
-                    throw new ArgumentOutOfRangeException("type", type, null);
+                    throw new ArgumentOutOfRangeException(nameof(type));
             }
+            service.Create();
+            return service;
         }
     }
 }

@@ -72,6 +72,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="3rd\7zip\Common\CommandLineParser.cs" />
+    <Compile Include="3rd\7zip\Common\CRC.cs" />
+    <Compile Include="3rd\7zip\Common\InBuffer.cs" />
+    <Compile Include="3rd\7zip\Common\OutBuffer.cs" />
+    <Compile Include="3rd\7zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="3rd\7zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="3rd\7zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="3rd\7zip\Compress\LZ\IMatchFinder.cs" />
+    <Compile Include="3rd\7zip\Compress\LZ\LzBinTree.cs" />
+    <Compile Include="3rd\7zip\Compress\LZ\LzInWindow.cs" />
+    <Compile Include="3rd\7zip\Compress\LZ\LzOutWindow.cs" />
+    <Compile Include="3rd\7zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="3rd\7zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="3rd\7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="3rd\7zip\ICoder.cs" />
     <Compile Include="3rd\LitJson\IJsonWrapper.cs" />
     <Compile Include="3rd\LitJson\JsonData.cs" />
     <Compile Include="3rd\LitJson\JsonException.cs" />
@@ -89,6 +104,12 @@
     <Compile Include="Components\Component.cs" />
     <Compile Include="Components\IContainer.cs" />
     <Compile Include="Components\IComponent.cs" />
+    <Compile Include="Compress\CompressService.cs" />
+    <Compile Include="Compress\CompressServiceOptions.cs" />
+    <Compile Include="Compress\CompressType.cs" />
+    <Compile Include="Compress\ICompressService.cs" />
+    <Compile Include="Compress\LZMA\LZMACompressOptions.cs" />
+    <Compile Include="Compress\LZMA\LZMACompressService.cs" />
     <Compile Include="Crypto\CryptoService.cs" />
     <Compile Include="Crypto\CryptoType.cs" />
     <Compile Include="Crypto\ICryptoService.cs" />
@@ -112,9 +133,14 @@
     <Compile Include="Events\VotePool.cs" />
     <Compile Include="Extensions\ByteExtension.cs" />
     <Compile Include="Extensions\StringExtension.cs" />
+    <Compile Include="FileSystems\Adapters\FileStreamAdapter_Default.cs" />
+    <Compile Include="FileSystems\Adapters\FileStreamFactory.cs" />
+    <Compile Include="FileSystems\Adapters\FileStreamFactory_Default.cs" />
+    <Compile Include="FileSystems\Adapters\FileStreamAdapter.cs" />
     <Compile Include="FileSystems\Constants\PackageConstants.cs" />
     <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
     <Compile Include="FileSystems\FileSystem.cs" />
+    <Compile Include="FileSystems\FileSystemManager.cs" />
     <Compile Include="FileSystems\IFileSystem.cs" />
     <Compile Include="FileSystems\Package\PackageStruct.cs" />
     <Compile Include="FileSystems\Package\PackageFileSystem.cs" />

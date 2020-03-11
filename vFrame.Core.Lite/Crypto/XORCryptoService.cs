@@ -8,6 +8,9 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System.Collections.Generic;
+using System.IO;
+
 namespace vFrame.Core.Crypto
 {
     public sealed class XorCryptoService : CryptoService
@@ -20,9 +23,23 @@ namespace vFrame.Core.Crypto
             XORBuffer(input, output, key, keyLength);
         }
 
-        private void XORBuffer(byte[] input, byte[] output, byte[] key, int keyLength) {
-            for (var i = 0; i < input.Length; i++) {
+        public override void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
+            XORStream(input, output, key, keyLength);
+        }
+
+        public override void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
+            XORStream(input, output, key, keyLength);
+        }
+
+        private static void XORBuffer(IReadOnlyList<byte> input, IList<byte> output, IReadOnlyList<byte> key, int keyLength) {
+            for (var i = 0; i < input.Count; i++) {
                 output[i] = (byte) (input[i] ^ key[i % keyLength]);
+            }
+        }
+
+        private static void XORStream(Stream input, Stream output, IReadOnlyList<byte> key, int keyLength) {
+            for (var i = 0; i < input.Length; i++) {
+                output.WriteByte((byte) (input.ReadByte() ^ key[i % keyLength]));
             }
         }
     }

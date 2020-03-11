@@ -1,5 +1,7 @@
 ﻿using System;
+using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Exceptions;
+using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems
 {
@@ -29,6 +31,10 @@ namespace vFrame.Core.FileSystems
 
         public string GetValue() {
             return _value;
+        }
+
+        public string GetHash() {
+            return MessageDigestUtils.MD5(_value.ToByteArray());
         }
 
         public string GetFileName() {
@@ -63,12 +69,43 @@ namespace vFrame.Core.FileSystems
                    || (_value.Length >= 3 && _value[1] == ':' && _value[2] == '/');
         }
 
+        public override bool Equals(object obj) {
+            switch (obj) {
+                case Path path:
+                    return path == this;
+                case string str:
+                    return str == this;
+                default:
+                    return false;
+            }
+        }
+
+        public override int GetHashCode() {
+            return _value.GetHashCode();
+        }
+
+        public static bool operator ==(Path p1, Path p2) {
+            return p1._value == p2._value;
+        }
+
+        public static bool operator !=(Path p1, Path p2) {
+            return !(p1 == p2);
+        }
+
         public static Path operator +(Path dir, string fileName) {
             return dir + GetPath(fileName);
         }
 
         public static Path operator +(Path dir, Path fileName) {
             return GetPath(dir.EnsureDirectoryPath().GetValue() + fileName.GetValue());
+        }
+
+        public static explicit operator string(Path path) {
+            return path.GetValue();
+        }
+
+        public static implicit operator Path(string value) {
+            return GetPath(value);
         }
     }
 }
