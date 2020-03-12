@@ -42,8 +42,9 @@ namespace vFrame.Core.ThreadPools
         private Queue<TaskContext> _waitingTask;
 
         protected override void OnCreate(int threadCount) {
-            lock (_lockObject)
+            lock (_lockObject) {
                 _waitingTask = new Queue<TaskContext>();
+            }
 
             _threads = new List<ThreadContext>(threadCount);
             for (var i = 0; i < threadCount; i++) {
@@ -69,15 +70,15 @@ namespace vFrame.Core.ThreadPools
                 handler = handler,
             };
 
-            lock (_lockObject)
+            lock (_lockObject) {
                 _waitingTask.Enqueue(context);
+            }
         }
 
         public void ResumeStoppedThreads() {
-            foreach (var threadContext in _threads) {
+            foreach (var threadContext in _threads)
                 if (threadContext.stopped)
                     threadContext.thread.Start(threadContext);
-            }
         }
 
         private void ThreadProc(object stateInfo) {

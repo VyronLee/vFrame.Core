@@ -19,9 +19,7 @@ namespace vFrame.Core.FileSystems
         }
 
         protected override void OnDestroy() {
-            foreach (var fileSystem in _fileSystems) {
-                fileSystem.Close();
-            }
+            foreach (var fileSystem in _fileSystems) fileSystem.Close();
             _fileSystems.Clear();
         }
 
@@ -35,6 +33,7 @@ namespace vFrame.Core.FileSystems
                     fileSystem = new StandardFileSystem(_factory);
                     break;
             }
+
             fileSystem.Open(path);
 
             AddFileSystem(fileSystem);
@@ -50,11 +49,9 @@ namespace vFrame.Core.FileSystems
         }
 
         public Stream GetStream(string path, FileMode mode = FileMode.Open) {
-            foreach (var fileSystem in _fileSystems) {
-                if (fileSystem.Exist(path)) {
+            foreach (var fileSystem in _fileSystems)
+                if (fileSystem.Exist(path))
                     return fileSystem.GetStream(path, mode);
-                }
-            }
             return null;
         }
     }

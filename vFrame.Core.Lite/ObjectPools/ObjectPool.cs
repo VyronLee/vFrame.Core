@@ -40,14 +40,14 @@ namespace vFrame.Core.ObjectPools
 
         private static ObjectPool<TClass> Instance {
             get {
-                if (null == _instance) {
+                if (null == _instance)
                     lock (_instanceLockObject) {
                         if (null == _instance) {
                             _instance = new ObjectPool<TClass>();
                             _instance.Initialize();
                         }
                     }
-                }
+
                 return _instance;
             }
         }
@@ -55,10 +55,9 @@ namespace vFrame.Core.ObjectPools
         protected override void OnInitialize() {
             lock (_lockObject) {
                 _objects = new Stack<TClass>(InitSize);
-                for (var i = 0; i < InitSize; i++) {
-                    _objects.Push(new TClass());
-                }
+                for (var i = 0; i < InitSize; i++) _objects.Push(new TClass());
             }
+
             _instance = this;
 
             ObjectPoolManager.Instance().RegisterPool(this);
@@ -69,12 +68,11 @@ namespace vFrame.Core.ObjectPools
                 Logger.Error(LogTag, "Return object cannot be null.");
                 return;
             }
+
             lock (_lockObject) {
                 if (_objects.Contains(obj))
                     return;
-                if (obj is IPoolObjectResetable resetable) {
-                    resetable.Reset();
-                }
+                if (obj is IPoolObjectResetable resetable) resetable.Reset();
                 _objects.Push(obj);
             }
         }
@@ -114,16 +112,17 @@ namespace vFrame.Core.ObjectPools
         private static readonly object _instanceLockObject = new object();
 
         private static ObjectPool<TClass, TAllocator> _instance;
+
         private static ObjectPool<TClass, TAllocator> Instance {
             get {
-                if (null == _instance) {
+                if (null == _instance)
                     lock (_instanceLockObject) {
                         if (null == _instance) {
                             _instance = new ObjectPool<TClass, TAllocator>();
                             _instance.Initialize();
                         }
                     }
-                }
+
                 return _instance;
             }
         }
@@ -132,10 +131,9 @@ namespace vFrame.Core.ObjectPools
             _allocator = new TAllocator();
             lock (_lockObject) {
                 _objects = new Stack<TClass>(InitSize);
-                for (var i = 0; i < InitSize; i++) {
-                    _objects.Push(_allocator.Alloc());
-                }
+                for (var i = 0; i < InitSize; i++) _objects.Push(_allocator.Alloc());
             }
+
             _instance = this;
 
             ObjectPoolManager.Instance().RegisterPool(this);
@@ -152,6 +150,7 @@ namespace vFrame.Core.ObjectPools
                 Logger.Error(LogTag, "Return object cannot be null.");
                 return;
             }
+
             _allocator.Reset(obj);
 
             lock (_lockObject) {

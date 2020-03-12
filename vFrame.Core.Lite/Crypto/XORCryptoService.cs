@@ -31,16 +31,13 @@ namespace vFrame.Core.Crypto
             XORStream(input, output, key, keyLength);
         }
 
-        private static void XORBuffer(IReadOnlyList<byte> input, IList<byte> output, IReadOnlyList<byte> key, int keyLength) {
-            for (var i = 0; i < input.Count; i++) {
-                output[i] = (byte) (input[i] ^ key[i % keyLength]);
-            }
+        private static void XORBuffer(IReadOnlyList<byte> input, IList<byte> output, IReadOnlyList<byte> key,
+            int keyLength) {
+            for (var i = 0; i < input.Count; i++) output[i] = (byte) (input[i] ^ key[i % keyLength]);
         }
 
         private static void XORStream(Stream input, Stream output, IReadOnlyList<byte> key, int keyLength) {
-            for (var i = 0; i < input.Length; i++) {
-                output.WriteByte((byte) (input.ReadByte() ^ key[i % keyLength]));
-            }
+            for (var i = 0; i < input.Length; i++) output.WriteByte((byte) (input.ReadByte() ^ key[i % keyLength]));
         }
     }
 }

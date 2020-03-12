@@ -49,9 +49,7 @@ namespace vFrame.Core.Compress.LZMA
             lzmaEncoder.SetCoderProperties(PropIDs, properties);
             lzmaEncoder.WriteCoderProperties(output);
             var fileSize = input.Length;
-            for (var i = 0; i < 8; i++) {
-                output.WriteByte((byte) (fileSize >> (8 * i)));
-            }
+            for (var i = 0; i < 8; i++) output.WriteByte((byte) (fileSize >> (8 * i)));
             lzmaEncoder.Code(input, output, -1, -1, null);
         }
 
@@ -67,11 +65,10 @@ namespace vFrame.Core.Compress.LZMA
             long fileLength = 0;
             for (var i = 0; i < 8; i++) {
                 var v = input.ReadByte();
-                if (v < 0) {
-                    throw new Exception("Can't Read 1");
-                }
+                if (v < 0) throw new Exception("Can't Read 1");
                 fileLength |= (long) (byte) v << (8 * i);
             }
+
             var compressedSize = input.Length - input.Position;
             decoder.Code(input, output, compressedSize, fileLength, null);
         }

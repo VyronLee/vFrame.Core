@@ -56,26 +56,20 @@ namespace LitJson
         #region Properties
 
         public bool AllowComments {
-            get { return allow_comments; }
-            set { allow_comments = value; }
+            get => allow_comments;
+            set => allow_comments = value;
         }
 
         public bool AllowSingleQuotedStrings {
-            get { return allow_single_quoted_strings; }
-            set { allow_single_quoted_strings = value; }
+            get => allow_single_quoted_strings;
+            set => allow_single_quoted_strings = value;
         }
 
-        public bool EndOfInput {
-            get { return end_of_input; }
-        }
+        public bool EndOfInput => end_of_input;
 
-        public int Token {
-            get { return token; }
-        }
+        public int Token => token;
 
-        public string StringValue {
-            get { return string_value; }
-        }
+        public string StringValue => string_value;
 
         #endregion
 
@@ -637,7 +631,7 @@ namespace LitJson
         }
 
         private static bool State19(FsmContext ctx) {
-            while (ctx.L.GetChar()) {
+            while (ctx.L.GetChar())
                 switch (ctx.L.input_char) {
                     case '"':
                         ctx.L.UngetChar();
@@ -654,7 +648,6 @@ namespace LitJson
                         ctx.L.string_buffer.Append((char) ctx.L.input_char);
                         continue;
                 }
-            }
 
             return true;
         }
@@ -701,8 +694,8 @@ namespace LitJson
         }
 
         private static bool State22(FsmContext ctx) {
-            int counter = 0;
-            int mult = 4096;
+            var counter = 0;
+            var mult = 4096;
 
             ctx.L.unichar = 0;
 
@@ -732,7 +725,7 @@ namespace LitJson
         }
 
         private static bool State23(FsmContext ctx) {
-            while (ctx.L.GetChar()) {
+            while (ctx.L.GetChar())
                 switch (ctx.L.input_char) {
                     case '\'':
                         ctx.L.UngetChar();
@@ -749,7 +742,6 @@ namespace LitJson
                         ctx.L.string_buffer.Append((char) ctx.L.input_char);
                         continue;
                 }
-            }
 
             return true;
         }
@@ -787,23 +779,21 @@ namespace LitJson
         }
 
         private static bool State26(FsmContext ctx) {
-            while (ctx.L.GetChar()) {
+            while (ctx.L.GetChar())
                 if (ctx.L.input_char == '\n') {
                     ctx.NextState = 1;
                     return true;
                 }
-            }
 
             return true;
         }
 
         private static bool State27(FsmContext ctx) {
-            while (ctx.L.GetChar()) {
+            while (ctx.L.GetChar())
                 if (ctx.L.input_char == '*') {
                     ctx.NextState = 28;
                     return true;
                 }
-            }
 
             return true;
         }
@@ -838,7 +828,7 @@ namespace LitJson
 
         private int NextChar() {
             if (input_buffer != 0) {
-                int tmp = input_buffer;
+                var tmp = input_buffer;
                 input_buffer = 0;
 
                 return tmp;

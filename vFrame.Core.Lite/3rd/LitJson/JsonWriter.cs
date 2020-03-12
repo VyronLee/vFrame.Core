@@ -62,30 +62,28 @@ namespace LitJson
         #region Properties
 
         public int IndentValue {
-            get { return indent_value; }
+            get => indent_value;
             set {
-                indentation = (indentation / indent_value) * value;
+                indentation = indentation / indent_value * value;
                 indent_value = value;
             }
         }
 
         public bool PrettyPrint {
-            get { return pretty_print; }
-            set { pretty_print = value; }
+            get => pretty_print;
+            set => pretty_print = value;
         }
 
-        public TextWriter TextWriter {
-            get { return writer; }
-        }
+        public TextWriter TextWriter => writer;
 
         public bool Validate {
-            get { return validate; }
-            set { validate = value; }
+            get => validate;
+            set => validate = value;
         }
 
         public bool LowerCaseProperties {
-            get { return lower_case_properties; }
-            set { lower_case_properties = value; }
+            get => lower_case_properties;
+            set => lower_case_properties = value;
         }
 
         #endregion
@@ -185,7 +183,7 @@ namespace LitJson
         private static void IntToHex(int n, char[] hex) {
             int num;
 
-            for (int i = 0; i < 4; i++) {
+            for (var i = 0; i < 4; i++) {
                 num = n % 16;
 
                 if (num < 10)
@@ -205,7 +203,7 @@ namespace LitJson
 
         private void Put(string str) {
             if (pretty_print && !context.ExpectingValue)
-                for (int i = 0; i < indentation; i++)
+                for (var i = 0; i < indentation; i++)
                     writer.Write(' ');
 
             writer.Write(str);
@@ -225,12 +223,12 @@ namespace LitJson
         }
 
         private void PutString(string str) {
-            Put(String.Empty);
+            Put(string.Empty);
 
             writer.Write('"');
 
-            int n = str.Length;
-            for (int i = 0; i < n; i++) {
+            var n = str.Length;
+            for (var i = 0; i < n; i++) {
                 switch (str[i]) {
                     case '\n':
                         writer.Write("\\n");
@@ -283,7 +281,7 @@ namespace LitJson
 
         public override string ToString() {
             if (inst_string_builder == null)
-                return String.Empty;
+                return string.Empty;
 
             return inst_string_builder.ToString();
         }
@@ -321,7 +319,7 @@ namespace LitJson
             DoValidation(Condition.Value);
             PutNewline();
 
-            string str = Convert.ToString(number, number_format);
+            var str = Convert.ToString(number, number_format);
             Put(str);
 
             if (str.IndexOf('.') == -1 &&
@@ -376,8 +374,9 @@ namespace LitJson
             PutNewline(false);
 
             ctx_stack.Pop();
-            if (ctx_stack.Count == 1)
+            if (ctx_stack.Count == 1) {
                 has_reached_end = true;
+            }
             else {
                 context = ctx_stack.Peek();
                 context.ExpectingValue = false;
@@ -405,8 +404,9 @@ namespace LitJson
             PutNewline(false);
 
             ctx_stack.Pop();
-            if (ctx_stack.Count == 1)
+            if (ctx_stack.Count == 1) {
                 has_reached_end = true;
+            }
             else {
                 context = ctx_stack.Peek();
                 context.ExpectingValue = false;
@@ -432,7 +432,7 @@ namespace LitJson
         public void WritePropertyName(string property_name) {
             DoValidation(Condition.Property);
             PutNewline();
-            string propertyName = (property_name == null || !lower_case_properties)
+            var propertyName = property_name == null || !lower_case_properties
                 ? property_name
                 : property_name.ToLowerInvariant();
 
@@ -442,15 +442,16 @@ namespace LitJson
                 if (propertyName.Length > context.Padding)
                     context.Padding = propertyName.Length;
 
-                for (int i = context.Padding - propertyName.Length;
+                for (var i = context.Padding - propertyName.Length;
                     i >= 0;
                     i--)
                     writer.Write(' ');
 
                 writer.Write(": ");
             }
-            else
+            else {
                 writer.Write(':');
+            }
 
             context.ExpectingValue = true;
         }

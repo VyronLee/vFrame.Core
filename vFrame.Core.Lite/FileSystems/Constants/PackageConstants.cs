@@ -4,8 +4,10 @@
     {
         // 包文件标识
         public const long Id = 0x737172757368; // sqrush
+
         // 包文件版本号
         public const long Version = 0x1;
+
         // 包文件后缀
         public const string Ext = ".vpk";
     }

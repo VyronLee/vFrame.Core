@@ -60,7 +60,7 @@ namespace vFrame.Core.Localize
         /// 获取/设置语言代码
         /// </summary>
         public string Language {
-            get { return _langCode; }
+            get => _langCode;
             set {
                 var changed = _langCode != value;
                 _langCode = value;

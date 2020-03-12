@@ -19,7 +19,6 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override void Close() {
-
         }
 
         public override bool Exist(Path relativePath) {
@@ -27,9 +26,7 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override Stream GetStream(Path fileName, FileMode mode, FileAccess access, FileShare share) {
-            if (!Exist(fileName)) {
-                throw new FileNotFoundException("File not found: " + fileName.GetValue());
-            }
+            if (!Exist(fileName)) throw new FileNotFoundException("File not found: " + fileName.GetValue());
             return FileStreamFactory.Create(fileName.GetValue(), mode, access, share);
         }
 
@@ -40,6 +37,7 @@ namespace vFrame.Core.FileSystems.Standard
                 var relative = full.GetRelative(_workingDir);
                 refs.Add(relative);
             }
+
             return refs;
         }
     }

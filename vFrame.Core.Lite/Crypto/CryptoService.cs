@@ -24,11 +24,9 @@ namespace vFrame.Core.Crypto
         public abstract void Decrypt(Stream input, Stream output, byte[] key, int keyLength);
 
         protected override void OnCreate() {
-
         }
 
         protected override void OnDestroy() {
-
         }
 
         public static ICryptoService CreateCrypto(CryptoType type) {
@@ -43,6 +41,7 @@ namespace vFrame.Core.Crypto
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
+
             service.Create();
             return service;
         }

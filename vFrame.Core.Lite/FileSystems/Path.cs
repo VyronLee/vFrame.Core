@@ -23,9 +23,7 @@ namespace vFrame.Core.FileSystems
         }
 
         private Path EnsureDirectoryPath() {
-            if (!_value.EndsWith("/")) {
-                _value += "/";
-            }
+            if (!_value.EndsWith("/")) _value += "/";
             return this;
         }
 
@@ -56,17 +54,15 @@ namespace vFrame.Core.FileSystems
         public Path GetRelative(Path target) {
             var targetValue = target.GetValue();
             var begin = targetValue.IndexOf(_value, StringComparison.Ordinal);
-            if (begin < 0) {
-                throw new PathNotRelativeException();
-            }
+            if (begin < 0) throw new PathNotRelativeException();
             return new Path(targetValue.Substring(begin));
         }
 
         public bool IsAbsolute() {
             // unix style: "/user/data"
             // window style: "c:/user/data"
-            return (_value.Length > 0 && _value[0] == '/')
-                   || (_value.Length >= 3 && _value[1] == ':' && _value[2] == '/');
+            return _value.Length > 0 && _value[0] == '/'
+                   || _value.Length >= 3 && _value[1] == ':' && _value[2] == '/';
         }
 
         public override bool Equals(object obj) {

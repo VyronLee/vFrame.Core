@@ -7,6 +7,7 @@
 //    Modified:  2020-03-11 16:39
 //   Copyright:  Copyright (c) 2020, VyronLee
 //============================================================
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -92,6 +93,7 @@ namespace vFrame.Core.FileSystems.Package
         public override bool CanSeek => _opened && !_closed;
         public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
         public override long Length => _blockInfo.OriginalSize;
+
         public override long Position {
             get => _memoryStream.Position;
             set => _memoryStream.Position = value;
@@ -102,13 +104,9 @@ namespace vFrame.Core.FileSystems.Package
         //=======================================================//
 
         private void ValidateStreamState() {
-            if (!_opened) {
-                throw new PackageStreamNotOpenedException();
-            }
+            if (!_opened) throw new PackageStreamNotOpenedException();
 
-            if (_closed) {
-                throw new PackageStreamClosedException();
-            }
+            if (_closed) throw new PackageStreamClosedException();
         }
 
         private bool InternalOpen(Stream inputStream) {
@@ -147,22 +145,18 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         private void ValidateBlockInfo(Stream inputStream) {
-            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0) {
-                throw new PackageBlockDisposedException();
-            }
+            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0) throw new PackageBlockDisposedException();
 
             var sizeOfHeader = PackageHeader.GetMarshalSize();
-            if (_blockInfo.Offset < sizeOfHeader) {
+            if (_blockInfo.Offset < sizeOfHeader)
                 throw new PackageBlockOffsetErrorException(_blockInfo.Offset, sizeOfHeader);
-            }
 
             var blockSize = (_blockInfo.Flags & BlockFlags.BlockCompressed) > 0
                 ? _blockInfo.CompressedSize
                 : _blockInfo.OriginalSize;
 
-            if (inputStream.Length < _blockInfo.Offset + blockSize) {
+            if (inputStream.Length < _blockInfo.Offset + blockSize)
                 throw new PackageStreamDataErrorException(_blockInfo.Offset + blockSize, inputStream.Length);
-            }
         }
     }
 }

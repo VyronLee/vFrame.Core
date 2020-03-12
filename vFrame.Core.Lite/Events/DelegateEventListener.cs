@@ -25,9 +25,7 @@ namespace vFrame.Core.Events
         /// 事件响应接口
         /// </summary>
         public void OnEvent(IEvent e) {
-            if (null != Action) {
-                Action(e);
-            }
+            if (null != Action) Action(e);
         }
 
         protected override void OnCreate() {
