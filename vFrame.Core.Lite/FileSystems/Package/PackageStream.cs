@@ -19,29 +19,39 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    public class PackageStream : Stream
+    public class PackageStream : VirtualFileStream
     {
         private readonly PackageBlockInfo _blockInfo;
         private readonly FileAccess _mode = FileAccess.ReadWrite;
 
-        private readonly Stream _pkgStream;
+        private readonly Stream _vpkStream;
+        private bool _closed;
         private MemoryStream _memoryStream;
         private bool _opened;
-        private bool _closed;
 
-        internal PackageStream(Stream pkgStream, PackageBlockInfo blockInfo) {
-            _pkgStream = pkgStream;
+        internal PackageStream(Stream vpkStream, PackageBlockInfo blockInfo) {
+            _vpkStream = vpkStream;
             _blockInfo = blockInfo;
         }
 
-        internal PackageStream(Stream pkgStream, PackageBlockInfo blockInfo, FileAccess mode)
-            : this(pkgStream, blockInfo) {
+        internal PackageStream(Stream vpkStream, PackageBlockInfo blockInfo, FileAccess mode)
+            : this(vpkStream, blockInfo) {
             _mode = mode;
         }
 
+        public override bool CanRead => _opened && !_closed && (_mode & FileAccess.Read) > 0;
+        public override bool CanSeek => _opened && !_closed;
+        public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
+        public override long Length => _blockInfo.OriginalSize;
+
+        public override long Position {
+            get => _memoryStream.Position;
+            set => _memoryStream.Position = value;
+        }
+
         public bool Open() {
-            Debug.Assert(null != _pkgStream);
-            return InternalOpen(_pkgStream);
+            Debug.Assert(null != _vpkStream);
+            return InternalOpen(_vpkStream);
         }
 
         public override void Close() {
@@ -89,23 +99,12 @@ namespace vFrame.Core.FileSystems.Package
             _memoryStream.Write(buffer, offset, count);
         }
 
-        public override bool CanRead => _opened && !_closed && (_mode & FileAccess.Read) > 0;
-        public override bool CanSeek => _opened && !_closed;
-        public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
-        public override long Length => _blockInfo.OriginalSize;
-
-        public override long Position {
-            get => _memoryStream.Position;
-            set => _memoryStream.Position = value;
-        }
-
         //=======================================================//
         //                         Private                     ==//
         //=======================================================//
 
         private void ValidateStreamState() {
             if (!_opened) throw new PackageStreamNotOpenedException();
-
             if (_closed) throw new PackageStreamClosedException();
         }
 
@@ -129,7 +128,7 @@ namespace vFrame.Core.FileSystems.Package
 
                 if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
                     var keyBytes = BitConverter.GetBytes(_blockInfo.EncryptKey);
-                    var cryptoService = CryptoService.CreateCrypto((CryptoType) (_blockInfo.Flags >> 12));
+                    var cryptoService = CryptoService.CreateCryptoService((CryptoType) (_blockInfo.Flags >> 12));
                     cryptoService.Decrypt(tempStream, _memoryStream, keyBytes, keyBytes.Length);
                     cryptoService.Destroy();
                     ObjectPoolManager.Instance().Return(cryptoService);
@@ -145,7 +144,8 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         private void ValidateBlockInfo(Stream inputStream) {
-            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0) throw new PackageBlockDisposedException();
+            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0)
+                throw new PackageBlockDisposedException();
 
             var sizeOfHeader = PackageHeader.GetMarshalSize();
             if (_blockInfo.Offset < sizeOfHeader)

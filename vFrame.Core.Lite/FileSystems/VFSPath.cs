@@ -1,28 +1,29 @@
 ﻿using System;
+using System.IO;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems
 {
-    public struct Path
+    public struct VFSPath
     {
         private string _value;
 
-        public Path(string value) {
+        private VFSPath(string value) {
             _value = string.Empty;
             _value = Normalize(value);
         }
 
-        public static Path GetPath(string value) {
-            return new Path(value);
+        public static VFSPath GetPath(string value) {
+            return new VFSPath(value);
         }
 
         private string Normalize(string value) {
             return value.Replace("\\", "/");
         }
 
-        private Path EnsureDirectoryPath() {
+        private VFSPath EnsureDirectoryPath() {
             if (!_value.EndsWith("/")) _value += "/";
             return this;
         }
@@ -36,26 +37,26 @@ namespace vFrame.Core.FileSystems
         }
 
         public string GetFileName() {
-            return System.IO.Path.GetFileName(_value);
+            return Path.GetFileName(_value);
         }
 
-        public Path GetDirectory() {
-            return new Path(GetDirectoryName());
+        public VFSPath GetDirectory() {
+            return new VFSPath(GetDirectoryName());
         }
 
         public string GetDirectoryName() {
-            return System.IO.Path.GetDirectoryName(_value);
+            return Path.GetDirectoryName(_value);
         }
 
         public string GetExtension() {
-            return System.IO.Path.GetExtension(_value);
+            return Path.GetExtension(_value);
         }
 
-        public Path GetRelative(Path target) {
+        public VFSPath GetRelative(VFSPath target) {
             var targetValue = target.GetValue();
             var begin = targetValue.IndexOf(_value, StringComparison.Ordinal);
             if (begin < 0) throw new PathNotRelativeException();
-            return new Path(targetValue.Substring(begin));
+            return new VFSPath(targetValue.Substring(begin));
         }
 
         public bool IsAbsolute() {
@@ -67,7 +68,7 @@ namespace vFrame.Core.FileSystems
 
         public override bool Equals(object obj) {
             switch (obj) {
-                case Path path:
+                case VFSPath path:
                     return path == this;
                 case string str:
                     return str == this;
@@ -80,27 +81,27 @@ namespace vFrame.Core.FileSystems
             return _value.GetHashCode();
         }
 
-        public static bool operator ==(Path p1, Path p2) {
+        public static bool operator ==(VFSPath p1, VFSPath p2) {
             return p1._value == p2._value;
         }
 
-        public static bool operator !=(Path p1, Path p2) {
+        public static bool operator !=(VFSPath p1, VFSPath p2) {
             return !(p1 == p2);
         }
 
-        public static Path operator +(Path dir, string fileName) {
+        public static VFSPath operator +(VFSPath dir, string fileName) {
             return dir + GetPath(fileName);
         }
 
-        public static Path operator +(Path dir, Path fileName) {
+        public static VFSPath operator +(VFSPath dir, VFSPath fileName) {
             return GetPath(dir.EnsureDirectoryPath().GetValue() + fileName.GetValue());
         }
 
-        public static explicit operator string(Path path) {
-            return path.GetValue();
+        public static explicit operator string(VFSPath vfsPath) {
+            return vfsPath.GetValue();
         }
 
-        public static implicit operator Path(string value) {
+        public static implicit operator VFSPath(string value) {
             return GetPath(value);
         }
     }

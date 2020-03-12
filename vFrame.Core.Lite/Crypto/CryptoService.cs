@@ -29,7 +29,7 @@ namespace vFrame.Core.Crypto
         protected override void OnDestroy() {
         }
 
-        public static ICryptoService CreateCrypto(CryptoType type) {
+        public static ICryptoService CreateCryptoService(CryptoType type) {
             CryptoService service;
             switch (type) {
                 case CryptoType.Plain:

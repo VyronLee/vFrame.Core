@@ -18,36 +18,36 @@ using vFrame.Core.FileSystems.Exceptions;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    public class PackageFileSystem : FileSystem
+    public class PackageVirtualFileSystem : VirtualFileSystem
     {
-        private bool _opened;
-        private bool _closed;
-
         private PackageHeader _header;
-        private Dictionary<Path, int> _fileList;
         private List<PackageBlockInfo> _blockInfos;
+        private Dictionary<VFSPath, int> _fileList;
 
-        private Path _vpkPath;
+        private bool _closed;
+        private bool _opened;
 
-        public PackageFileSystem(FileStreamFactory factory) {
+        private VFSPath _vpkVfsPath;
+
+        public PackageVirtualFileSystem(FileStreamFactory factory) {
             FileStreamFactory = factory;
 
-            _fileList = new Dictionary<Path, int>();
+            _fileList = new Dictionary<VFSPath, int>();
             _blockInfos = new List<PackageBlockInfo>();
             _opened = false;
             _closed = false;
         }
 
-        public override void Open(Path streamPath) {
+        public override void Open(VFSPath streamVfsPath) {
             if (_opened) throw new FileSystemAlreadyOpenedException();
 
-            var vpkStream = FileStreamFactory.Create(streamPath.GetValue(),
+            var vpkStream = FileStreamFactory.Create(streamVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
                 InternalOpen(vpkStream);
             }
 
-            _vpkPath = streamPath;
+            _vpkVfsPath = streamVfsPath;
         }
 
         public override void Close() {
@@ -59,18 +59,19 @@ namespace vFrame.Core.FileSystems.Package
             _closed = true;
         }
 
-        public override bool Exist(Path relativePath) {
-            return _fileList.ContainsKey(relativePath);
+        public override bool Exist(VFSPath relativeVfsPath) {
+            return _fileList.ContainsKey(relativeVfsPath);
         }
 
-        public override Stream GetStream(Path fileName, FileMode mode, FileAccess access, FileShare share) {
+        public override IVirtualFileStream GetStream(VFSPath fileName, FileMode mode, FileAccess access,
+            FileShare share) {
             if (!Exist(fileName)) throw new PackageFileSystemFileNotFound();
             var idx = _fileList[fileName];
             if (idx < 0 || idx >= _blockInfos.Count)
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkPath.GetValue(),
+            var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
                 var stream = new PackageStream(vpkStream, block, access);
@@ -79,7 +80,7 @@ namespace vFrame.Core.FileSystems.Package
             }
         }
 
-        public override IList<Path> List(IList<Path> refs) {
+        public override IList<VFSPath> List(IList<VFSPath> refs) {
             foreach (var kv in _fileList) refs.Add(kv.Key);
             return refs;
         }
@@ -92,9 +93,7 @@ namespace vFrame.Core.FileSystems.Package
             Debug.Assert(null != vpkStream);
 
             if (!ReadHeader(vpkStream)) throw new PackageFileSystemHeaderDataError();
-
             if (!ReadFileList(vpkStream)) throw new PackageFileSystemFileListDataError();
-
             if (!ReadBlockTable(vpkStream)) throw new PackageFileSystemBlockTableDataError();
 
             _opened = true;
@@ -126,7 +125,7 @@ namespace vFrame.Core.FileSystems.Package
 
             var idx = 0;
             var bytesRead = 0;
-            var ret = new Dictionary<Path, int>();
+            var ret = new Dictionary<VFSPath, int>();
 
             vpkStream.Seek(_header.FileListOffset, SeekOrigin.Begin);
             using (var reader = new StreamReader(vpkStream)) {
