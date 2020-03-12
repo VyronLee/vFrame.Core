@@ -17,7 +17,7 @@ namespace vFrame.Core.FileSystems.Package
         private readonly object _lockObject = new object();
 
         public PackageReadonlyVirtualFileStreamRequest(Stream vpkStream, PackageBlockInfo blockInfo) {
-            var context = new PackageStreamContext() {
+            var context = new PackageStreamContext {
                 Stream = vpkStream,
                 BlockInfo = blockInfo,
             };

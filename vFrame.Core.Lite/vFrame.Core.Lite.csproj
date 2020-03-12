@@ -141,6 +141,7 @@
     <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
     <Compile Include="FileSystems\IReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\Package\PackageReadonlyVirtualFileStreamRequest.cs" />
+    <Compile Include="FileSystems\Package\PackageVirtualFileOperator.cs" />
     <Compile Include="FileSystems\Standard\StandardReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\VirtualFileStream.cs" />
     <Compile Include="FileSystems\ReadonlyVirtualFileStreamRequest.cs" />

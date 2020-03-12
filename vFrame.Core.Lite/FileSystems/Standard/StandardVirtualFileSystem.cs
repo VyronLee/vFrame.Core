@@ -8,11 +8,18 @@ namespace vFrame.Core.FileSystems.Standard
     {
         private VFSPath _workingDir;
 
+        public StandardVirtualFileSystem() : this(new FileStreamFactory_Default()) {
+        }
+
         public StandardVirtualFileSystem(FileStreamFactory factory) {
             FileStreamFactory = factory;
         }
 
         public override void Open(VFSPath streamVfsPath) {
+            if (!Directory.Exists(streamVfsPath.GetValue())) {
+                throw new DirectoryNotFoundException();
+            }
+
             _workingDir = streamVfsPath.AsDirectory();
         }
 
@@ -25,8 +32,6 @@ namespace vFrame.Core.FileSystems.Standard
 
         public override IVirtualFileStream GetStream(VFSPath fileName, FileMode mode, FileAccess access,
             FileShare share) {
-            if (!Exist(fileName))
-                throw new FileNotFoundException("File not found: " + fileName.GetValue());
             var fileStream = FileStreamFactory.Create(fileName.GetValue(), mode, access, share);
             return new StandardVirtualFileStream(fileStream);
         }
