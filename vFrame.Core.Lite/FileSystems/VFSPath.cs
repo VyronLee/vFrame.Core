@@ -57,10 +57,10 @@ namespace vFrame.Core.FileSystems
         }
 
         public VFSPath GetRelative(VFSPath target) {
-            var targetValue = target.GetValue();
-            var begin = targetValue.IndexOf(_value, StringComparison.Ordinal);
-            if (begin < 0) throw new PathNotRelativeException();
-            return new VFSPath(targetValue.Substring(begin));
+            if (_value.Contains(target.GetValue())) {
+                return _value.Substring(target._value.Length);
+            }
+            throw new PathNotRelativeException();
         }
 
         public bool IsAbsolute() {
@@ -68,6 +68,10 @@ namespace vFrame.Core.FileSystems
             // window style: "c:/user/data"
             return _value.Length > 0 && _value[0] == '/'
                    || _value.Length >= 3 && _value[1] == ':' && _value[2] == '/';
+        }
+
+        public override string ToString() {
+            return _value;
         }
 
         public override bool Equals(object obj) {

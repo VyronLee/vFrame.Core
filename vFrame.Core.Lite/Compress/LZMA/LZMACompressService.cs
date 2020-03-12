@@ -8,7 +8,7 @@ namespace vFrame.Core.Compress.LZMA
     public class LZMACompressService : CompressService
     {
         private static readonly LZMACompressOptions DefaultOptions = new LZMACompressOptions() {
-            DictionarySize = LZMACompressOptions.LZMADictionarySize.VerySmall,
+            DictionarySize = LZMACompressOptions.LZMADictionarySize.Small,
             Speed = LZMACompressOptions.LZMASpeed.Fast,
         };
 

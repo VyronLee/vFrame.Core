@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
 using vFrame.Core.Extensions;
@@ -53,12 +55,15 @@ namespace vFrame.Core.FileSystems.Package
                 out var blockBytesData,
                 onProgress);
 
-            var outputStream = new FileStream(outputPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            var outputStream = new FileStream(outputPath,
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None);
             using (outputStream) {
                 outputStream.SetLength(0);
                 outputStream.Seek(0, SeekOrigin.Begin);
 
-                var header = WriteHeader(outputStream, files, fileListBytes, onProgress);
+                var header = WriteHeader(outputStream, files, fileListBytes, blockBytesData, onProgress);
                 WriteFileList(outputStream, fileListBytes, onProgress);
                 WriteBlockInfo(outputStream, header, blockInfos, onProgress);
                 WriteBlocks(outputStream, blockBytesData, onProgress);
@@ -70,20 +75,16 @@ namespace vFrame.Core.FileSystems.Package
             stdFileSystem.Close();
         }
 
-        private static byte[] GetFileListBytes(ICollection<VFSPath> files,
+        private static List<byte[]> GetFileListBytes(ICollection<VFSPath> files,
             Action<ProcessState, float, float> onProgress) {
-            using (var mfs = new MemoryStream()) {
-                using (var writer = new BinaryWriter(mfs)) {
-                    var total = files.Count; var idx = 0f;
-                    foreach (var path in files) {
-                        var bytes = path.GetValue().ToByteArray();
-                        writer.Write(bytes);
-                        onProgress?.Invoke(ProcessState.ScanningFileList, idx++, total);
-                    }
-
-                    return mfs.ToArray();
-                }
+            var ret = new List<byte[]>();
+            var total = files.Count; var idx = 0f;
+            foreach (var path in files) {
+                var bytes = path.GetValue().ToByteArray();
+                ret.Add(bytes);
+                onProgress?.Invoke(ProcessState.ScanningFileList, idx++, total);
             }
+            return ret;
         }
 
         private static List<PackageBlockInfo> GetBlockInfo(
@@ -112,7 +113,7 @@ namespace vFrame.Core.FileSystems.Package
 
                     // 启用加密
                     if (encryptType != 0) {
-                        buffer = EncryptBytes(buffer, encryptKey, encryptType);
+                        buffer = EncryptBytes(buffer, encryptType, encryptKey);
                         blockInfo.Flags |= BlockFlags.BlockEncrypted;
                         blockInfo.Flags |= encryptType;
                         blockInfo.EncryptKey = encryptKey;
@@ -130,6 +131,9 @@ namespace vFrame.Core.FileSystems.Package
                     ret.Add(blockInfo);
 
                     onProgress?.Invoke(ProcessState.CalculatingBlockInfo, idx++, total);
+
+                    //Console.WriteLine("Block data read finished: {0}, origin size: {1}, compressed size: {2}",
+                    //    path, blockInfo.OriginalSize, blockInfo.CompressedSize);
                 }
 
             return ret;
@@ -151,7 +155,7 @@ namespace vFrame.Core.FileSystems.Package
             using (var compressed = new MemoryStream()) {
                 using (var input = new MemoryStream(buffer)) {
                     var compressService = CompressService.CreateCompressService((CompressType) (compressType >> 8));
-                    compressService.Decompress(input, compressed);
+                    compressService.Compress(input, compressed);
                     compressService.Destroy();
                     return compressed.ToArray();
                 }
@@ -160,23 +164,27 @@ namespace vFrame.Core.FileSystems.Package
 
         private static PackageHeader WriteHeader(Stream stream,
             IList<VFSPath> files,
-            byte[] fileListBytes,
-            Action<ProcessState, float, float> onProgress
-        ) {
+            List<byte[]> fileListBytes,
+            List<byte[]> blocksDataByte,
+            Action<ProcessState, float, float> onProgress) {
             var header = new PackageHeader();
             header.Id = PackageFileSystemConst.Id;
             header.Version = PackageFileSystemConst.Version;
             header.FileListOffset = PackageHeader.GetMarshalSize();
-            header.FileListSize = fileListBytes.Length;
+            header.FileListSize = fileListBytes.Sum(bytes => bytes.Length);
             header.BlockTableOffset = header.FileListOffset + header.FileListSize;
             header.BlockTableSize = PackageBlockInfo.GetMarshalSize() * files.Count;
             header.BlockOffset = header.BlockTableOffset + header.BlockTableSize;
             header.Reserved = 0;
 
+            var blockSize = blocksDataByte.Sum(bytes => bytes.Length);
+            header.Size = PackageHeader.GetMarshalSize() * header.FileListSize + header.BlockTableSize + blockSize;
+
             onProgress?.Invoke(ProcessState.WritingHeader, 0, 1);
-            using (var writer = new BinaryWriter(stream)) {
+            using (var writer = new BinaryWriter(stream, Encoding.UTF8, true)) {
                 writer.Write(header.Id);
                 writer.Write(header.Version);
+                writer.Write(header.Size);
                 writer.Write(header.FileListOffset);
                 writer.Write(header.FileListSize);
                 writer.Write(header.BlockTableOffset);
@@ -190,11 +198,11 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         private static void WriteFileList(FileStream outputStream,
-            byte[] fileListBytes,
+            List<byte[]> fileListBytes,
             Action<ProcessState, float, float> onProgress
         ) {
-            using (var writer = new BinaryWriter(outputStream)) {
-                var total = fileListBytes.Length;
+            using (var writer = new BinaryWriter(outputStream, Encoding.UTF8, true)) {
+                var total = fileListBytes.Count;
                 var idx = 0f;
 
                 foreach (var fileListByte in fileListBytes) {
@@ -213,7 +221,7 @@ namespace vFrame.Core.FileSystems.Package
             var offset = header.BlockOffset;
             var total = blockInfos.Count;
             var idx = 0f;
-            using (var writer = new BinaryWriter(outputStream)) {
+            using (var writer = new BinaryWriter(outputStream, Encoding.UTF8, true)) {
                 for (var i = 0; i < blockInfos.Count; i++) {
                     var block = blockInfos[i];
                     writer.Write(block.Flags);
@@ -235,7 +243,7 @@ namespace vFrame.Core.FileSystems.Package
         ) {
             var total = blockBytesData.Count;
             var idx = 0f;
-            using (var writer = new BinaryWriter(stream)) {
+            using (var writer = new BinaryWriter(stream, Encoding.UTF8, true)) {
                 foreach (var bytes in blockBytesData) {
                     writer.Write(bytes);
                     onProgress?.Invoke(ProcessState.WritingBlockData, idx++, total);
