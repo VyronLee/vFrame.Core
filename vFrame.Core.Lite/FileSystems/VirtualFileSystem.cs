@@ -4,7 +4,7 @@ using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems
 {
-    public abstract class VirtualFileSystem : IVirtualFileSystem
+    internal abstract class VirtualFileSystem : IVirtualFileSystem
     {
         protected FileStreamFactory FileStreamFactory { get; set; }
 
@@ -16,6 +16,8 @@ namespace vFrame.Core.FileSystems
 
         public abstract IVirtualFileStream GetStream(VFSPath fileName, FileMode mode, FileAccess access,
             FileShare share);
+
+        public abstract IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName);
 
         public virtual IList<VFSPath> List() {
             return List(new List<VFSPath>());

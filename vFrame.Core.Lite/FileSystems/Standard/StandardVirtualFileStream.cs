@@ -2,13 +2,9 @@
 
 namespace vFrame.Core.FileSystems.Standard
 {
-    public class StandardVirtualFileStream : VirtualFileStream
+    internal class StandardVirtualFileStream : VirtualFileStream
     {
         private readonly Stream _fileStream;
-
-        public StandardVirtualFileStream(string path, FileMode mode, FileAccess access, FileShare share)
-            : this(new FileStream(path, mode, access, share)) {
-        }
 
         public StandardVirtualFileStream(Stream stream) {
             _fileStream = stream;

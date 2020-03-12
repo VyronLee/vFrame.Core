@@ -19,13 +19,17 @@ namespace vFrame.Core.FileSystems
             return new VFSPath(value);
         }
 
-        private string Normalize(string value) {
+        private static string Normalize(string value) {
             return value.Replace("\\", "/");
         }
 
         private VFSPath EnsureDirectoryPath() {
             if (!_value.EndsWith("/")) _value += "/";
             return this;
+        }
+
+        public VFSPath AsDirectory() {
+            return EnsureDirectoryPath();
         }
 
         public string GetValue() {

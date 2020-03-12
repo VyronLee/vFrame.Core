@@ -37,6 +37,13 @@ namespace vFrame.Core.FileSystems
             FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
 
         /// <summary>
+        ///     Get readonly file stream async of specified name.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName);
+
+        /// <summary>
         ///     List all files in this file system.
         /// </summary>
         IList<VFSPath> List();

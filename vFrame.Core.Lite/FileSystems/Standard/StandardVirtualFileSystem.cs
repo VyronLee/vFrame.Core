@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems.Standard
 {
-    public class StandardVirtualFileSystem : VirtualFileSystem
+    internal class StandardVirtualFileSystem : VirtualFileSystem
     {
         private VFSPath _workingDir;
 
@@ -14,8 +13,7 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override void Open(VFSPath streamVfsPath) {
-            Debug.Assert(streamVfsPath.IsAbsolute());
-            _workingDir = streamVfsPath;
+            _workingDir = streamVfsPath.AsDirectory();
         }
 
         public override void Close() {
@@ -31,6 +29,13 @@ namespace vFrame.Core.FileSystems.Standard
                 throw new FileNotFoundException("File not found: " + fileName.GetValue());
             var fileStream = FileStreamFactory.Create(fileName.GetValue(), mode, access, share);
             return new StandardVirtualFileStream(fileStream);
+        }
+
+        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
+            if (!Exist(fileName))
+                throw new FileNotFoundException("File not found: " + fileName.GetValue());
+            var fileStream = FileStreamFactory.Create(fileName.GetValue());
+            return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }
 
         public override IList<VFSPath> List(IList<VFSPath> refs) {

@@ -19,22 +19,22 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    public class PackageStream : VirtualFileStream
+    internal class PackageVirtualFileStream : VirtualFileStream
     {
         private readonly PackageBlockInfo _blockInfo;
         private readonly FileAccess _mode = FileAccess.ReadWrite;
 
         private readonly Stream _vpkStream;
-        private bool _closed;
         private MemoryStream _memoryStream;
         private bool _opened;
+        private bool _closed;
 
-        internal PackageStream(Stream vpkStream, PackageBlockInfo blockInfo) {
+        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo) {
             _vpkStream = vpkStream;
             _blockInfo = blockInfo;
         }
 
-        internal PackageStream(Stream vpkStream, PackageBlockInfo blockInfo, FileAccess mode)
+        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo, FileAccess mode)
             : this(vpkStream, blockInfo) {
             _mode = mode;
         }

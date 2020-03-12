@@ -2,7 +2,7 @@
 
 namespace vFrame.Core.FileSystems
 {
-    public abstract class VirtualFileStream : Stream, IVirtualFileStream
+    internal abstract class VirtualFileStream : Stream, IVirtualFileStream
     {
     }
 }
