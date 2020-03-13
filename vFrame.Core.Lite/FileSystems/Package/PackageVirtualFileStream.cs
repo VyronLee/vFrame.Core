@@ -112,32 +112,55 @@ namespace vFrame.Core.FileSystems.Package
             ValidateBlockInfo(inputStream);
 
             _memoryStream = new MemoryStream();
-            _memoryStream.SetLength(_blockInfo.OriginalSize);
 
             inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
-
             using (var tempStream = new MemoryStream()) {
-                inputStream.CopyTo(tempStream);
-
+                // 先解压
                 if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
-                    var compressService = CompressService.CreateCompressService((CompressType) (_blockInfo.Flags >> 8));
-                    compressService.Decompress(inputStream, tempStream);
-                    compressService.Destroy();
-                    ObjectPoolManager.Instance().Return(compressService);
-                }
+                    inputStream.CopyTo(tempStream, (int)_blockInfo.CompressedSize);
 
-                if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
-                    var keyBytes = BitConverter.GetBytes(_blockInfo.EncryptKey);
-                    var cryptoService = CryptoService.CreateCryptoService((CryptoType) (_blockInfo.Flags >> 12));
-                    cryptoService.Decrypt(tempStream, _memoryStream, keyBytes, keyBytes.Length);
-                    cryptoService.Destroy();
-                    ObjectPoolManager.Instance().Return(cryptoService);
+                    using (var decompressedStream = new MemoryStream()) {
+                        var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
+                        var compressService = CompressService.CreateCompressService((CompressType) compressType);
+
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        compressService.Decompress(tempStream, decompressedStream);
+                        compressService.Destroy();
+
+                        tempStream.SetLength(0);
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        decompressedStream.Seek(0, SeekOrigin.Begin);
+                        decompressedStream.CopyTo(tempStream);
+                    }
                 }
                 else {
+                    inputStream.CopyTo(tempStream, (int)_blockInfo.OriginalSize);
+                }
+
+                // 再解密
+                if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
+                    using (var decryptedStream = new MemoryStream()) {
+                        var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
+                        var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
+                        var cryptoService = CryptoService.CreateCryptoService((CryptoType) cryptoType);
+
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        cryptoService.Decrypt(tempStream, decryptedStream, cryptoKey, cryptoKey.Length);
+                        cryptoService.Destroy();
+
+                        decryptedStream.Seek(0, SeekOrigin.Begin);
+                        decryptedStream.CopyTo(_memoryStream);
+                    }
+                }
+                else {
+                    tempStream.Seek(0, SeekOrigin.Begin);
                     tempStream.CopyTo(_memoryStream);
                 }
             }
 
+            if (_memoryStream.Length != _blockInfo.OriginalSize) {
+                throw new PackageStreamDataLengthNotMatchException(_memoryStream.Length, _blockInfo.OriginalSize);
+            }
             _memoryStream.Seek(0, SeekOrigin.Begin);
 
             return _opened = true;

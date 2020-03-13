@@ -15,6 +15,19 @@ namespace vFrame.Core.FileSystems.Exceptions
     {
     }
 
+    public class FileAlreadyExistException : FileSystemException
+    {
+        public FileAlreadyExistException(string fileName)
+            : base($"{fileName} already exist."){
+
+        }
+
+        public FileAlreadyExistException(VFSPath fileName)
+            : base($"{fileName} already exist."){
+
+        }
+    }
+
     public class FileSystemAlreadyOpenedException : FileSystemException
     {
     }
@@ -64,6 +77,13 @@ namespace vFrame.Core.FileSystems.Exceptions
     public class PackageStreamDataErrorException : FileSystemException
     {
         public PackageStreamDataErrorException(long size, long need) : base($"At least: {need}, got: {size}") {
+        }
+    }
+
+    public class PackageStreamDataLengthNotMatchException : FileSystemException
+    {
+        public PackageStreamDataLengthNotMatchException(long size, long expected)
+            : base($"Got: {size}, expected: {expected}") {
         }
     }
 }

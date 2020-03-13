@@ -36,7 +36,7 @@ namespace vFrame.Core.Crypto
                     service = ObjectPool<PlainCryptoService>.Get();
                     break;
                 case CryptoType.Xor:
-                    service = new XorCryptoService();
+                    service = ObjectPool<XorCryptoService>.Get();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));

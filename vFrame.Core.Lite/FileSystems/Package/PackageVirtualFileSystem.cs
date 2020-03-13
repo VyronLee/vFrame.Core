@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
@@ -28,6 +29,10 @@ namespace vFrame.Core.FileSystems.Package
         private bool _opened;
 
         private VFSPath _vpkVfsPath;
+
+        public PackageVirtualFileSystem() : this(new FileStreamFactory_Default()) {
+
+        }
 
         public PackageVirtualFileSystem(FileStreamFactory factory) {
             FileStreamFactory = factory;
@@ -65,7 +70,11 @@ namespace vFrame.Core.FileSystems.Package
             return _fileList.ContainsKey(relativeVfsPath);
         }
 
-        public override IVirtualFileStream GetStream(VFSPath fileName, FileMode mode, FileAccess access, FileShare share) {
+        public override IVirtualFileStream GetStream(VFSPath fileName,
+            FileMode mode = FileMode.Open,
+            FileAccess access = FileAccess.ReadWrite,
+            FileShare share = FileShare.Read
+        ) {
             if (!Exist(fileName))
                 throw new PackageFileSystemFileNotFound();
 
@@ -125,7 +134,7 @@ namespace vFrame.Core.FileSystems.Package
             vpkStream.Seek(0, SeekOrigin.Begin);
 
             _header = new PackageHeader();
-            using (var reader = new BinaryReader(vpkStream)) {
+            using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
                 _header.Id = reader.ReadInt64();
                 _header.Version = reader.ReadInt64();
                 _header.Size = reader.ReadInt64();
@@ -145,21 +154,18 @@ namespace vFrame.Core.FileSystems.Package
                 return false;
 
             var idx = 0;
-            var bytesRead = 0;
             var ret = new Dictionary<VFSPath, int>();
 
+            var maxOffset = _header.FileListOffset + _header.FileListSize;
             vpkStream.Seek(_header.FileListOffset, SeekOrigin.Begin);
-            using (var reader = new StreamReader(vpkStream)) {
-                while (bytesRead >= _header.FileListSize) {
-                    var name = reader.ReadLine();
-                    if (null == name)
-                        return false;
-                    bytesRead += name.Length;
+            using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
+                while (maxOffset > vpkStream.Position) {
+                    var name = reader.ReadString();
                     ret.Add(name, idx++);
                 }
             }
 
-            if (bytesRead != _header.FileListSize)
+            if (vpkStream.Position != maxOffset)
                 return false;
 
             _fileList = ret;
@@ -174,7 +180,7 @@ namespace vFrame.Core.FileSystems.Package
 
             vpkStream.Seek(_header.BlockTableOffset, SeekOrigin.Begin);
             while (vpkStream.Position < _header.BlockTableOffset + _header.BlockTableSize)
-                using (var reader = new BinaryReader(vpkStream)) {
+                using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
                     var block = new PackageBlockInfo {
                         Flags = reader.ReadInt64(),
                         Offset = reader.ReadInt64(),

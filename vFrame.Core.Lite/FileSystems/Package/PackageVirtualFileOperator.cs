@@ -7,6 +7,7 @@ using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Constants;
+using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.FileSystems.Standard;
 
 namespace vFrame.Core.FileSystems.Package
@@ -63,7 +64,11 @@ namespace vFrame.Core.FileSystems.Package
                 outputStream.SetLength(0);
                 outputStream.Seek(0, SeekOrigin.Begin);
 
-                var header = WriteHeader(outputStream, files, fileListBytes, blockBytesData, onProgress);
+                var header = WriteHeader(outputStream,
+                    files,
+                    fileListBytes,
+                    blockBytesData,
+                    onProgress);
                 WriteFileList(outputStream, fileListBytes, onProgress);
                 WriteBlockInfo(outputStream, header, blockInfos, onProgress);
                 WriteBlocks(outputStream, blockBytesData, onProgress);
@@ -75,15 +80,60 @@ namespace vFrame.Core.FileSystems.Package
             stdFileSystem.Close();
         }
 
+        public static void ExtractPackage(string pkgPath,
+            string destPath,
+            Action<string, float, float> onProgress
+        ) {
+            var pkgFileSystem = new PackageVirtualFileSystem();
+            pkgFileSystem.Open(pkgPath);
+
+            var stdFileSystem = new StandardVirtualFileSystem();
+            stdFileSystem.Open(destPath);
+
+            var files = pkgFileSystem.List();
+            var idx = 0;
+            var total = files.Count;
+            foreach (var path in files) {
+                using (var input = (Stream) pkgFileSystem.GetStream(path)) {
+                    var absolute = VFSPath.GetPath(destPath) + path;
+                    var dirName = absolute.GetDirectoryName();
+                    Directory.CreateDirectory(dirName);
+
+                    if (stdFileSystem.Exist(path)) {
+                        throw new FileAlreadyExistException(path);
+                    }
+
+                    using (var output = new FileStream(absolute.GetValue(), FileMode.Create)) {
+                        input.CopyTo(output);
+                    }
+                }
+
+                onProgress?.Invoke(path.GetValue(), idx++, total);
+            }
+
+            pkgFileSystem.Close();
+            stdFileSystem.Close();
+        }
+
+        //======================================================//
+        //                      Private                         //
+        //======================================================//
+
         private static List<byte[]> GetFileListBytes(ICollection<VFSPath> files,
             Action<ProcessState, float, float> onProgress) {
             var ret = new List<byte[]>();
-            var total = files.Count; var idx = 0f;
+            var total = files.Count;
+            var idx = 0f;
             foreach (var path in files) {
-                var bytes = path.GetValue().ToByteArray();
-                ret.Add(bytes);
+                using (var stream = new MemoryStream()) {
+                    using (var writer = new BinaryWriter(stream)) {
+                        writer.Write(path.GetValue());
+                        ret.Add(stream.ToArray());
+                    }
+                }
                 onProgress?.Invoke(ProcessState.ScanningFileList, idx++, total);
             }
+
             return ret;
         }
 
@@ -114,7 +164,6 @@ namespace vFrame.Core.FileSystems.Package
                     // 启用加密
                     if (encryptType != 0) {
                         buffer = EncryptBytes(buffer, encryptType, encryptKey);
-                        blockInfo.Flags |= BlockFlags.BlockEncrypted;
                         blockInfo.Flags |= encryptType;
                         blockInfo.EncryptKey = encryptKey;
                     }
@@ -122,7 +171,6 @@ namespace vFrame.Core.FileSystems.Package
                     // 启用压缩
                     if (compressType != 0) {
                         buffer = CompressBytes(buffer, compressType);
-                        blockInfo.Flags |= BlockFlags.BlockCompressed;
                         blockInfo.Flags |= compressType;
                         blockInfo.CompressedSize = buffer.Length;
                     }
@@ -131,9 +179,6 @@ namespace vFrame.Core.FileSystems.Package
                     ret.Add(blockInfo);
 
                     onProgress?.Invoke(ProcessState.CalculatingBlockInfo, idx++, total);
-
-                    //Console.WriteLine("Block data read finished: {0}, origin size: {1}, compressed size: {2}",
-                    //    path, blockInfo.OriginalSize, blockInfo.CompressedSize);
                 }
 
             return ret;
@@ -192,6 +237,7 @@ namespace vFrame.Core.FileSystems.Package
                 writer.Write(header.BlockOffset);
                 writer.Write(header.Reserved);
             }
+
             onProgress?.Invoke(ProcessState.WritingHeader, 1, 1);
 
             return header;

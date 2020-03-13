@@ -37,7 +37,7 @@ namespace vFrame.Core.FileSystems
         }
 
         public string GetHash() {
-            return MessageDigestUtils.MD5(_value.ToByteArray());
+            return MessageDigestUtils.MD5(_value.ToUtf8ByteArray());
         }
 
         public string GetFileName() {
