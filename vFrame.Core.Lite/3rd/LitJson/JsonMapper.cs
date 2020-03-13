@@ -44,17 +44,17 @@ namespace LitJson
                 return element_type;
             }
 
-            set { element_type = value; }
+            set => element_type = value;
         }
 
         public bool IsArray {
-            get { return is_array; }
-            set { is_array = value; }
+            get => is_array;
+            set => is_array = value;
         }
 
         public bool IsList {
-            get { return is_list; }
-            set { is_list = value; }
+            get => is_list;
+            set => is_list = value;
         }
     }
 
@@ -75,17 +75,17 @@ namespace LitJson
                 return element_type;
             }
 
-            set { element_type = value; }
+            set => element_type = value;
         }
 
         public bool IsDictionary {
-            get { return is_dictionary; }
-            set { is_dictionary = value; }
+            get => is_dictionary;
+            set => is_dictionary = value;
         }
 
         public IDictionary<string, PropertyMetadata> Properties {
-            get { return properties; }
-            set { properties = value; }
+            get => properties;
+            set => properties = value;
         }
     }
 
@@ -119,23 +119,23 @@ namespace LitJson
             IDictionary<Type, ImporterFunc>> custom_importers_table;
 
         private static readonly IDictionary<Type, ArrayMetadata> array_metadata;
-        private static readonly object array_metadata_lock = new Object();
+        private static readonly object array_metadata_lock = new object();
 
         private static readonly IDictionary<Type,
             IDictionary<Type, MethodInfo>> conv_ops;
 
-        private static readonly object conv_ops_lock = new Object();
+        private static readonly object conv_ops_lock = new object();
 
         private static readonly IDictionary<Type, ObjectMetadata> object_metadata;
-        private static readonly object object_metadata_lock = new Object();
+        private static readonly object object_metadata_lock = new object();
 
         private static readonly IDictionary<Type,
             IList<PropertyMetadata>> type_properties;
 
-        private static readonly object type_properties_lock = new Object();
+        private static readonly object type_properties_lock = new object();
 
         private static readonly JsonWriter static_writer;
-        private static readonly object static_writer_lock = new Object();
+        private static readonly object static_writer_lock = new object();
 
         #endregion
 
@@ -176,18 +176,18 @@ namespace LitJson
             if (array_metadata.ContainsKey(type))
                 return;
 
-            ArrayMetadata data = new ArrayMetadata();
+            var data = new ArrayMetadata();
 
             data.IsArray = type.IsArray;
 
             if (type.GetInterface("System.Collections.IList") != null)
                 data.IsList = true;
 
-            foreach (PropertyInfo p_info in type.GetProperties()) {
+            foreach (var p_info in type.GetProperties()) {
                 if (p_info.Name != "Item")
                     continue;
 
-                ParameterInfo[] parameters = p_info.GetIndexParameters();
+                var parameters = p_info.GetIndexParameters();
 
                 if (parameters.Length != 1)
                     continue;
@@ -210,16 +210,16 @@ namespace LitJson
             if (object_metadata.ContainsKey(type))
                 return;
 
-            ObjectMetadata data = new ObjectMetadata();
+            var data = new ObjectMetadata();
 
             if (type.GetInterface("System.Collections.IDictionary") != null)
                 data.IsDictionary = true;
 
             data.Properties = new Dictionary<string, PropertyMetadata>();
 
-            foreach (PropertyInfo p_info in type.GetProperties()) {
+            foreach (var p_info in type.GetProperties()) {
                 if (p_info.Name == "Item") {
-                    ParameterInfo[] parameters = p_info.GetIndexParameters();
+                    var parameters = p_info.GetIndexParameters();
 
                     if (parameters.Length != 1)
                         continue;
@@ -230,15 +230,15 @@ namespace LitJson
                     continue;
                 }
 
-                PropertyMetadata p_data = new PropertyMetadata();
+                var p_data = new PropertyMetadata();
                 p_data.Info = p_info;
                 p_data.Type = p_info.PropertyType;
 
                 data.Properties.Add(p_info.Name, p_data);
             }
 
-            foreach (FieldInfo f_info in type.GetFields()) {
-                PropertyMetadata p_data = new PropertyMetadata();
+            foreach (var f_info in type.GetFields()) {
+                var p_data = new PropertyMetadata();
                 p_data.Info = f_info;
                 p_data.IsField = true;
                 p_data.Type = f_info.FieldType;
@@ -262,18 +262,18 @@ namespace LitJson
 
             IList<PropertyMetadata> props = new List<PropertyMetadata>();
 
-            foreach (PropertyInfo p_info in type.GetProperties()) {
+            foreach (var p_info in type.GetProperties()) {
                 if (p_info.Name == "Item")
                     continue;
 
-                PropertyMetadata p_data = new PropertyMetadata();
+                var p_data = new PropertyMetadata();
                 p_data.Info = p_info;
                 p_data.IsField = false;
                 props.Add(p_data);
             }
 
-            foreach (FieldInfo f_info in type.GetFields()) {
-                PropertyMetadata p_data = new PropertyMetadata();
+            foreach (var f_info in type.GetFields()) {
+                var p_data = new PropertyMetadata();
                 p_data.Info = f_info;
                 p_data.IsField = true;
 
@@ -299,7 +299,7 @@ namespace LitJson
             if (conv_ops[t1].ContainsKey(t2))
                 return conv_ops[t1][t2];
 
-            MethodInfo op = t1.GetMethod(
+            var op = t1.GetMethod(
                 "op_Implicit", new Type[] {t2});
 
             lock (conv_ops_lock) {
@@ -320,8 +320,8 @@ namespace LitJson
             if (reader.Token == JsonToken.ArrayEnd)
                 return null;
 
-            Type underlying_type = Nullable.GetUnderlyingType(inst_type);
-            Type value_type = underlying_type ?? inst_type;
+            var underlying_type = Nullable.GetUnderlyingType(inst_type);
+            var value_type = underlying_type ?? inst_type;
 
             if (reader.Token == JsonToken.Null) {
 #if NETSTANDARD1_5
@@ -329,12 +329,10 @@ namespace LitJson
                     return null;
                 }
 #else
-                if (inst_type.IsClass || underlying_type != null) {
-                    return null;
-                }
+                if (inst_type.IsClass || underlying_type != null) return null;
 #endif
 
-                throw new JsonException(String.Format(
+                throw new JsonException(string.Format(
                     "Can't assign null to an instance of type {0}",
                     inst_type));
             }
@@ -344,7 +342,7 @@ namespace LitJson
                 reader.Token == JsonToken.Long ||
                 reader.Token == JsonToken.String ||
                 reader.Token == JsonToken.Boolean) {
-                Type json_type = reader.Value.GetType();
+                var json_type = reader.Value.GetType();
 
                 if (value_type.IsAssignableFrom(json_type))
                     return reader.Value;
@@ -353,7 +351,7 @@ namespace LitJson
                 if (custom_importers_table.ContainsKey(json_type) &&
                     custom_importers_table[json_type].ContainsKey(
                         value_type)) {
-                    ImporterFunc importer =
+                    var importer =
                         custom_importers_table[json_type][value_type];
 
                     return importer(reader.Value);
@@ -363,7 +361,7 @@ namespace LitJson
                 if (base_importers_table.ContainsKey(json_type) &&
                     base_importers_table[json_type].ContainsKey(
                         value_type)) {
-                    ImporterFunc importer =
+                    var importer =
                         base_importers_table[json_type][value_type];
 
                     return importer(reader.Value);
@@ -378,14 +376,14 @@ namespace LitJson
                     return Enum.ToObject(value_type, reader.Value);
 #endif
                 // Try using an implicit conversion operator
-                MethodInfo conv_op = GetConvOp(value_type, json_type);
+                var conv_op = GetConvOp(value_type, json_type);
 
                 if (conv_op != null)
                     return conv_op.Invoke(null,
                         new object[] {reader.Value});
 
                 // No luck
-                throw new JsonException(String.Format(
+                throw new JsonException(string.Format(
                     "Can't assign value '{0}' (type {1}) to type {2}",
                     reader.Value, json_type, inst_type));
             }
@@ -394,10 +392,10 @@ namespace LitJson
 
             if (reader.Token == JsonToken.ArrayStart) {
                 AddArrayMetadata(inst_type);
-                ArrayMetadata t_data = array_metadata[inst_type];
+                var t_data = array_metadata[inst_type];
 
                 if (!t_data.IsArray && !t_data.IsList)
-                    throw new JsonException(String.Format(
+                    throw new JsonException(string.Format(
                         "Type {0} can't act as an array",
                         inst_type));
 
@@ -414,7 +412,7 @@ namespace LitJson
                 }
 
                 while (true) {
-                    object item = ReadValue(elem_type, reader);
+                    var item = ReadValue(elem_type, reader);
                     if (item == null && reader.Token == JsonToken.ArrayEnd)
                         break;
 
@@ -422,18 +420,19 @@ namespace LitJson
                 }
 
                 if (t_data.IsArray) {
-                    int n = list.Count;
+                    var n = list.Count;
                     instance = Array.CreateInstance(elem_type, n);
 
-                    for (int i = 0; i < n; i++)
+                    for (var i = 0; i < n; i++)
                         ((Array) instance).SetValue(list[i], i);
                 }
-                else
+                else {
                     instance = list;
+                }
             }
             else if (reader.Token == JsonToken.ObjectStart) {
                 AddObjectMetadata(value_type);
-                ObjectMetadata t_data = object_metadata[value_type];
+                var t_data = object_metadata[value_type];
 
                 instance = Activator.CreateInstance(value_type);
 
@@ -443,10 +442,10 @@ namespace LitJson
                     if (reader.Token == JsonToken.ObjectEnd)
                         break;
 
-                    string property = (string) reader.Value;
+                    var property = (string) reader.Value;
 
                     if (t_data.Properties.ContainsKey(property)) {
-                        PropertyMetadata prop_data =
+                        var prop_data =
                             t_data.Properties[property];
 
                         if (prop_data.IsField) {
@@ -454,7 +453,7 @@ namespace LitJson
                                 instance, ReadValue(prop_data.Type, reader));
                         }
                         else {
-                            PropertyInfo p_info =
+                            var p_info =
                                 (PropertyInfo) prop_data.Info;
 
                             if (p_info.CanWrite)
@@ -469,7 +468,7 @@ namespace LitJson
                     else {
                         if (!t_data.IsDictionary) {
                             if (!reader.SkipNonMembers) {
-                                throw new JsonException(String.Format(
+                                throw new JsonException(string.Format(
                                     "The type {0} doesn't have the " +
                                     "property '{1}'",
                                     inst_type, property));
@@ -498,7 +497,7 @@ namespace LitJson
                 reader.Token == JsonToken.Null)
                 return null;
 
-            IJsonWrapper instance = factory();
+            var instance = factory();
 
             if (reader.Token == JsonToken.String) {
                 instance.SetString((string) reader.Value);
@@ -529,7 +528,7 @@ namespace LitJson
                 instance.SetJsonType(JsonType.Array);
 
                 while (true) {
-                    IJsonWrapper item = ReadValue(factory, reader);
+                    var item = ReadValue(factory, reader);
                     if (item == null && reader.Token == JsonToken.ArrayEnd)
                         break;
 
@@ -545,7 +544,7 @@ namespace LitJson
                     if (reader.Token == JsonToken.ObjectEnd)
                         break;
 
-                    string property = (string) reader.Value;
+                    var property = (string) reader.Value;
 
                     ((IDictionary) instance)[property] = ReadValue(
                         factory, reader);
@@ -672,7 +671,7 @@ namespace LitJson
             int depth) {
             if (depth > max_nesting_depth)
                 throw new JsonException(
-                    String.Format("Max allowed object depth reached while " +
+                    string.Format("Max allowed object depth reached while " +
                                   "trying to export from type {0}",
                         obj.GetType()));
 
@@ -690,27 +689,27 @@ namespace LitJson
                 return;
             }
 
-            if (obj is String) {
+            if (obj is string) {
                 writer.Write((string) obj);
                 return;
             }
 
-            if (obj is Double) {
+            if (obj is double) {
                 writer.Write((double) obj);
                 return;
             }
 
-            if (obj is Int32) {
+            if (obj is int) {
                 writer.Write((int) obj);
                 return;
             }
 
-            if (obj is Boolean) {
+            if (obj is bool) {
                 writer.Write((bool) obj);
                 return;
             }
 
-            if (obj is Int64) {
+            if (obj is long) {
                 writer.Write((long) obj);
                 return;
             }
@@ -718,7 +717,7 @@ namespace LitJson
             if (obj is Array) {
                 writer.WriteArrayStart();
 
-                foreach (object elem in (Array) obj)
+                foreach (var elem in (Array) obj)
                     WriteValue(elem, writer, writer_is_private, depth + 1);
 
                 writer.WriteArrayEnd();
@@ -728,7 +727,7 @@ namespace LitJson
 
             if (obj is IList) {
                 writer.WriteArrayStart();
-                foreach (object elem in (IList) obj)
+                foreach (var elem in (IList) obj)
                     WriteValue(elem, writer, writer_is_private, depth + 1);
                 writer.WriteArrayEnd();
 
@@ -748,11 +747,11 @@ namespace LitJson
                 return;
             }
 
-            Type obj_type = obj.GetType();
+            var obj_type = obj.GetType();
 
             // See if there's a custom exporter for the object
             if (custom_exporters_table.ContainsKey(obj_type)) {
-                ExporterFunc exporter = custom_exporters_table[obj_type];
+                var exporter = custom_exporters_table[obj_type];
                 exporter(obj, writer);
 
                 return;
@@ -760,7 +759,7 @@ namespace LitJson
 
             // If not, maybe there's a base exporter
             if (base_exporters_table.ContainsKey(obj_type)) {
-                ExporterFunc exporter = base_exporters_table[obj_type];
+                var exporter = base_exporters_table[obj_type];
                 exporter(obj, writer);
 
                 return;
@@ -768,7 +767,7 @@ namespace LitJson
 
             // Last option, let's see if it's an enum
             if (obj is Enum) {
-                Type e_type = Enum.GetUnderlyingType(obj_type);
+                var e_type = Enum.GetUnderlyingType(obj_type);
 
                 if (e_type == typeof(long)
                     || e_type == typeof(uint)
@@ -783,17 +782,17 @@ namespace LitJson
             // Okay, so it looks like the input should be exported as an
             // object
             AddTypeProperties(obj_type);
-            IList<PropertyMetadata> props = type_properties[obj_type];
+            var props = type_properties[obj_type];
 
             writer.WriteObjectStart();
-            foreach (PropertyMetadata p_data in props) {
+            foreach (var p_data in props)
                 if (p_data.IsField) {
                     writer.WritePropertyName(p_data.Info.Name);
                     WriteValue(((FieldInfo) p_data.Info).GetValue(obj),
                         writer, writer_is_private, depth + 1);
                 }
                 else {
-                    PropertyInfo p_info = (PropertyInfo) p_data.Info;
+                    var p_info = (PropertyInfo) p_data.Info;
 
                     if (p_info.CanRead) {
                         writer.WritePropertyName(p_data.Info.Name);
@@ -801,7 +800,6 @@ namespace LitJson
                             writer, writer_is_private, depth + 1);
                     }
                 }
-            }
 
             writer.WriteObjectEnd();
         }
@@ -829,7 +827,7 @@ namespace LitJson
         }
 
         public static JsonData ToObject(TextReader reader) {
-            JsonReader json_reader = new JsonReader(reader);
+            var json_reader = new JsonReader(reader);
 
             return (JsonData) ToWrapper(
                 delegate { return new JsonData(); }, json_reader);
@@ -845,19 +843,19 @@ namespace LitJson
         }
 
         public static T ToObject<T>(TextReader reader) {
-            JsonReader json_reader = new JsonReader(reader);
+            var json_reader = new JsonReader(reader);
 
             return (T) ReadValue(typeof(T), json_reader);
         }
 
         public static T ToObject<T>(string json) {
-            JsonReader reader = new JsonReader(json);
+            var reader = new JsonReader(json);
 
             return (T) ReadValue(typeof(T), reader);
         }
 
         public static object ToObject(string json, Type ConvertType) {
-            JsonReader reader = new JsonReader(json);
+            var reader = new JsonReader(json);
 
             return ReadValue(ConvertType, reader);
         }
@@ -869,7 +867,7 @@ namespace LitJson
 
         public static IJsonWrapper ToWrapper(WrapperFactory factory,
             string json) {
-            JsonReader reader = new JsonReader(json);
+            var reader = new JsonReader(json);
 
             return ReadValue(factory, reader);
         }

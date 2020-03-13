@@ -24,25 +24,24 @@ namespace vFrame.Core.Crypto
         public abstract void Decrypt(Stream input, Stream output, byte[] key, int keyLength);
 
         protected override void OnCreate() {
-
         }
 
         protected override void OnDestroy() {
-
         }
 
-        public static ICryptoService CreateCrypto(CryptoType type) {
+        public static ICryptoService CreateCryptoService(CryptoType type) {
             CryptoService service;
             switch (type) {
                 case CryptoType.Plain:
                     service = ObjectPool<PlainCryptoService>.Get();
                     break;
                 case CryptoType.Xor:
-                    service = new XorCryptoService();
+                    service = ObjectPool<XorCryptoService>.Get();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
+
             service.Create();
             return service;
         }

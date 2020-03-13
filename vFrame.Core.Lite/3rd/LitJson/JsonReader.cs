@@ -69,35 +69,27 @@ namespace LitJson
         #region Public Properties
 
         public bool AllowComments {
-            get { return lexer.AllowComments; }
-            set { lexer.AllowComments = value; }
+            get => lexer.AllowComments;
+            set => lexer.AllowComments = value;
         }
 
         public bool AllowSingleQuotedStrings {
-            get { return lexer.AllowSingleQuotedStrings; }
-            set { lexer.AllowSingleQuotedStrings = value; }
+            get => lexer.AllowSingleQuotedStrings;
+            set => lexer.AllowSingleQuotedStrings = value;
         }
 
         public bool SkipNonMembers {
-            get { return skip_non_members; }
-            set { skip_non_members = value; }
+            get => skip_non_members;
+            set => skip_non_members = value;
         }
 
-        public bool EndOfInput {
-            get { return end_of_input; }
-        }
+        public bool EndOfInput => end_of_input;
 
-        public bool EndOfJson {
-            get { return end_of_json; }
-        }
+        public bool EndOfJson => end_of_json;
 
-        public JsonToken Token {
-            get { return token; }
-        }
+        public JsonToken Token => token;
 
-        public object Value {
-            get { return token_value; }
-        }
+        public object Value => token_value;
 
         #endregion
 
@@ -391,10 +383,9 @@ namespace LitJson
             end_of_input = true;
             end_of_json = true;
 
-            if (reader_is_owned) {
+            if (reader_is_owned)
                 using (reader) {
                 }
-            }
 
             reader = null;
         }
@@ -464,7 +455,7 @@ namespace LitJson
                 if (entry_symbols[0] == (int) ParserToken.Epsilon)
                     continue;
 
-                for (int i = entry_symbols.Length - 1; i >= 0; i--)
+                for (var i = entry_symbols.Length - 1; i >= 0; i--)
                     automaton_stack.Push(entry_symbols[i]);
             }
         }

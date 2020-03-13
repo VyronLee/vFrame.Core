@@ -29,13 +29,13 @@ namespace vFrame.Core.Loggers
         }
 
         public static LogLevelDef LogLevel {
-            get { return _level; }
-            set { _level = value; }
+            get => _level;
+            set => _level = value;
         }
 
         public static int LogCapacity {
-            get { return _capacity; }
-            set { _capacity = value; }
+            get => _capacity;
+            set => _capacity = value;
         }
 
         public static event Action<LogContext> OnLogReceived;

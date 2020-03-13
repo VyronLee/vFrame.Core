@@ -15,7 +15,6 @@ namespace vFrame.Core.Compress
         }
 
         protected override void OnDestroy() {
-
         }
 
         public abstract void Compress(Stream input, Stream output);
@@ -31,6 +30,7 @@ namespace vFrame.Core.Compress
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
+
             service.Create(options);
             return service;
         }

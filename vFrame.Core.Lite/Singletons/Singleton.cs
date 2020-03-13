@@ -40,13 +40,11 @@ namespace vFrame.Core.Singletons
         ///     获取单例
         /// </summary>
         public static T Instance() {
-            if (null == _instance) {
+            if (null == _instance)
                 lock (_lockObject) {
-                    if (null == _instance) {
-                        _instance = NewInstance();
-                    }
+                    if (null == _instance) _instance = NewInstance();
                 }
-            }
+
             return _instance;
         }
 

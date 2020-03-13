@@ -27,11 +27,13 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace System.Text.Formatting {
+namespace System.Text.Formatting
+{
     /// <summary>
     /// Specifies an interface for types that act as a set of formatting arguments.
     /// </summary>
-    public interface IArgSet {
+    public interface IArgSet
+    {
         /// <summary>
         /// The number of arguments in the set.
         /// </summary>
@@ -43,41 +45,41 @@ namespace System.Text.Formatting {
         /// <param name="buffer">The buffer to which to append the argument.</param>
         /// <param name="index">The index of the argument to format.</param>
         /// <param name="format">A specifier indicating how the argument should be formatted.</param>
-        void Format (StringBuffer buffer, int index, StringView format);
+        void Format(StringBuffer buffer, int index, StringView format);
     }
 
     /// <summary>
     /// Defines an interface for types that can be formatted into a string buffer.
     /// </summary>
-    public interface IStringFormattable {
+    public interface IStringFormattable
+    {
         /// <summary>
         /// Format the current instance into the given string buffer.
         /// </summary>
         /// <param name="buffer">The buffer to which to append.</param>
         /// <param name="format">A specifier indicating how the argument should be formatted.</param>
-        void Format (StringBuffer buffer, StringView format);
+        void Format(StringBuffer buffer, StringView format);
     }
 
     /// <summary>
     /// A low-allocation version of the built-in <see cref="StringBuilder"/> type.
     /// </summary>
-    public unsafe sealed partial class StringBuffer {
-        CachedCulture culture;
-        char[] buffer;
-        int currentCount;
+    public sealed unsafe partial class StringBuffer
+    {
+        private CachedCulture culture;
+        private char[] buffer;
+        private int currentCount;
 
         /// <summary>
         /// The number of characters in the buffer.
         /// </summary>
-        public int Count {
-            get { return currentCount; }
-        }
+        public int Count => currentCount;
 
         /// <summary>
         /// The culture used to format string data.
         /// </summary>
         public CultureInfo Culture {
-            get { return culture.Culture; }
+            get => culture.Culture;
             set {
                 if (culture.Culture == value)
                     return;
@@ -94,7 +96,7 @@ namespace System.Text.Formatting {
         /// <summary>
         /// Initializes a new instance of the <see cref="StringBuffer"/> class.
         /// </summary>
-        public StringBuffer ()
+        public StringBuffer()
             : this(DefaultCapacity) {
         }
 
@@ -102,7 +104,7 @@ namespace System.Text.Formatting {
         /// Initializes a new instance of the <see cref="StringBuffer"/> class.
         /// </summary>
         /// <param name="capacity">The initial size of the string buffer.</param>
-        public StringBuffer (int capacity) {
+        public StringBuffer(int capacity) {
             buffer = new char[capacity];
             culture = CachedCurrentCulture;
         }
@@ -119,7 +121,7 @@ namespace System.Text.Formatting {
         /// <summary>
         /// Clears the buffer.
         /// </summary>
-        public void Clear () {
+        public void Clear() {
             currentCount = 0;
         }
 
@@ -130,14 +132,15 @@ namespace System.Text.Formatting {
         /// <param name="destination">The destination array.</param>
         /// <param name="destinationIndex">The index within the destination array to which to begin copying.</param>
         /// <param name="count">The number of characters to copy.</param>
-        public void CopyTo (int sourceIndex, char[] destination, int destinationIndex, int count) {
+        public void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count) {
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination));
             if (destinationIndex + count > destination.Length || destinationIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
 
-            fixed (char* destPtr = &destination[destinationIndex])
+            fixed (char* destPtr = &destination[destinationIndex]) {
                 CopyTo(destPtr, sourceIndex, count);
+            }
         }
 
         /// <summary>
@@ -146,16 +149,15 @@ namespace System.Text.Formatting {
         /// <param name="dest">A pointer to the destination array.</param>
         /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
         /// <param name="count">The number of characters to copy.</param>
-        public void CopyTo (char* dest, int sourceIndex, int count) {
+        public void CopyTo(char* dest, int sourceIndex, int count) {
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
             if (sourceIndex + count > currentCount || sourceIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
 
-            fixed (char* s = buffer)
-            {
+            fixed (char* s = buffer) {
                 var src = s + sourceIndex;
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                     *dest++ = *src++;
             }
         }
@@ -168,7 +170,7 @@ namespace System.Text.Formatting {
         /// <param name="count">The number of characters to copy.</param>
         /// <param name="encoding">The encoding to use to convert characters to bytes.</param>
         /// <returns>The number of bytes written to the destination.</returns>
-        public int CopyTo (byte* dest, int sourceIndex, int count, Encoding encoding) {
+        public int CopyTo(byte* dest, int sourceIndex, int count, Encoding encoding) {
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
             if (sourceIndex + count > currentCount || sourceIndex < 0)
@@ -176,15 +178,16 @@ namespace System.Text.Formatting {
             if (encoding == null)
                 throw new ArgumentNullException(nameof(encoding));
 
-            fixed (char* s = buffer)
+            fixed (char* s = buffer) {
                 return encoding.GetBytes(s, count, dest, count);
+            }
         }
 
         /// <summary>
         /// Converts the buffer to a string instance.
         /// </summary>
         /// <returns>A new string representing the characters currently in the buffer.</returns>
-        public override string ToString () {
+        public override string ToString() {
             return new string(buffer, 0, currentCount);
         }
 
@@ -192,7 +195,7 @@ namespace System.Text.Formatting {
         /// Appends a character to the current buffer.
         /// </summary>
         /// <param name="c">The character to append.</param>
-        public void Append (char c) {
+        public void Append(char c) {
             Append(c, 1);
         }
 
@@ -201,15 +204,14 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="c">The character to append.</param>
         /// <param name="count">The number of times to append the character.</param>
-        public void Append (char c, int count) {
+        public void Append(char c, int count) {
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
 
             CheckCapacity(count);
-            fixed (char* b = &buffer[currentCount])
-            {
+            fixed (char* b = &buffer[currentCount]) {
                 var ptr = b;
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                     *ptr++ = c;
                 currentCount += count;
             }
@@ -219,7 +221,7 @@ namespace System.Text.Formatting {
         /// Appends the specified string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        public void Append (string value) {
+        public void Append(string value) {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
@@ -232,14 +234,15 @@ namespace System.Text.Formatting {
         /// <param name="value">The string to append.</param>
         /// <param name="startIndex">The starting index within the string to begin reading characters.</param>
         /// <param name="count">The number of characters to append.</param>
-        public void Append (string value, int startIndex, int count) {
+        public void Append(string value, int startIndex, int count) {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
             if (startIndex < 0 || startIndex + count > value.Length)
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
 
-            fixed (char* s = value)
+            fixed (char* s = value) {
                 Append(s + startIndex, count);
+            }
         }
 
         /// <summary>
@@ -248,14 +251,15 @@ namespace System.Text.Formatting {
         /// <param name="values">The characters to append.</param>
         /// <param name="startIndex">The starting index within the array to begin reading characters.</param>
         /// <param name="count">The number of characters to append.</param>
-        public void Append (char[] values, int startIndex, int count) {
+        public void Append(char[] values, int startIndex, int count) {
             if (values == null)
                 throw new ArgumentNullException(nameof(values));
             if (startIndex < 0 || startIndex + count > values.Length)
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
 
-            fixed (char* s = &values[startIndex])
+            fixed (char* s = &values[startIndex]) {
                 Append(s, count);
+            }
         }
 
         /// <summary>
@@ -263,12 +267,11 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="str">A pointer to the array of characters to append.</param>
         /// <param name="count">The number of characters to append.</param>
-        public void Append (char* str, int count) {
+        public void Append(char* str, int count) {
             CheckCapacity(count);
-            fixed (char* b = &buffer[currentCount])
-            {
+            fixed (char* b = &buffer[currentCount]) {
                 var dest = b;
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                     *dest++ = *str++;
                 currentCount += count;
             }
@@ -278,7 +281,7 @@ namespace System.Text.Formatting {
         /// Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        public void Append (bool value) {
+        public void Append(bool value) {
             if (value)
                 Append(TrueLiteral);
             else
@@ -290,7 +293,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (sbyte value, StringView format) {
+        public void Append(sbyte value, StringView format) {
             Numeric.FormatSByte(this, value, format, culture);
         }
 
@@ -299,7 +302,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (byte value, StringView format) {
+        public void Append(byte value, StringView format) {
             // widening here is fine
             Numeric.FormatUInt32(this, value, format, culture);
         }
@@ -309,7 +312,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (short value, StringView format) {
+        public void Append(short value, StringView format) {
             Numeric.FormatInt16(this, value, format, culture);
         }
 
@@ -318,7 +321,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (ushort value, StringView format) {
+        public void Append(ushort value, StringView format) {
             // widening here is fine
             Numeric.FormatUInt32(this, value, format, culture);
         }
@@ -328,7 +331,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (int value, StringView format) {
+        public void Append(int value, StringView format) {
             Numeric.FormatInt32(this, value, format, culture);
         }
 
@@ -337,7 +340,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (uint value, StringView format) {
+        public void Append(uint value, StringView format) {
             Numeric.FormatUInt32(this, value, format, culture);
         }
 
@@ -346,7 +349,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (long value, StringView format) {
+        public void Append(long value, StringView format) {
             Numeric.FormatInt64(this, value, format, culture);
         }
 
@@ -355,7 +358,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (ulong value, StringView format) {
+        public void Append(ulong value, StringView format) {
             Numeric.FormatUInt64(this, value, format, culture);
         }
 
@@ -364,7 +367,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (float value, StringView format) {
+        public void Append(float value, StringView format) {
             Numeric.FormatSingle(this, value, format, culture);
         }
 
@@ -373,7 +376,7 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (double value, StringView format) {
+        public void Append(double value, StringView format) {
             Numeric.FormatDouble(this, value, format, culture);
         }
 
@@ -382,8 +385,8 @@ namespace System.Text.Formatting {
         /// </summary>
         /// <param name="value">The value to append.</param>
         /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
-        public void Append (decimal value, StringView format) {
-            Numeric.FormatDecimal(this, (uint*)&value, format, culture);
+        public void Append(decimal value, StringView format) {
+            Numeric.FormatDecimal(this, (uint*) &value, format, culture);
         }
 
         /// <summary>
@@ -397,30 +400,30 @@ namespace System.Text.Formatting {
             if (format == null)
                 throw new ArgumentNullException(nameof(format));
 
-            fixed (char* formatPtr = format)
-            {
+            fixed (char* formatPtr = format) {
                 var curr = formatPtr;
                 var end = curr + format.Length;
                 var segmentsLeft = false;
                 var prevArgIndex = 0;
                 do {
-                    CheckCapacity((int)(end - curr));
-                    fixed (char* bufferPtr = &buffer[currentCount])
+                    CheckCapacity((int) (end - curr));
+                    fixed (char* bufferPtr = &buffer[currentCount]) {
                         segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref prevArgIndex, ref args);
-                }
-                while (segmentsLeft);
+                    }
+                } while (segmentsLeft);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void CheckCapacity (int count) {
+        private void CheckCapacity(int count) {
             if (currentCount + count > buffer.Length)
                 Array.Resize(ref buffer, buffer.Length * 2);
         }
 
-        bool AppendSegment<T>(ref char* currRef, char* end, char* dest, ref int prevArgIndex, ref T args) where T : IArgSet {
-            char* curr = currRef;
-            char c = '\x0';
+        private bool AppendSegment<T>(ref char* currRef, char* end, char* dest, ref int prevArgIndex, ref T args)
+            where T : IArgSet {
+            var curr = currRef;
+            var c = '\x0';
             while (curr < end) {
                 c = *curr++;
                 if (c == '}') {
@@ -497,12 +500,13 @@ namespace System.Text.Formatting {
                     }
                     else if (c == '}') {
                         // check for escape character for }}
-                        if (curr < end && *curr == '}')
+                        if (curr < end && *curr == '}') {
                             curr++;
+                        }
                         else {
                             // found the end of the specifier
                             // kick off the format job
-                            var specifier = new StringView(specifierBuffer, (int)(specifierPtr - specifierBuffer));
+                            var specifier = new StringView(specifierBuffer, (int) (specifierPtr - specifierBuffer));
                             args.Format(this, index, specifier);
                             break;
                         }
@@ -525,16 +529,17 @@ namespace System.Text.Formatting {
             // finish off padding, if necessary
             var padding = width - (currentCount - oldCount);
             if (padding > 0) {
-                if (leftJustify)
+                if (leftJustify) {
                     Append(' ', padding);
+                }
                 else {
                     // copy the recently placed chars up in memory to make room for padding
                     CheckCapacity(padding);
-                    for (int i = currentCount - 1; i >= oldCount; i--)
+                    for (var i = currentCount - 1; i >= oldCount; i--)
                         buffer[i + padding] = buffer[i];
 
                     // fill in padding
-                    for (int i = 0; i < padding; i++)
+                    for (var i = 0; i < padding; i++)
                         buffer[i + oldCount] = ' ';
                     currentCount += padding;
                 }
@@ -549,55 +554,67 @@ namespace System.Text.Formatting {
         internal void AppendGeneric<T>(T value, StringView format) {
             // this looks gross, but T is known at JIT-time so this call tree
             // gets compiled down to a direct call with no branching
-            if (typeof(T) == typeof(sbyte))
-                Append(*(sbyte*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(byte))
-                Append(*(byte*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(short))
-                Append(*(short*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(ushort))
-                Append(*(ushort*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(int))
-                Append(*(int*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(uint))
-                Append(*(uint*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(long))
-                Append(*(long*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(ulong))
-                Append(*(ulong*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(float))
-                Append(*(float*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(double))
-                Append(*(double*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(decimal))
-                Append(*(decimal*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(bool))
-                Append(*(bool*)Unsafe.AsPointer(ref value));
-            else if (typeof(T) == typeof(char))
-                Append(*(char*)Unsafe.AsPointer(ref value), format);
-            else if (typeof(T) == typeof(string))
+            if (typeof(T) == typeof(sbyte)) {
+                Append(*(sbyte*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(byte)) {
+                Append(*(byte*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(short)) {
+                Append(*(short*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(ushort)) {
+                Append(*(ushort*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(int)) {
+                Append(*(int*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(uint)) {
+                Append(*(uint*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(long)) {
+                Append(*(long*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(ulong)) {
+                Append(*(ulong*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(float)) {
+                Append(*(float*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(double)) {
+                Append(*(double*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(decimal)) {
+                Append(*(decimal*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(bool)) {
+                Append(*(bool*) Unsafe.AsPointer(ref value));
+            }
+            else if (typeof(T) == typeof(char)) {
+                Append(*(char*) Unsafe.AsPointer(ref value), format);
+            }
+            else if (typeof(T) == typeof(string)) {
                 Append(Unsafe.As<string>(value));
+            }
             else {
                 // first, check to see if it's a value type implementing IStringFormattable
                 var formatter = ValueHelper<T>.Formatter;
                 if (formatter != null)
                     formatter(this, value, format);
-                else {
-                    // We could handle this case by calling ToString() on the object and paying the
+                else // We could handle this case by calling ToString() on the object and paying the
                     // allocation, but presumably if the user is using us instead of the built-in
                     // formatting utilities they would rather be notified of this case, so we'll throw.
                     throw new InvalidOperationException(string.Format(SR.TypeNotFormattable, typeof(T)));
-                }
             }
         }
 
-        static int ParseNum (ref char* currRef, char* end, int maxValue) {
-            char* curr = currRef;
-            char c = *curr;
+        private static int ParseNum(ref char* currRef, char* end, int maxValue) {
+            var curr = currRef;
+            var c = *curr;
             if (c < '0' || c > '9')
                 ThrowError();
 
-            int value = 0;
+            var value = 0;
             do {
                 value = value * 10 + c - '0';
                 curr++;
@@ -611,8 +628,8 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static char SkipWhitespace (ref char* currRef, char* end) {
-            char* curr = currRef;
+        private static char SkipWhitespace(ref char* currRef, char* end) {
+            var curr = currRef;
             while (curr < end && *curr == ' ') curr++;
 
             if (curr == end)
@@ -622,11 +639,11 @@ namespace System.Text.Formatting {
             return *curr;
         }
 
-        static void ThrowError () {
+        private static void ThrowError() {
             throw new FormatException(SR.InvalidFormatString);
         }
 
-        static StringBuffer Acquire (int capacity) {
+        private static StringBuffer Acquire(int capacity) {
             if (capacity <= MaxCachedSize) {
                 var buffer = CachedInstance;
                 if (buffer != null) {
@@ -640,35 +657,35 @@ namespace System.Text.Formatting {
             return new StringBuffer(capacity);
         }
 
-        static void Release (StringBuffer buffer) {
+        private static void Release(StringBuffer buffer) {
             if (buffer.buffer.Length <= MaxCachedSize)
                 CachedInstance = buffer;
         }
 
-        [ThreadStatic]
-        static StringBuffer CachedInstance;
+        [ThreadStatic] private static StringBuffer CachedInstance;
 
-        static readonly CachedCulture CachedInvariantCulture = new CachedCulture(CultureInfo.InvariantCulture);
-        static readonly CachedCulture CachedCurrentCulture = new CachedCulture(CultureInfo.CurrentCulture);
+        private static readonly CachedCulture CachedInvariantCulture = new CachedCulture(CultureInfo.InvariantCulture);
+        private static readonly CachedCulture CachedCurrentCulture = new CachedCulture(CultureInfo.CurrentCulture);
 
-        const int DefaultCapacity = 32;
-        const int MaxCachedSize = 360;  // same as BCL's StringBuilderCache
-        const int MaxArgs = 256;
-        const int MaxSpacing = 1000000;
-        const int MaxSpecifierSize = 32;
+        private const int DefaultCapacity = 32;
+        private const int MaxCachedSize = 360; // same as BCL's StringBuilderCache
+        private const int MaxArgs = 256;
+        private const int MaxSpacing = 1000000;
+        private const int MaxSpecifierSize = 32;
 
-        const string TrueLiteral = "True";
-        const string FalseLiteral = "False";
+        private const string TrueLiteral = "True";
+        private const string FalseLiteral = "False";
 
         // The point of this class is to allow us to generate a direct call to a known
         // method on an unknown, unconstrained generic value type. Normally this would
         // be impossible; you'd have to cast the generic argument and introduce boxing.
         // Instead we pay a one-time startup cost to create a delegate that will forward
         // the parameter to the appropriate method in a strongly typed fashion.
-        static class ValueHelper<T> {
+        private static class ValueHelper<T>
+        {
             public static Action<StringBuffer, T, StringView> Formatter = Prepare();
 
-            static Action<StringBuffer, T, StringView> Prepare () {
+            private static Action<StringBuffer, T, StringView> Prepare() {
                 // we only use this class for value types that also implement IStringFormattable
                 var type = typeof(T);
                 if (!typeof(IStringFormattable).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
@@ -679,7 +696,7 @@ namespace System.Text.Formatting {
                     .GetDeclaredMethod("Assign")
                     .MakeGenericMethod(type)
                     .Invoke(null, null);
-                return (Action<StringBuffer, T, StringView>)result;
+                return (Action<StringBuffer, T, StringView>) result;
             }
 
             public static Action<StringBuffer, U, StringView> Assign<U>() where U : IStringFormattable {
@@ -689,17 +706,16 @@ namespace System.Text.Formatting {
     }
 
     // TODO: clean this up
-    public unsafe struct StringView {
+    public unsafe struct StringView
+    {
         public static readonly StringView Empty = new StringView();
 
         public readonly char* Data;
         public readonly int Length;
 
-        public bool IsEmpty {
-            get { return Length == 0; }
-        }
+        public bool IsEmpty => Length == 0;
 
-        public StringView (char* data, int length) {
+        public StringView(char* data, int length) {
             Data = data;
             Length = length;
         }
@@ -709,14 +725,12 @@ namespace System.Text.Formatting {
             if (count != rhs.Length)
                 return false;
 
-            fixed (char* r = rhs)
-            {
+            fixed (char* r = rhs) {
                 var lhsPtr = lhs.Data;
                 var rhsPtr = r;
-                for (int i = 0; i < count; i++) {
+                for (var i = 0; i < count; i++)
                     if (*lhsPtr++ != *rhsPtr++)
                         return false;
-                }
             }
 
             return true;
@@ -729,7 +743,8 @@ namespace System.Text.Formatting {
 
     // caches formatting information from culture data
     // some of the accessors on NumberFormatInfo allocate copies of their data
-    sealed class CachedCulture {
+    internal sealed class CachedCulture
+    {
         public readonly CultureInfo Culture;
 
         public readonly NumberFormatData CurrencyData;
@@ -758,7 +773,7 @@ namespace System.Text.Formatting {
 
         public readonly int DecimalBufferSize;
 
-        public CachedCulture (CultureInfo culture) {
+        public CachedCulture(CultureInfo culture) {
             Culture = culture;
 
             var info = culture.NumberFormat;
@@ -826,22 +841,22 @@ namespace System.Text.Formatting {
                 (NegativeSign.Length + PositiveSign.Length) * 2;
         }
 
-        static readonly string[] PositiveCurrencyFormats = {
+        private static readonly string[] PositiveCurrencyFormats = {
             "$#", "#$", "$ #", "# $"
         };
 
-        static readonly string[] NegativeCurrencyFormats = {
+        private static readonly string[] NegativeCurrencyFormats = {
             "($#)", "-$#", "$-#", "$#-",
             "(#$)", "-#$", "#-$", "#$-",
             "-# $", "-$ #", "# $-", "$ #-",
             "$ -#", "#- $", "($ #)", "(# $)"
         };
 
-        static readonly string[] PositivePercentFormats = {
+        private static readonly string[] PositivePercentFormats = {
             "# %", "#%", "%#", "% #"
         };
 
-        static readonly string[] NegativePercentFormats = {
+        private static readonly string[] NegativePercentFormats = {
             "-# %", "-#%", "-%#",
             "%-#", "%#-",
             "#-%", "#%-",
@@ -849,18 +864,19 @@ namespace System.Text.Formatting {
             "% -#", "#- %"
         };
 
-        static readonly string[] NegativeNumberFormats = {
+        private static readonly string[] NegativeNumberFormats = {
             "(#)", "-#", "- #", "#-", "# -",
         };
 
-        static readonly string PositiveNumberFormat = "#";
+        private static readonly string PositiveNumberFormat = "#";
     }
 
     // contains format information for a specific kind of format string
     // e.g. (fixed, number, currency)
-    sealed class NumberFormatData {
-        readonly int bufferLength;
-        readonly int perDigitLength;
+    internal sealed class NumberFormatData
+    {
+        private readonly int bufferLength;
+        private readonly int perDigitLength;
 
         public readonly int DecimalDigits;
         public readonly string NegativeSign;
@@ -868,7 +884,8 @@ namespace System.Text.Formatting {
         public readonly string GroupSeparator;
         public readonly int[] GroupSizes;
 
-        public NumberFormatData (int decimalDigits, string negativeSign, string decimalSeparator, string groupSeparator, int[] groupSizes, int extra) {
+        public NumberFormatData(int decimalDigits, string negativeSign, string decimalSeparator, string groupSeparator,
+            int[] groupSizes, int extra) {
             DecimalDigits = decimalDigits;
             NegativeSign = negativeSign;
             DecimalSeparator = decimalSeparator;
@@ -884,7 +901,7 @@ namespace System.Text.Formatting {
                 perDigitLength = GroupSeparator.Length;
         }
 
-        public int GetBufferSize (ref int maxDigits, int scale) {
+        public int GetBufferSize(ref int maxDigits, int scale) {
             if (maxDigits < 0)
                 maxDigits = DecimalDigits;
 
@@ -894,15 +911,17 @@ namespace System.Text.Formatting {
             // calculate buffer size
             len += digitCount;
             len += perDigitLength * digitCount;
-            return checked((int)len);
+            return checked((int) len);
         }
 
         internal const int MinBufferSize = 105;
     }
 
     // this file contains the custom numeric formatting routines split out from the Numeric.cs file
-    partial class Numeric {
-        static void NumberToCustomFormatString (StringBuffer formatter, ref Number number, StringView specifier, CachedCulture culture) {
+    internal partial class Numeric
+    {
+        private static void NumberToCustomFormatString(StringBuffer formatter, ref Number number, StringView specifier,
+            CachedCulture culture) {
         }
     }
 
@@ -911,13 +930,15 @@ namespace System.Text.Formatting {
     // Also see: https://github.com/dotnet/coreclr/blob/02084af832c2900cf6eac2a168c41f261409be97/src/mscorlib/src/System/Number.cs
     // Standard numeric format string reference: https://msdn.microsoft.com/en-us/library/dwhawy9k%28v=vs.110%29.aspx
 
-    unsafe static partial class Numeric {
-        public static void FormatSByte (StringBuffer formatter, sbyte value, StringView specifier, CachedCulture culture) {
+    internal static unsafe partial class Numeric
+    {
+        public static void FormatSByte(StringBuffer formatter, sbyte value, StringView specifier,
+            CachedCulture culture) {
             if (value < 0 && !specifier.IsEmpty) {
                 // if we're negative and doing a hex format, mask out the bits for the conversion
-                char c = specifier.Data[0];
+                var c = specifier.Data[0];
                 if (c == 'X' || c == 'x') {
-                    FormatUInt32(formatter, (uint)(value & 0xFF), specifier, culture);
+                    FormatUInt32(formatter, (uint) (value & 0xFF), specifier, culture);
                     return;
                 }
             }
@@ -925,12 +946,13 @@ namespace System.Text.Formatting {
             FormatInt32(formatter, value, specifier, culture);
         }
 
-        public static void FormatInt16 (StringBuffer formatter, short value, StringView specifier, CachedCulture culture) {
+        public static void FormatInt16(StringBuffer formatter, short value, StringView specifier,
+            CachedCulture culture) {
             if (value < 0 && !specifier.IsEmpty) {
                 // if we're negative and doing a hex format, mask out the bits for the conversion
-                char c = specifier.Data[0];
+                var c = specifier.Data[0];
                 if (c == 'X' || c == 'x') {
-                    FormatUInt32(formatter, (uint)(value & 0xFFFF), specifier, culture);
+                    FormatUInt32(formatter, (uint) (value & 0xFFFF), specifier, culture);
                     return;
                 }
             }
@@ -938,7 +960,7 @@ namespace System.Text.Formatting {
             FormatInt32(formatter, value, specifier, culture);
         }
 
-        public static void FormatInt32 (StringBuffer formatter, int value, StringView specifier, CachedCulture culture) {
+        public static void FormatInt32(StringBuffer formatter, int value, StringView specifier, CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -957,7 +979,7 @@ namespace System.Text.Formatting {
                 case 'X':
                     // fmt-('X'-'A'+1) gives us the base hex character in either
                     // uppercase or lowercase, depending on the casing of fmt
-                    Int32ToHexStr(formatter, (uint)value, fmt - ('X' - 'A' + 10), digits);
+                    Int32ToHexStr(formatter, (uint) value, fmt - ('X' - 'A' + 10), digits);
                     break;
 
                 default:
@@ -973,7 +995,8 @@ namespace System.Text.Formatting {
             }
         }
 
-        public static void FormatUInt32 (StringBuffer formatter, uint value, StringView specifier, CachedCulture culture) {
+        public static void FormatUInt32(StringBuffer formatter, uint value, StringView specifier,
+            CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -1008,7 +1031,8 @@ namespace System.Text.Formatting {
             }
         }
 
-        public static void FormatInt64 (StringBuffer formatter, long value, StringView specifier, CachedCulture culture) {
+        public static void FormatInt64(StringBuffer formatter, long value, StringView specifier,
+            CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -1027,7 +1051,7 @@ namespace System.Text.Formatting {
                 case 'X':
                     // fmt-('X'-'A'+1) gives us the base hex character in either
                     // uppercase or lowercase, depending on the casing of fmt
-                    Int64ToHexStr(formatter, (ulong)value, fmt - ('X' - 'A' + 10), digits);
+                    Int64ToHexStr(formatter, (ulong) value, fmt - ('X' - 'A' + 10), digits);
                     break;
 
                 default:
@@ -1043,7 +1067,8 @@ namespace System.Text.Formatting {
             }
         }
 
-        public static void FormatUInt64 (StringBuffer formatter, ulong value, StringView specifier, CachedCulture culture) {
+        public static void FormatUInt64(StringBuffer formatter, ulong value, StringView specifier,
+            CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -1078,9 +1103,10 @@ namespace System.Text.Formatting {
             }
         }
 
-        public static void FormatSingle (StringBuffer formatter, float value, StringView specifier, CachedCulture culture) {
+        public static void FormatSingle(StringBuffer formatter, float value, StringView specifier,
+            CachedCulture culture) {
             int digits;
-            int precision = FloatPrecision;
+            var precision = FloatPrecision;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
             // ANDing with 0xFFDF has the effect of uppercasing the character
@@ -1121,9 +1147,10 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FormatDouble (StringBuffer formatter, double value, StringView specifier, CachedCulture culture) {
+        public static void FormatDouble(StringBuffer formatter, double value, StringView specifier,
+            CachedCulture culture) {
             int digits;
-            int precision = DoublePrecision;
+            var precision = DoublePrecision;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
             // ANDing with 0xFFDF has the effect of uppercasing the character
@@ -1164,7 +1191,8 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FormatDecimal (StringBuffer formatter, uint* value, StringView specifier, CachedCulture culture) {
+        public static void FormatDecimal(StringBuffer formatter, uint* value, StringView specifier,
+            CachedCulture culture) {
             int digits;
             var fmt = ParseFormatSpecifier(specifier, out digits);
 
@@ -1173,228 +1201,246 @@ namespace System.Text.Formatting {
             number.Digits = buffer;
             DecimalToNumber(value, ref number);
             if (fmt != 0)
-                NumberToString(formatter, ref number, fmt, digits, culture, isDecimal: true);
+                NumberToString(formatter, ref number, fmt, digits, culture, true);
             else
                 NumberToCustomFormatString(formatter, ref number, specifier, culture);
         }
 
-        static void NumberToString (StringBuffer formatter, ref Number number, char format, int maxDigits, CachedCulture culture, bool isDecimal = false) {
+        private static void NumberToString(StringBuffer formatter, ref Number number, char format, int maxDigits,
+            CachedCulture culture, bool isDecimal = false) {
             // ANDing with 0xFFDF has the effect of uppercasing the character
             switch (format & 0xFFDF) {
-                case 'C':
-                    {
-                        var cultureData = culture.CurrencyData;
-                        var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
-                        RoundNumber(ref number, number.Scale + maxDigits);
+                case 'C': {
+                    var cultureData = culture.CurrencyData;
+                    var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
+                    RoundNumber(ref number, number.Scale + maxDigits);
 
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = FormatCurrency(
-                            buffer,
-                            ref number,
-                            maxDigits,
-                            cultureData,
-                            number.Sign > 0 ? culture.CurrencyNegativePattern : culture.CurrencyPositivePattern,
-                            culture.CurrencySymbol
-                        );
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = FormatCurrency(
+                        buffer,
+                        ref number,
+                        maxDigits,
+                        cultureData,
+                        number.Sign > 0 ? culture.CurrencyNegativePattern : culture.CurrencyPositivePattern,
+                        culture.CurrencySymbol
+                    );
 
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
-                    }
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
-                case 'F':
-                    {
-                        var cultureData = culture.FixedData;
-                        var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
-                        RoundNumber(ref number, number.Scale + maxDigits);
+                case 'F': {
+                    var cultureData = culture.FixedData;
+                    var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
+                    RoundNumber(ref number, number.Scale + maxDigits);
 
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = buffer;
-                        if (number.Sign > 0)
-                            AppendString(&ptr, cultureData.NegativeSign);
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = buffer;
+                    if (number.Sign > 0)
+                        AppendString(&ptr, cultureData.NegativeSign);
 
-                        ptr = FormatFixed(ptr, ref number, maxDigits, cultureData);
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
-                    }
+                    ptr = FormatFixed(ptr, ref number, maxDigits, cultureData);
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
-                case 'N':
-                    {
-                        var cultureData = culture.NumberData;
-                        var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
-                        RoundNumber(ref number, number.Scale + maxDigits);
+                case 'N': {
+                    var cultureData = culture.NumberData;
+                    var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
+                    RoundNumber(ref number, number.Scale + maxDigits);
 
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = FormatNumber(
-                            buffer,
-                            ref number,
-                            maxDigits,
-                            number.Sign > 0 ? culture.NumberNegativePattern : culture.NumberPositivePattern,
-                            cultureData
-                        );
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = FormatNumber(
+                        buffer,
+                        ref number,
+                        maxDigits,
+                        number.Sign > 0 ? culture.NumberNegativePattern : culture.NumberPositivePattern,
+                        cultureData
+                    );
 
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
-                    }
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
-                case 'E':
-                    {
-                        var cultureData = culture.ScientificData;
-                        var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
-                        maxDigits++;
+                case 'E': {
+                    var cultureData = culture.ScientificData;
+                    var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
+                    maxDigits++;
 
-                        RoundNumber(ref number, maxDigits);
+                    RoundNumber(ref number, maxDigits);
 
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = buffer;
-                        if (number.Sign > 0)
-                            AppendString(&ptr, cultureData.NegativeSign);
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = buffer;
+                    if (number.Sign > 0)
+                        AppendString(&ptr, cultureData.NegativeSign);
 
-                        ptr = FormatScientific(
-                            ptr,
-                            ref number,
-                            maxDigits,
-                            format, // TODO: fix casing
-                            cultureData.DecimalSeparator,
-                            culture.PositiveSign,
-                            culture.NegativeSign
-                        );
+                    ptr = FormatScientific(
+                        ptr,
+                        ref number,
+                        maxDigits,
+                        format, // TODO: fix casing
+                        cultureData.DecimalSeparator,
+                        culture.PositiveSign,
+                        culture.NegativeSign
+                    );
 
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
-                    }
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
-                case 'P':
-                    {
-                        number.Scale += 2;
-                        var cultureData = culture.PercentData;
-                        var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
-                        RoundNumber(ref number, number.Scale + maxDigits);
+                case 'P': {
+                    number.Scale += 2;
+                    var cultureData = culture.PercentData;
+                    var bufferSize = cultureData.GetBufferSize(ref maxDigits, number.Scale);
+                    RoundNumber(ref number, number.Scale + maxDigits);
 
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = FormatPercent(
-                            buffer,
-                            ref number,
-                            maxDigits,
-                            cultureData,
-                            number.Sign > 0 ? culture.PercentNegativePattern : culture.PercentPositivePattern,
-                            culture.PercentSymbol
-                        );
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = FormatPercent(
+                        buffer,
+                        ref number,
+                        maxDigits,
+                        cultureData,
+                        number.Sign > 0 ? culture.PercentNegativePattern : culture.PercentPositivePattern,
+                        culture.PercentSymbol
+                    );
 
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
-                    }
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
-                case 'G':
-                    {
-                        var enableRounding = true;
-                        if (maxDigits < 1) {
-                            if (isDecimal && maxDigits == -1) {
-                                // if we're formatting a decimal, default to 29 digits precision
-                                // only for G formatting without a precision specifier
-                                maxDigits = DecimalPrecision;
-                                enableRounding = false;
-                            }
-                            else
-                                maxDigits = number.Precision;
+                case 'G': {
+                    var enableRounding = true;
+                    if (maxDigits < 1) {
+                        if (isDecimal && maxDigits == -1) {
+                            // if we're formatting a decimal, default to 29 digits precision
+                            // only for G formatting without a precision specifier
+                            maxDigits = DecimalPrecision;
+                            enableRounding = false;
                         }
-
-                        var bufferSize = maxDigits + culture.DecimalBufferSize;
-                        var buffer = stackalloc char[bufferSize];
-                        var ptr = buffer;
-
-                        // round for G formatting only if a precision is given
-                        // we need to handle the minus zero case also
-                        if (enableRounding)
-                            RoundNumber(ref number, maxDigits);
-                        else if (isDecimal && number.Digits[0] == 0)
-                            number.Sign = 0;
-
-                        if (number.Sign > 0)
-                            AppendString(&ptr, culture.NegativeSign);
-
-                        ptr = FormatGeneral(
-                            ptr,
-                            ref number,
-                            maxDigits,
-                            (char)(format - ('G' - 'E')),
-                            culture.NumberData.DecimalSeparator,
-                            culture.PositiveSign,
-                            culture.NegativeSign,
-                            !enableRounding
-                        );
-
-                        formatter.Append(buffer, (int)(ptr - buffer));
-                        break;
+                        else {
+                            maxDigits = number.Precision;
+                        }
                     }
+
+                    var bufferSize = maxDigits + culture.DecimalBufferSize;
+                    var buffer = stackalloc char[bufferSize];
+                    var ptr = buffer;
+
+                    // round for G formatting only if a precision is given
+                    // we need to handle the minus zero case also
+                    if (enableRounding)
+                        RoundNumber(ref number, maxDigits);
+                    else if (isDecimal && number.Digits[0] == 0)
+                        number.Sign = 0;
+
+                    if (number.Sign > 0)
+                        AppendString(&ptr, culture.NegativeSign);
+
+                    ptr = FormatGeneral(
+                        ptr,
+                        ref number,
+                        maxDigits,
+                        (char) (format - ('G' - 'E')),
+                        culture.NumberData.DecimalSeparator,
+                        culture.PositiveSign,
+                        culture.NegativeSign,
+                        !enableRounding
+                    );
+
+                    formatter.Append(buffer, (int) (ptr - buffer));
+                    break;
+                }
 
                 default:
                     throw new FormatException(string.Format(SR.UnknownFormatSpecifier, format));
             }
         }
 
-        static char* FormatCurrency (char* buffer, ref Number number, int maxDigits, NumberFormatData data, string currencyFormat, string currencySymbol) {
-            for (int i = 0; i < currencyFormat.Length; i++) {
-                char c = currencyFormat[i];
+        private static char* FormatCurrency(char* buffer, ref Number number, int maxDigits, NumberFormatData data,
+            string currencyFormat, string currencySymbol) {
+            for (var i = 0; i < currencyFormat.Length; i++) {
+                var c = currencyFormat[i];
                 switch (c) {
-                    case '#': buffer = FormatFixed(buffer, ref number, maxDigits, data); break;
-                    case '-': AppendString(&buffer, data.NegativeSign); break;
-                    case '$': AppendString(&buffer, currencySymbol); break;
-                    default: *buffer++ = c; break;
+                    case '#':
+                        buffer = FormatFixed(buffer, ref number, maxDigits, data);
+                        break;
+                    case '-':
+                        AppendString(&buffer, data.NegativeSign);
+                        break;
+                    case '$':
+                        AppendString(&buffer, currencySymbol);
+                        break;
+                    default:
+                        *buffer++ = c;
+                        break;
                 }
             }
 
             return buffer;
         }
 
-        static char* FormatNumber (char* buffer, ref Number number, int maxDigits, string format, NumberFormatData data) {
-            for (int i = 0; i < format.Length; i++) {
-                char c = format[i];
+        private static char* FormatNumber(char* buffer, ref Number number, int maxDigits, string format,
+            NumberFormatData data) {
+            for (var i = 0; i < format.Length; i++) {
+                var c = format[i];
                 switch (c) {
-                    case '#': buffer = FormatFixed(buffer, ref number, maxDigits, data); break;
-                    case '-': AppendString(&buffer, data.NegativeSign); break;
-                    default: *buffer++ = c; break;
+                    case '#':
+                        buffer = FormatFixed(buffer, ref number, maxDigits, data);
+                        break;
+                    case '-':
+                        AppendString(&buffer, data.NegativeSign);
+                        break;
+                    default:
+                        *buffer++ = c;
+                        break;
                 }
             }
 
             return buffer;
         }
 
-        static char* FormatPercent (char* buffer, ref Number number, int maxDigits, NumberFormatData data, string format, string percentSymbol) {
-            for (int i = 0; i < format.Length; i++) {
-                char c = format[i];
+        private static char* FormatPercent(char* buffer, ref Number number, int maxDigits, NumberFormatData data,
+            string format, string percentSymbol) {
+            for (var i = 0; i < format.Length; i++) {
+                var c = format[i];
                 switch (c) {
-                    case '#': buffer = FormatFixed(buffer, ref number, maxDigits, data); break;
-                    case '-': AppendString(&buffer, data.NegativeSign); break;
-                    case '%': AppendString(&buffer, percentSymbol); break;
-                    default: *buffer++ = c; break;
+                    case '#':
+                        buffer = FormatFixed(buffer, ref number, maxDigits, data);
+                        break;
+                    case '-':
+                        AppendString(&buffer, data.NegativeSign);
+                        break;
+                    case '%':
+                        AppendString(&buffer, percentSymbol);
+                        break;
+                    default:
+                        *buffer++ = c;
+                        break;
                 }
             }
 
             return buffer;
         }
 
-        static char* FormatGeneral (
+        private static char* FormatGeneral(
             char* buffer, ref Number number, int maxDigits, char expChar,
             string decimalSeparator, string positiveSign, string negativeSign,
             bool suppressScientific) {
-
             var digitPos = number.Scale;
             var scientific = false;
-            if (!suppressScientific) {
+            if (!suppressScientific)
                 if (digitPos > maxDigits || digitPos < -3) {
                     digitPos = 1;
                     scientific = true;
                 }
-            }
 
             var digits = number.Digits;
             if (digitPos <= 0)
                 *buffer++ = '0';
-            else {
+            else
                 do {
                     *buffer++ = *digits != 0 ? *digits++ : '0';
                 } while (--digitPos > 0);
-            }
 
             if (*digits != 0 || digitPos < 0) {
                 AppendString(&buffer, decimalSeparator);
@@ -1413,10 +1459,9 @@ namespace System.Text.Formatting {
             return buffer;
         }
 
-        static char* FormatScientific (
+        private static char* FormatScientific(
             char* buffer, ref Number number, int maxDigits, char expChar,
             string decimalSeparator, string positiveSign, string negativeSign) {
-
             var digits = number.Digits;
             *buffer++ = *digits != 0 ? *digits++ : '0';
             if (maxDigits != 1)
@@ -1425,34 +1470,37 @@ namespace System.Text.Formatting {
             while (--maxDigits > 0)
                 *buffer++ = *digits != 0 ? *digits++ : '0';
 
-            int e = number.Digits[0] == 0 ? 0 : number.Scale - 1;
+            var e = number.Digits[0] == 0 ? 0 : number.Scale - 1;
             return FormatExponent(buffer, e, expChar, positiveSign, negativeSign, 3);
         }
 
-        static char* FormatExponent (char* buffer, int value, char expChar, string positiveSign, string negativeSign, int minDigits) {
+        private static char* FormatExponent(char* buffer, int value, char expChar, string positiveSign,
+            string negativeSign, int minDigits) {
             *buffer++ = expChar;
             if (value < 0) {
                 AppendString(&buffer, negativeSign);
                 value = -value;
             }
-            else if (positiveSign != null)
+            else if (positiveSign != null) {
                 AppendString(&buffer, positiveSign);
+            }
 
             var digits = stackalloc char[11];
-            var ptr = Int32ToDecChars(digits + 10, (uint)value, minDigits);
-            var len = (int)(digits + 10 - ptr);
+            var ptr = Int32ToDecChars(digits + 10, (uint) value, minDigits);
+            var len = (int) (digits + 10 - ptr);
             while (--len >= 0)
                 *buffer++ = *ptr++;
 
             return buffer;
         }
 
-        static char* FormatFixed (char* buffer, ref Number number, int maxDigits, NumberFormatData data) {
+        private static char* FormatFixed(char* buffer, ref Number number, int maxDigits, NumberFormatData data) {
             var groups = data.GroupSizes;
             var digits = number.Digits;
             var digitPos = number.Scale;
-            if (digitPos <= 0)
+            if (digitPos <= 0) {
                 *buffer++ = '0';
+            }
             else if (groups != null) {
                 var groupIndex = 0;
                 var groupSizeCount = groups[0];
@@ -1489,20 +1537,21 @@ namespace System.Text.Formatting {
                 var digitStart = digitPos < digitLength ? digitPos : digitLength;
                 var ptr = buffer + newBufferSize - 1;
 
-                for (int i = digitPos - 1; i >= 0; i--) {
-                    *(ptr--) = i < digitStart ? digits[i] : '0';
+                for (var i = digitPos - 1; i >= 0; i--) {
+                    *ptr-- = i < digitStart ? digits[i] : '0';
 
                     // check if we need to add a group separator
                     if (groupSize > 0) {
                         digitCount++;
                         if (digitCount == groupSize && i != 0) {
-                            for (int j = groupSeparatorLen - 1; j >= 0; j--)
-                                *(ptr--) = data.GroupSeparator[j];
+                            for (var j = groupSeparatorLen - 1; j >= 0; j--)
+                                *ptr-- = data.GroupSeparator[j];
 
                             if (groupIndex < groupSizeLen - 1) {
                                 groupIndex++;
                                 groupSize = groups[groupIndex];
                             }
+
                             digitCount = 0;
                         }
                     }
@@ -1514,8 +1563,7 @@ namespace System.Text.Formatting {
             else {
                 do {
                     *buffer++ = *digits != 0 ? *digits++ : '0';
-                }
-                while (--digitPos > 0);
+                } while (--digitPos > 0);
             }
 
             if (maxDigits > 0) {
@@ -1535,7 +1583,7 @@ namespace System.Text.Formatting {
             return buffer;
         }
 
-        static void Int32ToDecStr (StringBuffer formatter, int value, int digits, string negativeSign) {
+        private static void Int32ToDecStr(StringBuffer formatter, int value, int digits, string negativeSign) {
             if (digits < 1)
                 digits = 1;
 
@@ -1550,39 +1598,37 @@ namespace System.Text.Formatting {
             }
 
             var buffer = stackalloc char[bufferLength];
-            var p = Int32ToDecChars(buffer + bufferLength, value >= 0 ? (uint)value : (uint)-value, digits);
-            if (value < 0) {
-                // add the negative sign
-                for (int i = negativeLength - 1; i >= 0; i--)
-                    *(--p) = negativeSign[i];
-            }
+            var p = Int32ToDecChars(buffer + bufferLength, value >= 0 ? (uint) value : (uint) -value, digits);
+            if (value < 0) // add the negative sign
+                for (var i = negativeLength - 1; i >= 0; i--)
+                    *--p = negativeSign[i];
 
-            formatter.Append(p, (int)(buffer + bufferLength - p));
+            formatter.Append(p, (int) (buffer + bufferLength - p));
         }
 
-        static void UInt32ToDecStr (StringBuffer formatter, uint value, int digits) {
+        private static void UInt32ToDecStr(StringBuffer formatter, uint value, int digits) {
             var buffer = stackalloc char[100];
             if (digits < 1)
                 digits = 1;
 
             var p = Int32ToDecChars(buffer + 100, value, digits);
-            formatter.Append(p, (int)(buffer + 100 - p));
+            formatter.Append(p, (int) (buffer + 100 - p));
         }
 
-        static void Int32ToHexStr (StringBuffer formatter, uint value, int hexBase, int digits) {
+        private static void Int32ToHexStr(StringBuffer formatter, uint value, int hexBase, int digits) {
             var buffer = stackalloc char[100];
             if (digits < 1)
                 digits = 1;
 
             var p = Int32ToHexChars(buffer + 100, value, hexBase, digits);
-            formatter.Append(p, (int)(buffer + 100 - p));
+            formatter.Append(p, (int) (buffer + 100 - p));
         }
 
-        static void Int64ToDecStr (StringBuffer formatter, long value, int digits, string negativeSign) {
+        private static void Int64ToDecStr(StringBuffer formatter, long value, int digits, string negativeSign) {
             if (digits < 1)
                 digits = 1;
 
-            var sign = (int)High32((ulong)value);
+            var sign = (int) High32((ulong) value);
             var maxDigits = digits > 20 ? digits : 20;
             var bufferLength = maxDigits > 100 ? maxDigits : 100;
 
@@ -1595,23 +1641,21 @@ namespace System.Text.Formatting {
 
             var buffer = stackalloc char[bufferLength];
             var p = buffer + bufferLength;
-            var uv = (ulong)value;
+            var uv = (ulong) value;
             while (High32(uv) != 0) {
                 p = Int32ToDecChars(p, Int64DivMod(ref uv), 9);
                 digits -= 9;
             }
 
             p = Int32ToDecChars(p, Low32(uv), digits);
-            if (sign < 0) {
-                // add the negative sign
-                for (int i = negativeSign.Length - 1; i >= 0; i--)
-                    *(--p) = negativeSign[i];
-            }
+            if (sign < 0) // add the negative sign
+                for (var i = negativeSign.Length - 1; i >= 0; i--)
+                    *--p = negativeSign[i];
 
-            formatter.Append(p, (int)(buffer + bufferLength - p));
+            formatter.Append(p, (int) (buffer + bufferLength - p));
         }
 
-        static void UInt64ToDecStr (StringBuffer formatter, ulong value, int digits) {
+        private static void UInt64ToDecStr(StringBuffer formatter, ulong value, int digits) {
             if (digits < 1)
                 digits = 1;
 
@@ -1623,10 +1667,10 @@ namespace System.Text.Formatting {
             }
 
             p = Int32ToDecChars(p, Low32(value), digits);
-            formatter.Append(p, (int)(buffer + 100 - p));
+            formatter.Append(p, (int) (buffer + 100 - p));
         }
 
-        static void Int64ToHexStr (StringBuffer formatter, ulong value, int hexBase, int digits) {
+        private static void Int64ToHexStr(StringBuffer formatter, ulong value, int hexBase, int digits) {
             var buffer = stackalloc char[100];
             char* ptr;
             if (High32(value) != 0) {
@@ -1639,12 +1683,12 @@ namespace System.Text.Formatting {
                 ptr = Int32ToHexChars(buffer + 100, Low32(value), hexBase, digits);
             }
 
-            formatter.Append(ptr, (int)(buffer + 100 - ptr));
+            formatter.Append(ptr, (int) (buffer + 100 - ptr));
         }
 
-        static char* Int32ToDecChars (char* p, uint value, int digits) {
+        private static char* Int32ToDecChars(char* p, uint value, int digits) {
             while (value != 0) {
-                *--p = (char)(value % 10 + '0');
+                *--p = (char) (value % 10 + '0');
                 value /= 10;
                 digits--;
             }
@@ -1654,26 +1698,27 @@ namespace System.Text.Formatting {
             return p;
         }
 
-        static char* Int32ToHexChars (char* p, uint value, int hexBase, int digits) {
+        private static char* Int32ToHexChars(char* p, uint value, int hexBase, int digits) {
             while (--digits >= 0 || value != 0) {
                 var digit = value & 0xF;
-                *--p = (char)(digit + (digit < 10 ? '0' : hexBase));
+                *--p = (char) (digit + (digit < 10 ? '0' : hexBase));
                 value >>= 4;
             }
+
             return p;
         }
 
-        static char ParseFormatSpecifier (StringView specifier, out int digits) {
+        private static char ParseFormatSpecifier(StringView specifier, out int digits) {
             if (specifier.IsEmpty) {
                 digits = -1;
                 return 'G';
             }
 
-            char* curr = specifier.Data;
-            char first = *curr++;
-            if ((first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z')) {
-                int n = -1;
-                char c = *curr++;
+            var curr = specifier.Data;
+            var first = *curr++;
+            if (first >= 'A' && first <= 'Z' || first >= 'a' && first <= 'z') {
+                var n = -1;
+                var c = *curr++;
                 if (c >= '0' && c <= '9') {
                     n = c - '0';
                     c = *curr++;
@@ -1692,21 +1737,22 @@ namespace System.Text.Formatting {
             }
 
             digits = -1;
-            return (char)0;
+            return (char) 0;
         }
 
-        static void Int32ToNumber (int value, ref Number number) {
+        private static void Int32ToNumber(int value, ref Number number) {
             number.Precision = Int32Precision;
-            if (value >= 0)
+            if (value >= 0) {
                 number.Sign = 0;
+            }
             else {
                 number.Sign = 1;
                 value = -value;
             }
 
             var buffer = stackalloc char[Int32Precision + 1];
-            var ptr = Int32ToDecChars(buffer + Int32Precision, (uint)value, 0);
-            var len = (int)(buffer + Int32Precision - ptr);
+            var ptr = Int32ToDecChars(buffer + Int32Precision, (uint) value, 0);
+            var len = (int) (buffer + Int32Precision - ptr);
             number.Scale = len;
 
             var dest = number.Digits;
@@ -1715,13 +1761,13 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
-        static void UInt32ToNumber (uint value, ref Number number) {
+        private static void UInt32ToNumber(uint value, ref Number number) {
             number.Precision = UInt32Precision;
             number.Sign = 0;
 
             var buffer = stackalloc char[UInt32Precision + 1];
             var ptr = Int32ToDecChars(buffer + UInt32Precision, value, 0);
-            var len = (int)(buffer + UInt32Precision - ptr);
+            var len = (int) (buffer + UInt32Precision - ptr);
             number.Scale = len;
 
             var dest = number.Digits;
@@ -1730,10 +1776,11 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
-        static void Int64ToNumber (long value, ref Number number) {
+        private static void Int64ToNumber(long value, ref Number number) {
             number.Precision = Int64Precision;
-            if (value >= 0)
+            if (value >= 0) {
                 number.Sign = 0;
+            }
             else {
                 number.Sign = 1;
                 value = -value;
@@ -1741,12 +1788,12 @@ namespace System.Text.Formatting {
 
             var buffer = stackalloc char[Int64Precision + 1];
             var ptr = buffer + Int64Precision;
-            var uv = (ulong)value;
+            var uv = (ulong) value;
             while (High32(uv) != 0)
                 ptr = Int32ToDecChars(ptr, Int64DivMod(ref uv), 9);
 
             ptr = Int32ToDecChars(ptr, Low32(uv), 0);
-            var len = (int)(buffer + Int64Precision - ptr);
+            var len = (int) (buffer + Int64Precision - ptr);
             number.Scale = len;
 
             var dest = number.Digits;
@@ -1755,7 +1802,7 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
-        static void UInt64ToNumber (ulong value, ref Number number) {
+        private static void UInt64ToNumber(ulong value, ref Number number) {
             number.Precision = UInt64Precision;
             number.Sign = 0;
 
@@ -1766,7 +1813,7 @@ namespace System.Text.Formatting {
 
             ptr = Int32ToDecChars(ptr, Low32(value), 0);
 
-            var len = (int)(buffer + UInt64Precision - ptr);
+            var len = (int) (buffer + UInt64Precision - ptr);
             number.Scale = len;
 
             var dest = number.Digits;
@@ -1775,7 +1822,7 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
-        static void DoubleToNumber (double value, int precision, ref Number number) {
+        private static void DoubleToNumber(double value, int precision, ref Number number) {
             number.Precision = precision;
 
             uint sign, exp, mantHi, mantLo;
@@ -1783,8 +1830,8 @@ namespace System.Text.Formatting {
 
             if (exp == 0x7FF) {
                 // special value handling (infinity and NaNs)
-                number.Scale = (mantLo != 0 || mantHi != 0) ? ScaleNaN : ScaleInf;
-                number.Sign = (int)sign;
+                number.Scale = mantLo != 0 || mantHi != 0 ? ScaleNaN : ScaleInf;
+                number.Sign = (int) sign;
                 number.Digits[0] = '\0';
             }
             else {
@@ -1806,9 +1853,10 @@ namespace System.Text.Formatting {
                     // format the integer part
                     while (intPart != 0) {
                         reducedInt = ModF(intPart / 10, out intPart);
-                        *--p = (char)((int)((reducedInt + 0.03) * 10) + '0');
+                        *--p = (char) ((int) ((reducedInt + 0.03) * 10) + '0');
                         shift++;
                     }
+
                     while (p < end)
                         *digits++ = *p++;
                 }
@@ -1825,16 +1873,17 @@ namespace System.Text.Formatting {
                 while (digits <= p && digits < end) {
                     fracPart *= 10;
                     fracPart = ModF(fracPart, out reducedInt);
-                    *digits++ = (char)((int)reducedInt + '0');
+                    *digits++ = (char) ((int) reducedInt + '0');
                 }
 
                 // round the result if necessary
                 digits = p;
-                *p = (char)(*p + 5);
+                *p = (char) (*p + 5);
                 while (*p > '9') {
                     *p = '0';
-                    if (p > number.Digits)
+                    if (p > number.Digits) {
                         ++*--p;
+                    }
                     else {
                         *p = '1';
                         shift++;
@@ -1846,11 +1895,11 @@ namespace System.Text.Formatting {
             }
         }
 
-        static void DecimalToNumber (uint* value, ref Number number) {
+        private static void DecimalToNumber(uint* value, ref Number number) {
             // bit 31 of the decimal is the sign bit
             // bits 16-23 contain the scale
-            number.Sign = (int)(*value >> 31);
-            number.Scale = (int)((*value >> 16) & 0xFF);
+            number.Sign = (int) (*value >> 31);
+            number.Scale = (int) ((*value >> 16) & 0xFF);
             number.Precision = DecimalPrecision;
 
             // loop for as long as the decimal is larger than 32 bits
@@ -1863,20 +1912,20 @@ namespace System.Text.Formatting {
             while ((mid | hi) != 0) {
                 // keep dividing down by one billion at a time
                 ulong n = hi;
-                hi = (uint)(n / OneBillion);
-                n = (n % OneBillion) << 32 | mid;
-                mid = (uint)(n / OneBillion);
-                n = (n % OneBillion) << 32 | lo;
-                lo = (uint)(n / OneBillion);
+                hi = (uint) (n / OneBillion);
+                n = ((n % OneBillion) << 32) | mid;
+                mid = (uint) (n / OneBillion);
+                n = ((n % OneBillion) << 32) | lo;
+                lo = (uint) (n / OneBillion);
 
                 // format this portion of the number
-                p = Int32ToDecChars(p, (uint)(n % OneBillion), 9);
+                p = Int32ToDecChars(p, (uint) (n % OneBillion), 9);
             }
 
             // finish off with the low 32-bits of the decimal, if anything is left over
             p = Int32ToDecChars(p, lo, 0);
 
-            var len = (int)(buffer + DecimalPrecision - p);
+            var len = (int) (buffer + DecimalPrecision - p);
             number.Scale = len - number.Scale;
 
             var dest = number.Digits;
@@ -1885,14 +1934,15 @@ namespace System.Text.Formatting {
             *dest = '\0';
         }
 
-        static void RoundNumber (ref Number number, int pos) {
+        private static void RoundNumber(ref Number number, int pos) {
             var digits = number.Digits;
-            int i = 0;
+            var i = 0;
             while (i < pos && digits[i] != 0) i++;
             if (i == pos && digits[i] >= '5') {
                 while (i > 0 && digits[i - 1] == '9') i--;
-                if (i > 0)
+                if (i > 0) {
                     digits[i - 1]++;
+                }
                 else {
                     number.Scale++;
                     digits[0] = '1';
@@ -1912,97 +1962,102 @@ namespace System.Text.Formatting {
             digits[i] = '\0';
         }
 
-        static void AppendString (char** buffer, string value) {
-            fixed (char* pinnedString = value)
-            {
+        private static void AppendString(char** buffer, string value) {
+            fixed (char* pinnedString = value) {
                 var length = value.Length;
                 for (var src = pinnedString; src < pinnedString + length; (*buffer)++, src++)
                     **buffer = *src;
             }
         }
 
-        static int StrLen (char* str) {
-            int count = 0;
+        private static int StrLen(char* str) {
+            var count = 0;
             while (*str++ != 0)
                 count++;
 
             return count;
         }
 
-        static uint Int64DivMod (ref ulong value) {
-            var rem = (uint)(value % 1000000000);
+        private static uint Int64DivMod(ref ulong value) {
+            var rem = (uint) (value % 1000000000);
             value /= 1000000000;
             return rem;
         }
 
-        static double ModF (double value, out double intPart) {
+        private static double ModF(double value, out double intPart) {
             intPart = Math.Truncate(value);
             return value - intPart;
         }
 
-        static void ExplodeDouble (double value, out uint sign, out uint exp, out uint mantHi, out uint mantLo) {
-            var bits = *(ulong*)&value;
+        private static void ExplodeDouble(double value, out uint sign, out uint exp, out uint mantHi, out uint mantLo) {
+            var bits = *(ulong*) &value;
             if (BitConverter.IsLittleEndian) {
-                mantLo = (uint)(bits & 0xFFFFFFFF);         // bits 0 - 31
-                mantHi = (uint)((bits >> 32) & 0xFFFFF);    // bits 32 - 51
-                exp = (uint)((bits >> 52) & 0x7FF);         // bits 52 - 62
-                sign = (uint)((bits >> 63) & 0x1);          // bit 63
+                mantLo = (uint) (bits & 0xFFFFFFFF); // bits 0 - 31
+                mantHi = (uint) ((bits >> 32) & 0xFFFFF); // bits 32 - 51
+                exp = (uint) ((bits >> 52) & 0x7FF); // bits 52 - 62
+                sign = (uint) ((bits >> 63) & 0x1); // bit 63
             }
             else {
-                sign = (uint)(bits & 0x1);                  // bit 0
-                exp = (uint)((bits >> 1) & 0x7FF);          // bits 1 - 11
-                mantHi = (uint)((bits >> 12) & 0xFFFFF);    // bits 12 - 31
-                mantLo = (uint)(bits >> 32);                // bits 32 - 63
+                sign = (uint) (bits & 0x1); // bit 0
+                exp = (uint) ((bits >> 1) & 0x7FF); // bits 1 - 11
+                mantHi = (uint) ((bits >> 12) & 0xFFFFF); // bits 12 - 31
+                mantLo = (uint) (bits >> 32); // bits 32 - 63
             }
         }
 
-        static uint Low32 (ulong value) {
-            return (uint)value;
+        private static uint Low32(ulong value) {
+            return (uint) value;
         }
 
-        static uint High32 (ulong value) {
-            return (uint)((value & 0xFFFFFFFF00000000) >> 32);
+        private static uint High32(ulong value) {
+            return (uint) ((value & 0xFFFFFFFF00000000) >> 32);
         }
 
-        struct Number {
+        private struct Number
+        {
             public int Precision;
             public int Scale;
             public int Sign;
             public char* Digits;
 
             // useful for debugging
-            public override string ToString () {
+            public override string ToString() {
                 return new string(Digits);
             }
         }
 
-        const int MaxNumberDigits = 50;
-        const int MaxFloatingDigits = 352;
-        const int Int32Precision = 10;
-        const int UInt32Precision = 10;
-        const int Int64Precision = 19;
-        const int UInt64Precision = 20;
-        const int FloatPrecision = 7;
-        const int DoublePrecision = 15;
-        const int DecimalPrecision = 29;
-        const int ScaleNaN = unchecked((int)0x80000000);
-        const int ScaleInf = 0x7FFFFFFF;
-        const int OneBillion = 1000000000;
+        private const int MaxNumberDigits = 50;
+        private const int MaxFloatingDigits = 352;
+        private const int Int32Precision = 10;
+        private const int UInt32Precision = 10;
+        private const int Int64Precision = 19;
+        private const int UInt64Precision = 20;
+        private const int FloatPrecision = 7;
+        private const int DoublePrecision = 15;
+        private const int DecimalPrecision = 29;
+        private const int ScaleNaN = unchecked((int) 0x80000000);
+        private const int ScaleInf = 0x7FFFFFFF;
+        private const int OneBillion = 1000000000;
     }
 
     // currently just contains some hardcoded exception messages
-    static class SR {
+    internal static class SR
+    {
         public const string InvalidGroupSizes = "Invalid group sizes in NumberFormatInfo.";
         public const string UnknownFormatSpecifier = "Unknown format specifier '{0}'.";
         public const string ArgIndexOutOfRange = "No format argument exists for index '{0}'.";
-        public const string TypeNotFormattable = "Type '{0}' is not a built-in type, does not implement IStringFormattable, and no custom formatter was found for it.";
+
+        public const string TypeNotFormattable =
+            "Type '{0}' is not a built-in type, does not implement IStringFormattable, and no custom formatter was found for it.";
+
         public const string InvalidFormatString = "Invalid format string.";
     }
 
     /// <summary>
     /// A low-allocation version of the built-in <see cref="StringBuilder"/> type.
     /// </summary>
-    partial class StringBuffer {
+    partial class StringBuffer
+    {
         /// <summary>
         /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
@@ -2148,7 +2203,8 @@ namespace System.Text.Formatting {
         /// <param name="arg3">A value to format.</param>
         /// <param name="arg4">A value to format.</param>
         /// <param name="arg5">A value to format.</param>
-        public void AppendFormat<T0, T1, T2, T3, T4, T5>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+        public void AppendFormat<T0, T1, T2, T3, T4, T5>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4,
+            T5 arg5) {
             var args = new Arg6<T0, T1, T2, T3, T4, T5>(arg0, arg1, arg2, arg3, arg4, arg5);
             AppendArgSet(format, ref args);
         }
@@ -2163,7 +2219,8 @@ namespace System.Text.Formatting {
         /// <param name="arg3">A value to format.</param>
         /// <param name="arg4">A value to format.</param>
         /// <param name="arg5">A value to format.</param>
-        public static string Format<T0, T1, T2, T3, T4, T5>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+        public static string Format<T0, T1, T2, T3, T4, T5>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4,
+            T5 arg5) {
             var buffer = Acquire(format.Length + 48);
             buffer.AppendFormat(format, arg0, arg1, arg2, arg3, arg4, arg5);
             var result = buffer.ToString();
@@ -2182,7 +2239,8 @@ namespace System.Text.Formatting {
         /// <param name="arg4">A value to format.</param>
         /// <param name="arg5">A value to format.</param>
         /// <param name="arg6">A value to format.</param>
-        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) {
+        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4,
+            T5 arg5, T6 arg6) {
             var args = new Arg7<T0, T1, T2, T3, T4, T5, T6>(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
             AppendArgSet(format, ref args);
         }
@@ -2198,7 +2256,8 @@ namespace System.Text.Formatting {
         /// <param name="arg4">A value to format.</param>
         /// <param name="arg5">A value to format.</param>
         /// <param name="arg6">A value to format.</param>
-        public static string Format<T0, T1, T2, T3, T4, T5, T6>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) {
+        public static string Format<T0, T1, T2, T3, T4, T5, T6>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3,
+            T4 arg4, T5 arg5, T6 arg6) {
             var buffer = Acquire(format.Length + 56);
             buffer.AppendFormat(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
             var result = buffer.ToString();
@@ -2218,7 +2277,8 @@ namespace System.Text.Formatting {
         /// <param name="arg5">A value to format.</param>
         /// <param name="arg6">A value to format.</param>
         /// <param name="arg7">A value to format.</param>
-        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6, T7>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) {
+        public void AppendFormat<T0, T1, T2, T3, T4, T5, T6, T7>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3,
+            T4 arg4, T5 arg5, T6 arg6, T7 arg7) {
             var args = new Arg8<T0, T1, T2, T3, T4, T5, T6, T7>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
             AppendArgSet(format, ref args);
         }
@@ -2235,7 +2295,8 @@ namespace System.Text.Formatting {
         /// <param name="arg5">A value to format.</param>
         /// <param name="arg6">A value to format.</param>
         /// <param name="arg7">A value to format.</param>
-        public static string Format<T0, T1, T2, T3, T4, T5, T6, T7>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) {
+        public static string Format<T0, T1, T2, T3, T4, T5, T6, T7>(string format, T0 arg0, T1 arg1, T2 arg2, T3 arg3,
+            T4 arg4, T5 arg5, T6 arg6, T7 arg7) {
             var buffer = Acquire(format.Length + 64);
             buffer.AppendFormat(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
             var result = buffer.ToString();
@@ -2244,75 +2305,91 @@ namespace System.Text.Formatting {
         }
     }
 
-    unsafe struct Arg1<T0> : IArgSet {
-        T0 t0;
+    internal unsafe struct Arg1<T0> : IArgSet
+    {
+        private T0 t0;
 
         public int Count => 1;
 
-        public Arg1 (T0 t0) {
+        public Arg1(T0 t0) {
             this.t0 = t0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg2<T0, T1> : IArgSet {
-        T0 t0;
-        T1 t1;
+    internal unsafe struct Arg2<T0, T1> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
 
         public int Count => 2;
 
-        public Arg2 (T0 t0, T1 t1) {
+        public Arg2(T0 t0, T1 t1) {
             this.t0 = t0;
             this.t1 = t1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg3<T0, T1, T2> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
+    internal unsafe struct Arg3<T0, T1, T2> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
 
         public int Count => 3;
 
-        public Arg3 (T0 t0, T1 t1, T2 t2) {
+        public Arg3(T0 t0, T1 t1, T2 t2) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg4<T0, T1, T2, T3> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
-        T3 t3;
+    internal unsafe struct Arg4<T0, T1, T2, T3> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
+        private T3 t3;
 
         public int Count => 4;
 
-        public Arg4 (T0 t0, T1 t1, T2 t2, T3 t3) {
+        public Arg4(T0 t0, T1 t1, T2 t2, T3 t3) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
@@ -2320,26 +2397,35 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
-                case 3: buffer.AppendGeneric(t3, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
+                case 3:
+                    buffer.AppendGeneric(t3, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg5<T0, T1, T2, T3, T4> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
-        T3 t3;
-        T4 t4;
+    internal unsafe struct Arg5<T0, T1, T2, T3, T4> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
+        private T3 t3;
+        private T4 t4;
 
         public int Count => 5;
 
-        public Arg5 (T0 t0, T1 t1, T2 t2, T3 t3, T4 t4) {
+        public Arg5(T0 t0, T1 t1, T2 t2, T3 t3, T4 t4) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
@@ -2348,28 +2434,39 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
-                case 3: buffer.AppendGeneric(t3, format); break;
-                case 4: buffer.AppendGeneric(t4, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
+                case 3:
+                    buffer.AppendGeneric(t3, format);
+                    break;
+                case 4:
+                    buffer.AppendGeneric(t4, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg6<T0, T1, T2, T3, T4, T5> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
-        T3 t3;
-        T4 t4;
-        T5 t5;
+    internal unsafe struct Arg6<T0, T1, T2, T3, T4, T5> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
+        private T3 t3;
+        private T4 t4;
+        private T5 t5;
 
         public int Count => 6;
 
-        public Arg6 (T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) {
+        public Arg6(T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
@@ -2379,30 +2476,43 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
-                case 3: buffer.AppendGeneric(t3, format); break;
-                case 4: buffer.AppendGeneric(t4, format); break;
-                case 5: buffer.AppendGeneric(t5, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
+                case 3:
+                    buffer.AppendGeneric(t3, format);
+                    break;
+                case 4:
+                    buffer.AppendGeneric(t4, format);
+                    break;
+                case 5:
+                    buffer.AppendGeneric(t5, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg7<T0, T1, T2, T3, T4, T5, T6> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
-        T3 t3;
-        T4 t4;
-        T5 t5;
-        T6 t6;
+    internal unsafe struct Arg7<T0, T1, T2, T3, T4, T5, T6> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
+        private T3 t3;
+        private T4 t4;
+        private T5 t5;
+        private T6 t6;
 
         public int Count => 7;
 
-        public Arg7 (T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
+        public Arg7(T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
@@ -2413,32 +2523,47 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
-                case 3: buffer.AppendGeneric(t3, format); break;
-                case 4: buffer.AppendGeneric(t4, format); break;
-                case 5: buffer.AppendGeneric(t5, format); break;
-                case 6: buffer.AppendGeneric(t6, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
+                case 3:
+                    buffer.AppendGeneric(t3, format);
+                    break;
+                case 4:
+                    buffer.AppendGeneric(t4, format);
+                    break;
+                case 5:
+                    buffer.AppendGeneric(t5, format);
+                    break;
+                case 6:
+                    buffer.AppendGeneric(t6, format);
+                    break;
             }
         }
     }
 
-    unsafe struct Arg8<T0, T1, T2, T3, T4, T5, T6, T7> : IArgSet {
-        T0 t0;
-        T1 t1;
-        T2 t2;
-        T3 t3;
-        T4 t4;
-        T5 t5;
-        T6 t6;
-        T7 t7;
+    internal unsafe struct Arg8<T0, T1, T2, T3, T4, T5, T6, T7> : IArgSet
+    {
+        private T0 t0;
+        private T1 t1;
+        private T2 t2;
+        private T3 t3;
+        private T4 t4;
+        private T5 t5;
+        private T6 t6;
+        private T7 t7;
 
         public int Count => 8;
 
-        public Arg8 (T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
+        public Arg8(T0 t0, T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
             this.t0 = t0;
             this.t1 = t1;
             this.t2 = t2;
@@ -2450,16 +2575,32 @@ namespace System.Text.Formatting {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Format (StringBuffer buffer, int index, StringView format) {
+        public void Format(StringBuffer buffer, int index, StringView format) {
             switch (index) {
-                case 0: buffer.AppendGeneric(t0, format); break;
-                case 1: buffer.AppendGeneric(t1, format); break;
-                case 2: buffer.AppendGeneric(t2, format); break;
-                case 3: buffer.AppendGeneric(t3, format); break;
-                case 4: buffer.AppendGeneric(t4, format); break;
-                case 5: buffer.AppendGeneric(t5, format); break;
-                case 6: buffer.AppendGeneric(t6, format); break;
-                case 7: buffer.AppendGeneric(t7, format); break;
+                case 0:
+                    buffer.AppendGeneric(t0, format);
+                    break;
+                case 1:
+                    buffer.AppendGeneric(t1, format);
+                    break;
+                case 2:
+                    buffer.AppendGeneric(t2, format);
+                    break;
+                case 3:
+                    buffer.AppendGeneric(t3, format);
+                    break;
+                case 4:
+                    buffer.AppendGeneric(t4, format);
+                    break;
+                case 5:
+                    buffer.AppendGeneric(t5, format);
+                    break;
+                case 6:
+                    buffer.AppendGeneric(t6, format);
+                    break;
+                case 7:
+                    buffer.AppendGeneric(t7, format);
+                    break;
             }
         }
     }

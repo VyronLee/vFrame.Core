@@ -10,51 +10,49 @@ namespace vFrame.Core.FileSystems
 {
     public class FileSystemManager : BaseObject<FileStreamFactory>
     {
-        private List<IFileSystem> _fileSystems;
         private FileStreamFactory _factory;
+        private List<IVirtualFileSystem> _fileSystems;
 
         protected override void OnCreate(FileStreamFactory factory) {
             _factory = factory ?? new FileStreamFactory_Default();
-            _fileSystems = new List<IFileSystem>();
+            _fileSystems = new List<IVirtualFileSystem>();
         }
 
         protected override void OnDestroy() {
-            foreach (var fileSystem in _fileSystems) {
+            foreach (var fileSystem in _fileSystems)
                 fileSystem.Close();
-            }
             _fileSystems.Clear();
         }
 
-        public IFileSystem AddFileSystem(Path path) {
-            IFileSystem fileSystem;
-            switch (path.GetExtension()) {
+        public IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
+            IVirtualFileSystem virtualFileSystem;
+            switch (vfsPath.GetExtension()) {
                 case PackageFileSystemConst.Ext:
-                    fileSystem = new PackageFileSystem(_factory);
+                    virtualFileSystem = new PackageVirtualFileSystem(_factory);
                     break;
                 default:
-                    fileSystem = new StandardFileSystem(_factory);
+                    virtualFileSystem = new StandardVirtualFileSystem(_factory);
                     break;
             }
-            fileSystem.Open(path);
 
-            AddFileSystem(fileSystem);
-            return fileSystem;
+            virtualFileSystem.Open(vfsPath);
+
+            AddFileSystem(virtualFileSystem);
+            return virtualFileSystem;
         }
 
-        public void AddFileSystem(IFileSystem fileSystem) {
-            _fileSystems.Add(fileSystem);
+        public void AddFileSystem(IVirtualFileSystem virtualFileSystem) {
+            _fileSystems.Add(virtualFileSystem);
         }
 
-        public void RemoveFileSystem(IFileSystem fileSystem) {
-            _fileSystems.Remove(fileSystem);
+        public void RemoveFileSystem(IVirtualFileSystem virtualFileSystem) {
+            _fileSystems.Remove(virtualFileSystem);
         }
 
-        public Stream GetStream(string path, FileMode mode = FileMode.Open) {
-            foreach (var fileSystem in _fileSystems) {
-                if (fileSystem.Exist(path)) {
+        public IVirtualFileStream GetStream(string path, FileMode mode = FileMode.Open) {
+            foreach (var fileSystem in _fileSystems)
+                if (fileSystem.Exist(path))
                     return fileSystem.GetStream(path, mode);
-                }
-            }
             return null;
         }
     }

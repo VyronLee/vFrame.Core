@@ -1,13 +1,18 @@
 ﻿using System.IO;
 
-namespace vFrame.Core.FileSystems.Adapters
+namespace vFrame.Core.FileSystems.Standard
 {
-    internal class FileStreamAdapter_Default : FileStreamAdapter
+    internal class StandardVirtualFileStream : VirtualFileStream
     {
-        private readonly FileStream _fileStream;
+        private readonly Stream _fileStream;
 
-        public FileStreamAdapter_Default(string path, FileMode mode, FileAccess access, FileShare share) {
-            _fileStream = new FileStream(path, mode, access, share);
+        public StandardVirtualFileStream(Stream stream) {
+            _fileStream = stream;
+        }
+
+        public override void Close() {
+            _fileStream.Close();
+            base.Close();
         }
 
         public override bool CanRead => _fileStream.CanRead;
@@ -18,11 +23,6 @@ namespace vFrame.Core.FileSystems.Adapters
         public override long Position {
             get => _fileStream.Position;
             set => _fileStream.Position = value;
-        }
-
-        public override void Close() {
-            _fileStream.Close();
-            base.Close();
         }
 
         public override void Flush() {

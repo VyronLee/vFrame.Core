@@ -24,10 +24,9 @@ namespace vFrame.Core.ObjectPools
         public T Get<T>() where T : class, new() {
             IObjectPool pool = null;
             lock (_lockObject) {
-                if (_pools.TryGetValue(typeof(T), out pool)) {
-                    return ((IObjectPool<T>) pool).GetObject();
-                }
+                if (_pools.TryGetValue(typeof(T), out pool)) return ((IObjectPool<T>) pool).GetObject();
             }
+
             return ObjectPool<T>.Get();
         }
 
@@ -39,6 +38,7 @@ namespace vFrame.Core.ObjectPools
                     return;
                 }
             }
+
             throw new ArgumentOutOfRangeException("obj", "No object pool of type: " + obj.GetType().Name);
         }
     }

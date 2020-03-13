@@ -6,7 +6,7 @@
         /// Get instance from pool.
         /// </summary>
         /// <returns></returns>
-        T GetObject<T>() where T: class;
+        T GetObject<T>() where T : class;
 
         /// <summary>
         /// Return instance to pool.

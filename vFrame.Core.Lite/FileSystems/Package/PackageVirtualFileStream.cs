@@ -7,6 +7,7 @@
 //    Modified:  2020-03-11 16:39
 //   Copyright:  Copyright (c) 2020, VyronLee
 //============================================================
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,29 +19,39 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    public class PackageStream : Stream
+    internal class PackageVirtualFileStream : VirtualFileStream
     {
         private readonly PackageBlockInfo _blockInfo;
         private readonly FileAccess _mode = FileAccess.ReadWrite;
 
-        private readonly Stream _pkgStream;
+        private readonly Stream _vpkStream;
         private MemoryStream _memoryStream;
         private bool _opened;
         private bool _closed;
 
-        internal PackageStream(Stream pkgStream, PackageBlockInfo blockInfo) {
-            _pkgStream = pkgStream;
+        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo) {
+            _vpkStream = vpkStream;
             _blockInfo = blockInfo;
         }
 
-        internal PackageStream(Stream pkgStream, PackageBlockInfo blockInfo, FileAccess mode)
-            : this(pkgStream, blockInfo) {
+        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo, FileAccess mode)
+            : this(vpkStream, blockInfo) {
             _mode = mode;
         }
 
+        public override bool CanRead => _opened && !_closed && (_mode & FileAccess.Read) > 0;
+        public override bool CanSeek => _opened && !_closed;
+        public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
+        public override long Length => _blockInfo.OriginalSize;
+
+        public override long Position {
+            get => _memoryStream.Position;
+            set => _memoryStream.Position = value;
+        }
+
         public bool Open() {
-            Debug.Assert(null != _pkgStream);
-            return InternalOpen(_pkgStream);
+            Debug.Assert(null != _vpkStream);
+            return InternalOpen(_vpkStream);
         }
 
         public override void Close() {
@@ -88,81 +99,87 @@ namespace vFrame.Core.FileSystems.Package
             _memoryStream.Write(buffer, offset, count);
         }
 
-        public override bool CanRead => _opened && !_closed && (_mode & FileAccess.Read) > 0;
-        public override bool CanSeek => _opened && !_closed;
-        public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
-        public override long Length => _blockInfo.OriginalSize;
-        public override long Position {
-            get => _memoryStream.Position;
-            set => _memoryStream.Position = value;
-        }
-
         //=======================================================//
         //                         Private                     ==//
         //=======================================================//
 
         private void ValidateStreamState() {
-            if (!_opened) {
-                throw new PackageStreamNotOpenedException();
-            }
-
-            if (_closed) {
-                throw new PackageStreamClosedException();
-            }
+            if (!_opened) throw new PackageStreamNotOpenedException();
+            if (_closed) throw new PackageStreamClosedException();
         }
 
         private bool InternalOpen(Stream inputStream) {
             ValidateBlockInfo(inputStream);
 
             _memoryStream = new MemoryStream();
-            _memoryStream.SetLength(_blockInfo.OriginalSize);
 
             inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
-
             using (var tempStream = new MemoryStream()) {
-                inputStream.CopyTo(tempStream);
-
+                // 先解压
                 if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
-                    var compressService = CompressService.CreateCompressService((CompressType) (_blockInfo.Flags >> 8));
-                    compressService.Decompress(inputStream, tempStream);
-                    compressService.Destroy();
-                    ObjectPoolManager.Instance().Return(compressService);
-                }
+                    inputStream.CopyTo(tempStream, (int)_blockInfo.CompressedSize);
 
-                if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
-                    var keyBytes = BitConverter.GetBytes(_blockInfo.EncryptKey);
-                    var cryptoService = CryptoService.CreateCrypto((CryptoType) (_blockInfo.Flags >> 12));
-                    cryptoService.Decrypt(tempStream, _memoryStream, keyBytes, keyBytes.Length);
-                    cryptoService.Destroy();
-                    ObjectPoolManager.Instance().Return(cryptoService);
+                    using (var decompressedStream = new MemoryStream()) {
+                        var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
+                        var compressService = CompressService.CreateCompressService((CompressType) compressType);
+
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        compressService.Decompress(tempStream, decompressedStream);
+                        compressService.Destroy();
+
+                        tempStream.SetLength(0);
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        decompressedStream.Seek(0, SeekOrigin.Begin);
+                        decompressedStream.CopyTo(tempStream);
+                    }
                 }
                 else {
+                    inputStream.CopyTo(tempStream, (int)_blockInfo.OriginalSize);
+                }
+
+                // 再解密
+                if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
+                    using (var decryptedStream = new MemoryStream()) {
+                        var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
+                        var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
+                        var cryptoService = CryptoService.CreateCryptoService((CryptoType) cryptoType);
+
+                        tempStream.Seek(0, SeekOrigin.Begin);
+                        cryptoService.Decrypt(tempStream, decryptedStream, cryptoKey, cryptoKey.Length);
+                        cryptoService.Destroy();
+
+                        decryptedStream.Seek(0, SeekOrigin.Begin);
+                        decryptedStream.CopyTo(_memoryStream);
+                    }
+                }
+                else {
+                    tempStream.Seek(0, SeekOrigin.Begin);
                     tempStream.CopyTo(_memoryStream);
                 }
             }
 
+            if (_memoryStream.Length != _blockInfo.OriginalSize) {
+                throw new PackageStreamDataLengthNotMatchException(_memoryStream.Length, _blockInfo.OriginalSize);
+            }
             _memoryStream.Seek(0, SeekOrigin.Begin);
 
             return _opened = true;
         }
 
         private void ValidateBlockInfo(Stream inputStream) {
-            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0) {
+            if ((_blockInfo.Flags & BlockFlags.BlockExists) <= 0)
                 throw new PackageBlockDisposedException();
-            }
 
             var sizeOfHeader = PackageHeader.GetMarshalSize();
-            if (_blockInfo.Offset < sizeOfHeader) {
+            if (_blockInfo.Offset < sizeOfHeader)
                 throw new PackageBlockOffsetErrorException(_blockInfo.Offset, sizeOfHeader);
-            }
 
             var blockSize = (_blockInfo.Flags & BlockFlags.BlockCompressed) > 0
                 ? _blockInfo.CompressedSize
                 : _blockInfo.OriginalSize;
 
-            if (inputStream.Length < _blockInfo.Offset + blockSize) {
+            if (inputStream.Length < _blockInfo.Offset + blockSize)
                 throw new PackageStreamDataErrorException(_blockInfo.Offset + blockSize, inputStream.Length);
-            }
         }
     }
 }
