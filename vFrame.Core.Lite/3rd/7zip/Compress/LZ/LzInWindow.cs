@@ -1,33 +1,32 @@
 // LzInWindow.cs
 
-using System;
+using System.IO;
 
 namespace SevenZip.Compression.LZ
 {
     public class InWindow
     {
-        public byte[] _bufferBase = null; // pointer to buffer with data
-        private System.IO.Stream _stream;
-        private uint _posLimit; // offset (from _buffer) of first byte when new block reading must be done
-        private bool _streamEndWasReached; // if (true) then _streamPos shows real end of stream
-
-        private uint _pointerToLastSafePosition;
+        public uint _blockSize; // Size of Allocated memory block
+        public byte[] _bufferBase; // pointer to buffer with data
 
         public uint _bufferOffset;
-
-        public uint _blockSize; // Size of Allocated memory block
-        public uint _pos; // offset (from _buffer) of curent byte
-        private uint _keepSizeBefore; // how many BYTEs must be kept in buffer before _pos
         private uint _keepSizeAfter; // how many BYTEs must be kept buffer after _pos
+        private uint _keepSizeBefore; // how many BYTEs must be kept in buffer before _pos
+
+        private uint _pointerToLastSafePosition;
+        public uint _pos; // offset (from _buffer) of curent byte
+        private uint _posLimit; // offset (from _buffer) of first byte when new block reading must be done
+        private Stream _stream;
+        private bool _streamEndWasReached; // if (true) then _streamPos shows real end of stream
         public uint _streamPos; // offset (from _buffer) of first not read byte from Stream
 
         public void MoveBlock() {
-            var offset = (uint) _bufferOffset + _pos - _keepSizeBefore;
+            var offset = _bufferOffset + _pos - _keepSizeBefore;
             // we need one additional byte, since MovePos moves on 1 byte.
             if (offset > 0)
                 offset--;
 
-            var numBytes = (uint) _bufferOffset + _streamPos - offset;
+            var numBytes = _bufferOffset + _streamPos - offset;
 
             // check negative offset ????
             for (uint i = 0; i < numBytes; i++)
@@ -47,7 +46,7 @@ namespace SevenZip.Compression.LZ
                     _posLimit = _streamPos;
                     var pointerToPostion = _bufferOffset + _posLimit;
                     if (pointerToPostion > _pointerToLastSafePosition)
-                        _posLimit = (uint) (_pointerToLastSafePosition - _bufferOffset);
+                        _posLimit = _pointerToLastSafePosition - _bufferOffset;
 
                     _streamEndWasReached = true;
                     return;
@@ -76,7 +75,7 @@ namespace SevenZip.Compression.LZ
             _pointerToLastSafePosition = _blockSize - keepSizeAfter;
         }
 
-        public void SetStream(System.IO.Stream stream) {
+        public void SetStream(Stream stream) {
             _stream = stream;
         }
 

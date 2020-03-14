@@ -6,6 +6,8 @@ namespace SevenZip
     {
         public static readonly uint[] Table;
 
+        private uint _value = 0xFFFFFFFF;
+
         static CRC() {
             Table = new uint[256];
             const uint kPoly = 0xEDB88320;
@@ -19,8 +21,6 @@ namespace SevenZip
                 Table[i] = r;
             }
         }
-
-        private uint _value = 0xFFFFFFFF;
 
         public void Init() {
             _value = 0xFFFFFFFF;

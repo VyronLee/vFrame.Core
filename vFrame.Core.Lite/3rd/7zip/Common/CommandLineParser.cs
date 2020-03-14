@@ -17,11 +17,11 @@ namespace SevenZip.CommandLineParser
     public class SwitchForm
     {
         public string IDString;
-        public SwitchType Type;
-        public bool Multi;
-        public int MinLen;
         public int MaxLen;
+        public int MinLen;
+        public bool Multi;
         public string PostCharSet;
+        public SwitchType Type;
 
         public SwitchForm(string idString, SwitchType type, bool multi,
             int minLen, int maxLen, string postCharSet) {
@@ -44,10 +44,10 @@ namespace SevenZip.CommandLineParser
 
     public class SwitchResult
     {
+        public int PostCharIndex;
+        public ArrayList PostStrings = new ArrayList();
         public bool ThereIs;
         public bool WithMinus;
-        public ArrayList PostStrings = new ArrayList();
-        public int PostCharIndex;
 
         public SwitchResult() {
             ThereIs = false;
@@ -56,14 +56,21 @@ namespace SevenZip.CommandLineParser
 
     public class Parser
     {
+        private const char kSwitchID1 = '-';
+        private const char kSwitchID2 = '/';
+
+        private const char kSwitchMinus = '-';
+        private const string kStopSwitchParsing = "--";
+        private readonly SwitchResult[] _switches;
         public ArrayList NonSwitchStrings = new ArrayList();
-        private SwitchResult[] _switches;
 
         public Parser(int numSwitches) {
             _switches = new SwitchResult[numSwitches];
             for (var i = 0; i < numSwitches; i++)
                 _switches[i] = new SwitchResult();
         }
+
+        public SwitchResult this[int index] => _switches[index];
 
         private bool ParseString(string srcString, SwitchForm[] switchForms) {
             var len = srcString.Length;
@@ -175,8 +182,6 @@ namespace SevenZip.CommandLineParser
             }
         }
 
-        public SwitchResult this[int index] => _switches[index];
-
         public static int ParseCommand(CommandForm[] commandForms, string commandString,
             out string postString) {
             for (var i = 0; i < commandForms.Length; i++) {
@@ -226,12 +231,6 @@ namespace SevenZip.CommandLineParser
             return numUsedChars == commandString.Length;
         }
 
-        private const char kSwitchID1 = '-';
-        private const char kSwitchID2 = '/';
-
-        private const char kSwitchMinus = '-';
-        private const string kStopSwitchParsing = "--";
-
         private static bool IsItSwitchChar(char c) {
             return c == kSwitchID1 || c == kSwitchID2;
         }
@@ -240,7 +239,7 @@ namespace SevenZip.CommandLineParser
     public class CommandForm
     {
         public string IDString = "";
-        public bool PostStringMode = false;
+        public bool PostStringMode;
 
         public CommandForm(string idString, bool postStringMode) {
             IDString = idString;

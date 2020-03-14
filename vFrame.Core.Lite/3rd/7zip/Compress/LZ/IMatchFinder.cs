@@ -1,12 +1,12 @@
 // IMatchFinder.cs
 
-using System;
+using System.IO;
 
 namespace SevenZip.Compression.LZ
 {
     internal interface IInWindowStream
     {
-        void SetStream(System.IO.Stream inStream);
+        void SetStream(Stream inStream);
         void Init();
         void ReleaseStream();
         byte GetIndexByte(int index);

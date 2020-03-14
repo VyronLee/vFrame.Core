@@ -13,7 +13,6 @@
 
 using System;
 
-
 namespace LitJson
 {
     public class JsonException :
@@ -23,7 +22,7 @@ namespace LitJson
         ApplicationException
 #endif
     {
-        public JsonException() : base() {
+        public JsonException() {
         }
 
         internal JsonException(ParserToken token) :

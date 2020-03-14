@@ -1,24 +1,12 @@
 // LzBinTree.cs
 
 using System;
+using System.IO;
 
 namespace SevenZip.Compression.LZ
 {
     public class BinTree : InWindow, IMatchFinder
     {
-        private uint _cyclicBufferPos;
-        private uint _cyclicBufferSize = 0;
-        private uint _matchMaxLen;
-
-        private uint[] _son;
-        private uint[] _hash;
-
-        private uint _cutValue = 0xFF;
-        private uint _hashMask;
-        private uint _hashSizeSum = 0;
-
-        private bool HASH_ARRAY = true;
-
         private const uint kHash2Size = 1 << 10;
         private const uint kHash3Size = 1 << 16;
         private const uint kBT2HashSize = 1 << 16;
@@ -27,25 +15,23 @@ namespace SevenZip.Compression.LZ
         private const uint kEmptyHashValue = 0;
         private const uint kMaxValForNormalize = ((uint) 1 << 31) - 1;
 
-        private uint kNumHashDirectBytes = 0;
-        private uint kMinMatchCheck = 4;
+        private uint _cutValue = 0xFF;
+        private uint _cyclicBufferPos;
+        private uint _cyclicBufferSize;
+        private uint[] _hash;
+        private uint _hashMask;
+        private uint _hashSizeSum;
+        private uint _matchMaxLen;
+
+        private uint[] _son;
+
+        private bool HASH_ARRAY = true;
         private uint kFixHashSize = kHash2Size + kHash3Size;
+        private uint kMinMatchCheck = 4;
 
-        public void SetType(int numHashBytes) {
-            HASH_ARRAY = numHashBytes > 2;
-            if (HASH_ARRAY) {
-                kNumHashDirectBytes = 0;
-                kMinMatchCheck = 4;
-                kFixHashSize = kHash2Size + kHash3Size;
-            }
-            else {
-                kNumHashDirectBytes = 2;
-                kMinMatchCheck = 2 + 1;
-                kFixHashSize = 0;
-            }
-        }
+        private uint kNumHashDirectBytes;
 
-        public new void SetStream(System.IO.Stream stream) {
+        public new void SetStream(Stream stream) {
             base.SetStream(stream);
         }
 
@@ -59,14 +45,6 @@ namespace SevenZip.Compression.LZ
                 _hash[i] = kEmptyHashValue;
             _cyclicBufferPos = 0;
             ReduceOffsets(-1);
-        }
-
-        public new void MovePos() {
-            if (++_cyclicBufferPos >= _cyclicBufferSize)
-                _cyclicBufferPos = 0;
-            base.MovePos();
-            if (_pos == kMaxValForNormalize)
-                Normalize();
         }
 
         public new byte GetIndexByte(int index) {
@@ -322,6 +300,28 @@ namespace SevenZip.Compression.LZ
 
                 MovePos();
             } while (--num != 0);
+        }
+
+        public void SetType(int numHashBytes) {
+            HASH_ARRAY = numHashBytes > 2;
+            if (HASH_ARRAY) {
+                kNumHashDirectBytes = 0;
+                kMinMatchCheck = 4;
+                kFixHashSize = kHash2Size + kHash3Size;
+            }
+            else {
+                kNumHashDirectBytes = 2;
+                kMinMatchCheck = 2 + 1;
+                kFixHashSize = 0;
+            }
+        }
+
+        public new void MovePos() {
+            if (++_cyclicBufferPos >= _cyclicBufferSize)
+                _cyclicBufferPos = 0;
+            base.MovePos();
+            if (_pos == kMaxValForNormalize)
+                Normalize();
         }
 
         private void NormalizeLinks(uint[] items, uint numItems, uint subValue) {

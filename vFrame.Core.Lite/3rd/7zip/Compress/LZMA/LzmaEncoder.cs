@@ -1,22 +1,104 @@
 // LzmaEncoder.cs
 
 using System;
+using System.IO;
+using SevenZip.Compression.LZ;
+using SevenZip.Compression.RangeCoder;
 
 namespace SevenZip.Compression.LZMA
 {
-    using RangeCoder;
-
     public class Encoder : ICoder, ISetCoderProperties, IWriteCoderProperties
     {
-        private enum EMatchFinderType
-        {
-            BT2,
-            BT4,
-        };
-
         private const uint kIfinityPrice = 0xFFFFFFF;
 
-        private static byte[] g_FastPos = new byte[1 << 11];
+        private const int kDefaultDictionaryLogSize = 22;
+        private const uint kNumFastBytesDefault = 0x20;
+
+        private const uint kNumLenSpecSymbols = Base.kNumLowLenSymbols + Base.kNumMidLenSymbols;
+
+        private const uint kNumOpts = 1 << 12;
+
+        private const int kPropSize = 5;
+
+        private static readonly byte[] g_FastPos = new byte[1 << 11];
+
+
+        private static readonly string[] kMatchFinderIDs = {
+            "BT2",
+            "BT4"
+        };
+
+        private uint _additionalOffset;
+        private uint _alignPriceCount;
+        private readonly uint[] _alignPrices = new uint[Base.kAlignTableSize];
+
+        private uint _dictionarySize = 1 << kDefaultDictionaryLogSize;
+        private uint _dictionarySizePrev = 0xFFFFFFFF;
+        private readonly uint[] _distancesPrices = new uint[Base.kNumFullDistances << Base.kNumLenToPosStatesBits];
+
+        private uint _distTableSize = kDefaultDictionaryLogSize * 2;
+        private bool _finished;
+        private Stream _inStream;
+
+        private readonly BitEncoder[] _isMatch = new BitEncoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
+        private readonly BitEncoder[] _isRep = new BitEncoder[Base.kNumStates];
+        private readonly BitEncoder[] _isRep0Long = new BitEncoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
+        private readonly BitEncoder[] _isRepG0 = new BitEncoder[Base.kNumStates];
+        private readonly BitEncoder[] _isRepG1 = new BitEncoder[Base.kNumStates];
+        private readonly BitEncoder[] _isRepG2 = new BitEncoder[Base.kNumStates];
+
+        private readonly LenPriceTableEncoder _lenEncoder = new LenPriceTableEncoder();
+
+        private readonly LiteralEncoder _literalEncoder = new LiteralEncoder();
+        private uint _longestMatchLength;
+
+        private bool _longestMatchWasFound;
+
+        private readonly uint[] _matchDistances = new uint[Base.kMatchMaxLen * 2 + 2];
+        private IMatchFinder _matchFinder;
+
+        private EMatchFinderType _matchFinderType = EMatchFinderType.BT4;
+        private uint _matchPriceCount;
+
+        private bool _needReleaseMFStream;
+        private uint _numDistancePairs;
+
+        private uint _numFastBytes = kNumFastBytesDefault;
+        private uint _numFastBytesPrev = 0xFFFFFFFF;
+        private int _numLiteralContextBits = 3;
+        private int _numLiteralPosStateBits;
+
+        private readonly Optimal[] _optimum = new Optimal[kNumOpts];
+        private uint _optimumCurrentIndex;
+
+        private uint _optimumEndIndex;
+        private BitTreeEncoder _posAlignEncoder = new BitTreeEncoder(Base.kNumAlignBits);
+
+        private readonly BitEncoder[] _posEncoders = new BitEncoder[Base.kNumFullDistances - Base.kEndPosModelIndex];
+
+        private readonly BitTreeEncoder[] _posSlotEncoder = new BitTreeEncoder[Base.kNumLenToPosStates];
+
+        private readonly uint[] _posSlotPrices = new uint[1 << (Base.kNumPosSlotBits + Base.kNumLenToPosStatesBits)];
+
+        private int _posStateBits = 2;
+        private uint _posStateMask = 4 - 1;
+        private byte _previousByte;
+        private readonly RangeCoder.Encoder _rangeEncoder = new RangeCoder.Encoder();
+        private readonly uint[] _repDistances = new uint[Base.kNumRepDistances];
+        private readonly LenPriceTableEncoder _repMatchLenEncoder = new LenPriceTableEncoder();
+
+        private Base.State _state = new Base.State();
+
+        private uint _trainSize;
+        private bool _writeEndMark;
+
+        private long nowPos64;
+        private readonly byte[] properties = new byte[kPropSize];
+        private readonly uint[] repLens = new uint[Base.kNumRepDistances];
+
+        private readonly uint[] reps = new uint[Base.kNumRepDistances];
+
+        private readonly uint[] tempPrices = new uint[Base.kNumFullDistances];
 
         static Encoder() {
             const byte kFastSlots = 22;
@@ -28,6 +110,137 @@ namespace SevenZip.Compression.LZMA
                 for (uint j = 0; j < k; j++, c++)
                     g_FastPos[c] = slotFast;
             }
+        }
+
+        public Encoder() {
+            for (var i = 0; i < kNumOpts; i++)
+                _optimum[i] = new Optimal();
+            for (var i = 0; i < Base.kNumLenToPosStates; i++)
+                _posSlotEncoder[i] = new BitTreeEncoder(Base.kNumPosSlotBits);
+        }
+
+
+        public void Code(Stream inStream, Stream outStream,
+            long inSize, long outSize, ICodeProgress progress) {
+            _needReleaseMFStream = false;
+            try {
+                SetStreams(inStream, outStream, inSize, outSize);
+                while (true) {
+                    long processedInSize;
+                    long processedOutSize;
+                    bool finished;
+                    CodeOneBlock(out processedInSize, out processedOutSize, out finished);
+                    if (finished)
+                        return;
+                    if (progress != null) progress.SetProgress(processedInSize, processedOutSize);
+                }
+            }
+            finally {
+                ReleaseStreams();
+            }
+        }
+
+        public void SetCoderProperties(CoderPropID[] propIDs, object[] properties) {
+            for (uint i = 0; i < properties.Length; i++) {
+                var prop = properties[i];
+                switch (propIDs[i]) {
+                    case CoderPropID.NumFastBytes: {
+                        if (!(prop is int))
+                            throw new InvalidParamException();
+                        var numFastBytes = (int) prop;
+                        if (numFastBytes < 5 || numFastBytes > Base.kMatchMaxLen)
+                            throw new InvalidParamException();
+                        _numFastBytes = (uint) numFastBytes;
+                        break;
+                    }
+                    case CoderPropID.Algorithm: {
+                        /*
+                        if (!(prop is Int32))
+                            throw new InvalidParamException();
+                        Int32 maximize = (Int32)prop;
+                        _fastMode = (maximize == 0);
+                        _maxMode = (maximize >= 2);
+                        */
+                        break;
+                    }
+                    case CoderPropID.MatchFinder: {
+                        if (!(prop is string))
+                            throw new InvalidParamException();
+                        var matchFinderIndexPrev = _matchFinderType;
+                        var m = FindMatchFinder(((string) prop).ToUpper());
+                        if (m < 0)
+                            throw new InvalidParamException();
+                        _matchFinderType = (EMatchFinderType) m;
+                        if (_matchFinder != null && matchFinderIndexPrev != _matchFinderType) {
+                            _dictionarySizePrev = 0xFFFFFFFF;
+                            _matchFinder = null;
+                        }
+
+                        break;
+                    }
+                    case CoderPropID.DictionarySize: {
+                        const int kDicLogSizeMaxCompress = 30;
+                        if (!(prop is int))
+                            throw new InvalidParamException();
+                        ;
+                        var dictionarySize = (int) prop;
+                        if (dictionarySize < (uint) (1 << Base.kDicLogSizeMin) ||
+                            dictionarySize > (uint) (1 << kDicLogSizeMaxCompress))
+                            throw new InvalidParamException();
+                        _dictionarySize = (uint) dictionarySize;
+                        int dicLogSize;
+                        for (dicLogSize = 0; dicLogSize < (uint) kDicLogSizeMaxCompress; dicLogSize++)
+                            if (dictionarySize <= (uint) 1 << dicLogSize)
+                                break;
+                        _distTableSize = (uint) dicLogSize * 2;
+                        break;
+                    }
+                    case CoderPropID.PosStateBits: {
+                        if (!(prop is int))
+                            throw new InvalidParamException();
+                        var v = (int) prop;
+                        if (v < 0 || v > (uint) Base.kNumPosStatesBitsEncodingMax)
+                            throw new InvalidParamException();
+                        _posStateBits = v;
+                        _posStateMask = ((uint) 1 << _posStateBits) - 1;
+                        break;
+                    }
+                    case CoderPropID.LitPosBits: {
+                        if (!(prop is int))
+                            throw new InvalidParamException();
+                        var v = (int) prop;
+                        if (v < 0 || v > Base.kNumLitPosStatesBitsEncodingMax)
+                            throw new InvalidParamException();
+                        _numLiteralPosStateBits = v;
+                        break;
+                    }
+                    case CoderPropID.LitContextBits: {
+                        if (!(prop is int))
+                            throw new InvalidParamException();
+                        var v = (int) prop;
+                        if (v < 0 || v > Base.kNumLitContextBitsMax)
+                            throw new InvalidParamException();
+                        ;
+                        _numLiteralContextBits = v;
+                        break;
+                    }
+                    case CoderPropID.EndMarker: {
+                        if (!(prop is bool))
+                            throw new InvalidParamException();
+                        SetWriteEndMarkerMode((bool) prop);
+                        break;
+                    }
+                    default:
+                        throw new InvalidParamException();
+                }
+            }
+        }
+
+        public void WriteCoderProperties(Stream outStream) {
+            properties[0] = (byte) ((_posStateBits * 5 + _numLiteralPosStateBits) * 9 + _numLiteralContextBits);
+            for (var i = 0; i < 4; i++)
+                properties[1 + i] = (byte) ((_dictionarySize >> (8 * i)) & 0xFF);
+            outStream.Write(properties, 0, kPropSize);
         }
 
         private static uint GetPosSlot(uint pos) {
@@ -46,10 +259,6 @@ namespace SevenZip.Compression.LZMA
             return (uint) (g_FastPos[pos >> 26] + 52);
         }
 
-        private Base.State _state = new Base.State();
-        private byte _previousByte;
-        private uint[] _repDistances = new uint[Base.kNumRepDistances];
-
         private void BaseInit() {
             _state.Init();
             _previousByte = 0;
@@ -57,303 +266,9 @@ namespace SevenZip.Compression.LZMA
                 _repDistances[i] = 0;
         }
 
-        private const int kDefaultDictionaryLogSize = 22;
-        private const uint kNumFastBytesDefault = 0x20;
-
-        private class LiteralEncoder
-        {
-            public struct Encoder2
-            {
-                private BitEncoder[] m_Encoders;
-
-                public void Create() {
-                    m_Encoders = new BitEncoder[0x300];
-                }
-
-                public void Init() {
-                    for (var i = 0; i < 0x300; i++) m_Encoders[i].Init();
-                }
-
-                public void Encode(RangeCoder.Encoder rangeEncoder, byte symbol) {
-                    uint context = 1;
-                    for (var i = 7; i >= 0; i--) {
-                        var bit = (uint) ((symbol >> i) & 1);
-                        m_Encoders[context].Encode(rangeEncoder, bit);
-                        context = (context << 1) | bit;
-                    }
-                }
-
-                public void EncodeMatched(RangeCoder.Encoder rangeEncoder, byte matchByte, byte symbol) {
-                    uint context = 1;
-                    var same = true;
-                    for (var i = 7; i >= 0; i--) {
-                        var bit = (uint) ((symbol >> i) & 1);
-                        var state = context;
-                        if (same) {
-                            var matchBit = (uint) ((matchByte >> i) & 1);
-                            state += (1 + matchBit) << 8;
-                            same = matchBit == bit;
-                        }
-
-                        m_Encoders[state].Encode(rangeEncoder, bit);
-                        context = (context << 1) | bit;
-                    }
-                }
-
-                public uint GetPrice(bool matchMode, byte matchByte, byte symbol) {
-                    uint price = 0;
-                    uint context = 1;
-                    var i = 7;
-                    if (matchMode)
-                        for (; i >= 0; i--) {
-                            var matchBit = (uint) (matchByte >> i) & 1;
-                            var bit = (uint) (symbol >> i) & 1;
-                            price += m_Encoders[((1 + matchBit) << 8) + context].GetPrice(bit);
-                            context = (context << 1) | bit;
-                            if (matchBit != bit) {
-                                i--;
-                                break;
-                            }
-                        }
-
-                    for (; i >= 0; i--) {
-                        var bit = (uint) (symbol >> i) & 1;
-                        price += m_Encoders[context].GetPrice(bit);
-                        context = (context << 1) | bit;
-                    }
-
-                    return price;
-                }
-            }
-
-            private Encoder2[] m_Coders;
-            private int m_NumPrevBits;
-            private int m_NumPosBits;
-            private uint m_PosMask;
-
-            public void Create(int numPosBits, int numPrevBits) {
-                if (m_Coders != null && m_NumPrevBits == numPrevBits && m_NumPosBits == numPosBits)
-                    return;
-                m_NumPosBits = numPosBits;
-                m_PosMask = ((uint) 1 << numPosBits) - 1;
-                m_NumPrevBits = numPrevBits;
-                var numStates = (uint) 1 << (m_NumPrevBits + m_NumPosBits);
-                m_Coders = new Encoder2[numStates];
-                for (uint i = 0; i < numStates; i++)
-                    m_Coders[i].Create();
-            }
-
-            public void Init() {
-                var numStates = (uint) 1 << (m_NumPrevBits + m_NumPosBits);
-                for (uint i = 0; i < numStates; i++)
-                    m_Coders[i].Init();
-            }
-
-            public Encoder2 GetSubCoder(uint pos, byte prevByte) {
-                return m_Coders[((pos & m_PosMask) << m_NumPrevBits) + (uint) (prevByte >> (8 - m_NumPrevBits))];
-            }
-        }
-
-        private class LenEncoder
-        {
-            private BitEncoder _choice = new BitEncoder();
-            private BitEncoder _choice2 = new BitEncoder();
-            private BitTreeEncoder[] _lowCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
-            private BitTreeEncoder[] _midCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
-            private BitTreeEncoder _highCoder = new BitTreeEncoder(Base.kNumHighLenBits);
-
-            public LenEncoder() {
-                for (uint posState = 0; posState < Base.kNumPosStatesEncodingMax; posState++) {
-                    _lowCoder[posState] = new BitTreeEncoder(Base.kNumLowLenBits);
-                    _midCoder[posState] = new BitTreeEncoder(Base.kNumMidLenBits);
-                }
-            }
-
-            public void Init(uint numPosStates) {
-                _choice.Init();
-                _choice2.Init();
-                for (uint posState = 0; posState < numPosStates; posState++) {
-                    _lowCoder[posState].Init();
-                    _midCoder[posState].Init();
-                }
-
-                _highCoder.Init();
-            }
-
-            public void Encode(RangeCoder.Encoder rangeEncoder, uint symbol, uint posState) {
-                if (symbol < Base.kNumLowLenSymbols) {
-                    _choice.Encode(rangeEncoder, 0);
-                    _lowCoder[posState].Encode(rangeEncoder, symbol);
-                }
-                else {
-                    symbol -= Base.kNumLowLenSymbols;
-                    _choice.Encode(rangeEncoder, 1);
-                    if (symbol < Base.kNumMidLenSymbols) {
-                        _choice2.Encode(rangeEncoder, 0);
-                        _midCoder[posState].Encode(rangeEncoder, symbol);
-                    }
-                    else {
-                        _choice2.Encode(rangeEncoder, 1);
-                        _highCoder.Encode(rangeEncoder, symbol - Base.kNumMidLenSymbols);
-                    }
-                }
-            }
-
-            public void SetPrices(uint posState, uint numSymbols, uint[] prices, uint st) {
-                var a0 = _choice.GetPrice0();
-                var a1 = _choice.GetPrice1();
-                var b0 = a1 + _choice2.GetPrice0();
-                var b1 = a1 + _choice2.GetPrice1();
-                uint i = 0;
-                for (i = 0; i < Base.kNumLowLenSymbols; i++) {
-                    if (i >= numSymbols)
-                        return;
-                    prices[st + i] = a0 + _lowCoder[posState].GetPrice(i);
-                }
-
-                for (; i < Base.kNumLowLenSymbols + Base.kNumMidLenSymbols; i++) {
-                    if (i >= numSymbols)
-                        return;
-                    prices[st + i] = b0 + _midCoder[posState].GetPrice(i - Base.kNumLowLenSymbols);
-                }
-
-                for (; i < numSymbols; i++)
-                    prices[st + i] = b1 + _highCoder.GetPrice(i - Base.kNumLowLenSymbols - Base.kNumMidLenSymbols);
-            }
-        };
-
-        private const uint kNumLenSpecSymbols = Base.kNumLowLenSymbols + Base.kNumMidLenSymbols;
-
-        private class LenPriceTableEncoder : LenEncoder
-        {
-            private uint[] _prices = new uint[Base.kNumLenSymbols << Base.kNumPosStatesBitsEncodingMax];
-            private uint _tableSize;
-            private uint[] _counters = new uint[Base.kNumPosStatesEncodingMax];
-
-            public void SetTableSize(uint tableSize) {
-                _tableSize = tableSize;
-            }
-
-            public uint GetPrice(uint symbol, uint posState) {
-                return _prices[posState * Base.kNumLenSymbols + symbol];
-            }
-
-            private void UpdateTable(uint posState) {
-                SetPrices(posState, _tableSize, _prices, posState * Base.kNumLenSymbols);
-                _counters[posState] = _tableSize;
-            }
-
-            public void UpdateTables(uint numPosStates) {
-                for (uint posState = 0; posState < numPosStates; posState++)
-                    UpdateTable(posState);
-            }
-
-            public new void Encode(RangeCoder.Encoder rangeEncoder, uint symbol, uint posState) {
-                base.Encode(rangeEncoder, symbol, posState);
-                if (--_counters[posState] == 0)
-                    UpdateTable(posState);
-            }
-        }
-
-        private const uint kNumOpts = 1 << 12;
-
-        private class Optimal
-        {
-            public Base.State State;
-
-            public bool Prev1IsChar;
-            public bool Prev2;
-
-            public uint PosPrev2;
-            public uint BackPrev2;
-
-            public uint Price;
-            public uint PosPrev;
-            public uint BackPrev;
-
-            public uint Backs0;
-            public uint Backs1;
-            public uint Backs2;
-            public uint Backs3;
-
-            public void MakeAsChar() {
-                BackPrev = 0xFFFFFFFF;
-                Prev1IsChar = false;
-            }
-
-            public void MakeAsShortRep() {
-                BackPrev = 0;
-                ;
-                Prev1IsChar = false;
-            }
-
-            public bool IsShortRep() {
-                return BackPrev == 0;
-            }
-        };
-
-        private Optimal[] _optimum = new Optimal[kNumOpts];
-        private LZ.IMatchFinder _matchFinder = null;
-        private RangeCoder.Encoder _rangeEncoder = new RangeCoder.Encoder();
-
-        private BitEncoder[] _isMatch = new BitEncoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
-        private BitEncoder[] _isRep = new BitEncoder[Base.kNumStates];
-        private BitEncoder[] _isRepG0 = new BitEncoder[Base.kNumStates];
-        private BitEncoder[] _isRepG1 = new BitEncoder[Base.kNumStates];
-        private BitEncoder[] _isRepG2 = new BitEncoder[Base.kNumStates];
-        private BitEncoder[] _isRep0Long = new BitEncoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
-
-        private BitTreeEncoder[] _posSlotEncoder = new BitTreeEncoder[Base.kNumLenToPosStates];
-
-        private BitEncoder[] _posEncoders = new BitEncoder[Base.kNumFullDistances - Base.kEndPosModelIndex];
-        private BitTreeEncoder _posAlignEncoder = new BitTreeEncoder(Base.kNumAlignBits);
-
-        private LenPriceTableEncoder _lenEncoder = new LenPriceTableEncoder();
-        private LenPriceTableEncoder _repMatchLenEncoder = new LenPriceTableEncoder();
-
-        private LiteralEncoder _literalEncoder = new LiteralEncoder();
-
-        private uint[] _matchDistances = new uint[Base.kMatchMaxLen * 2 + 2];
-
-        private uint _numFastBytes = kNumFastBytesDefault;
-        private uint _longestMatchLength;
-        private uint _numDistancePairs;
-
-        private uint _additionalOffset;
-
-        private uint _optimumEndIndex;
-        private uint _optimumCurrentIndex;
-
-        private bool _longestMatchWasFound;
-
-        private uint[] _posSlotPrices = new uint[1 << (Base.kNumPosSlotBits + Base.kNumLenToPosStatesBits)];
-        private uint[] _distancesPrices = new uint[Base.kNumFullDistances << Base.kNumLenToPosStatesBits];
-        private uint[] _alignPrices = new uint[Base.kAlignTableSize];
-        private uint _alignPriceCount;
-
-        private uint _distTableSize = kDefaultDictionaryLogSize * 2;
-
-        private int _posStateBits = 2;
-        private uint _posStateMask = 4 - 1;
-        private int _numLiteralPosStateBits = 0;
-        private int _numLiteralContextBits = 3;
-
-        private uint _dictionarySize = 1 << kDefaultDictionaryLogSize;
-        private uint _dictionarySizePrev = 0xFFFFFFFF;
-        private uint _numFastBytesPrev = 0xFFFFFFFF;
-
-        private long nowPos64;
-        private bool _finished;
-        private System.IO.Stream _inStream;
-
-        private EMatchFinderType _matchFinderType = EMatchFinderType.BT4;
-        private bool _writeEndMark = false;
-
-        private bool _needReleaseMFStream;
-
         private void Create() {
             if (_matchFinder == null) {
-                var bt = new LZ.BinTree();
+                var bt = new BinTree();
                 var numHashBytes = 4;
                 if (_matchFinderType == EMatchFinderType.BT2)
                     numHashBytes = 2;
@@ -368,13 +283,6 @@ namespace SevenZip.Compression.LZMA
             _matchFinder.Create(_dictionarySize, kNumOpts, _numFastBytes, Base.kMatchMaxLen + 1);
             _dictionarySizePrev = _dictionarySize;
             _numFastBytesPrev = _numFastBytes;
-        }
-
-        public Encoder() {
-            for (var i = 0; i < kNumOpts; i++)
-                _optimum[i] = new Optimal();
-            for (var i = 0; i < Base.kNumLenToPosStates; i++)
-                _posSlotEncoder[i] = new BitTreeEncoder(Base.kNumPosSlotBits);
         }
 
         private void SetWriteEndMarkerMode(bool writeEndMarker) {
@@ -509,9 +417,6 @@ namespace SevenZip.Compression.LZMA
             return _optimumCurrentIndex;
         }
 
-        private uint[] reps = new uint[Base.kNumRepDistances];
-        private uint[] repLens = new uint[Base.kNumRepDistances];
-
 
         private uint GetOptimum(uint position, out uint backRes) {
             if (_optimumEndIndex != _optimumCurrentIndex) {
@@ -568,7 +473,7 @@ namespace SevenZip.Compression.LZMA
             var matchByte = _matchFinder.GetIndexByte((int) (0 - _repDistances[0] - 1 - 1));
 
             if (lenMain < 2 && currentByte != matchByte && repLens[repMaxIndex] < 2) {
-                backRes = (uint) 0xFFFFFFFF;
+                backRes = 0xFFFFFFFF;
                 return 1;
             }
 
@@ -864,7 +769,7 @@ namespace SevenZip.Compression.LZMA
                                 _isMatch[(state2.Index << Base.kNumPosStatesBitsMax) + posStateNext].GetPrice0() +
                                 _literalEncoder.GetSubCoder(position + lenTest,
                                     _matchFinder.GetIndexByte((int) lenTest - 1 - 1)).GetPrice(true,
-                                    _matchFinder.GetIndexByte((int) ((int) lenTest - 1 - (int) (reps[repIndex] + 1))),
+                                    _matchFinder.GetIndexByte((int) lenTest - 1 - (int) (reps[repIndex] + 1)),
                                     _matchFinder.GetIndexByte((int) lenTest - 1));
                             state2.UpdateChar();
                             posStateNext = (position + lenTest + 1) & _posStateMask;
@@ -1171,7 +1076,7 @@ namespace SevenZip.Compression.LZMA
             }
         }
 
-        private void SetOutStream(System.IO.Stream outStream) {
+        private void SetOutStream(Stream outStream) {
             _rangeEncoder.SetStream(outStream);
         }
 
@@ -1184,7 +1089,7 @@ namespace SevenZip.Compression.LZMA
             ReleaseOutStream();
         }
 
-        private void SetStreams(System.IO.Stream inStream, System.IO.Stream outStream,
+        private void SetStreams(Stream inStream, Stream outStream,
             long inSize, long outSize) {
             _inStream = inStream;
             _finished = false;
@@ -1205,40 +1110,6 @@ namespace SevenZip.Compression.LZMA
 
             nowPos64 = 0;
         }
-
-
-        public void Code(System.IO.Stream inStream, System.IO.Stream outStream,
-            long inSize, long outSize, ICodeProgress progress) {
-            _needReleaseMFStream = false;
-            try {
-                SetStreams(inStream, outStream, inSize, outSize);
-                while (true) {
-                    long processedInSize;
-                    long processedOutSize;
-                    bool finished;
-                    CodeOneBlock(out processedInSize, out processedOutSize, out finished);
-                    if (finished)
-                        return;
-                    if (progress != null) progress.SetProgress(processedInSize, processedOutSize);
-                }
-            }
-            finally {
-                ReleaseStreams();
-            }
-        }
-
-        private const int kPropSize = 5;
-        private byte[] properties = new byte[kPropSize];
-
-        public void WriteCoderProperties(System.IO.Stream outStream) {
-            properties[0] = (byte) ((_posStateBits * 5 + _numLiteralPosStateBits) * 9 + _numLiteralContextBits);
-            for (var i = 0; i < 4; i++)
-                properties[1 + i] = (byte) ((_dictionarySize >> (8 * i)) & 0xFF);
-            outStream.Write(properties, 0, kPropSize);
-        }
-
-        private uint[] tempPrices = new uint[Base.kNumFullDistances];
-        private uint _matchPriceCount;
 
         private void FillDistancesPrices() {
             for (var i = Base.kStartPosModelIndex; i < Base.kNumFullDistances; i++) {
@@ -1277,12 +1148,6 @@ namespace SevenZip.Compression.LZMA
             _alignPriceCount = 0;
         }
 
-
-        private static string[] kMatchFinderIDs = {
-            "BT2",
-            "BT4",
-        };
-
         private static int FindMatchFinder(string s) {
             for (var m = 0; m < kMatchFinderIDs.Length; m++)
                 if (s == kMatchFinderIDs[m])
@@ -1290,106 +1155,242 @@ namespace SevenZip.Compression.LZMA
             return -1;
         }
 
-        public void SetCoderProperties(CoderPropID[] propIDs, object[] properties) {
-            for (uint i = 0; i < properties.Length; i++) {
-                var prop = properties[i];
-                switch (propIDs[i]) {
-                    case CoderPropID.NumFastBytes: {
-                        if (!(prop is int))
-                            throw new InvalidParamException();
-                        var numFastBytes = (int) prop;
-                        if (numFastBytes < 5 || numFastBytes > Base.kMatchMaxLen)
-                            throw new InvalidParamException();
-                        _numFastBytes = (uint) numFastBytes;
-                        break;
+        public void SetTrainSize(uint trainSize) {
+            _trainSize = trainSize;
+        }
+
+        private enum EMatchFinderType
+        {
+            BT2,
+            BT4
+        }
+
+        private class LiteralEncoder
+        {
+            private Encoder2[] m_Coders;
+            private int m_NumPosBits;
+            private int m_NumPrevBits;
+            private uint m_PosMask;
+
+            public void Create(int numPosBits, int numPrevBits) {
+                if (m_Coders != null && m_NumPrevBits == numPrevBits && m_NumPosBits == numPosBits)
+                    return;
+                m_NumPosBits = numPosBits;
+                m_PosMask = ((uint) 1 << numPosBits) - 1;
+                m_NumPrevBits = numPrevBits;
+                var numStates = (uint) 1 << (m_NumPrevBits + m_NumPosBits);
+                m_Coders = new Encoder2[numStates];
+                for (uint i = 0; i < numStates; i++)
+                    m_Coders[i].Create();
+            }
+
+            public void Init() {
+                var numStates = (uint) 1 << (m_NumPrevBits + m_NumPosBits);
+                for (uint i = 0; i < numStates; i++)
+                    m_Coders[i].Init();
+            }
+
+            public Encoder2 GetSubCoder(uint pos, byte prevByte) {
+                return m_Coders[((pos & m_PosMask) << m_NumPrevBits) + (uint) (prevByte >> (8 - m_NumPrevBits))];
+            }
+
+            public struct Encoder2
+            {
+                private BitEncoder[] m_Encoders;
+
+                public void Create() {
+                    m_Encoders = new BitEncoder[0x300];
+                }
+
+                public void Init() {
+                    for (var i = 0; i < 0x300; i++) m_Encoders[i].Init();
+                }
+
+                public void Encode(RangeCoder.Encoder rangeEncoder, byte symbol) {
+                    uint context = 1;
+                    for (var i = 7; i >= 0; i--) {
+                        var bit = (uint) ((symbol >> i) & 1);
+                        m_Encoders[context].Encode(rangeEncoder, bit);
+                        context = (context << 1) | bit;
                     }
-                    case CoderPropID.Algorithm: {
-                        /*
-                        if (!(prop is Int32))
-                            throw new InvalidParamException();
-                        Int32 maximize = (Int32)prop;
-                        _fastMode = (maximize == 0);
-                        _maxMode = (maximize >= 2);
-                        */
-                        break;
-                    }
-                    case CoderPropID.MatchFinder: {
-                        if (!(prop is string))
-                            throw new InvalidParamException();
-                        var matchFinderIndexPrev = _matchFinderType;
-                        var m = FindMatchFinder(((string) prop).ToUpper());
-                        if (m < 0)
-                            throw new InvalidParamException();
-                        _matchFinderType = (EMatchFinderType) m;
-                        if (_matchFinder != null && matchFinderIndexPrev != _matchFinderType) {
-                            _dictionarySizePrev = 0xFFFFFFFF;
-                            _matchFinder = null;
+                }
+
+                public void EncodeMatched(RangeCoder.Encoder rangeEncoder, byte matchByte, byte symbol) {
+                    uint context = 1;
+                    var same = true;
+                    for (var i = 7; i >= 0; i--) {
+                        var bit = (uint) ((symbol >> i) & 1);
+                        var state = context;
+                        if (same) {
+                            var matchBit = (uint) ((matchByte >> i) & 1);
+                            state += (1 + matchBit) << 8;
+                            same = matchBit == bit;
                         }
 
-                        break;
+                        m_Encoders[state].Encode(rangeEncoder, bit);
+                        context = (context << 1) | bit;
                     }
-                    case CoderPropID.DictionarySize: {
-                        const int kDicLogSizeMaxCompress = 30;
-                        if (!(prop is int))
-                            throw new InvalidParamException();
-                        ;
-                        var dictionarySize = (int) prop;
-                        if (dictionarySize < (uint) (1 << Base.kDicLogSizeMin) ||
-                            dictionarySize > (uint) (1 << kDicLogSizeMaxCompress))
-                            throw new InvalidParamException();
-                        _dictionarySize = (uint) dictionarySize;
-                        int dicLogSize;
-                        for (dicLogSize = 0; dicLogSize < (uint) kDicLogSizeMaxCompress; dicLogSize++)
-                            if (dictionarySize <= (uint) 1 << dicLogSize)
+                }
+
+                public uint GetPrice(bool matchMode, byte matchByte, byte symbol) {
+                    uint price = 0;
+                    uint context = 1;
+                    var i = 7;
+                    if (matchMode)
+                        for (; i >= 0; i--) {
+                            var matchBit = (uint) (matchByte >> i) & 1;
+                            var bit = (uint) (symbol >> i) & 1;
+                            price += m_Encoders[((1 + matchBit) << 8) + context].GetPrice(bit);
+                            context = (context << 1) | bit;
+                            if (matchBit != bit) {
+                                i--;
                                 break;
-                        _distTableSize = (uint) dicLogSize * 2;
-                        break;
+                            }
+                        }
+
+                    for (; i >= 0; i--) {
+                        var bit = (uint) (symbol >> i) & 1;
+                        price += m_Encoders[context].GetPrice(bit);
+                        context = (context << 1) | bit;
                     }
-                    case CoderPropID.PosStateBits: {
-                        if (!(prop is int))
-                            throw new InvalidParamException();
-                        var v = (int) prop;
-                        if (v < 0 || v > (uint) Base.kNumPosStatesBitsEncodingMax)
-                            throw new InvalidParamException();
-                        _posStateBits = (int) v;
-                        _posStateMask = ((uint) 1 << (int) _posStateBits) - 1;
-                        break;
-                    }
-                    case CoderPropID.LitPosBits: {
-                        if (!(prop is int))
-                            throw new InvalidParamException();
-                        var v = (int) prop;
-                        if (v < 0 || v > (uint) Base.kNumLitPosStatesBitsEncodingMax)
-                            throw new InvalidParamException();
-                        _numLiteralPosStateBits = (int) v;
-                        break;
-                    }
-                    case CoderPropID.LitContextBits: {
-                        if (!(prop is int))
-                            throw new InvalidParamException();
-                        var v = (int) prop;
-                        if (v < 0 || v > (uint) Base.kNumLitContextBitsMax)
-                            throw new InvalidParamException();
-                        ;
-                        _numLiteralContextBits = (int) v;
-                        break;
-                    }
-                    case CoderPropID.EndMarker: {
-                        if (!(prop is bool))
-                            throw new InvalidParamException();
-                        SetWriteEndMarkerMode((bool) prop);
-                        break;
-                    }
-                    default:
-                        throw new InvalidParamException();
+
+                    return price;
                 }
             }
         }
 
-        private uint _trainSize = 0;
+        private class LenEncoder
+        {
+            private BitEncoder _choice = new BitEncoder();
+            private BitEncoder _choice2 = new BitEncoder();
+            private BitTreeEncoder _highCoder = new BitTreeEncoder(Base.kNumHighLenBits);
+            private readonly BitTreeEncoder[] _lowCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
+            private readonly BitTreeEncoder[] _midCoder = new BitTreeEncoder[Base.kNumPosStatesEncodingMax];
 
-        public void SetTrainSize(uint trainSize) {
-            _trainSize = trainSize;
+            public LenEncoder() {
+                for (uint posState = 0; posState < Base.kNumPosStatesEncodingMax; posState++) {
+                    _lowCoder[posState] = new BitTreeEncoder(Base.kNumLowLenBits);
+                    _midCoder[posState] = new BitTreeEncoder(Base.kNumMidLenBits);
+                }
+            }
+
+            public void Init(uint numPosStates) {
+                _choice.Init();
+                _choice2.Init();
+                for (uint posState = 0; posState < numPosStates; posState++) {
+                    _lowCoder[posState].Init();
+                    _midCoder[posState].Init();
+                }
+
+                _highCoder.Init();
+            }
+
+            public void Encode(RangeCoder.Encoder rangeEncoder, uint symbol, uint posState) {
+                if (symbol < Base.kNumLowLenSymbols) {
+                    _choice.Encode(rangeEncoder, 0);
+                    _lowCoder[posState].Encode(rangeEncoder, symbol);
+                }
+                else {
+                    symbol -= Base.kNumLowLenSymbols;
+                    _choice.Encode(rangeEncoder, 1);
+                    if (symbol < Base.kNumMidLenSymbols) {
+                        _choice2.Encode(rangeEncoder, 0);
+                        _midCoder[posState].Encode(rangeEncoder, symbol);
+                    }
+                    else {
+                        _choice2.Encode(rangeEncoder, 1);
+                        _highCoder.Encode(rangeEncoder, symbol - Base.kNumMidLenSymbols);
+                    }
+                }
+            }
+
+            public void SetPrices(uint posState, uint numSymbols, uint[] prices, uint st) {
+                var a0 = _choice.GetPrice0();
+                var a1 = _choice.GetPrice1();
+                var b0 = a1 + _choice2.GetPrice0();
+                var b1 = a1 + _choice2.GetPrice1();
+                uint i = 0;
+                for (i = 0; i < Base.kNumLowLenSymbols; i++) {
+                    if (i >= numSymbols)
+                        return;
+                    prices[st + i] = a0 + _lowCoder[posState].GetPrice(i);
+                }
+
+                for (; i < Base.kNumLowLenSymbols + Base.kNumMidLenSymbols; i++) {
+                    if (i >= numSymbols)
+                        return;
+                    prices[st + i] = b0 + _midCoder[posState].GetPrice(i - Base.kNumLowLenSymbols);
+                }
+
+                for (; i < numSymbols; i++)
+                    prices[st + i] = b1 + _highCoder.GetPrice(i - Base.kNumLowLenSymbols - Base.kNumMidLenSymbols);
+            }
+        }
+
+        private class LenPriceTableEncoder : LenEncoder
+        {
+            private readonly uint[] _counters = new uint[Base.kNumPosStatesEncodingMax];
+            private readonly uint[] _prices = new uint[Base.kNumLenSymbols << Base.kNumPosStatesBitsEncodingMax];
+            private uint _tableSize;
+
+            public void SetTableSize(uint tableSize) {
+                _tableSize = tableSize;
+            }
+
+            public uint GetPrice(uint symbol, uint posState) {
+                return _prices[posState * Base.kNumLenSymbols + symbol];
+            }
+
+            private void UpdateTable(uint posState) {
+                SetPrices(posState, _tableSize, _prices, posState * Base.kNumLenSymbols);
+                _counters[posState] = _tableSize;
+            }
+
+            public void UpdateTables(uint numPosStates) {
+                for (uint posState = 0; posState < numPosStates; posState++)
+                    UpdateTable(posState);
+            }
+
+            public new void Encode(RangeCoder.Encoder rangeEncoder, uint symbol, uint posState) {
+                base.Encode(rangeEncoder, symbol, posState);
+                if (--_counters[posState] == 0)
+                    UpdateTable(posState);
+            }
+        }
+
+        private class Optimal
+        {
+            public uint BackPrev;
+            public uint BackPrev2;
+
+            public uint Backs0;
+            public uint Backs1;
+            public uint Backs2;
+            public uint Backs3;
+            public uint PosPrev;
+
+            public uint PosPrev2;
+
+            public bool Prev1IsChar;
+            public bool Prev2;
+
+            public uint Price;
+            public Base.State State;
+
+            public void MakeAsChar() {
+                BackPrev = 0xFFFFFFFF;
+                Prev1IsChar = false;
+            }
+
+            public void MakeAsShortRep() {
+                BackPrev = 0;
+                ;
+                Prev1IsChar = false;
+            }
+
+            public bool IsShortRep() {
+                return BackPrev == 0;
+            }
         }
     }
 }

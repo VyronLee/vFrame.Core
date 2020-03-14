@@ -18,29 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace System.Text.Formatting
 {
     /// <summary>
-    /// Specifies an interface for types that act as a set of formatting arguments.
+    ///     Specifies an interface for types that act as a set of formatting arguments.
     /// </summary>
     public interface IArgSet
     {
         /// <summary>
-        /// The number of arguments in the set.
+        ///     The number of arguments in the set.
         /// </summary>
         int Count { get; }
 
         /// <summary>
-        /// Format one of the arguments in the set into the given string buffer.
+        ///     Format one of the arguments in the set into the given string buffer.
         /// </summary>
         /// <param name="buffer">The buffer to which to append the argument.</param>
         /// <param name="index">The index of the argument to format.</param>
@@ -49,12 +44,12 @@ namespace System.Text.Formatting
     }
 
     /// <summary>
-    /// Defines an interface for types that can be formatted into a string buffer.
+    ///     Defines an interface for types that can be formatted into a string buffer.
     /// </summary>
     public interface IStringFormattable
     {
         /// <summary>
-        /// Format the current instance into the given string buffer.
+        ///     Format the current instance into the given string buffer.
         /// </summary>
         /// <param name="buffer">The buffer to which to append.</param>
         /// <param name="format">A specifier indicating how the argument should be formatted.</param>
@@ -62,21 +57,49 @@ namespace System.Text.Formatting
     }
 
     /// <summary>
-    /// A low-allocation version of the built-in <see cref="StringBuilder"/> type.
+    ///     A low-allocation version of the built-in <see cref="StringBuilder" /> type.
     /// </summary>
     public sealed unsafe partial class StringBuffer
     {
-        private CachedCulture culture;
+        private const int DefaultCapacity = 32;
+        private const int MaxCachedSize = 360; // same as BCL's StringBuilderCache
+        private const int MaxArgs = 256;
+        private const int MaxSpacing = 1000000;
+        private const int MaxSpecifierSize = 32;
+
+        private const string TrueLiteral = "True";
+        private const string FalseLiteral = "False";
+
+        [ThreadStatic] private static StringBuffer CachedInstance;
+
+        private static readonly CachedCulture CachedInvariantCulture = new CachedCulture(CultureInfo.InvariantCulture);
+        private static readonly CachedCulture CachedCurrentCulture = new CachedCulture(CultureInfo.CurrentCulture);
         private char[] buffer;
-        private int currentCount;
+        private CachedCulture culture;
 
         /// <summary>
-        /// The number of characters in the buffer.
+        ///     Initializes a new instance of the <see cref="StringBuffer" /> class.
         /// </summary>
-        public int Count => currentCount;
+        public StringBuffer()
+            : this(DefaultCapacity) {
+        }
 
         /// <summary>
-        /// The culture used to format string data.
+        ///     Initializes a new instance of the <see cref="StringBuffer" /> class.
+        /// </summary>
+        /// <param name="capacity">The initial size of the string buffer.</param>
+        public StringBuffer(int capacity) {
+            buffer = new char[capacity];
+            culture = CachedCurrentCulture;
+        }
+
+        /// <summary>
+        ///     The number of characters in the buffer.
+        /// </summary>
+        public int Count { get; private set; }
+
+        /// <summary>
+        ///     The culture used to format string data.
         /// </summary>
         public CultureInfo Culture {
             get => culture.Culture;
@@ -94,23 +117,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StringBuffer"/> class.
-        /// </summary>
-        public StringBuffer()
-            : this(DefaultCapacity) {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StringBuffer"/> class.
-        /// </summary>
-        /// <param name="capacity">The initial size of the string buffer.</param>
-        public StringBuffer(int capacity) {
-            buffer = new char[capacity];
-            culture = CachedCurrentCulture;
-        }
-
-        /// <summary>
-        /// Sets a custom formatter to use when converting instances of a given type to a string.
+        ///     Sets a custom formatter to use when converting instances of a given type to a string.
         /// </summary>
         /// <typeparam name="T">The type for which to set the formatter.</typeparam>
         /// <param name="formatter">A delegate that will be called to format instances of the specified type.</param>
@@ -119,14 +126,14 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Clears the buffer.
+        ///     Clears the buffer.
         /// </summary>
         public void Clear() {
-            currentCount = 0;
+            Count = 0;
         }
 
         /// <summary>
-        /// Copies the contents of the buffer to the given array.
+        ///     Copies the contents of the buffer to the given array.
         /// </summary>
         /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
         /// <param name="destination">The destination array.</param>
@@ -144,7 +151,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Copies the contents of the buffer to the given array.
+        ///     Copies the contents of the buffer to the given array.
         /// </summary>
         /// <param name="dest">A pointer to the destination array.</param>
         /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
@@ -152,7 +159,7 @@ namespace System.Text.Formatting
         public void CopyTo(char* dest, int sourceIndex, int count) {
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
-            if (sourceIndex + count > currentCount || sourceIndex < 0)
+            if (sourceIndex + count > Count || sourceIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
 
             fixed (char* s = buffer) {
@@ -163,7 +170,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Copies the contents of the buffer to the given byte array.
+        ///     Copies the contents of the buffer to the given byte array.
         /// </summary>
         /// <param name="dest">A pointer to the destination byte array.</param>
         /// <param name="sourceIndex">The index within the buffer to begin copying.</param>
@@ -173,7 +180,7 @@ namespace System.Text.Formatting
         public int CopyTo(byte* dest, int sourceIndex, int count, Encoding encoding) {
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
-            if (sourceIndex + count > currentCount || sourceIndex < 0)
+            if (sourceIndex + count > Count || sourceIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
             if (encoding == null)
                 throw new ArgumentNullException(nameof(encoding));
@@ -184,15 +191,15 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the buffer to a string instance.
+        ///     Converts the buffer to a string instance.
         /// </summary>
         /// <returns>A new string representing the characters currently in the buffer.</returns>
         public override string ToString() {
-            return new string(buffer, 0, currentCount);
+            return new string(buffer, 0, Count);
         }
 
         /// <summary>
-        /// Appends a character to the current buffer.
+        ///     Appends a character to the current buffer.
         /// </summary>
         /// <param name="c">The character to append.</param>
         public void Append(char c) {
@@ -200,7 +207,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends a character to the current buffer several times.
+        ///     Appends a character to the current buffer several times.
         /// </summary>
         /// <param name="c">The character to append.</param>
         /// <param name="count">The number of times to append the character.</param>
@@ -209,16 +216,16 @@ namespace System.Text.Formatting
                 throw new ArgumentOutOfRangeException(nameof(count));
 
             CheckCapacity(count);
-            fixed (char* b = &buffer[currentCount]) {
+            fixed (char* b = &buffer[Count]) {
                 var ptr = b;
                 for (var i = 0; i < count; i++)
                     *ptr++ = c;
-                currentCount += count;
+                Count += count;
             }
         }
 
         /// <summary>
-        /// Appends the specified string to the current buffer.
+        ///     Appends the specified string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
         public void Append(string value) {
@@ -229,7 +236,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends a string subset to the current buffer.
+        ///     Appends a string subset to the current buffer.
         /// </summary>
         /// <param name="value">The string to append.</param>
         /// <param name="startIndex">The starting index within the string to begin reading characters.</param>
@@ -246,7 +253,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends an array of characters to the current buffer.
+        ///     Appends an array of characters to the current buffer.
         /// </summary>
         /// <param name="values">The characters to append.</param>
         /// <param name="startIndex">The starting index within the array to begin reading characters.</param>
@@ -263,22 +270,22 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends an array of characters to the current buffer.
+        ///     Appends an array of characters to the current buffer.
         /// </summary>
         /// <param name="str">A pointer to the array of characters to append.</param>
         /// <param name="count">The number of characters to append.</param>
         public void Append(char* str, int count) {
             CheckCapacity(count);
-            fixed (char* b = &buffer[currentCount]) {
+            fixed (char* b = &buffer[Count]) {
                 var dest = b;
                 for (var i = 0; i < count; i++)
                     *dest++ = *str++;
-                currentCount += count;
+                Count += count;
             }
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
         public void Append(bool value) {
@@ -289,109 +296,110 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(sbyte value, StringView format) {
             Numeric.FormatSByte(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(byte value, StringView format) {
             // widening here is fine
             Numeric.FormatUInt32(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(short value, StringView format) {
             Numeric.FormatInt16(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(ushort value, StringView format) {
             // widening here is fine
             Numeric.FormatUInt32(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(int value, StringView format) {
             Numeric.FormatInt32(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(uint value, StringView format) {
             Numeric.FormatUInt32(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(long value, StringView format) {
             Numeric.FormatInt64(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(ulong value, StringView format) {
             Numeric.FormatUInt64(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(float value, StringView format) {
             Numeric.FormatSingle(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(double value, StringView format) {
             Numeric.FormatDouble(this, value, format, culture);
         }
 
         /// <summary>
-        /// Appends the specified value as a string to the current buffer.
+        ///     Appends the specified value as a string to the current buffer.
         /// </summary>
         /// <param name="value">The value to append.</param>
-        /// <param name="format">A format specifier indicating how to convert <paramref name="value"/> to a string.</param>
+        /// <param name="format">A format specifier indicating how to convert <paramref name="value" /> to a string.</param>
         public void Append(decimal value, StringView format) {
             Numeric.FormatDecimal(this, (uint*) &value, format, culture);
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance.
-        /// Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance.
+        ///     Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <typeparam name="T">The type of argument set being formatted.</typeparam>
         /// <param name="format">A composite format string.</param>
@@ -407,7 +415,7 @@ namespace System.Text.Formatting
                 var prevArgIndex = 0;
                 do {
                     CheckCapacity((int) (end - curr));
-                    fixed (char* bufferPtr = &buffer[currentCount]) {
+                    fixed (char* bufferPtr = &buffer[Count]) {
                         segmentsLeft = AppendSegment(ref curr, end, bufferPtr, ref prevArgIndex, ref args);
                     }
                 } while (segmentsLeft);
@@ -416,7 +424,7 @@ namespace System.Text.Formatting
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CheckCapacity(int count) {
-            if (currentCount + count > buffer.Length)
+            if (Count + count > buffer.Length)
                 Array.Resize(ref buffer, buffer.Length * 2);
         }
 
@@ -444,7 +452,7 @@ namespace System.Text.Formatting
                 }
 
                 *dest++ = c;
-                currentCount++;
+                Count++;
             }
 
             if (curr == end)
@@ -462,7 +470,7 @@ namespace System.Text.Formatting
             c = SkipWhitespace(ref curr, end);
             var width = 0;
             var leftJustify = false;
-            var oldCount = currentCount;
+            var oldCount = Count;
             if (c == ',') {
                 curr++;
                 c = SkipWhitespace(ref curr, end);
@@ -527,7 +535,7 @@ namespace System.Text.Formatting
             }
 
             // finish off padding, if necessary
-            var padding = width - (currentCount - oldCount);
+            var padding = width - (Count - oldCount);
             if (padding > 0) {
                 if (leftJustify) {
                     Append(' ', padding);
@@ -535,13 +543,13 @@ namespace System.Text.Formatting
                 else {
                     // copy the recently placed chars up in memory to make room for padding
                     CheckCapacity(padding);
-                    for (var i = currentCount - 1; i >= oldCount; i--)
+                    for (var i = Count - 1; i >= oldCount; i--)
                         buffer[i + padding] = buffer[i];
 
                     // fill in padding
                     for (var i = 0; i < padding; i++)
                         buffer[i + oldCount] = ' ';
-                    currentCount += padding;
+                    Count += padding;
                 }
             }
 
@@ -662,20 +670,6 @@ namespace System.Text.Formatting
                 CachedInstance = buffer;
         }
 
-        [ThreadStatic] private static StringBuffer CachedInstance;
-
-        private static readonly CachedCulture CachedInvariantCulture = new CachedCulture(CultureInfo.InvariantCulture);
-        private static readonly CachedCulture CachedCurrentCulture = new CachedCulture(CultureInfo.CurrentCulture);
-
-        private const int DefaultCapacity = 32;
-        private const int MaxCachedSize = 360; // same as BCL's StringBuilderCache
-        private const int MaxArgs = 256;
-        private const int MaxSpacing = 1000000;
-        private const int MaxSpecifierSize = 32;
-
-        private const string TrueLiteral = "True";
-        private const string FalseLiteral = "False";
-
         // The point of this class is to allow us to generate a direct call to a known
         // method on an unknown, unconstrained generic value type. Normally this would
         // be impossible; you'd have to cast the generic argument and introduce boxing.
@@ -745,33 +739,61 @@ namespace System.Text.Formatting
     // some of the accessors on NumberFormatInfo allocate copies of their data
     internal sealed class CachedCulture
     {
+        private static readonly string[] PositiveCurrencyFormats = {
+            "$#", "#$", "$ #", "# $"
+        };
+
+        private static readonly string[] NegativeCurrencyFormats = {
+            "($#)", "-$#", "$-#", "$#-",
+            "(#$)", "-#$", "#-$", "#$-",
+            "-# $", "-$ #", "# $-", "$ #-",
+            "$ -#", "#- $", "($ #)", "(# $)"
+        };
+
+        private static readonly string[] PositivePercentFormats = {
+            "# %", "#%", "%#", "% #"
+        };
+
+        private static readonly string[] NegativePercentFormats = {
+            "-# %", "-#%", "-%#",
+            "%-#", "%#-",
+            "#-%", "#%-",
+            "-% #", "# %-", "% #-",
+            "% -#", "#- %"
+        };
+
+        private static readonly string[] NegativeNumberFormats = {
+            "(#)", "-#", "- #", "#-", "# -"
+        };
+
+        private static readonly string PositiveNumberFormat = "#";
         public readonly CultureInfo Culture;
 
         public readonly NumberFormatData CurrencyData;
-        public readonly NumberFormatData FixedData;
-        public readonly NumberFormatData NumberData;
-        public readonly NumberFormatData ScientificData;
-        public readonly NumberFormatData PercentData;
 
         public readonly string CurrencyNegativePattern;
         public readonly string CurrencyPositivePattern;
         public readonly string CurrencySymbol;
 
+        public readonly int DecimalBufferSize;
+        public readonly NumberFormatData FixedData;
+
+        public readonly string NaN;
+        public readonly string NegativeInfinity;
+
+        public readonly string NegativeSign;
+        public readonly NumberFormatData NumberData;
+
         public readonly string NumberNegativePattern;
         public readonly string NumberPositivePattern;
+        public readonly NumberFormatData PercentData;
 
         public readonly string PercentNegativePattern;
         public readonly string PercentPositivePattern;
         public readonly string PercentSymbol;
-
-        public readonly string NegativeSign;
-        public readonly string PositiveSign;
-
-        public readonly string NaN;
         public readonly string PositiveInfinity;
-        public readonly string NegativeInfinity;
-
-        public readonly int DecimalBufferSize;
+        public readonly string PositiveSign;
+        public readonly NumberFormatData ScientificData;
 
         public CachedCulture(CultureInfo culture) {
             Culture = culture;
@@ -840,49 +862,21 @@ namespace System.Text.Formatting
                 info.NumberDecimalSeparator.Length +
                 (NegativeSign.Length + PositiveSign.Length) * 2;
         }
-
-        private static readonly string[] PositiveCurrencyFormats = {
-            "$#", "#$", "$ #", "# $"
-        };
-
-        private static readonly string[] NegativeCurrencyFormats = {
-            "($#)", "-$#", "$-#", "$#-",
-            "(#$)", "-#$", "#-$", "#$-",
-            "-# $", "-$ #", "# $-", "$ #-",
-            "$ -#", "#- $", "($ #)", "(# $)"
-        };
-
-        private static readonly string[] PositivePercentFormats = {
-            "# %", "#%", "%#", "% #"
-        };
-
-        private static readonly string[] NegativePercentFormats = {
-            "-# %", "-#%", "-%#",
-            "%-#", "%#-",
-            "#-%", "#%-",
-            "-% #", "# %-", "% #-",
-            "% -#", "#- %"
-        };
-
-        private static readonly string[] NegativeNumberFormats = {
-            "(#)", "-#", "- #", "#-", "# -",
-        };
-
-        private static readonly string PositiveNumberFormat = "#";
     }
 
     // contains format information for a specific kind of format string
     // e.g. (fixed, number, currency)
     internal sealed class NumberFormatData
     {
+        internal const int MinBufferSize = 105;
         private readonly int bufferLength;
-        private readonly int perDigitLength;
 
         public readonly int DecimalDigits;
-        public readonly string NegativeSign;
         public readonly string DecimalSeparator;
         public readonly string GroupSeparator;
         public readonly int[] GroupSizes;
+        public readonly string NegativeSign;
+        private readonly int perDigitLength;
 
         public NumberFormatData(int decimalDigits, string negativeSign, string decimalSeparator, string groupSeparator,
             int[] groupSizes, int extra) {
@@ -913,8 +907,6 @@ namespace System.Text.Formatting
             len += perDigitLength * digitCount;
             return checked((int) len);
         }
-
-        internal const int MinBufferSize = 105;
     }
 
     // this file contains the custom numeric formatting routines split out from the Numeric.cs file
@@ -932,6 +924,19 @@ namespace System.Text.Formatting
 
     internal static unsafe partial class Numeric
     {
+        private const int MaxNumberDigits = 50;
+        private const int MaxFloatingDigits = 352;
+        private const int Int32Precision = 10;
+        private const int UInt32Precision = 10;
+        private const int Int64Precision = 19;
+        private const int UInt64Precision = 20;
+        private const int FloatPrecision = 7;
+        private const int DoublePrecision = 15;
+        private const int DecimalPrecision = 29;
+        private const int ScaleNaN = unchecked((int) 0x80000000);
+        private const int ScaleInf = 0x7FFFFFFF;
+        private const int OneBillion = 1000000000;
+
         public static void FormatSByte(StringBuffer formatter, sbyte value, StringView specifier,
             CachedCulture culture) {
             if (value < 0 && !specifier.IsEmpty) {
@@ -2025,19 +2030,6 @@ namespace System.Text.Formatting
                 return new string(Digits);
             }
         }
-
-        private const int MaxNumberDigits = 50;
-        private const int MaxFloatingDigits = 352;
-        private const int Int32Precision = 10;
-        private const int UInt32Precision = 10;
-        private const int Int64Precision = 19;
-        private const int UInt64Precision = 20;
-        private const int FloatPrecision = 7;
-        private const int DoublePrecision = 15;
-        private const int DecimalPrecision = 29;
-        private const int ScaleNaN = unchecked((int) 0x80000000);
-        private const int ScaleInf = 0x7FFFFFFF;
-        private const int OneBillion = 1000000000;
     }
 
     // currently just contains some hardcoded exception messages
@@ -2054,12 +2046,13 @@ namespace System.Text.Formatting
     }
 
     /// <summary>
-    /// A low-allocation version of the built-in <see cref="StringBuilder"/> type.
+    ///     A low-allocation version of the built-in <see cref="StringBuilder" /> type.
     /// </summary>
     partial class StringBuffer
     {
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2069,7 +2062,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2082,7 +2075,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2093,7 +2087,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2107,7 +2101,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2119,7 +2114,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2134,7 +2129,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2147,7 +2143,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2163,7 +2159,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2177,7 +2174,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2194,7 +2191,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2210,7 +2208,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2229,7 +2227,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2246,7 +2245,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2266,7 +2265,8 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        ///     Appends the string returned by processing a composite format string, which contains zero or more format items, to
+        ///     this instance. Each format item is replaced by the string representation of a single argument.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2284,7 +2284,7 @@ namespace System.Text.Formatting
         }
 
         /// <summary>
-        /// Converts the value of objects to strings based on the formats specified and inserts them into another string.
+        ///     Converts the value of objects to strings based on the formats specified and inserts them into another string.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="arg0">A value to format.</param>
@@ -2305,9 +2305,9 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg1<T0> : IArgSet
+    internal struct Arg1<T0> : IArgSet
     {
-        private T0 t0;
+        private readonly T0 t0;
 
         public int Count => 1;
 
@@ -2325,10 +2325,10 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg2<T0, T1> : IArgSet
+    internal struct Arg2<T0, T1> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
+        private readonly T0 t0;
+        private readonly T1 t1;
 
         public int Count => 2;
 
@@ -2350,11 +2350,11 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg3<T0, T1, T2> : IArgSet
+    internal struct Arg3<T0, T1, T2> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
 
         public int Count => 3;
 
@@ -2380,12 +2380,12 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg4<T0, T1, T2, T3> : IArgSet
+    internal struct Arg4<T0, T1, T2, T3> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
-        private T3 t3;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
+        private readonly T3 t3;
 
         public int Count => 4;
 
@@ -2415,13 +2415,13 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg5<T0, T1, T2, T3, T4> : IArgSet
+    internal struct Arg5<T0, T1, T2, T3, T4> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
-        private T3 t3;
-        private T4 t4;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
+        private readonly T3 t3;
+        private readonly T4 t4;
 
         public int Count => 5;
 
@@ -2455,14 +2455,14 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg6<T0, T1, T2, T3, T4, T5> : IArgSet
+    internal struct Arg6<T0, T1, T2, T3, T4, T5> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
-        private T3 t3;
-        private T4 t4;
-        private T5 t5;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
+        private readonly T3 t3;
+        private readonly T4 t4;
+        private readonly T5 t5;
 
         public int Count => 6;
 
@@ -2500,15 +2500,15 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg7<T0, T1, T2, T3, T4, T5, T6> : IArgSet
+    internal struct Arg7<T0, T1, T2, T3, T4, T5, T6> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
-        private T3 t3;
-        private T4 t4;
-        private T5 t5;
-        private T6 t6;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
+        private readonly T3 t3;
+        private readonly T4 t4;
+        private readonly T5 t5;
+        private readonly T6 t6;
 
         public int Count => 7;
 
@@ -2550,16 +2550,16 @@ namespace System.Text.Formatting
         }
     }
 
-    internal unsafe struct Arg8<T0, T1, T2, T3, T4, T5, T6, T7> : IArgSet
+    internal struct Arg8<T0, T1, T2, T3, T4, T5, T6, T7> : IArgSet
     {
-        private T0 t0;
-        private T1 t1;
-        private T2 t2;
-        private T3 t3;
-        private T4 t4;
-        private T5 t5;
-        private T6 t6;
-        private T7 t7;
+        private readonly T0 t0;
+        private readonly T1 t1;
+        private readonly T2 t2;
+        private readonly T3 t3;
+        private readonly T4 t4;
+        private readonly T5 t5;
+        private readonly T6 t6;
+        private readonly T7 t7;
 
         public int Count => 8;
 

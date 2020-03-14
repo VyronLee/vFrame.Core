@@ -96,6 +96,9 @@
     <Compile Include="3rd\LitJson\JsonWriter.cs" />
     <Compile Include="3rd\LitJson\Lexer.cs" />
     <Compile Include="3rd\LitJson\ParserToken.cs" />
+    <Compile Include="3rd\RecyclableMemoryStream\Events.cs" />
+    <Compile Include="3rd\RecyclableMemoryStream\RecyclableMemoryStream.cs" />
+    <Compile Include="3rd\RecyclableMemoryStream\RecyclableMemoryStreamManager.cs" />
     <Compile Include="3rd\StringBuffer.cs" />
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />

@@ -1,21 +1,21 @@
-using System;
+using System.IO;
 
 namespace SevenZip.Compression.RangeCoder
 {
     internal class Encoder
     {
         public const uint kTopValue = 1 << 24;
-
-        private System.IO.Stream Stream;
+        private byte _cache;
+        private uint _cacheSize;
 
         public ulong Low;
         public uint Range;
-        private uint _cacheSize;
-        private byte _cache;
 
         private long StartPosition;
 
-        public void SetStream(System.IO.Stream stream) {
+        private Stream Stream;
+
+        public void SetStream(Stream stream) {
             Stream = stream;
         }
 
@@ -55,7 +55,7 @@ namespace SevenZip.Compression.RangeCoder
         }
 
         public void ShiftLow() {
-            if ((uint) Low < (uint) 0xFF000000 || (uint) (Low >> 32) == 1) {
+            if ((uint) Low < 0xFF000000 || (uint) (Low >> 32) == 1) {
                 var temp = _cache;
                 do {
                     Stream.WriteByte((byte) (temp + (Low >> 32)));
@@ -107,14 +107,14 @@ namespace SevenZip.Compression.RangeCoder
     internal class Decoder
     {
         public const uint kTopValue = 1 << 24;
-        public uint Range;
 
         public uint Code;
+        public uint Range;
 
         // public Buffer.InBuffer Stream = new Buffer.InBuffer(1 << 16);
-        public System.IO.Stream Stream;
+        public Stream Stream;
 
-        public void Init(System.IO.Stream stream) {
+        public void Init(Stream stream) {
             // Stream.Init(stream);
             Stream = stream;
 

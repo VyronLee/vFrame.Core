@@ -17,7 +17,6 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-
 namespace LitJson
 {
     internal enum Condition
@@ -32,253 +31,14 @@ namespace LitJson
     internal class WriterContext
     {
         public int Count;
+        public bool ExpectingValue;
         public bool InArray;
         public bool InObject;
-        public bool ExpectingValue;
         public int Padding;
     }
 
     public class JsonWriter
     {
-        #region Fields
-
-        private static readonly NumberFormatInfo number_format;
-
-        private WriterContext context;
-        private Stack<WriterContext> ctx_stack;
-        private bool has_reached_end;
-        private char[] hex_seq;
-        private int indentation;
-        private int indent_value;
-        private StringBuilder inst_string_builder;
-        private bool pretty_print;
-        private bool validate;
-        private bool lower_case_properties;
-        private TextWriter writer;
-
-        #endregion
-
-
-        #region Properties
-
-        public int IndentValue {
-            get => indent_value;
-            set {
-                indentation = indentation / indent_value * value;
-                indent_value = value;
-            }
-        }
-
-        public bool PrettyPrint {
-            get => pretty_print;
-            set => pretty_print = value;
-        }
-
-        public TextWriter TextWriter => writer;
-
-        public bool Validate {
-            get => validate;
-            set => validate = value;
-        }
-
-        public bool LowerCaseProperties {
-            get => lower_case_properties;
-            set => lower_case_properties = value;
-        }
-
-        #endregion
-
-
-        #region Constructors
-
-        static JsonWriter() {
-            number_format = NumberFormatInfo.InvariantInfo;
-        }
-
-        public JsonWriter() {
-            inst_string_builder = new StringBuilder();
-            writer = new StringWriter(inst_string_builder);
-
-            Init();
-        }
-
-        public JsonWriter(StringBuilder sb) :
-            this(new StringWriter(sb)) {
-        }
-
-        public JsonWriter(TextWriter writer) {
-            if (writer == null)
-                throw new ArgumentNullException("writer");
-
-            this.writer = writer;
-
-            Init();
-        }
-
-        #endregion
-
-
-        #region Private Methods
-
-        private void DoValidation(Condition cond) {
-            if (!context.ExpectingValue)
-                context.Count++;
-
-            if (!validate)
-                return;
-
-            if (has_reached_end)
-                throw new JsonException(
-                    "A complete JSON symbol has already been written");
-
-            switch (cond) {
-                case Condition.InArray:
-                    if (!context.InArray)
-                        throw new JsonException(
-                            "Can't close an array here");
-                    break;
-
-                case Condition.InObject:
-                    if (!context.InObject || context.ExpectingValue)
-                        throw new JsonException(
-                            "Can't close an object here");
-                    break;
-
-                case Condition.NotAProperty:
-                    if (context.InObject && !context.ExpectingValue)
-                        throw new JsonException(
-                            "Expected a property");
-                    break;
-
-                case Condition.Property:
-                    if (!context.InObject || context.ExpectingValue)
-                        throw new JsonException(
-                            "Can't add a property here");
-                    break;
-
-                case Condition.Value:
-                    if (!context.InArray &&
-                        (!context.InObject || !context.ExpectingValue))
-                        throw new JsonException(
-                            "Can't add a value here");
-
-                    break;
-            }
-        }
-
-        private void Init() {
-            has_reached_end = false;
-            hex_seq = new char[4];
-            indentation = 0;
-            indent_value = 4;
-            pretty_print = false;
-            validate = true;
-            lower_case_properties = false;
-
-            ctx_stack = new Stack<WriterContext>();
-            context = new WriterContext();
-            ctx_stack.Push(context);
-        }
-
-        private static void IntToHex(int n, char[] hex) {
-            int num;
-
-            for (var i = 0; i < 4; i++) {
-                num = n % 16;
-
-                if (num < 10)
-                    hex[3 - i] = (char) ('0' + num);
-                else
-                    hex[3 - i] = (char) ('A' + (num - 10));
-
-                n >>= 4;
-            }
-        }
-
-        private void Indent() {
-            if (pretty_print)
-                indentation += indent_value;
-        }
-
-
-        private void Put(string str) {
-            if (pretty_print && !context.ExpectingValue)
-                for (var i = 0; i < indentation; i++)
-                    writer.Write(' ');
-
-            writer.Write(str);
-        }
-
-        private void PutNewline() {
-            PutNewline(true);
-        }
-
-        private void PutNewline(bool add_comma) {
-            if (add_comma && !context.ExpectingValue &&
-                context.Count > 1)
-                writer.Write(',');
-
-            if (pretty_print && !context.ExpectingValue)
-                writer.Write(Environment.NewLine);
-        }
-
-        private void PutString(string str) {
-            Put(string.Empty);
-
-            writer.Write('"');
-
-            var n = str.Length;
-            for (var i = 0; i < n; i++) {
-                switch (str[i]) {
-                    case '\n':
-                        writer.Write("\\n");
-                        continue;
-
-                    case '\r':
-                        writer.Write("\\r");
-                        continue;
-
-                    case '\t':
-                        writer.Write("\\t");
-                        continue;
-
-                    case '"':
-                    case '\\':
-                        writer.Write('\\');
-                        writer.Write(str[i]);
-                        continue;
-
-                    case '\f':
-                        writer.Write("\\f");
-                        continue;
-
-                    case '\b':
-                        writer.Write("\\b");
-                        continue;
-                }
-
-                if ((int) str[i] >= 32 && (int) str[i] <= 126) {
-                    writer.Write(str[i]);
-                    continue;
-                }
-
-                // Default, turn into a \uXXXX sequence
-                IntToHex((int) str[i], hex_seq);
-                writer.Write("\\u");
-                writer.Write(hex_seq);
-            }
-
-            writer.Write('"');
-        }
-
-        private void Unindent() {
-            if (pretty_print)
-                indentation -= indent_value;
-        }
-
-        #endregion
-
-
         public override string ToString() {
             if (inst_string_builder == null)
                 return string.Empty;
@@ -324,7 +84,7 @@ namespace LitJson
 
             if (str.IndexOf('.') == -1 &&
                 str.IndexOf('E') == -1)
-                writer.Write(".0");
+                TextWriter.Write(".0");
 
             context.ExpectingValue = false;
         }
@@ -432,28 +192,253 @@ namespace LitJson
         public void WritePropertyName(string property_name) {
             DoValidation(Condition.Property);
             PutNewline();
-            var propertyName = property_name == null || !lower_case_properties
+            var propertyName = property_name == null || !LowerCaseProperties
                 ? property_name
                 : property_name.ToLowerInvariant();
 
             PutString(propertyName);
 
-            if (pretty_print) {
+            if (PrettyPrint) {
                 if (propertyName.Length > context.Padding)
                     context.Padding = propertyName.Length;
 
                 for (var i = context.Padding - propertyName.Length;
                     i >= 0;
                     i--)
-                    writer.Write(' ');
+                    TextWriter.Write(' ');
 
-                writer.Write(": ");
+                TextWriter.Write(": ");
             }
             else {
-                writer.Write(':');
+                TextWriter.Write(':');
             }
 
             context.ExpectingValue = true;
         }
+
+        #region Fields
+
+        private static readonly NumberFormatInfo number_format;
+
+        private WriterContext context;
+        private Stack<WriterContext> ctx_stack;
+        private bool has_reached_end;
+        private char[] hex_seq;
+        private int indentation;
+        private int indent_value;
+        private readonly StringBuilder inst_string_builder;
+
+        #endregion
+
+
+        #region Properties
+
+        public int IndentValue {
+            get => indent_value;
+            set {
+                indentation = indentation / indent_value * value;
+                indent_value = value;
+            }
+        }
+
+        public bool PrettyPrint { get; set; }
+
+        public TextWriter TextWriter { get; }
+
+        public bool Validate { get; set; }
+
+        public bool LowerCaseProperties { get; set; }
+
+        #endregion
+
+
+        #region Constructors
+
+        static JsonWriter() {
+            number_format = NumberFormatInfo.InvariantInfo;
+        }
+
+        public JsonWriter() {
+            inst_string_builder = new StringBuilder();
+            TextWriter = new StringWriter(inst_string_builder);
+
+            Init();
+        }
+
+        public JsonWriter(StringBuilder sb) :
+            this(new StringWriter(sb)) {
+        }
+
+        public JsonWriter(TextWriter writer) {
+            if (writer == null)
+                throw new ArgumentNullException("writer");
+
+            TextWriter = writer;
+
+            Init();
+        }
+
+        #endregion
+
+
+        #region Private Methods
+
+        private void DoValidation(Condition cond) {
+            if (!context.ExpectingValue)
+                context.Count++;
+
+            if (!Validate)
+                return;
+
+            if (has_reached_end)
+                throw new JsonException(
+                    "A complete JSON symbol has already been written");
+
+            switch (cond) {
+                case Condition.InArray:
+                    if (!context.InArray)
+                        throw new JsonException(
+                            "Can't close an array here");
+                    break;
+
+                case Condition.InObject:
+                    if (!context.InObject || context.ExpectingValue)
+                        throw new JsonException(
+                            "Can't close an object here");
+                    break;
+
+                case Condition.NotAProperty:
+                    if (context.InObject && !context.ExpectingValue)
+                        throw new JsonException(
+                            "Expected a property");
+                    break;
+
+                case Condition.Property:
+                    if (!context.InObject || context.ExpectingValue)
+                        throw new JsonException(
+                            "Can't add a property here");
+                    break;
+
+                case Condition.Value:
+                    if (!context.InArray &&
+                        (!context.InObject || !context.ExpectingValue))
+                        throw new JsonException(
+                            "Can't add a value here");
+
+                    break;
+            }
+        }
+
+        private void Init() {
+            has_reached_end = false;
+            hex_seq = new char[4];
+            indentation = 0;
+            indent_value = 4;
+            PrettyPrint = false;
+            Validate = true;
+            LowerCaseProperties = false;
+
+            ctx_stack = new Stack<WriterContext>();
+            context = new WriterContext();
+            ctx_stack.Push(context);
+        }
+
+        private static void IntToHex(int n, char[] hex) {
+            int num;
+
+            for (var i = 0; i < 4; i++) {
+                num = n % 16;
+
+                if (num < 10)
+                    hex[3 - i] = (char) ('0' + num);
+                else
+                    hex[3 - i] = (char) ('A' + (num - 10));
+
+                n >>= 4;
+            }
+        }
+
+        private void Indent() {
+            if (PrettyPrint)
+                indentation += indent_value;
+        }
+
+
+        private void Put(string str) {
+            if (PrettyPrint && !context.ExpectingValue)
+                for (var i = 0; i < indentation; i++)
+                    TextWriter.Write(' ');
+
+            TextWriter.Write(str);
+        }
+
+        private void PutNewline() {
+            PutNewline(true);
+        }
+
+        private void PutNewline(bool add_comma) {
+            if (add_comma && !context.ExpectingValue &&
+                context.Count > 1)
+                TextWriter.Write(',');
+
+            if (PrettyPrint && !context.ExpectingValue)
+                TextWriter.Write(Environment.NewLine);
+        }
+
+        private void PutString(string str) {
+            Put(string.Empty);
+
+            TextWriter.Write('"');
+
+            var n = str.Length;
+            for (var i = 0; i < n; i++) {
+                switch (str[i]) {
+                    case '\n':
+                        TextWriter.Write("\\n");
+                        continue;
+
+                    case '\r':
+                        TextWriter.Write("\\r");
+                        continue;
+
+                    case '\t':
+                        TextWriter.Write("\\t");
+                        continue;
+
+                    case '"':
+                    case '\\':
+                        TextWriter.Write('\\');
+                        TextWriter.Write(str[i]);
+                        continue;
+
+                    case '\f':
+                        TextWriter.Write("\\f");
+                        continue;
+
+                    case '\b':
+                        TextWriter.Write("\\b");
+                        continue;
+                }
+
+                if (str[i] >= 32 && str[i] <= 126) {
+                    TextWriter.Write(str[i]);
+                    continue;
+                }
+
+                // Default, turn into a \uXXXX sequence
+                IntToHex(str[i], hex_seq);
+                TextWriter.Write("\\u");
+                TextWriter.Write(hex_seq);
+            }
+
+            TextWriter.Write('"');
+        }
+
+        private void Unindent() {
+            if (PrettyPrint)
+                indentation -= indent_value;
+        }
+
+        #endregion
     }
 }

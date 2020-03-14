@@ -18,7 +18,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 
-
 namespace LitJson
 {
     internal struct PropertyMetadata
@@ -32,8 +31,6 @@ namespace LitJson
     internal struct ArrayMetadata
     {
         private Type element_type;
-        private bool is_array;
-        private bool is_list;
 
 
         public Type ElementType {
@@ -47,24 +44,15 @@ namespace LitJson
             set => element_type = value;
         }
 
-        public bool IsArray {
-            get => is_array;
-            set => is_array = value;
-        }
+        public bool IsArray { get; set; }
 
-        public bool IsList {
-            get => is_list;
-            set => is_list = value;
-        }
+        public bool IsList { get; set; }
     }
 
 
     internal struct ObjectMetadata
     {
         private Type element_type;
-        private bool is_dictionary;
-
-        private IDictionary<string, PropertyMetadata> properties;
 
 
         public Type ElementType {
@@ -78,15 +66,9 @@ namespace LitJson
             set => element_type = value;
         }
 
-        public bool IsDictionary {
-            get => is_dictionary;
-            set => is_dictionary = value;
-        }
+        public bool IsDictionary { get; set; }
 
-        public IDictionary<string, PropertyMetadata> Properties {
-            get => properties;
-            set => properties = value;
-        }
+        public IDictionary<string, PropertyMetadata> Properties { get; set; }
     }
 
 
@@ -103,6 +85,125 @@ namespace LitJson
 
     public class JsonMapper
     {
+        #region Constructors
+
+        static JsonMapper() {
+            max_nesting_depth = 100;
+
+            array_metadata = new Dictionary<Type, ArrayMetadata>();
+            conv_ops = new Dictionary<Type, IDictionary<Type, MethodInfo>>();
+            object_metadata = new Dictionary<Type, ObjectMetadata>();
+            type_properties = new Dictionary<Type,
+                IList<PropertyMetadata>>();
+
+            static_writer = new JsonWriter();
+
+            datetime_format = DateTimeFormatInfo.InvariantInfo;
+
+            base_exporters_table = new Dictionary<Type, ExporterFunc>();
+            custom_exporters_table = new Dictionary<Type, ExporterFunc>();
+
+            base_importers_table = new Dictionary<Type,
+                IDictionary<Type, ImporterFunc>>();
+            custom_importers_table = new Dictionary<Type,
+                IDictionary<Type, ImporterFunc>>();
+
+            RegisterBaseExporters();
+            RegisterBaseImporters();
+        }
+
+        #endregion
+
+
+        public static string ToJson(object obj) {
+            lock (static_writer_lock) {
+                static_writer.Reset();
+
+                WriteValue(obj, static_writer, true, 0);
+
+                return static_writer.ToString();
+            }
+        }
+
+        public static void ToJson(object obj, JsonWriter writer) {
+            WriteValue(obj, writer, false, 0);
+        }
+
+        public static JsonData ToObject(JsonReader reader) {
+            return (JsonData) ToWrapper(
+                delegate { return new JsonData(); }, reader);
+        }
+
+        public static JsonData ToObject(TextReader reader) {
+            var json_reader = new JsonReader(reader);
+
+            return (JsonData) ToWrapper(
+                delegate { return new JsonData(); }, json_reader);
+        }
+
+        public static JsonData ToObject(string json) {
+            return (JsonData) ToWrapper(
+                delegate { return new JsonData(); }, json);
+        }
+
+        public static T ToObject<T>(JsonReader reader) {
+            return (T) ReadValue(typeof(T), reader);
+        }
+
+        public static T ToObject<T>(TextReader reader) {
+            var json_reader = new JsonReader(reader);
+
+            return (T) ReadValue(typeof(T), json_reader);
+        }
+
+        public static T ToObject<T>(string json) {
+            var reader = new JsonReader(json);
+
+            return (T) ReadValue(typeof(T), reader);
+        }
+
+        public static object ToObject(string json, Type ConvertType) {
+            var reader = new JsonReader(json);
+
+            return ReadValue(ConvertType, reader);
+        }
+
+        public static IJsonWrapper ToWrapper(WrapperFactory factory,
+            JsonReader reader) {
+            return ReadValue(factory, reader);
+        }
+
+        public static IJsonWrapper ToWrapper(WrapperFactory factory,
+            string json) {
+            var reader = new JsonReader(json);
+
+            return ReadValue(factory, reader);
+        }
+
+        public static void RegisterExporter<T>(ExporterFunc<T> exporter) {
+            ExporterFunc exporter_wrapper =
+                delegate(object obj, JsonWriter writer) { exporter((T) obj, writer); };
+
+            custom_exporters_table[typeof(T)] = exporter_wrapper;
+        }
+
+        public static void RegisterImporter<TJson, TValue>(
+            ImporterFunc<TJson, TValue> importer) {
+            ImporterFunc importer_wrapper =
+                delegate(object input) { return importer((TJson) input); };
+
+            RegisterImporter(custom_importers_table, typeof(TJson),
+                typeof(TValue), importer_wrapper);
+        }
+
+        public static void UnregisterExporters() {
+            custom_exporters_table.Clear();
+        }
+
+        public static void UnregisterImporters() {
+            custom_importers_table.Clear();
+        }
+
         #region Fields
 
         private static readonly int max_nesting_depth;
@@ -140,36 +241,6 @@ namespace LitJson
         #endregion
 
 
-        #region Constructors
-
-        static JsonMapper() {
-            max_nesting_depth = 100;
-
-            array_metadata = new Dictionary<Type, ArrayMetadata>();
-            conv_ops = new Dictionary<Type, IDictionary<Type, MethodInfo>>();
-            object_metadata = new Dictionary<Type, ObjectMetadata>();
-            type_properties = new Dictionary<Type,
-                IList<PropertyMetadata>>();
-
-            static_writer = new JsonWriter();
-
-            datetime_format = DateTimeFormatInfo.InvariantInfo;
-
-            base_exporters_table = new Dictionary<Type, ExporterFunc>();
-            custom_exporters_table = new Dictionary<Type, ExporterFunc>();
-
-            base_importers_table = new Dictionary<Type,
-                IDictionary<Type, ImporterFunc>>();
-            custom_importers_table = new Dictionary<Type,
-                IDictionary<Type, ImporterFunc>>();
-
-            RegisterBaseExporters();
-            RegisterBaseImporters();
-        }
-
-        #endregion
-
-
         #region Private Methods
 
         private static void AddArrayMetadata(Type type) {
@@ -201,7 +272,6 @@ namespace LitJson
                     array_metadata.Add(type, data);
                 }
                 catch (ArgumentException) {
-                    return;
                 }
             }
         }
@@ -251,7 +321,6 @@ namespace LitJson
                     object_metadata.Add(type, data);
                 }
                 catch (ArgumentException) {
-                    return;
                 }
             }
         }
@@ -285,7 +354,6 @@ namespace LitJson
                     type_properties.Add(type, props);
                 }
                 catch (ArgumentException) {
-                    return;
                 }
             }
         }
@@ -300,7 +368,7 @@ namespace LitJson
                 return conv_ops[t1][t2];
 
             var op = t1.GetMethod(
-                "op_Implicit", new Type[] {t2});
+                "op_Implicit", new[] {t2});
 
             lock (conv_ops_lock) {
                 try {
@@ -380,7 +448,7 @@ namespace LitJson
 
                 if (conv_op != null)
                     return conv_op.Invoke(null,
-                        new object[] {reader.Value});
+                        new[] {reader.Value});
 
                 // No luck
                 throw new JsonException(string.Format(
@@ -473,10 +541,9 @@ namespace LitJson
                                     "property '{1}'",
                                     inst_type, property));
                             }
-                            else {
-                                ReadSkip(reader);
-                                continue;
-                            }
+
+                            ReadSkip(reader);
+                            continue;
                         }
 
                         ((IDictionary) instance).Add(
@@ -532,7 +599,7 @@ namespace LitJson
                     if (item == null && reader.Token == JsonToken.ArrayEnd)
                         break;
 
-                    ((IList) instance).Add(item);
+                    instance.Add(item);
                 }
             }
             else if (reader.Token == JsonToken.ObjectStart) {
@@ -546,7 +613,7 @@ namespace LitJson
 
                     var property = (string) reader.Value;
 
-                    ((IDictionary) instance)[property] = ReadValue(
+                    instance[property] = ReadValue(
                         factory, reader);
                 }
             }
@@ -805,95 +872,5 @@ namespace LitJson
         }
 
         #endregion
-
-
-        public static string ToJson(object obj) {
-            lock (static_writer_lock) {
-                static_writer.Reset();
-
-                WriteValue(obj, static_writer, true, 0);
-
-                return static_writer.ToString();
-            }
-        }
-
-        public static void ToJson(object obj, JsonWriter writer) {
-            WriteValue(obj, writer, false, 0);
-        }
-
-        public static JsonData ToObject(JsonReader reader) {
-            return (JsonData) ToWrapper(
-                delegate { return new JsonData(); }, reader);
-        }
-
-        public static JsonData ToObject(TextReader reader) {
-            var json_reader = new JsonReader(reader);
-
-            return (JsonData) ToWrapper(
-                delegate { return new JsonData(); }, json_reader);
-        }
-
-        public static JsonData ToObject(string json) {
-            return (JsonData) ToWrapper(
-                delegate { return new JsonData(); }, json);
-        }
-
-        public static T ToObject<T>(JsonReader reader) {
-            return (T) ReadValue(typeof(T), reader);
-        }
-
-        public static T ToObject<T>(TextReader reader) {
-            var json_reader = new JsonReader(reader);
-
-            return (T) ReadValue(typeof(T), json_reader);
-        }
-
-        public static T ToObject<T>(string json) {
-            var reader = new JsonReader(json);
-
-            return (T) ReadValue(typeof(T), reader);
-        }
-
-        public static object ToObject(string json, Type ConvertType) {
-            var reader = new JsonReader(json);
-
-            return ReadValue(ConvertType, reader);
-        }
-
-        public static IJsonWrapper ToWrapper(WrapperFactory factory,
-            JsonReader reader) {
-            return ReadValue(factory, reader);
-        }
-
-        public static IJsonWrapper ToWrapper(WrapperFactory factory,
-            string json) {
-            var reader = new JsonReader(json);
-
-            return ReadValue(factory, reader);
-        }
-
-        public static void RegisterExporter<T>(ExporterFunc<T> exporter) {
-            ExporterFunc exporter_wrapper =
-                delegate(object obj, JsonWriter writer) { exporter((T) obj, writer); };
-
-            custom_exporters_table[typeof(T)] = exporter_wrapper;
-        }
-
-        public static void RegisterImporter<TJson, TValue>(
-            ImporterFunc<TJson, TValue> importer) {
-            ImporterFunc importer_wrapper =
-                delegate(object input) { return importer((TJson) input); };
-
-            RegisterImporter(custom_importers_table, typeof(TJson),
-                typeof(TValue), importer_wrapper);
-        }
-
-        public static void UnregisterExporters() {
-            custom_exporters_table.Clear();
-        }
-
-        public static void UnregisterImporters() {
-            custom_importers_table.Clear();
-        }
     }
 }

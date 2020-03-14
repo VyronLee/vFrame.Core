@@ -1,21 +1,23 @@
 // OutBuffer.cs
 
+using System.IO;
+
 namespace SevenZip.Buffer
 {
     public class OutBuffer
     {
-        private byte[] m_Buffer;
+        private readonly byte[] m_Buffer;
+        private readonly uint m_BufferSize;
         private uint m_Pos;
-        private uint m_BufferSize;
-        private System.IO.Stream m_Stream;
         private ulong m_ProcessedSize;
+        private Stream m_Stream;
 
         public OutBuffer(uint bufferSize) {
             m_Buffer = new byte[bufferSize];
             m_BufferSize = bufferSize;
         }
 
-        public void SetStream(System.IO.Stream stream) {
+        public void SetStream(Stream stream) {
             m_Stream = stream;
         }
 

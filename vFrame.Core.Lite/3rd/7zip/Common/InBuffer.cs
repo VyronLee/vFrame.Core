@@ -1,23 +1,25 @@
 // InBuffer.cs
 
+using System.IO;
+
 namespace SevenZip.Buffer
 {
     public class InBuffer
     {
-        private byte[] m_Buffer;
-        private uint m_Pos;
+        private readonly byte[] m_Buffer;
+        private readonly uint m_BufferSize;
         private uint m_Limit;
-        private uint m_BufferSize;
-        private System.IO.Stream m_Stream;
-        private bool m_StreamWasExhausted;
+        private uint m_Pos;
         private ulong m_ProcessedSize;
+        private Stream m_Stream;
+        private bool m_StreamWasExhausted;
 
         public InBuffer(uint bufferSize) {
             m_Buffer = new byte[bufferSize];
             m_BufferSize = bufferSize;
         }
 
-        public void Init(System.IO.Stream stream) {
+        public void Init(Stream stream) {
             m_Stream = stream;
             m_ProcessedSize = 0;
             m_Limit = 0;

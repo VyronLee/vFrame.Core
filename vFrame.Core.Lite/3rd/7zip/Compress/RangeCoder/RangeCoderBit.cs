@@ -1,5 +1,3 @@
-using System;
-
 namespace SevenZip.Compression.RangeCoder
 {
     internal struct BitEncoder
@@ -43,7 +41,7 @@ namespace SevenZip.Compression.RangeCoder
             }
         }
 
-        private static uint[] ProbPrices = new uint[kBitModelTotal >> kNumMoveReducingBits];
+        private static readonly uint[] ProbPrices = new uint[kBitModelTotal >> kNumMoveReducingBits];
 
         static BitEncoder() {
             const int kNumBits = kNumBitModelTotalBits - kNumMoveReducingBits;
@@ -89,7 +87,7 @@ namespace SevenZip.Compression.RangeCoder
         }
 
         public uint Decode(Decoder rangeDecoder) {
-            var newBound = (uint) (rangeDecoder.Range >> kNumBitModelTotalBits) * (uint) Prob;
+            var newBound = (rangeDecoder.Range >> kNumBitModelTotalBits) * Prob;
             if (rangeDecoder.Code < newBound) {
                 rangeDecoder.Range = newBound;
                 Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
@@ -100,17 +98,16 @@ namespace SevenZip.Compression.RangeCoder
 
                 return 0;
             }
-            else {
-                rangeDecoder.Range -= newBound;
-                rangeDecoder.Code -= newBound;
-                Prob -= Prob >> kNumMoveBits;
-                if (rangeDecoder.Range < Decoder.kTopValue) {
-                    rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte) rangeDecoder.Stream.ReadByte();
-                    rangeDecoder.Range <<= 8;
-                }
 
-                return 1;
+            rangeDecoder.Range -= newBound;
+            rangeDecoder.Code -= newBound;
+            Prob -= Prob >> kNumMoveBits;
+            if (rangeDecoder.Range < Decoder.kTopValue) {
+                rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte) rangeDecoder.Stream.ReadByte();
+                rangeDecoder.Range <<= 8;
             }
+
+            return 1;
         }
     }
 }

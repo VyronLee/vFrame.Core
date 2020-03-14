@@ -15,8 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
-
 
 namespace LitJson
 {
@@ -44,24 +42,103 @@ namespace LitJson
 
     public class JsonReader
     {
+        public void Close() {
+            if (EndOfInput)
+                return;
+
+            EndOfInput = true;
+            EndOfJson = true;
+
+            if (reader_is_owned)
+                using (reader) {
+                }
+
+            reader = null;
+        }
+
+        public bool Read() {
+            if (EndOfInput)
+                return false;
+
+            if (EndOfJson) {
+                EndOfJson = false;
+                automaton_stack.Clear();
+                automaton_stack.Push((int) ParserToken.End);
+                automaton_stack.Push((int) ParserToken.Text);
+            }
+
+            parser_in_string = false;
+            parser_return = false;
+
+            Token = JsonToken.None;
+            Value = null;
+
+            if (!read_started) {
+                read_started = true;
+
+                if (!ReadToken())
+                    return false;
+            }
+
+
+            int[] entry_symbols;
+
+            while (true) {
+                if (parser_return) {
+                    if (automaton_stack.Peek() == (int) ParserToken.End)
+                        EndOfJson = true;
+
+                    return true;
+                }
+
+                current_symbol = automaton_stack.Pop();
+
+                ProcessSymbol();
+
+                if (current_symbol == current_input) {
+                    if (!ReadToken()) {
+                        if (automaton_stack.Peek() != (int) ParserToken.End)
+                            throw new JsonException(
+                                "Input doesn't evaluate to proper JSON text");
+
+                        if (parser_return)
+                            return true;
+
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                try {
+                    entry_symbols =
+                        parse_table[current_symbol][current_input];
+                }
+                catch (KeyNotFoundException e) {
+                    throw new JsonException((ParserToken) current_input, e);
+                }
+
+                if (entry_symbols[0] == (int) ParserToken.Epsilon)
+                    continue;
+
+                for (var i = entry_symbols.Length - 1; i >= 0; i--)
+                    automaton_stack.Push(entry_symbols[i]);
+            }
+        }
+
         #region Fields
 
         private static readonly IDictionary<int, IDictionary<int, int[]>> parse_table;
 
-        private Stack<int> automaton_stack;
+        private readonly Stack<int> automaton_stack;
         private int current_input;
         private int current_symbol;
-        private bool end_of_json;
-        private bool end_of_input;
-        private Lexer lexer;
+        private readonly Lexer lexer;
         private bool parser_in_string;
         private bool parser_return;
         private bool read_started;
         private TextReader reader;
-        private bool reader_is_owned;
-        private bool skip_non_members;
-        private object token_value;
-        private JsonToken token;
+        private readonly bool reader_is_owned;
 
         #endregion
 
@@ -78,18 +155,15 @@ namespace LitJson
             set => lexer.AllowSingleQuotedStrings = value;
         }
 
-        public bool SkipNonMembers {
-            get => skip_non_members;
-            set => skip_non_members = value;
-        }
+        public bool SkipNonMembers { get; set; }
 
-        public bool EndOfInput => end_of_input;
+        public bool EndOfInput { get; private set; }
 
-        public bool EndOfJson => end_of_json;
+        public bool EndOfJson { get; private set; }
 
-        public JsonToken Token => token;
+        public JsonToken Token { get; private set; }
 
-        public object Value => token_value;
+        public object Value { get; private set; }
 
         #endregion
 
@@ -122,10 +196,10 @@ namespace LitJson
 
             lexer = new Lexer(reader);
 
-            end_of_input = false;
-            end_of_json = false;
+            EndOfInput = false;
+            EndOfJson = false;
 
-            skip_non_members = true;
+            SkipNonMembers = true;
 
             this.reader = reader;
             reader_is_owned = owned;
@@ -263,8 +337,8 @@ namespace LitJson
                 number.IndexOf('E') != -1) {
                 double n_double;
                 if (double.TryParse(number, NumberStyles.Any, CultureInfo.InvariantCulture, out n_double)) {
-                    token = JsonToken.Double;
-                    token_value = n_double;
+                    Token = JsonToken.Double;
+                    Value = n_double;
 
                     return;
                 }
@@ -272,48 +346,48 @@ namespace LitJson
 
             int n_int32;
             if (int.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out n_int32)) {
-                token = JsonToken.Int;
-                token_value = n_int32;
+                Token = JsonToken.Int;
+                Value = n_int32;
 
                 return;
             }
 
             long n_int64;
             if (long.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out n_int64)) {
-                token = JsonToken.Long;
-                token_value = n_int64;
+                Token = JsonToken.Long;
+                Value = n_int64;
 
                 return;
             }
 
             ulong n_uint64;
             if (ulong.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out n_uint64)) {
-                token = JsonToken.Long;
-                token_value = n_uint64;
+                Token = JsonToken.Long;
+                Value = n_uint64;
 
                 return;
             }
 
             // Shouldn't happen, but just in case, return something
-            token = JsonToken.Int;
-            token_value = 0;
+            Token = JsonToken.Int;
+            Value = 0;
         }
 
         private void ProcessSymbol() {
             if (current_symbol == '[') {
-                token = JsonToken.ArrayStart;
+                Token = JsonToken.ArrayStart;
                 parser_return = true;
             }
             else if (current_symbol == ']') {
-                token = JsonToken.ArrayEnd;
+                Token = JsonToken.ArrayEnd;
                 parser_return = true;
             }
             else if (current_symbol == '{') {
-                token = JsonToken.ObjectStart;
+                Token = JsonToken.ObjectStart;
                 parser_return = true;
             }
             else if (current_symbol == '}') {
-                token = JsonToken.ObjectEnd;
+                Token = JsonToken.ObjectEnd;
                 parser_return = true;
             }
             else if (current_symbol == '"') {
@@ -323,22 +397,22 @@ namespace LitJson
                     parser_return = true;
                 }
                 else {
-                    if (token == JsonToken.None)
-                        token = JsonToken.String;
+                    if (Token == JsonToken.None)
+                        Token = JsonToken.String;
 
                     parser_in_string = true;
                 }
             }
             else if (current_symbol == (int) ParserToken.CharSeq) {
-                token_value = lexer.StringValue;
+                Value = lexer.StringValue;
             }
             else if (current_symbol == (int) ParserToken.False) {
-                token = JsonToken.Boolean;
-                token_value = false;
+                Token = JsonToken.Boolean;
+                Value = false;
                 parser_return = true;
             }
             else if (current_symbol == (int) ParserToken.Null) {
-                token = JsonToken.Null;
+                Token = JsonToken.Null;
                 parser_return = true;
             }
             else if (current_symbol == (int) ParserToken.Number) {
@@ -347,17 +421,17 @@ namespace LitJson
                 parser_return = true;
             }
             else if (current_symbol == (int) ParserToken.Pair) {
-                token = JsonToken.PropertyName;
+                Token = JsonToken.PropertyName;
             }
             else if (current_symbol == (int) ParserToken.True) {
-                token = JsonToken.Boolean;
-                token_value = true;
+                Token = JsonToken.Boolean;
+                Value = true;
                 parser_return = true;
             }
         }
 
         private bool ReadToken() {
-            if (end_of_input)
+            if (EndOfInput)
                 return false;
 
             lexer.NextToken();
@@ -374,90 +448,5 @@ namespace LitJson
         }
 
         #endregion
-
-
-        public void Close() {
-            if (end_of_input)
-                return;
-
-            end_of_input = true;
-            end_of_json = true;
-
-            if (reader_is_owned)
-                using (reader) {
-                }
-
-            reader = null;
-        }
-
-        public bool Read() {
-            if (end_of_input)
-                return false;
-
-            if (end_of_json) {
-                end_of_json = false;
-                automaton_stack.Clear();
-                automaton_stack.Push((int) ParserToken.End);
-                automaton_stack.Push((int) ParserToken.Text);
-            }
-
-            parser_in_string = false;
-            parser_return = false;
-
-            token = JsonToken.None;
-            token_value = null;
-
-            if (!read_started) {
-                read_started = true;
-
-                if (!ReadToken())
-                    return false;
-            }
-
-
-            int[] entry_symbols;
-
-            while (true) {
-                if (parser_return) {
-                    if (automaton_stack.Peek() == (int) ParserToken.End)
-                        end_of_json = true;
-
-                    return true;
-                }
-
-                current_symbol = automaton_stack.Pop();
-
-                ProcessSymbol();
-
-                if (current_symbol == current_input) {
-                    if (!ReadToken()) {
-                        if (automaton_stack.Peek() != (int) ParserToken.End)
-                            throw new JsonException(
-                                "Input doesn't evaluate to proper JSON text");
-
-                        if (parser_return)
-                            return true;
-
-                        return false;
-                    }
-
-                    continue;
-                }
-
-                try {
-                    entry_symbols =
-                        parse_table[current_symbol][current_input];
-                }
-                catch (KeyNotFoundException e) {
-                    throw new JsonException((ParserToken) current_input, e);
-                }
-
-                if (entry_symbols[0] == (int) ParserToken.Epsilon)
-                    continue;
-
-                for (var i = entry_symbols.Length - 1; i >= 0; i--)
-                    automaton_stack.Push(entry_symbols[i]);
-            }
-        }
     }
 }
