@@ -14,9 +14,10 @@ namespace vFrame.Core.FileSystems.Standard
         private void ReadFileStream(object state) {
             var stream  = (Stream) state;
             using (stream) {
-                var memoryStream = new MemoryStream();
+                var memoryStream = VirtualFileStreamPool.Instance().GetStream();
                 stream.CopyTo(memoryStream);
                 Stream = new StandardVirtualFileStream(memoryStream);
+                Stream.SetLength(stream.Length);
             }
 
             lock (_lockObject) {

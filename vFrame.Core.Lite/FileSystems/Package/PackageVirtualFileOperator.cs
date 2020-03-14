@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
-using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.FileSystems.Standard;
