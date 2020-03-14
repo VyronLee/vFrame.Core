@@ -13,8 +13,14 @@ namespace vFrame.Core.FileSystems
 
         void SetLength(long value);
 
+        long Length { get; }
+
         int Read(byte[] buffer, int offset, int count);
 
         void Write(byte[] buffer, int offset, int count);
+
+        string ReadAllText();
+
+        byte[] ReadAllBytes();
     }
 }

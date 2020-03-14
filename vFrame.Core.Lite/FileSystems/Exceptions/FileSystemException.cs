@@ -13,6 +13,10 @@ namespace vFrame.Core.FileSystems.Exceptions
 
     public class PathNotRelativeException : FileSystemException
     {
+        public PathNotRelativeException(VFSPath source, VFSPath target)
+            : base($"source: {source}, target: {target}") {
+
+        }
     }
 
     public class FileAlreadyExistException : FileSystemException

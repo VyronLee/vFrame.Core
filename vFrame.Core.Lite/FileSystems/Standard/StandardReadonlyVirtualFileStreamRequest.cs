@@ -6,7 +6,6 @@ namespace vFrame.Core.FileSystems.Standard
     internal class StandardReadonlyVirtualFileStreamRequest : ReadonlyVirtualFileStreamRequest
     {
         private bool _finished;
-        private readonly object _lockObject = new object();
 
         public StandardReadonlyVirtualFileStreamRequest(Stream stream) {
             ThreadPool.QueueUserWorkItem(ReadFileStream, stream);
@@ -22,6 +21,11 @@ namespace vFrame.Core.FileSystems.Standard
 
             lock (_lockObject) {
                 _finished = true;
+
+                if (!_disposed)
+                    return;
+                Stream.Dispose();
+                Stream = null;
             }
         }
 

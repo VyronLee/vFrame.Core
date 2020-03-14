@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Utils;
@@ -60,7 +59,7 @@ namespace vFrame.Core.FileSystems
             if (_value.Contains(target.GetValue())) {
                 return _value.Substring(target._value.Length);
             }
-            throw new PathNotRelativeException();
+            throw new PathNotRelativeException(this, target);
         }
 
         public bool IsAbsolute() {

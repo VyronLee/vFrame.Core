@@ -31,11 +31,18 @@ public static class BetterStreamingAssets
         #pragma warning restore CS0649
     }
 
+    private static bool _initialized = false;
+
     public static string Root {
         get { return BetterStreamingAssetsImp.s_root; }
     }
 
     public static void Initialize() {
+        if (_initialized) {
+            return;
+        }
+        _initialized = true;
+
         BetterStreamingAssetsImp.Initialize(Application.dataPath, Application.streamingAssetsPath);
     }
 

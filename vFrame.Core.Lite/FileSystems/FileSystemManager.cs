@@ -8,13 +8,13 @@ using vFrame.Core.FileSystems.Standard;
 
 namespace vFrame.Core.FileSystems
 {
-    public class FileSystemManager : BaseObject<FileStreamFactory>
+    public class FileSystemManager<T> : BaseObject<T> , IFileSystemManager where T: FileStreamFactory
     {
         private FileStreamFactory _factory;
         private List<IVirtualFileSystem> _fileSystems;
 
-        protected override void OnCreate(FileStreamFactory factory) {
-            _factory = factory ?? new FileStreamFactory_Default();
+        protected override void OnCreate(T factory) {
+            _factory = factory;
             _fileSystems = new List<IVirtualFileSystem>();
         }
 
@@ -54,6 +54,32 @@ namespace vFrame.Core.FileSystems
                 if (fileSystem.Exist(path))
                     return fileSystem.GetStream(path, mode);
             return null;
+        }
+
+        public IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(string path) {
+            foreach (var fileSystem in _fileSystems)
+                if (fileSystem.Exist(path))
+                    return fileSystem.GetReadonlyStreamAsync(path);
+            return null;
+        }
+
+        public string ReadAllText(string path) {
+            using (var stream = GetStream(path)) {
+                return null == stream ? string.Empty : stream.ReadAllText();
+            }
+        }
+
+        public byte[] ReadAllBytes(string path) {
+            using (var stream = GetStream(path)) {
+                return stream?.ReadAllBytes();
+            }
+        }
+    }
+
+    public class FileSystemManager : FileSystemManager<FileStreamFactory_Default>
+    {
+        protected override void OnCreate() {
+            base.OnCreate(new FileStreamFactory_Default());
         }
     }
 }

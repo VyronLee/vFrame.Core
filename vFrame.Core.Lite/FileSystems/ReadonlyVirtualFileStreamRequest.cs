@@ -1,7 +1,10 @@
 ﻿namespace vFrame.Core.FileSystems
 {
-    internal abstract class ReadonlyVirtualFileStreamRequest : IReadonlyVirtualFileStreamRequest
+    public abstract class ReadonlyVirtualFileStreamRequest : IReadonlyVirtualFileStreamRequest
     {
+        protected bool _disposed;
+        protected readonly object _lockObject = new object();
+
         public abstract bool MoveNext();
 
         public void Reset() {
@@ -13,5 +16,14 @@
         public float Progress { get; }
 
         public IVirtualFileStream Stream { get; protected set; }
+
+        public void Dispose() {
+            lock (_lockObject) {
+                Stream?.Dispose();
+                Stream = null;
+
+                _disposed = true;
+            }
+        }
     }
 }

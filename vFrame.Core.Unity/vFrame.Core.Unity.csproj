@@ -115,6 +115,9 @@
     <Compile Include="FileReader\FileReaderRequest.cs" />
     <Compile Include="FileReader\IFileReader.cs" />
     <Compile Include="FileReader\IFileReaderAsync.cs" />
+    <Compile Include="FileSystems\Unity\Adapters\UnityFileStreamAdapter.cs" />
+    <Compile Include="FileSystems\Unity\Adapters\UnityFileStreamFactory.cs" />
+    <Compile Include="FileSystems\Unity\FileSystemManager.cs" />
     <Compile Include="Loggers\LogLevelExtension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Singletons\MonoSingleton.cs" />

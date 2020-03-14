@@ -139,6 +139,7 @@
     <Compile Include="FileSystems\Adapters\FileStreamAdapter.cs" />
     <Compile Include="FileSystems\Constants\PackageConstants.cs" />
     <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
+    <Compile Include="FileSystems\IFileSystemManager.cs" />
     <Compile Include="FileSystems\IReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\Package\PackageReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileOperator.cs" />

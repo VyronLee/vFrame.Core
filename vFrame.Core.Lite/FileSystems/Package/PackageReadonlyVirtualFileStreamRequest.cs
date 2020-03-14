@@ -14,8 +14,6 @@ namespace vFrame.Core.FileSystems.Package
 
         private bool _finished;
 
-        private readonly object _lockObject = new object();
-
         public PackageReadonlyVirtualFileStreamRequest(Stream vpkStream, PackageBlockInfo blockInfo) {
             var context = new PackageStreamContext {
                 Stream = vpkStream,
@@ -36,6 +34,12 @@ namespace vFrame.Core.FileSystems.Package
 
             lock (_lockObject) {
                 _finished = true;
+
+                if (!_disposed)
+                    return;
+
+                Stream.Dispose();
+                Stream = null;
             }
         }
 

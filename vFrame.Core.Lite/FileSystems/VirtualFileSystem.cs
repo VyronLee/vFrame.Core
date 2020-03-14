@@ -4,7 +4,7 @@ using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems
 {
-    internal abstract class VirtualFileSystem : IVirtualFileSystem
+    public abstract class VirtualFileSystem : IVirtualFileSystem
     {
         protected FileStreamFactory FileStreamFactory { get; set; }
 
