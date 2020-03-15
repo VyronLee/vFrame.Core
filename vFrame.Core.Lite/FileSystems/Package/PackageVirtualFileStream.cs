@@ -11,6 +11,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
 using vFrame.Core.FileSystems.Constants;
@@ -112,11 +113,15 @@ namespace vFrame.Core.FileSystems.Package
 
             _memoryStream = VirtualFileStreamPool.Instance().GetStream();
 
-            inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
             using (var tempStream = VirtualFileStreamPool.Instance().GetStream()) {
                 // 先解压
                 if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
-                    inputStream.CopyTo(tempStream, (int)_blockInfo.CompressedSize);
+                    inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
+                    using (var reader = new BinaryReader(inputStream, Encoding.UTF8, true)) {
+                        using (var writer = new BinaryWriter(tempStream, Encoding.UTF8, true)) {
+                            writer.Write(reader.ReadBytes((int)_blockInfo.CompressedSize));
+                        }
+                    }
 
                     using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
                         var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
@@ -133,7 +138,12 @@ namespace vFrame.Core.FileSystems.Package
                     }
                 }
                 else {
-                    inputStream.CopyTo(tempStream, (int)_blockInfo.OriginalSize);
+                    inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
+                    using (var reader = new BinaryReader(inputStream, Encoding.UTF8, true)) {
+                        using (var writer = new BinaryWriter(tempStream, Encoding.UTF8, true)) {
+                            writer.Write(reader.ReadBytes((int)_blockInfo.OriginalSize));
+                        }
+                    }
                 }
 
                 // 再解密
@@ -157,9 +167,9 @@ namespace vFrame.Core.FileSystems.Package
                 }
             }
 
-            //if (_memoryStream.Length != _blockInfo.OriginalSize) {
-            //    throw new PackageStreamDataLengthNotMatchException(_memoryStream.Length, _blockInfo.OriginalSize);
-            //}
+            if (_memoryStream.Length != _blockInfo.OriginalSize) {
+                throw new PackageStreamDataLengthNotMatchException(_memoryStream.Length, _blockInfo.OriginalSize);
+            }
             _memoryStream.Seek(0, SeekOrigin.Begin);
             _memoryStream.SetLength(_blockInfo.OriginalSize);
 

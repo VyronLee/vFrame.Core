@@ -16,6 +16,7 @@ using System.Text;
 using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -86,6 +87,7 @@ namespace vFrame.Core.FileSystems.Package
             var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
+                //Logger.Info("Read stream: {0}, size: {1:n0}", fileName, block.OriginalSize);
                 var stream = new PackageVirtualFileStream(vpkStream, block, access);
                 if (!stream.Open())
                     throw new PackageStreamOpenFailedException();
@@ -104,6 +106,7 @@ namespace vFrame.Core.FileSystems.Package
             var block = _blockInfos[idx];
             var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            //Logger.Info("Read stream async: {0}, size: {1:n0}", fileName, block.OriginalSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
         }
 
@@ -159,7 +162,7 @@ namespace vFrame.Core.FileSystems.Package
             var maxOffset = _header.FileListOffset + _header.FileListSize;
             vpkStream.Seek(_header.FileListOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
-                while (maxOffset > vpkStream.Position) {
+                while (vpkStream.Position < maxOffset) {
                     var name = reader.ReadString();
                     ret.Add(name, idx++);
                 }
