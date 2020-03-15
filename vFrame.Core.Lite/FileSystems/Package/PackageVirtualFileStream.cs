@@ -16,6 +16,7 @@ using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
+using vFrame.Core.Profiles;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -51,7 +52,11 @@ namespace vFrame.Core.FileSystems.Package
 
         public bool Open() {
             Debug.Assert(null != _vpkStream);
-            return InternalOpen(_vpkStream);
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("PackageVirtualFileStream:InternalOpen", id);
+            var ret = InternalOpen(_vpkStream);
+            PerfProfile.Unpin(id);
+            return ret;
         }
 
         public override void Close() {
@@ -123,6 +128,9 @@ namespace vFrame.Core.FileSystems.Package
                         }
                     }
 
+                    PerfProfile.Start(out var id);
+                    PerfProfile.Pin(
+                        $"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
                     using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
                         var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
                         var compressService = CompressService.CreateCompressService((CompressType) compressType);
@@ -136,6 +144,7 @@ namespace vFrame.Core.FileSystems.Package
                         decompressedStream.Seek(0, SeekOrigin.Begin);
                         decompressedStream.CopyTo(tempStream);
                     }
+                    PerfProfile.Unpin(id);
                 }
                 else {
                     inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
@@ -148,6 +157,9 @@ namespace vFrame.Core.FileSystems.Package
 
                 // 再解密
                 if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
+                    PerfProfile.Start(out var id);
+                    PerfProfile.Pin(
+                        $"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
                     using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
                         var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
                         var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
@@ -160,6 +172,7 @@ namespace vFrame.Core.FileSystems.Package
                         decryptedStream.Seek(0, SeekOrigin.Begin);
                         decryptedStream.CopyTo(_memoryStream);
                     }
+                    PerfProfile.Unpin(id);
                 }
                 else {
                     tempStream.Seek(0, SeekOrigin.Begin);

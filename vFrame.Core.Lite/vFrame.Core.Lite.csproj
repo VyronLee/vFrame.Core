@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\Build\Debug\Runtime</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -186,6 +186,7 @@
     <Compile Include="ObjectPools\IPoolObjectResetable.cs" />
     <Compile Include="ObjectPools\ObjectPool.cs" />
     <Compile Include="ObjectPools\ObjectPoolManager.cs" />
+    <Compile Include="Profiles\PerfProfile.cs" />
     <Compile Include="Properties\AssemblyInfo.Lite.cs" />
     <Compile Include="Singletons\Singleton.cs" />
     <Compile Include="ThreadPools\ThreadPool.cs" />
