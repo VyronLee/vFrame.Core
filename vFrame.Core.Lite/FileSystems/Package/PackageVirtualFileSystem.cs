@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using vFrame.Core.Compress;
+using vFrame.Core.Crypto;
 using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
@@ -163,8 +165,28 @@ namespace vFrame.Core.FileSystems.Package
             vpkStream.Seek(_header.FileListOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
                 while (vpkStream.Position < maxOffset) {
-                    var name = reader.ReadString();
-                    ret.Add(name, idx++);
+                    var len = reader.ReadInt32();
+                    var bytes = reader.ReadBytes(len);
+
+                    using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
+                        using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
+                            // 先解压
+                            using (var tempStream = new MemoryStream(bytes)) {
+                                var compressService = CompressService.CreateCompressService(CompressType.LZMA);
+                                compressService.Decompress(tempStream, decompressedStream);
+                                compressService.Destroy();
+                            }
+                            decompressedStream.Seek(0, SeekOrigin.Begin);
+                            // 再解密
+                            var key = BitConverter.GetBytes(PackageFileSystemConst.FileListEncryptKey);
+                            var cryptoService = CryptoService.CreateCryptoService(CryptoType.Xor);
+                            cryptoService.Decrypt(decompressedStream, decryptedStream, key, key.Length);
+                            cryptoService.Destroy();
+
+                            var name = Encoding.UTF8.GetString(decryptedStream.ToArray());
+                            ret.Add(name, idx++);
+                        }
+                    }
                 }
             }
 

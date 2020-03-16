@@ -129,8 +129,7 @@ namespace vFrame.Core.FileSystems.Package
                     }
 
                     PerfProfile.Start(out var id);
-                    PerfProfile.Pin(
-                        $"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
+                    PerfProfile.Pin($"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
                     using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
                         var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
                         var compressService = CompressService.CreateCompressService((CompressType) compressType);
@@ -158,8 +157,7 @@ namespace vFrame.Core.FileSystems.Package
                 // 再解密
                 if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
                     PerfProfile.Start(out var id);
-                    PerfProfile.Pin(
-                        $"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
+                    PerfProfile.Pin($"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
                     using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
                         var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
                         var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;

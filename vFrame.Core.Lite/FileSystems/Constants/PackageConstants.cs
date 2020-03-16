@@ -10,6 +10,10 @@
 
         // 包文件后缀
         public const string Ext = ".vpk";
+
+        // ReSharper disable once CommentTypo
+        // 文件列表加密密钥
+        public const long FileListEncryptKey = 0x7368656e7175616e; // shenquan
     }
 
     public static class BlockFlags

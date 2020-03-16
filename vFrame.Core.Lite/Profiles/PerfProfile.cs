@@ -28,7 +28,6 @@ namespace vFrame.Core.Profiles
 
         [Conditional("PERF_PROFILE")]
         public static void Pin(string tag, int id) {
-
             var data = new ProfileData {Tag = tag};
             data.Stopwatch.Start();
 
