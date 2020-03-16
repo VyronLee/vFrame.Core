@@ -8,6 +8,7 @@ using vFrame.Core.Crypto;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.FileSystems.Standard;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -162,9 +163,15 @@ namespace vFrame.Core.FileSystems.Package
 
                     // 启用加密
                     if (encryptType != 0) {
-                        buffer = EncryptBytes(buffer, encryptType, encryptKey);
-                        blockInfo.Flags |= encryptType;
-                        blockInfo.EncryptKey = encryptKey;
+                        var temp = EncryptBytes(buffer, encryptType, encryptKey);
+                        if (temp.Length < buffer.Length) {
+                            blockInfo.Flags |= encryptType;
+                            blockInfo.EncryptKey = encryptKey;
+                        }
+                        else {
+                            Logger.Info($"Size({temp.Length:n0} bytes) greater than origin({buffer.Length:n0} bytes)"
+                                        +" after compressed, discard this operation.");
+                        }
                     }
 
                     // 启用压缩

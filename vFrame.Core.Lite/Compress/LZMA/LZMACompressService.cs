@@ -9,7 +9,7 @@ namespace vFrame.Core.Compress.LZMA
     {
         private static readonly LZMACompressOptions DefaultOptions = new LZMACompressOptions() {
             DictionarySize = LZMACompressOptions.LZMADictionarySize.Small,
-            Speed = LZMACompressOptions.LZMASpeed.Fast,
+            Speed = LZMACompressOptions.LZMASpeed.Medium,
         };
 
         private static readonly CoderPropID[] PropIDs = {
