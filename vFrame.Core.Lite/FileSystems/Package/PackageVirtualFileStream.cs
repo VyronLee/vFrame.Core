@@ -9,11 +9,13 @@
 //============================================================
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using vFrame.Core.Compress;
 using vFrame.Core.Crypto;
+using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Profiles;
@@ -116,74 +118,66 @@ namespace vFrame.Core.FileSystems.Package
         private bool InternalOpen(Stream inputStream) {
             ValidateBlockInfo(inputStream);
 
-            _memoryStream = VirtualFileStreamPool.Instance().GetStream();
+            // 1. copy data to temp buffer first
+            var dataSize = (_blockInfo.Flags & BlockFlags.BlockCompressed) > 0
+                ? _blockInfo.CompressedSize
+                : _blockInfo.OriginalSize;
 
-            using (var tempStream = VirtualFileStreamPool.Instance().GetStream()) {
-                // 先解压
-                if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
-                    inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
-                    using (var reader = new BinaryReader(inputStream, Encoding.UTF8, true)) {
-                        using (var writer = new BinaryWriter(tempStream, Encoding.UTF8, true)) {
-                            writer.Write(reader.ReadBytes((int)_blockInfo.CompressedSize));
-                        }
-                    }
+            var tempStream = VirtualFileStreamPool.Instance().GetStream("VPK:TempStream", (int) dataSize);
+            inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
+            inputStream.BufferedCopyTo(tempStream, (int)dataSize);
 
-                    PerfProfile.Start(out var id);
-                    PerfProfile.Pin($"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
-                    using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
-                        var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
-                        var compressService = CompressService.CreateCompressService((CompressType) compressType);
+            // 2. decompress
+            if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
+                PerfProfile.Start(out var id);
+                PerfProfile.Pin($"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
+                var decompressedStream = VirtualFileStreamPool.Instance()
+                    .GetStream("VPK:DecompressedStream", (int) _blockInfo.OriginalSize);
+                using (decompressedStream) {
+                    var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
+                    var compressService = CompressService.CreateCompressService((CompressType) compressType);
 
-                        tempStream.Seek(0, SeekOrigin.Begin);
-                        compressService.Decompress(tempStream, decompressedStream);
-                        compressService.Destroy();
-
-                        tempStream.SetLength(0);
-                        tempStream.Seek(0, SeekOrigin.Begin);
-                        decompressedStream.Seek(0, SeekOrigin.Begin);
-                        decompressedStream.CopyTo(tempStream);
-                    }
-                    PerfProfile.Unpin(id);
-                }
-                else {
-                    inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
-                    using (var reader = new BinaryReader(inputStream, Encoding.UTF8, true)) {
-                        using (var writer = new BinaryWriter(tempStream, Encoding.UTF8, true)) {
-                            writer.Write(reader.ReadBytes((int)_blockInfo.OriginalSize));
-                        }
-                    }
-                }
-
-                // 再解密
-                if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
-                    PerfProfile.Start(out var id);
-                    PerfProfile.Pin($"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
-                    using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
-                        var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
-                        var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
-                        var cryptoService = CryptoService.CreateCryptoService((CryptoType) cryptoType);
-
-                        tempStream.Seek(0, SeekOrigin.Begin);
-                        cryptoService.Decrypt(tempStream, decryptedStream, cryptoKey, cryptoKey.Length);
-                        cryptoService.Destroy();
-
-                        decryptedStream.Seek(0, SeekOrigin.Begin);
-                        decryptedStream.CopyTo(_memoryStream);
-                    }
-                    PerfProfile.Unpin(id);
-                }
-                else {
                     tempStream.Seek(0, SeekOrigin.Begin);
-                    tempStream.CopyTo(_memoryStream);
+                    compressService.Decompress(tempStream, decompressedStream);
+                    compressService.Destroy();
+
+                    tempStream.SetLength(0);
+                    tempStream.Seek(0, SeekOrigin.Begin);
+                    decompressedStream.Seek(0, SeekOrigin.Begin);
+                    decompressedStream.BufferedCopyTo(tempStream, (int)decompressedStream.Length);
                 }
+                PerfProfile.Unpin(id);
             }
+
+            // 3. decrypt
+            if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
+                PerfProfile.Start(out var id);
+                PerfProfile.Pin($"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
+                var decryptedStream = VirtualFileStreamPool.Instance()
+                    .GetStream("VPK:DecryptedStream", (int)_blockInfo.OriginalSize);
+                using (decryptedStream) {
+                    var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
+                    var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
+                    var cryptoService = CryptoService.CreateCryptoService((CryptoType) cryptoType);
+
+                    tempStream.Seek(0, SeekOrigin.Begin);
+                    cryptoService.Decrypt(tempStream, decryptedStream, cryptoKey, cryptoKey.Length);
+                    cryptoService.Destroy();
+
+                    tempStream.SetLength(0);
+                    tempStream.Seek(0, SeekOrigin.Begin);
+                    decryptedStream.Seek(0, SeekOrigin.Begin);
+                    decryptedStream.BufferedCopyTo(tempStream, (int)decryptedStream.Length);
+                }
+                PerfProfile.Unpin(id);
+            }
+
+            _memoryStream = tempStream;
+            _memoryStream.Seek(0, SeekOrigin.Begin);
 
             if (_memoryStream.Length != _blockInfo.OriginalSize) {
-                throw new PackageStreamDataLengthNotMatchException(_memoryStream.Length, _blockInfo.OriginalSize);
+                throw new PackageStreamDataLengthMismatchException(_memoryStream.Length, _blockInfo.OriginalSize);
             }
-            _memoryStream.Seek(0, SeekOrigin.Begin);
-            _memoryStream.SetLength(_blockInfo.OriginalSize);
-
             return _opened = true;
         }
 

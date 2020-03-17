@@ -84,9 +84,9 @@ namespace vFrame.Core.FileSystems.Exceptions
         }
     }
 
-    public class PackageStreamDataLengthNotMatchException : FileSystemException
+    public class PackageStreamDataLengthMismatchException : FileSystemException
     {
-        public PackageStreamDataLengthNotMatchException(long size, long expected)
+        public PackageStreamDataLengthMismatchException(long size, long expected)
             : base($"Got: {size}, expected: {expected}") {
         }
     }

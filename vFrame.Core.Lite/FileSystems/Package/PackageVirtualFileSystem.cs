@@ -46,6 +46,15 @@ namespace vFrame.Core.FileSystems.Package
             _closed = false;
         }
 
+        public PackageVirtualFileSystem(PackageHeader header, List<PackageBlockInfo> blockInfos, Dictionary<VFSPath, int> fileList, bool closed, bool opened, VFSPath vpkVfsPath) {
+            _header = header;
+            _blockInfos = blockInfos;
+            _fileList = fileList;
+            _closed = closed;
+            _opened = opened;
+            _vpkVfsPath = vpkVfsPath;
+        }
+
         public override void Open(VFSPath streamVfsPath) {
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
@@ -116,6 +125,10 @@ namespace vFrame.Core.FileSystems.Package
             foreach (var kv in _fileList)
                 refs.Add(kv.Key);
             return refs;
+        }
+
+        public override string ToString() {
+            return _vpkVfsPath.GetValue();
         }
 
         //=========================================================//

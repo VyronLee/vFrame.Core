@@ -65,5 +65,9 @@ namespace vFrame.Core.FileSystems.Standard
                 TravelDirectory(subDir, refs);
             }
         }
+
+        public override string ToString() {
+            return _workingDir.GetValue();
+        }
     }
 }

@@ -22,5 +22,9 @@ namespace vFrame.Core.FileSystems
         public MemoryStream GetStream() {
             return _streamManager.GetStream();
         }
+
+        public MemoryStream GetStream(string tag, int size) {
+            return _streamManager.GetStream(tag, size);
+        }
     }
 }
