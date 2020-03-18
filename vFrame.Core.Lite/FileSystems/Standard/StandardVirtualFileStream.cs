@@ -8,6 +8,7 @@ namespace vFrame.Core.FileSystems.Standard
 
         public StandardVirtualFileStream(Stream stream) {
             _fileStream = stream;
+            _fileStream.Seek(0, SeekOrigin.Begin);
         }
 
         public override void Close() {

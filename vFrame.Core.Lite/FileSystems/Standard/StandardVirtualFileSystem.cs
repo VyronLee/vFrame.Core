@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using vFrame.Core.FileSystems.Adapters;
+using vFrame.Core.FileSystems.Constants;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Standard
 {
@@ -37,6 +39,7 @@ namespace vFrame.Core.FileSystems.Standard
         ) {
             var absolutePath = _workingDir + fileName;
             var fileStream = FileStreamFactory.Create(absolutePath.GetValue(), mode, access, share);
+            //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
             return new StandardVirtualFileStream(fileStream);
         }
 
@@ -45,6 +48,7 @@ namespace vFrame.Core.FileSystems.Standard
                 throw new FileNotFoundException("File not found: " + fileName.GetValue());
             var absolutePath = _workingDir + fileName;
             var fileStream = FileStreamFactory.Create(absolutePath.GetValue());
+            //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }
 

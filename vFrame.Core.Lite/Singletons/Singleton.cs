@@ -42,7 +42,8 @@ namespace vFrame.Core.Singletons
         public static T Instance() {
             if (null == _instance)
                 lock (_lockObject) {
-                    if (null == _instance) _instance = NewInstance();
+                    if (null == _instance)
+                        _instance = NewInstance();
                 }
 
             return _instance;
@@ -51,10 +52,10 @@ namespace vFrame.Core.Singletons
         /// <summary>
         ///     新建单例
         /// </summary>
-        public static T NewInstance() {
-            _instance = new T();
-            _instance.Create();
-            return _instance;
+        private static T NewInstance() {
+            var instance = new T();
+            instance.Create();
+            return instance;
         }
     }
 }

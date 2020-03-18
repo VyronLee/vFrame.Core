@@ -9,8 +9,12 @@ namespace vFrame.Core.FileSystems
     {
         private RecyclableMemoryStreamManager _streamManager;
 
+        private static readonly object _lockObject = new object();
+
         protected override void OnCreate() {
-            _streamManager = new RecyclableMemoryStreamManager();
+            lock (_lockObject) {
+                _streamManager = new RecyclableMemoryStreamManager();
+            }
 
             //_streamManager.UsageReport += (bytes, freeBytes, useBytes, poolFreeBytes) => {
             //    //long smallPoolInUseBytes, long smallPoolFreeBytes, long largePoolInUseBytes, long largePoolFreeBytes);
@@ -20,11 +24,15 @@ namespace vFrame.Core.FileSystems
         }
 
         public MemoryStream GetStream() {
-            return _streamManager.GetStream();
+            lock (_lockObject) {
+                return _streamManager.GetStream();
+            }
         }
 
         public MemoryStream GetStream(string tag, int size) {
-            return _streamManager.GetStream(tag, size);
+            lock (_lockObject) {
+                return _streamManager.GetStream(tag, size);
+            }
         }
     }
 }

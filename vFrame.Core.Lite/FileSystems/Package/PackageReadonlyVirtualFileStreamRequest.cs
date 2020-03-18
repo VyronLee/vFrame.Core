@@ -1,6 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
+using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -23,23 +26,28 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         private void OpenPackageStreamAsync(object state) {
-            var context = (PackageStreamContext) state;
-            var vpkStream = context.Stream;
-            using (vpkStream) {
-                var stream = new PackageVirtualFileStream(vpkStream, context.BlockInfo, FileAccess.Read);
-                if (!stream.Open())
-                    throw new PackageStreamOpenFailedException();
-                Stream = stream;
+            try {
+                var context = (PackageStreamContext) state;
+                var vpkStream = context.Stream;
+                using (vpkStream) {
+                    var stream = new PackageVirtualFileStream(vpkStream, context.BlockInfo, FileAccess.Read);
+                    if (!stream.Open())
+                        throw new PackageStreamOpenFailedException();
+                    Stream = stream;
+                }
+
+                lock (_lockObject) {
+                    _finished = true;
+
+                    if (!_disposed)
+                        return;
+
+                    Stream.Dispose();
+                    Stream = null;
+                }
             }
-
-            lock (_lockObject) {
-                _finished = true;
-
-                if (!_disposed)
-                    return;
-
-                Stream.Dispose();
-                Stream = null;
+            catch (Exception e) {
+                Logger.Error(PackageFileSystemConst.LogTag, "Error occurred while reading package: {0}", e);
             }
         }
 
