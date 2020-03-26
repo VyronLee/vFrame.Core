@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using SevenZip;
-using SevenZip.Compression.LZMA;
+using vFrame.Core.ThirdParty.SevenZip;
+using vFrame.Core.ThirdParty.SevenZip.Compression.LZMA;
 
 namespace vFrame.Core.Compress.LZMA
 {

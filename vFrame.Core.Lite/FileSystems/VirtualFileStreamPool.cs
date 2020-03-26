@@ -1,7 +1,7 @@
 ﻿using System.IO;
-using Microsoft.IO;
 using vFrame.Core.Loggers;
 using vFrame.Core.Singletons;
+using vFrame.Core.ThirdParty.RecyclableMemoryStream;
 
 namespace vFrame.Core.FileSystems
 {

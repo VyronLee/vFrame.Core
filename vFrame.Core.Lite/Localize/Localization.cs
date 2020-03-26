@@ -10,9 +10,9 @@
 
 using System;
 using System.Collections.Generic;
-using LitJson;
 using vFrame.Core.Base;
 using vFrame.Core.Loggers;
+using vFrame.Core.ThirdParty.LitJson;
 
 namespace vFrame.Core.Localize
 {
