@@ -57,6 +57,18 @@ namespace vFrame.Core.Coroutine
             _holder.transform.SetParent(PoolParent.transform);
         }
 
+        public void Destroy() {
+            foreach (var task in TasksRunning) {
+                var runner = CoroutineList[task.RunnerId];
+                runner.CoStop();
+                Object.Destroy(runner.gameObject);
+            }
+            TasksRunning.Clear();
+            TasksWaiting.Clear();
+
+            Object.Destroy(_holder);
+        }
+
         public int StartCoroutine(IEnumerator task) {
             var handle = GenerateTaskHandle();
 
