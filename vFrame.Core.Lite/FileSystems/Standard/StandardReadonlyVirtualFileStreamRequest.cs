@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.Loggers;
@@ -12,7 +11,7 @@ namespace vFrame.Core.FileSystems.Standard
         private bool _finished;
 
         public StandardReadonlyVirtualFileStreamRequest(Stream stream) {
-            ThreadPool.QueueUserWorkItem(ReadFileStream, stream);
+            VirtualFileSystemThreadPool.Instance().AddTask(ReadFileStream, stream);
         }
 
         private void ReadFileStream(object state) {

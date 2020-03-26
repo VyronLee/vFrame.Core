@@ -98,7 +98,8 @@ namespace vFrame.Core.FileSystems.Package
             var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
-                Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes", fileName, block.OriginalSize);
+                //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
+                //    fileName, block.OriginalSize, block.CompressedSize);
                 var stream = new PackageVirtualFileStream(vpkStream, block, access);
                 if (!stream.Open())
                     throw new PackageStreamOpenFailedException();
@@ -117,7 +118,8 @@ namespace vFrame.Core.FileSystems.Package
             var block = _blockInfos[idx];
             var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-            Logger.Info(PackageFileSystemConst.LogTag,"Read stream async: {0}, size: {1:n0} bytes", fileName, block.OriginalSize);
+            //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
+            //    fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
         }
 

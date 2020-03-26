@@ -4,6 +4,7 @@ using System.Threading;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Loggers;
+using vFrame.Core.Profiles;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -22,11 +23,14 @@ namespace vFrame.Core.FileSystems.Package
                 Stream = vpkStream,
                 BlockInfo = blockInfo,
             };
-            ThreadPool.QueueUserWorkItem(OpenPackageStreamAsync, context);
+            VirtualFileSystemThreadPool.Instance().AddTask(OpenPackageStreamAsync, context);
         }
 
         private void OpenPackageStreamAsync(object state) {
             try {
+                PerfProfile.Start(out var id);
+                PerfProfile.Pin("PackageReadonlyVirtualFileStreamRequest:OpenPackageStreamAsync", id);
+
                 var context = (PackageStreamContext) state;
                 var vpkStream = context.Stream;
                 using (vpkStream) {
@@ -35,6 +39,8 @@ namespace vFrame.Core.FileSystems.Package
                         throw new PackageStreamOpenFailedException();
                     Stream = stream;
                 }
+
+                PerfProfile.Unpin(id);
 
                 lock (_lockObject) {
                     _finished = true;
