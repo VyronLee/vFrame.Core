@@ -120,30 +120,29 @@ namespace vFrame.Core.FileSystems.Package
         //                      Private                         //
         //======================================================//
 
-        private static List<byte[]> GetFileListBytes(ICollection<VFSPath> files,
+        private static byte[] GetFileListBytes(ICollection<VFSPath> files,
             Action<ProcessState, float, float> onProgress) {
-            var ret = new List<byte[]>();
             var total = files.Count;
-            var idx = 0f;
-            foreach (var path in files) {
-                using (var stream = new MemoryStream()) {
-                    var buffer= path.GetValue().ToUtf8ByteArray();
-                    // 启用加密
-                    buffer = EncryptBytes(buffer, BlockFlags.BlockEncryptXor,
-                        PackageFileSystemConst.FileListEncryptKey);
-                    // 启用压缩
-                    buffer = CompressBytes(buffer, BlockFlags.BlockCompressZlib);
-
-                    using (var writer = new BinaryWriter(stream)) {
+            using (var stream = new MemoryStream()) {
+                using (var writer = new BinaryWriter(stream)) {
+                    var idx = 0f;
+                    foreach (var path in files) {
+                        var buffer = path.GetValue().ToUtf8ByteArray();
                         writer.Write(buffer.Length);
                         writer.Write(buffer);
-                    }
-                    ret.Add(stream.ToArray());
-                }
-                onProgress?.Invoke(ProcessState.ScanningFileList, idx++, total);
-            }
 
-            return ret;
+                        onProgress?.Invoke(ProcessState.ScanningFileList, idx++, total);
+                    }
+
+                    // 启用加密
+                    var encryptBytes = EncryptBytes(stream.ToArray(), BlockFlags.BlockEncryptXor,
+                        PackageFileSystemConst.FileListEncryptKey);
+
+                    // 启用压缩
+                    var compressBytes = CompressBytes(encryptBytes, BlockFlags.BlockCompressZlib);
+                    return compressBytes;
+                }
+            }
         }
 
         private static List<PackageBlockInfo> GetBlockInfo(
@@ -187,7 +186,7 @@ namespace vFrame.Core.FileSystems.Package
                         }
                         else {
                             Logger.Info($"Size({temp.Length:n0} bytes) greater than origin({buffer.Length:n0} bytes)"
-                                        +" after compressed, discard this operation.");
+                                        + " after compressed, discard this operation.");
                         }
                     }
 
@@ -225,14 +224,15 @@ namespace vFrame.Core.FileSystems.Package
 
         private static PackageHeader WriteHeader(Stream stream,
             IList<VFSPath> files,
-            List<byte[]> fileListBytes,
+            byte[] fileListBytes,
             List<byte[]> blocksDataByte,
-            Action<ProcessState, float, float> onProgress) {
+            Action<ProcessState, float, float> onProgress
+        ) {
             var header = new PackageHeader();
             header.Id = PackageFileSystemConst.Id;
             header.Version = PackageFileSystemConst.Version;
             header.FileListOffset = PackageHeader.GetMarshalSize();
-            header.FileListSize = fileListBytes.Sum(bytes => bytes.Length);
+            header.FileListSize = fileListBytes.Length;
             header.BlockTableOffset = header.FileListOffset + header.FileListSize;
             header.BlockTableSize = PackageBlockInfo.GetMarshalSize() * files.Count;
             header.BlockOffset = header.BlockTableOffset + header.BlockTableSize;
@@ -260,17 +260,13 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         private static void WriteFileList(FileStream outputStream,
-            List<byte[]> fileListBytes,
+            byte[] fileListBytes,
             Action<ProcessState, float, float> onProgress
         ) {
             using (var writer = new BinaryWriter(outputStream, Encoding.UTF8, true)) {
-                var total = fileListBytes.Count;
-                var idx = 0f;
-
-                foreach (var fileListByte in fileListBytes) {
-                    writer.Write(fileListByte);
-                    onProgress?.Invoke(ProcessState.WritingFileList, idx++, total);
-                }
+                onProgress?.Invoke(ProcessState.WritingFileList, 0, 1);
+                writer.Write(fileListBytes);
+                onProgress?.Invoke(ProcessState.WritingFileList, 1, 1);
             }
         }
 

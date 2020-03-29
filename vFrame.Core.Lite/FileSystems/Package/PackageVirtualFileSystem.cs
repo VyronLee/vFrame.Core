@@ -19,6 +19,7 @@ using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Loggers;
+using vFrame.Core.Profiles;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -34,7 +35,6 @@ namespace vFrame.Core.FileSystems.Package
         private VFSPath _vpkVfsPath;
 
         public PackageVirtualFileSystem() : this(new FileStreamFactory_Default()) {
-
         }
 
         public PackageVirtualFileSystem(FileStreamFactory factory) {
@@ -46,7 +46,8 @@ namespace vFrame.Core.FileSystems.Package
             _closed = false;
         }
 
-        public PackageVirtualFileSystem(PackageHeader header, List<PackageBlockInfo> blockInfos, Dictionary<VFSPath, int> fileList, bool closed, bool opened, VFSPath vpkVfsPath) {
+        public PackageVirtualFileSystem(PackageHeader header, List<PackageBlockInfo> blockInfos,
+            Dictionary<VFSPath, int> fileList, bool closed, bool opened, VFSPath vpkVfsPath) {
             _header = header;
             _blockInfos = blockInfos;
             _fileList = fileList;
@@ -140,9 +141,23 @@ namespace vFrame.Core.FileSystems.Package
         private void InternalOpen(Stream vpkStream) {
             Debug.Assert(null != vpkStream);
 
-            if (!ReadHeader(vpkStream)) throw new PackageFileSystemHeaderDataError();
-            if (!ReadFileList(vpkStream)) throw new PackageFileSystemFileListDataError();
-            if (!ReadBlockTable(vpkStream)) throw new PackageFileSystemBlockTableDataError();
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("PackageVirtualFileSystem:ReadHeader", id);
+            if (!ReadHeader(vpkStream))
+                throw new PackageFileSystemHeaderDataError();
+            PerfProfile.Unpin(id);
+
+            PerfProfile.Start(out id);
+            PerfProfile.Pin("PackageVirtualFileSystem:ReadFileList", id);
+            if (!ReadFileList(vpkStream))
+                throw new PackageFileSystemFileListDataError();
+            PerfProfile.Unpin(id);
+
+            PerfProfile.Start(out id);
+            PerfProfile.Pin("PackageVirtualFileSystem:ReadBlockTable", id);
+            if (!ReadBlockTable(vpkStream))
+                throw new PackageFileSystemBlockTableDataError();
+            PerfProfile.Unpin(id);
 
             _opened = true;
         }
@@ -176,37 +191,42 @@ namespace vFrame.Core.FileSystems.Package
             var idx = 0;
             var ret = new Dictionary<VFSPath, int>();
 
-            var maxOffset = _header.FileListOffset + _header.FileListSize;
             vpkStream.Seek(_header.FileListOffset, SeekOrigin.Begin);
             using (var reader = new BinaryReader(vpkStream, Encoding.UTF8, true)) {
-                while (vpkStream.Position < maxOffset) {
-                    var len = reader.ReadInt32();
-                    var bytes = reader.ReadBytes(len);
+                var fileListBytes = reader.ReadBytes((int) _header.FileListSize);
+                using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
+                    using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
+                        // 先解压
+                        using (var tempStream = new MemoryStream(fileListBytes)) {
+                            var compressService = CompressService.CreateCompressService(CompressType.LZMA);
+                            compressService.Decompress(tempStream, decompressedStream);
+                            compressService.Destroy();
+                        }
 
-                    using (var decompressedStream = VirtualFileStreamPool.Instance().GetStream()) {
-                        using (var decryptedStream = VirtualFileStreamPool.Instance().GetStream()) {
-                            // 先解压
-                            using (var tempStream = new MemoryStream(bytes)) {
-                                var compressService = CompressService.CreateCompressService(CompressType.LZMA);
-                                compressService.Decompress(tempStream, decompressedStream);
-                                compressService.Destroy();
+                        decompressedStream.Seek(0, SeekOrigin.Begin);
+
+                        // 再解密
+                        var key = BitConverter.GetBytes(PackageFileSystemConst.FileListEncryptKey);
+                        var cryptoService = CryptoService.CreateCryptoService(CryptoType.Xor);
+                        cryptoService.Decrypt(decompressedStream, decryptedStream, key, key.Length);
+                        cryptoService.Destroy();
+
+                        decryptedStream.Seek(0, SeekOrigin.Begin);
+                        using (var decryptedReader = new BinaryReader(decryptedStream)) {
+                            while (decryptedStream.Position < decryptedStream.Length) {
+                                var len = decryptedReader.ReadInt32();
+                                var bytes = decryptedReader.ReadBytes(len);
+                                if (bytes.Length != len) {
+                                    throw new PackageStreamDataErrorException(bytes.Length, len);
+                                }
+
+                                var name = Encoding.UTF8.GetString(bytes);
+                                ret.Add(name, idx++);
                             }
-                            decompressedStream.Seek(0, SeekOrigin.Begin);
-                            // 再解密
-                            var key = BitConverter.GetBytes(PackageFileSystemConst.FileListEncryptKey);
-                            var cryptoService = CryptoService.CreateCryptoService(CryptoType.Xor);
-                            cryptoService.Decrypt(decompressedStream, decryptedStream, key, key.Length);
-                            cryptoService.Destroy();
-
-                            var name = Encoding.UTF8.GetString(decryptedStream.ToArray());
-                            ret.Add(name, idx++);
                         }
                     }
                 }
             }
-
-            if (vpkStream.Position != maxOffset)
-                return false;
 
             _fileList = ret;
             return true;
