@@ -5,6 +5,7 @@ using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Package;
 using vFrame.Core.FileSystems.Standard;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems
 {
@@ -51,15 +52,21 @@ namespace vFrame.Core.FileSystems
 
         public IVirtualFileStream GetStream(string path, FileMode mode = FileMode.Open) {
             foreach (var fileSystem in _fileSystems)
-                if (fileSystem.Exist(path))
+                if (fileSystem.Exist(path)) {
+                    //Logger.Info(FileSystemConst.LogTag, "Get stream: \"{0}\" from file system: \"{1}\"",
+                    //    path, fileSystem);
                     return fileSystem.GetStream(path, mode);
+                }
             return null;
         }
 
         public IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(string path) {
             foreach (var fileSystem in _fileSystems)
-                if (fileSystem.Exist(path))
+                if (fileSystem.Exist(path)) {
+                    //Logger.Info(FileSystemConst.LogTag, "Get stream async: \"{0}\" from file system: \"{1}\"",
+                    //    path, fileSystem);
                     return fileSystem.GetReadonlyStreamAsync(path);
+                }
             return null;
         }
 

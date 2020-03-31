@@ -60,7 +60,7 @@ namespace vFrame.Core.FileSystems.Package
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
 
-            var vpkStream = FileStreamFactory.Create(streamVfsPath.GetValue(),
+            var vpkStream = FileStreamFactory.Create(streamVfsPath,
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
                 InternalOpen(vpkStream);
@@ -96,7 +96,7 @@ namespace vFrame.Core.FileSystems.Package
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
+            var vpkStream = FileStreamFactory.Create(_vpkVfsPath,
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             using (vpkStream) {
                 //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
@@ -117,7 +117,7 @@ namespace vFrame.Core.FileSystems.Package
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath.GetValue(),
+            var vpkStream = FileStreamFactory.Create(_vpkVfsPath,
                 FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
             //    fileName, block.OriginalSize, block.CompressedSize);
@@ -131,7 +131,7 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override string ToString() {
-            return _vpkVfsPath.GetValue();
+            return _vpkVfsPath;
         }
 
         //=========================================================//

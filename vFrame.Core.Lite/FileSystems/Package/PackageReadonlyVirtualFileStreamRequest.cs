@@ -53,7 +53,7 @@ namespace vFrame.Core.FileSystems.Package
                 }
             }
             catch (Exception e) {
-                Logger.Error(PackageFileSystemConst.LogTag, "Error occurred while reading package: {0}", e);
+                Logger.Error(FileSystemConst.LogTag, "Error occurred while reading package: {0}", e);
             }
         }
 

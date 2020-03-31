@@ -104,12 +104,12 @@ namespace vFrame.Core.FileSystems.Package
                         throw new FileAlreadyExistException(path);
                     }
 
-                    using (var output = new FileStream(absolute.GetValue(), FileMode.Create)) {
+                    using (var output = new FileStream(absolute, FileMode.Create)) {
                         input.CopyTo(output);
                     }
                 }
 
-                onProgress?.Invoke(path.GetValue(), idx++, total);
+                onProgress?.Invoke(path, idx++, total);
             }
 
             pkgFileSystem.Close();

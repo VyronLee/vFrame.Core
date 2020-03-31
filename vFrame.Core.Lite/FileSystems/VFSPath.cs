@@ -31,6 +31,38 @@ namespace vFrame.Core.FileSystems
             return EnsureDirectoryPath();
         }
 
+        public VFSPath SkipBase(int level = 1) {
+            var value = _value;
+            var index = -1;
+            while (level-- > 0) {
+                index = value.IndexOf('/');
+                if (index < 0) {
+                    break;
+                }
+            }
+
+            if (index >= 0) {
+                return value.Substring(index + 1);
+            }
+            return value;
+        }
+
+        public VFSPath SkipParent(int level = 1) {
+            var value = _value;
+            var index = -1;
+            while (level-- > 0) {
+                index = value.LastIndexOf('/');
+                if (index < 0) {
+                    break;
+                }
+            }
+
+            if (index >= 0) {
+                return value.Substring(0, index);
+            }
+            return value;
+        }
+
         public string GetValue() {
             return _value;
         }
@@ -56,7 +88,7 @@ namespace vFrame.Core.FileSystems
         }
 
         public VFSPath GetRelative(VFSPath target) {
-            if (_value.Contains(target.GetValue())) {
+            if (_value.Contains(target._value)) {
                 return _value.Substring(target._value.Length);
             }
             throw new PathNotRelativeException(this, target);
@@ -104,7 +136,7 @@ namespace vFrame.Core.FileSystems
             return GetPath(dir.EnsureDirectoryPath().GetValue() + fileName.GetValue());
         }
 
-        public static explicit operator string(VFSPath vfsPath) {
+        public static implicit operator string(VFSPath vfsPath) {
             return vfsPath.GetValue();
         }
 

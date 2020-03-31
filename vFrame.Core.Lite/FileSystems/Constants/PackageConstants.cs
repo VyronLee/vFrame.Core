@@ -2,6 +2,12 @@
 
 namespace vFrame.Core.FileSystems.Constants
 {
+    public static class FileSystemConst
+    {
+        // 虚拟文件系统LogTag
+        public static readonly LogTag LogTag = new LogTag("VirtualFileSystem");
+    }
+
     public static class PackageFileSystemConst
     {
         // 包文件标识
@@ -16,9 +22,6 @@ namespace vFrame.Core.FileSystems.Constants
         // ReSharper disable once CommentTypo
         // 文件列表加密密钥
         public const long FileListEncryptKey = 0x7368656e7175616e; // shenquan
-
-        // 虚拟文件系统LogTag
-        public static readonly LogTag LogTag = new LogTag("VirtualFileSystem");
     }
 
     public static class BlockFlags

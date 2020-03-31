@@ -18,7 +18,7 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override void Open(VFSPath streamVfsPath) {
-            if (!Directory.Exists(streamVfsPath.GetValue())) {
+            if (!Directory.Exists(streamVfsPath)) {
                 throw new DirectoryNotFoundException();
             }
 
@@ -29,7 +29,7 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override bool Exist(VFSPath relativeVfsPath) {
-            return File.Exists((_workingDir + relativeVfsPath).GetValue());
+            return File.Exists(_workingDir + relativeVfsPath);
         }
 
         public override IVirtualFileStream GetStream(VFSPath fileName,
@@ -38,22 +38,22 @@ namespace vFrame.Core.FileSystems.Standard
             FileShare share
         ) {
             var absolutePath = _workingDir + fileName;
-            var fileStream = FileStreamFactory.Create(absolutePath.GetValue(), mode, access, share);
+            var fileStream = FileStreamFactory.Create(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
             return new StandardVirtualFileStream(fileStream);
         }
 
         public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
             if (!Exist(fileName))
-                throw new FileNotFoundException("File not found: " + fileName.GetValue());
+                throw new FileNotFoundException("File not found: " + fileName);
             var absolutePath = _workingDir + fileName;
-            var fileStream = FileStreamFactory.Create(absolutePath.GetValue());
+            var fileStream = FileStreamFactory.Create(absolutePath);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }
 
         public override IList<VFSPath> List(IList<VFSPath> refs) {
-            var dirInfo = new DirectoryInfo(_workingDir.GetValue());
+            var dirInfo = new DirectoryInfo(_workingDir);
             TravelDirectory(dirInfo, refs);
             return refs;
         }
@@ -71,7 +71,7 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override string ToString() {
-            return _workingDir.GetValue();
+            return _workingDir;
         }
     }
 }
