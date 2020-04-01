@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
-using vFrame.Core.Extensions;
-using vFrame.Core.Loggers;
+using vFrame.Core.FileReaders;
 using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.Update
+namespace vFrame.Core.Patch
 {
-    public partial class Manifest
+    public class Manifest
     {
-        private static readonly LogTag AssetsUpdaterLogTag = new LogTag("AssetsUpdater");
-
         /// <summary>
         /// The type of difference
         /// </summary>
@@ -37,12 +34,12 @@ namespace vFrame.Core.Update
         /// <summary>
         /// The asset version
         /// </summary>
-        public int AssetsVersion { get; private set; }
+        public Version AssetsVersion { get; private set; }
 
         /// <summary>
         /// The game engine version
         /// </summary>
-        public System.Version GameVersion { get; private set; }
+        public Version GameVersion { get; private set; }
 
         /// <summary>
         /// The build number
@@ -57,7 +54,7 @@ namespace vFrame.Core.Update
         public bool Loaded { get; private set; }
 
         /// <summary>
-        /// Whether the version informations have been fully loaded
+        /// Whether the version information have been fully loaded
         /// </summary>
         public bool VersionLoaded { get; private set; }
 
@@ -197,17 +194,15 @@ namespace vFrame.Core.Update
             File.WriteAllText(path, jsonStr, Encoding.UTF8);
         }
 
-        #region private methods
-
         private void LoadJson(string url) {
             Clear();
 
             try {
-                var text = new FileReader.FileReader().ReadAllText(url);
+                var text = new FileReader().ReadAllText(url);
                 _json = JsonUtility.FromJson<ManifestJson>(text);
             }
             catch (Exception e) {
-                Logger.Error(AssetsUpdaterLogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
+                Logger.Error(PatchConst.LogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
             }
         }
 
@@ -215,10 +210,10 @@ namespace vFrame.Core.Update
         /// Load the version part
         /// </summary>
         private void LoadVersion() {
-            AssetsVersion = int.Parse(_json.assetsVersion);
+            AssetsVersion = new Version(_json.assetsVersion);
             GameVersion = string.IsNullOrEmpty(_json.gameVersion)
-                ? new System.Version("0.0.0")
-                : new System.Version(_json.gameVersion);
+                ? new Version("0.0.0")
+                : new Version(_json.gameVersion);
 
             VersionLoaded = true;
         }
@@ -239,13 +234,11 @@ namespace vFrame.Core.Update
         private void Clear() {
             _assets.Clear();
             _json = null;
-            AssetsVersion = 0;
+            AssetsVersion = null;
             GameVersion = null;
 
             Loaded = false;
             VersionLoaded = false;
         }
-
-        #endregion
     }
 }

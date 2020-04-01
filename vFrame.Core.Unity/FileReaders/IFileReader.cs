@@ -8,7 +8,7 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
-namespace vFrame.Core.FileReader
+namespace vFrame.Core.FileReaders
 {
     public interface IFileReader
     {

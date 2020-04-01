@@ -1,4 +1,4 @@
-namespace vFrame.Core.Update
+namespace vFrame.Core.Patch
 {
     internal enum UpdateState
     {

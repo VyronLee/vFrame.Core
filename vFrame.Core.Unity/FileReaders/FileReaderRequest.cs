@@ -13,7 +13,7 @@ using vFrame.Core.Crypto;
 using vFrame.Core.Loggers;
 using vFrame.Core.ThreadPools;
 
-namespace vFrame.Core.FileReader
+namespace vFrame.Core.FileReaders
 {
     public class FileReaderRequest : FileReader, IFileReaderRequest
     {

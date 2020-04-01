@@ -10,7 +10,7 @@
 
 using vFrame.Core.Crypto;
 
-namespace vFrame.Core.FileReader
+namespace vFrame.Core.FileReaders
 {
     public class FileReaderAsync : FileReader, IFileReaderAsync
     {

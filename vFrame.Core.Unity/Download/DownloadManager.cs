@@ -66,7 +66,7 @@ namespace vFrame.Core.Download
             }
         }
 
-        public string FormatedSpeed {
+        public string FormattedSpeed {
             get { return FormatSpeed(Speed); }
         }
 
@@ -84,7 +84,7 @@ namespace vFrame.Core.Download
             return 0f;
         }
 
-        public string GetFormatedDownloadSpeed(int serialId) {
+        public string GetFormattedDownloadSpeed(int serialId) {
             return FormatSpeed(GetDownloadSpeed(serialId));
         }
 

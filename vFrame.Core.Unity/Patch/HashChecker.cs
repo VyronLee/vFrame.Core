@@ -7,7 +7,7 @@ using UnityEngine;
 using vFrame.Core.Loggers;
 using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.Update
+namespace vFrame.Core.Patch
 {
     public class HashChecker : MonoBehaviour
     {
@@ -22,17 +22,17 @@ namespace vFrame.Core.Update
         private const int NUM_PER_FRAME = 5;
 
         private string _storagePath;
-        private List<Manifest.AssetInfo> _assets;
+        private List<AssetInfo> _assets;
 
         public event Action OnCheckStarted;
-        public event Action<Manifest.AssetInfo, bool> OnCheckProgress;
+        public event Action<AssetInfo, bool> OnCheckProgress;
         public event Action OnCheckFinished;
 
         public bool Valid { get; private set; }
         public int HashNum { get; private set; }
         public int HashTotal { get; private set; }
 
-        public void Check(List<Manifest.AssetInfo> assets) {
+        public void Check(List<AssetInfo> assets) {
             Valid = true;
             _assets = assets;
             HashNum = 0;
@@ -70,7 +70,7 @@ namespace vFrame.Core.Update
             }
         }
 
-        private bool HashValid(Manifest.AssetInfo asset) {
+        private bool HashValid(AssetInfo asset) {
             var fileName = _storagePath + asset.fileName;
 
             try {

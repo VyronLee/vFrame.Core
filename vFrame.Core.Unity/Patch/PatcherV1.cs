@@ -3,21 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using vFrame.Core.Download;
-using vFrame.Core.Loggers;
+using vFrame.Core.FileReaders;
+using vFrame.Core.FileSystems;
 using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.Update
+namespace vFrame.Core.Patch
 {
-    public partial class AssetsUpdater
+    public class PatcherV1
     {
-        private static readonly LogTag AssetsUpdaterLogTag = new LogTag("AssetsUpdater");
-
-        private const float UPDATE_PROGRESS_INTERVAL = 0.2f;
-
-        private const string VERSION_FILENAME = "GameVersion.json";
-        private const string TEMP_MANIFEST_FILENAME = "GameAssets.json.temp";
-        private const string MANIFEST_FILENAME = "GameAssets.json";
+        private const float UpdateProgressInterval = 0.2f;
 
         /// <summary>
         ///     The local path of cached manifest file
@@ -34,6 +29,9 @@ namespace vFrame.Core.Update
         /// </summary>
         private readonly Dictionary<string, ulong> _downloadedSize = new Dictionary<string, ulong>();
 
+        /// <summary>
+        ///     Hash checker
+        /// </summary>
         private readonly HashChecker _hashChecker;
 
         /// <summary>
@@ -59,12 +57,12 @@ namespace vFrame.Core.Update
         /// <summary>
         ///     All assets unit to download
         /// </summary>
-        private List<Manifest.AssetInfo> _downloadUnits = new List<Manifest.AssetInfo>();
+        private List<AssetInfo> _downloadUnits = new List<AssetInfo>();
 
         /// <summary>
         ///     All failed units
         /// </summary>
-        private List<Manifest.AssetInfo> _failedUnits = new List<Manifest.AssetInfo>();
+        private List<AssetInfo> _failedUnits = new List<AssetInfo>();
 
         private float _lastUpdateTime;
 
@@ -93,18 +91,24 @@ namespace vFrame.Core.Update
         /// </summary>
         private int _totalWaitToDownload;
 
+        /// <summary>
+        ///     Options
+        /// </summary>
+        private readonly PatchOptions _options;
+
         private UpdateState _updateState = UpdateState.UNCHECKED;
 
-        public AssetsUpdater(string storagePath, string hotFixUrl) {
-            _storagePath = storagePath.EndsWith("/") ? storagePath : storagePath + "/";
-            _hotFixUrl = hotFixUrl.EndsWith("/") ? hotFixUrl : hotFixUrl + "/";
+        public PatcherV1(PatchOptions options) {
+            _options = options;
+            _storagePath = VFSPath.GetPath(options.storagePath).AsDirectory();
+            _hotFixUrl = VFSPath.GetPath(options.hotfixURL).AsDirectory();
 
             if (!Directory.Exists(_storagePath))
                 Directory.CreateDirectory(_storagePath);
 
-            _cacheVersionPath = _storagePath + VERSION_FILENAME;
-            _cacheManifestPath = _storagePath + MANIFEST_FILENAME;
-            _tempManifestPath = _storagePath + TEMP_MANIFEST_FILENAME;
+            _cacheVersionPath = _storagePath + options.versionFilename;
+            _cacheManifestPath = _storagePath + options.manifestFilename;
+            _tempManifestPath = _storagePath + options.manifestFilename + ".tmp";
 
             InitManifest();
 
@@ -147,7 +151,7 @@ namespace vFrame.Core.Update
         /// </summary>
         public void CheckUpdate() {
             if (!_localManifest.Loaded) {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : No local manifest file found.");
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
                 return;
             }
@@ -174,7 +178,7 @@ namespace vFrame.Core.Update
         /// </summary>
         public void StartUpdate() {
             if (!_localManifest.Loaded) {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : No local manifest file found.");
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
                 return;
             }
@@ -207,7 +211,7 @@ namespace vFrame.Core.Update
             // Find the cached manifest file
             Manifest cachedManifest = null;
             if (File.Exists(_cacheManifestPath)) {
-                Logger.Info(AssetsUpdaterLogTag, "Cache manifest found at path: {0}, parsing..", _cacheManifestPath);
+                Logger.Info(PatchConst.LogTag, "Cache manifest found at path: {0}, parsing..", _cacheManifestPath);
 
                 cachedManifest = new Manifest();
                 cachedManifest.Parse(_cacheManifestPath);
@@ -218,17 +222,21 @@ namespace vFrame.Core.Update
             }
 
             // Load local manifest in app package
-            Logger.Info(AssetsUpdaterLogTag, "Load local manifest at streaming assets: {0}, parsing..",
-                MANIFEST_FILENAME);
+            var localManifestName = _options.manifestFilename;
+            if (!new FileReader().FileExist(localManifestName)) {
+                localManifestName = _options.versionFilename;
+            }
+            Logger.Info(PatchConst.LogTag, "Load local manifest at streaming assets: {0}, parsing..",
+                localManifestName);
 
-            _localManifest.Parse(Path.Combine(Application.streamingAssetsPath, MANIFEST_FILENAME));
-            if (_localManifest.Loaded)
+            _localManifest.Parse(Path.Combine(Application.streamingAssetsPath, localManifestName));
+            if (_localManifest.Loaded) {
                 if (cachedManifest != null) {
                     var gvc = _localManifest.GameVersionCompareTo(cachedManifest);
                     var avc = _localManifest.AssetsVersionCompareTo(cachedManifest);
 
                     if (gvc != 0 || avc > 0) {
-                        Logger.Info(AssetsUpdaterLogTag,
+                        Logger.Info(PatchConst.LogTag,
                             "Local version({0}) greater than cache version({1}), deleting storage path: {2}..",
                             _localManifest.GameVersion, cachedManifest.GameVersion, _storagePath);
 
@@ -236,28 +244,29 @@ namespace vFrame.Core.Update
                         Directory.CreateDirectory(_storagePath);
                     }
                     else {
-                        Logger.Info(AssetsUpdaterLogTag,
+                        Logger.Info(PatchConst.LogTag,
                             "Cache version({0}) greater than local version({1}), switching to cache manifest..",
                             cachedManifest.GameVersion, _localManifest.GameVersion);
 
                         _localManifest = cachedManifest;
                     }
                 }
+            }
         }
 
         private void DownloadVersion() {
-            var url = _hotFixUrl + VERSION_FILENAME;
+            var url = _hotFixUrl + _options.versionFilename;
 
-            Logger.Info(AssetsUpdaterLogTag, "Start to download version file: {0}, to path: {1}", url,
+            Logger.Info(PatchConst.LogTag, "Start to download version file: {0}, to path: {1}", url,
                 _cacheVersionPath);
 
             var task = DownloadManager.Instance.AddDownload(_cacheVersionPath, url);
             task.DownloadSuccess += args => {
-                Logger.Info(AssetsUpdaterLogTag, "Download version file succeed, parsing remote version..");
+                Logger.Info(PatchConst.LogTag, "Download version file succeed, parsing remote version..");
                 ParseVersion();
             };
             task.DownloadFailure += args => {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : Fail to download version. " + args.Error);
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Fail to download version. " + args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_VERSION);
                 _updateState = UpdateState.UNCHECKED;
             };
@@ -268,7 +277,7 @@ namespace vFrame.Core.Update
         private void ParseVersion() {
             _remoteManifest.ParseVersion(_cacheVersionPath);
             if (!_remoteManifest.VersionLoaded) {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : Error parsing version.");
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Error parsing version.");
 
                 _updateState = UpdateState.UNCHECKED;
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_PARSE_VERSION);
@@ -291,7 +300,7 @@ namespace vFrame.Core.Update
                     DispatchUpdateEvent(UpdateEvent.EventCode.NEW_GAME_VERSION_FOUND);
                 }
                 else {
-                    Logger.Info(AssetsUpdaterLogTag, "Local Game Version({0}) > Remote Game Version({1})",
+                    Logger.Info(PatchConst.LogTag, "Local Game Version({0}) > Remote Game Version({1})",
                         _localManifest.GameVersion, _remoteManifest.GameVersion);
 
                     _updateState = UpdateState.UP_TO_DATE;
@@ -301,18 +310,18 @@ namespace vFrame.Core.Update
         }
 
         private void DownloadManifest() {
-            var url = _hotFixUrl + MANIFEST_FILENAME;
+            var url = _hotFixUrl + _options.manifestFilename;
 
-            Logger.Info(AssetsUpdaterLogTag, "Start to download manifest file: {0}, to path: {1}", url,
+            Logger.Info(PatchConst.LogTag, "Start to download manifest file: {0}, to path: {1}", url,
                 _tempManifestPath);
 
             var task = DownloadManager.Instance.AddDownload(_tempManifestPath, url);
             task.DownloadSuccess += args => {
-                Logger.Info(AssetsUpdaterLogTag, "Download manifest file succeed, parsing remote manifest..");
+                Logger.Info(PatchConst.LogTag, "Download manifest file succeed, parsing remote manifest..");
                 ParseManifest();
             };
             task.DownloadFailure += args => {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : Fail to download manifest." + args.Error);
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Fail to download manifest." + args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_MANIFEST);
                 _updateState = UpdateState.NEED_UPDATE;
             };
@@ -324,7 +333,7 @@ namespace vFrame.Core.Update
             _remoteManifest.Parse(_tempManifestPath);
 
             if (!_remoteManifest.Loaded) {
-                Logger.Error(AssetsUpdaterLogTag, "AssetsUpdater : Error parsing manifest.");
+                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Error parsing manifest.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_PARSE_MANIFEST);
                 _updateState = UpdateState.NEED_UPDATE;
             }
@@ -362,10 +371,8 @@ namespace vFrame.Core.Update
                 _remoteManifest.SaveToFile(_tempManifestPath);
 
                 var msg =
-                    string.Format(
-                        "Resuming from previous update, {0} assets remains to update.",
-                        _totalToDownload);
-                Logger.Info(AssetsUpdaterLogTag, msg);
+                    string.Format("Resuming from previous update, {0} assets remains to update.", _totalToDownload);
+                Logger.Info(PatchConst.LogTag, msg);
                 DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
 
                 if (OnUpdateConfirm != null) {
@@ -397,7 +404,7 @@ namespace vFrame.Core.Update
                     foreach (var assetKV in assets) {
                         var assetName = assetKV.Key;
                         if (!diffDic.ContainsKey(assetName))
-                            _remoteManifest.SetAssetDownloadState(assetName, Manifest.DownloadState.SUCCEED);
+                            _remoteManifest.SetAssetDownloadState(assetName, DownloadState.SUCCEED);
                     }
 
                     _remoteManifest.SaveToFile(_tempManifestPath);
@@ -406,7 +413,7 @@ namespace vFrame.Core.Update
                     _totalSize = CalculateTotalSize(_downloadUnits);
 
                     var msg = string.Format("Start to update {0} assets.", _totalToDownload);
-                    Logger.Info(AssetsUpdaterLogTag, msg);
+                    Logger.Info(PatchConst.LogTag, msg);
                     DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
 
                     if (OnUpdateConfirm != null) {
@@ -419,9 +426,10 @@ namespace vFrame.Core.Update
             }
         }
 
-        private ulong CalculateTotalSize(List<Manifest.AssetInfo> assets) {
+        private ulong CalculateTotalSize(List<AssetInfo> assets) {
             ulong size = 0;
-            foreach (var asset in assets) size += asset.size;
+            foreach (var asset in assets)
+                size += asset.size;
 
             return size > 0 ? size : 1;
         }
@@ -434,12 +442,12 @@ namespace vFrame.Core.Update
             _updateState = UpdateState.UPDATING;
             _downloadUnits.Clear();
             _downloadUnits = _failedUnits;
-            _failedUnits = new List<Manifest.AssetInfo>();
+            _failedUnits = new List<AssetInfo>();
             _totalWaitToDownload = _totalToDownload = _downloadUnits.Count;
             _totalSize = CalculateTotalSize(_downloadUnits);
 
             var msg = string.Format("Start to update {0} failed assets.", _totalWaitToDownload);
-            Logger.Info(AssetsUpdaterLogTag, msg);
+            Logger.Info(PatchConst.LogTag, msg);
             DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
 
             BatchDownload();
@@ -456,7 +464,9 @@ namespace vFrame.Core.Update
                 var url = _hotFixUrl + asset.fileName;
 
                 var dir = Path.GetDirectoryName(storagePath);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) {
+                    Directory.CreateDirectory(dir);
+                }
 
                 var task = DownloadManager.Instance.AddDownload(storagePath, url, asset);
                 task.DownloadSuccess += OnDownloadSuccess;
@@ -466,7 +476,7 @@ namespace vFrame.Core.Update
         }
 
         private void OnDownloadUnitsFinished() {
-            Logger.Info(AssetsUpdaterLogTag, "Download Finish - {0} download failed.", _failedUnits.Count);
+            Logger.Info(PatchConst.LogTag, "Download Finish - {0} download failed.", _failedUnits.Count);
 
             // Release file locks.
             DownloadManager.Instance.RemoveAllDownloads();
@@ -501,9 +511,9 @@ namespace vFrame.Core.Update
         }
 
         private void OnDownloadSuccess(DownloadEventArgs args) {
-            var asset = (Manifest.AssetInfo) args.UserData;
+            var asset = (AssetInfo) args.UserData;
 
-            _remoteManifest.SetAssetDownloadState(asset.fileName, Manifest.DownloadState.DOWNLOADED);
+            _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.DOWNLOADED);
             _remoteManifest.SaveToFile(_tempManifestPath);
 
             _totalWaitToDownload--;
@@ -516,10 +526,12 @@ namespace vFrame.Core.Update
         }
 
         private void OnDownloadProgress(DownloadEventArgs args) {
-            var asset = (Manifest.AssetInfo) args.UserData;
+            var asset = (AssetInfo) args.UserData;
             RecordDownloadedSize(asset.fileName, args.DownloadedSize);
 
-            if (Time.realtimeSinceStartup - _lastUpdateTime < UPDATE_PROGRESS_INTERVAL) return;
+            if (Time.realtimeSinceStartup - _lastUpdateTime < UpdateProgressInterval) {
+                return;
+            }
 
             DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
             _lastUpdateTime = Time.realtimeSinceStartup;
@@ -533,8 +545,8 @@ namespace vFrame.Core.Update
         }
 
         private void OnDownloadError(DownloadEventArgs args) {
-            var asset = (Manifest.AssetInfo) args.UserData;
-            Logger.Error(AssetsUpdaterLogTag, asset.fileName + ": download failed!" + args.Error);
+            var asset = (AssetInfo) args.UserData;
+            Logger.Error(PatchConst.LogTag, asset.fileName + ": download failed!" + args.Error);
 
             _totalWaitToDownload--;
             _failedUnits.Add(asset);
@@ -544,7 +556,9 @@ namespace vFrame.Core.Update
         }
 
         private void DispatchUpdateEvent(UpdateEvent.EventCode code, string assetName = "") {
-            if (OnUpdateEvent == null) return;
+            if (OnUpdateEvent == null) {
+                return;
+            }
 
             var evt = new UpdateEvent {Code = code, AssetName = assetName};
 
@@ -553,7 +567,7 @@ namespace vFrame.Core.Update
                 evt.Percent = (float) evt.DownloadedSize / _totalSize;
                 evt.PercentByFile = (float) (_totalToDownload - _totalWaitToDownload - _failedUnits.Count) /
                                     _totalToDownload;
-                evt.DownloadSpeed = DownloadManager.Instance.FormatedSpeed;
+                evt.DownloadSpeed = DownloadManager.Instance.FormattedSpeed;
             }
 
             if (OnUpdateEvent != null)
@@ -562,7 +576,9 @@ namespace vFrame.Core.Update
 
         private ulong CalculateDownloadedSize() {
             ulong size = 0;
-            foreach (var kv in _downloadedSize) size += kv.Value;
+            foreach (var kv in _downloadedSize) {
+                size += kv.Value;
+            }
 
             return size;
         }
@@ -571,15 +587,15 @@ namespace vFrame.Core.Update
             DispatchUpdateEvent(UpdateEvent.EventCode.HASH_START);
         }
 
-        private void OnCheckProgress(Manifest.AssetInfo asset, bool valid) {
+        private void OnCheckProgress(AssetInfo asset, bool valid) {
             if (valid) {
-                _remoteManifest.SetAssetDownloadState(asset.fileName, Manifest.DownloadState.SUCCEED);
+                _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.SUCCEED);
             }
             else {
-                _remoteManifest.SetAssetDownloadState(asset.fileName, Manifest.DownloadState.UNSTARTED);
+                _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.UNSTARTED);
                 _failedUnits.Add(asset);
 
-                Logger.Error(AssetsUpdaterLogTag, "Hash Invalid : {0}", asset.fileName);
+                Logger.Error(PatchConst.LogTag, "Hash Invalid : {0}", asset.fileName);
             }
 
             _remoteManifest.SaveToFile(_tempManifestPath);

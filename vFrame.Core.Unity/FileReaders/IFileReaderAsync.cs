@@ -10,7 +10,7 @@
 
 using vFrame.Core.Base;
 
-namespace vFrame.Core.FileReader
+namespace vFrame.Core.FileReaders
 {
     public interface IFileReaderRequest : IAsync
     {
