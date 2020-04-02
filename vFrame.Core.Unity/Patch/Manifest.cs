@@ -39,7 +39,7 @@ namespace vFrame.Core.Patch
         /// <summary>
         /// The game engine version
         /// </summary>
-        public Version GameVersion { get; private set; }
+        public Version EngineVersion { get; private set; }
 
         /// <summary>
         /// The build number
@@ -100,7 +100,7 @@ namespace vFrame.Core.Patch
         /// game version compare
         /// </summary>
         public int GameVersionCompareTo(Manifest other) {
-            return GameVersion.CompareTo(other.GameVersion);
+            return EngineVersion.CompareTo(other.EngineVersion);
         }
 
         public void SetAssetDownloadState(string fileName, DownloadState state) {
@@ -211,9 +211,9 @@ namespace vFrame.Core.Patch
         /// </summary>
         private void LoadVersion() {
             AssetsVersion = new Version(_json.assetsVersion);
-            GameVersion = string.IsNullOrEmpty(_json.gameVersion)
+            EngineVersion = string.IsNullOrEmpty(_json.engineVersion)
                 ? new Version("0.0.0")
-                : new Version(_json.gameVersion);
+                : new Version(_json.engineVersion);
 
             VersionLoaded = true;
         }
@@ -235,7 +235,7 @@ namespace vFrame.Core.Patch
             _assets.Clear();
             _json = null;
             AssetsVersion = null;
-            GameVersion = null;
+            EngineVersion = null;
 
             Loaded = false;
             VersionLoaded = false;

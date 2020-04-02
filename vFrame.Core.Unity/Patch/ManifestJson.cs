@@ -7,7 +7,7 @@ namespace vFrame.Core.Patch
     public class ManifestJson
     {
         public string buildNumber;
-        public string gameVersion;
+        public string engineVersion;
         public string assetsVersion;
         public List<AssetInfo> assets = new List<AssetInfo>();
     }

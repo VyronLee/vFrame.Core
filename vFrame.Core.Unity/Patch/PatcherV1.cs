@@ -126,8 +126,8 @@ namespace vFrame.Core.Patch
             get { return _hashChecker.HashTotal; }
         }
 
-        public string GameVersion {
-            get { return _localManifest.GameVersion.ToString(); }
+        public string EngineVersion {
+            get { return _localManifest.EngineVersion.ToString(); }
         }
 
         public string AssetsVersion {
@@ -238,7 +238,7 @@ namespace vFrame.Core.Patch
                     if (gvc != 0 || avc > 0) {
                         Logger.Info(PatchConst.LogTag,
                             "Local version({0}) greater than cache version({1}), deleting storage path: {2}..",
-                            _localManifest.GameVersion, cachedManifest.GameVersion, _storagePath);
+                            _localManifest.EngineVersion, cachedManifest.EngineVersion, _storagePath);
 
                         Directory.Delete(_storagePath, true);
                         Directory.CreateDirectory(_storagePath);
@@ -246,7 +246,7 @@ namespace vFrame.Core.Patch
                     else {
                         Logger.Info(PatchConst.LogTag,
                             "Cache version({0}) greater than local version({1}), switching to cache manifest..",
-                            cachedManifest.GameVersion, _localManifest.GameVersion);
+                            cachedManifest.EngineVersion, _localManifest.EngineVersion);
 
                         _localManifest = cachedManifest;
                     }
@@ -301,7 +301,7 @@ namespace vFrame.Core.Patch
                 }
                 else {
                     Logger.Info(PatchConst.LogTag, "Local Game Version({0}) > Remote Game Version({1})",
-                        _localManifest.GameVersion, _remoteManifest.GameVersion);
+                        _localManifest.EngineVersion, _remoteManifest.EngineVersion);
 
                     _updateState = UpdateState.UP_TO_DATE;
                     DispatchUpdateEvent(UpdateEvent.EventCode.ALREADY_UP_TO_DATE);
@@ -482,7 +482,7 @@ namespace vFrame.Core.Patch
             DownloadManager.Instance.RemoveAllDownloads();
 
             if (_failedUnits.Count > 0) {
-                UpdateFailed();
+                UpdateFailed(UpdateEvent.EventCode.ERROR_DOWNLOAD_FAILED);
             }
             else {
                 var assets = _remoteManifest.GetDownloadedAssets();
@@ -490,10 +490,10 @@ namespace vFrame.Core.Patch
             }
         }
 
-        private void UpdateFailed() {
+        private void UpdateFailed(UpdateEvent.EventCode code = UpdateEvent.EventCode.UPDATE_FAILED) {
             _remoteManifest.SaveToFile(_tempManifestPath);
             _updateState = UpdateState.FAIL_TO_UPDATE;
-            DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_FAILED);
+            DispatchUpdateEvent(code);
         }
 
         private void UpdateSucceed() {
@@ -550,9 +550,10 @@ namespace vFrame.Core.Patch
 
             _totalWaitToDownload--;
             _failedUnits.Add(asset);
-            DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_UPDATING, asset.fileName);
+            //DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_FAILED, asset.fileName);
 
-            if (_totalWaitToDownload <= 0) OnDownloadUnitsFinished();
+            if (_totalWaitToDownload <= 0)
+                OnDownloadUnitsFinished();
         }
 
         private void DispatchUpdateEvent(UpdateEvent.EventCode code, string assetName = "") {
@@ -607,7 +608,7 @@ namespace vFrame.Core.Patch
             if (_hashChecker.Valid)
                 UpdateSucceed();
             else
-                UpdateFailed();
+                UpdateFailed(UpdateEvent.EventCode.ERROR_HASH_VALIDATION_FAILED);
         }
 
         #endregion

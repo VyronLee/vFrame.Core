@@ -57,7 +57,7 @@
             /// <summary>
             /// 单个资源下载失败
             /// </summary>
-            ERROR_UPDATING,
+            ERROR_DOWNLOAD_FAILED,
 
             /// <summary>
             /// 更新成功
@@ -78,6 +78,11 @@
             /// 哈希进度
             /// </summary>
             HASH_PROGRESSION,
+
+            /// <summary>
+            /// 校验失败
+            /// </summary>
+            ERROR_HASH_VALIDATION_FAILED,
         }
 
         public EventCode Code;
