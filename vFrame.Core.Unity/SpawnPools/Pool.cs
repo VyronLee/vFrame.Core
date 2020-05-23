@@ -138,9 +138,9 @@ namespace vFrame.Core.SpawnPools
                     snapshot.Take();
                     _snapshots.Add(obj, snapshot);
 
-                    obj.transform.DisableAllRenderer();
+                    HideGameObject(obj);
                 });
-                obj.transform.EnableAllRenderer();
+                ShowGameObject(obj);
             }
 
             OnSpawn(obj);
@@ -184,20 +184,7 @@ namespace vFrame.Core.SpawnPools
         protected virtual void ObjectPreprocessBeforeReturn(GameObject go) {
             go.transform.SetParent(null, false);
 
-            switch (SpawnPoolsSetting.HiddenType) {
-                case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
-                    go.SetActive(true);
-                    break;
-                case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.EnableAllAnimations();
-                    go.transform.EnableAllAnimators();
-                    go.transform.ClearAllTrailRendererEx();
-                    go.transform.StartAllParticleSystems();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
-            }
+            ShowGameObject(go);
 
             if (_snapshots.TryGetValue(go, out var snapshot)) {
                 snapshot.Restore();
@@ -241,7 +228,27 @@ namespace vFrame.Core.SpawnPools
 
         protected virtual void ObjectPostprocessAfterRecycle(GameObject go) {
             go.transform.SetParent(_poolGo.transform, false);
+            HideGameObject(go);
+        }
 
+        private void ShowGameObject(GameObject go) {
+            switch (SpawnPoolsSetting.HiddenType) {
+                case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
+                    go.SetActive(true);
+                    break;
+                case SpawnPoolsSetting.PoolObjectHiddenType.Position:
+                    go.transform.EnableAllAnimations();
+                    go.transform.EnableAllAnimators();
+                    go.transform.ClearAllTrailRendererEx();
+                    go.transform.StartAllParticleSystems();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
+            }
+        }
+
+        private void HideGameObject(GameObject go) {
             switch (SpawnPoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(false);
