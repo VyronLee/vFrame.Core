@@ -37,5 +37,19 @@ namespace vFrame.Core.Extensions.UnityEngine
 
             go.tag = tag;
         }
+
+        /// <summary>
+        /// 获取或者添加组件
+        /// </summary>
+        /// <param name="go"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T GetOrAddComponent<T>(this GameObject go) where T: MonoBehaviour {
+            var comp = go.GetComponent<T>();
+            if (null == comp) {
+                comp = go.AddComponent<T>();
+            }
+            return comp;
+        }
     }
 }
