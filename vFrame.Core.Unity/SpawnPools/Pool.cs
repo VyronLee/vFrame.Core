@@ -22,13 +22,13 @@ using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools
 {
-    public class Pool : BaseObject<string, int, IGameObjectBuilder>, IPool
+    public class Pool : BaseObject<string, SpawnPools, IGameObjectBuilder>, IPool
     {
         private readonly Queue<GameObject> _objects = new Queue<GameObject>();
         private int _lastTime;
         private GameObject _poolGo;
 
-        private int _lifetime;
+        private SpawnPools _spawnPools;
         private string _poolName;
         private IGameObjectBuilder _builder;
 
@@ -38,15 +38,15 @@ namespace vFrame.Core.SpawnPools
 
         public int SpawnedTimes { get; private set; }
 
-        protected override void OnCreate(string poolName, int lifetime, IGameObjectBuilder builder) {
-            _lifetime = lifetime;
+        protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectBuilder builder) {
+            _spawnPools = spawnPools;
             _lastTime = Time.frameCount;
             _poolName = poolName;
             _builder = builder;
             _snapshots = new Dictionary<GameObject, PoolObjectSnapshot>(32);
 
             _poolGo = new GameObject(string.Format("Pool({0})", poolName));
-            _poolGo.transform.SetParent(SpawnPools.PoolsParent.transform, false);
+            _poolGo.transform.SetParent(_spawnPools.PoolsParent.transform, false);
         }
 
         protected override void OnDestroy() {
@@ -178,7 +178,7 @@ namespace vFrame.Core.SpawnPools
         public int Count => _objects.Count;
 
         public bool IsTimeout() {
-            return Time.frameCount - _lastTime > _lifetime;
+            return Time.frameCount - _lastTime > _spawnPools.PoolsSetting.LifeTime;
         }
 
         protected virtual void ObjectPreprocessBeforeReturn(GameObject go) {
@@ -232,7 +232,7 @@ namespace vFrame.Core.SpawnPools
         }
 
         private void ShowGameObject(GameObject go) {
-            switch (SpawnPoolsSetting.HiddenType) {
+            switch (_spawnPools.PoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(true);
                     break;
@@ -244,12 +244,12 @@ namespace vFrame.Core.SpawnPools
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
+                        "Unknown hidden type: " + _spawnPools.PoolsSetting.HiddenType);
             }
         }
 
         private void HideGameObject(GameObject go) {
-            switch (SpawnPoolsSetting.HiddenType) {
+            switch (_spawnPools.PoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
                     go.SetActive(false);
                     break;
@@ -261,7 +261,7 @@ namespace vFrame.Core.SpawnPools
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + SpawnPoolsSetting.HiddenType);
+                        "Unknown hidden type: " + _spawnPools.PoolsSetting.HiddenType);
             }
         }
 

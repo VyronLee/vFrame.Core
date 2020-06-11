@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace vFrame.Core.SpawnPools
 {
-    public static class SpawnPoolsSetting
+    public class SpawnPoolsSetting
     {
         public enum PoolObjectHiddenType
         {
@@ -20,11 +20,18 @@ namespace vFrame.Core.SpawnPools
             Position,
         }
 
-        public static int DefaultCapacity = 40;
-        public static int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
-        public static int GCInterval = 600; // 600 frames, 20s by 30fps
+        public const int DefaultCapacity = 40;
+        public const int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
+        public const int DefaultGCInterval = 600; // 600 frames, 20s by 30fps
+        public static readonly Vector3 DefaultRootPosition = new Vector3(-1000, -1000, -1000);
 
-        public static Vector3 RootPosition = new Vector3(-1000, -1000, -1000);
-        public static PoolObjectHiddenType HiddenType = PoolObjectHiddenType.Deactive;
+        public int Capacity { get; set; } = DefaultCapacity;
+        public int LifeTime { get; set; } = DefaultLifeTime;
+        public int GCInterval { get; set; } = DefaultGCInterval;
+        public Vector3 RootPosition { get; set; } = DefaultRootPosition;
+        public PoolObjectHiddenType HiddenType { get; set; } = PoolObjectHiddenType.Deactive;
+
+        private static readonly SpawnPoolsSetting _default = new SpawnPoolsSetting();
+        public static SpawnPoolsSetting Default => _default;
     }
 }

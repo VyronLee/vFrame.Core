@@ -13,19 +13,19 @@ using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Builders;
-using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.SpawnPools
 {
-    public class SpawnPools : BaseObject<IGameObjectBuilderFactory, int, int>, ISpawnPools
+    public class SpawnPools : BaseObject<IGameObjectBuilderFactory, SpawnPoolsSetting>, ISpawnPools
     {
-        private static GameObject _poolsParent;
+        private GameObject _poolsParent;
+        private SpawnPoolsSetting _poolsSetting;
 
-        public static GameObject PoolsParent {
+        public GameObject PoolsParent {
             get {
                 if (!_poolsParent) {
                     _poolsParent = new GameObject("Pools");
-                    _poolsParent.transform.position = SpawnPoolsSetting.RootPosition;
+                    _poolsParent.transform.position = _poolsSetting.RootPosition;
                     Object.DontDestroyOnLoad(PoolsParent);
                 }
 
@@ -38,16 +38,14 @@ namespace vFrame.Core.SpawnPools
         private IGameObjectBuilderFactory _builderFromPathFactory;
         private IGameObjectBuilderFactory _builderFromPrefabInstanceFactory;
 
-        private int _lifetime;
-        private int _capacity;
-
         private int _lastGC;
 
-        protected override void OnCreate(IGameObjectBuilderFactory factory, int lifetime, int capacity) {
+        public SpawnPoolsSetting PoolsSetting => _poolsSetting;
+
+        protected override void OnCreate(IGameObjectBuilderFactory factory, SpawnPoolsSetting poolsSetting) {
             _builderFromPathFactory = factory ?? new DefaultGameObjectBuilderFromPathFactory();
             _builderFromPrefabInstanceFactory = new DefaultGameObjectBuilderFromPrefabInstanceFactory();
-            _lifetime = lifetime;
-            _capacity = capacity;
+            _poolsSetting = poolsSetting;
         }
 
         protected override void OnDestroy() {
@@ -75,7 +73,7 @@ namespace vFrame.Core.SpawnPools
                 builder.Create(assetName);
 
                 var pool = new Pool();
-                pool.Create(assetName, _lifetime, builder);
+                pool.Create(assetName, this, builder);
 
                 _pools.Add(assetName, pool);
                 PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
@@ -96,7 +94,7 @@ namespace vFrame.Core.SpawnPools
                 builder.Create(prefab);
 
                 var pool = new Pool();
-                pool.Create(prefabCode, _lifetime, builder);
+                pool.Create(prefabCode, this, builder);
 
                 _pools.Add(prefabCode, pool);
                 PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
@@ -106,7 +104,7 @@ namespace vFrame.Core.SpawnPools
         }
 
         public void Update() {
-            if (++_lastGC < SpawnPoolsSetting.GCInterval)
+            if (++_lastGC < _poolsSetting.GCInterval)
                 return;
             _lastGC = 0;
 
@@ -127,14 +125,14 @@ namespace vFrame.Core.SpawnPools
             pools.Clear();
 
             // Clear pools by frequency
-            if (_pools.Count < _capacity)
+            if (_pools.Count < _poolsSetting.Capacity)
                 return;
 
             foreach (var kv in _pools)
                 pools.Add(kv.Key);
             pools.Sort((a, b) => _pools[b].SpawnedTimes.CompareTo(_pools[a].SpawnedTimes));
 
-            for (var i = _capacity; i < pools.Count; i++) {
+            for (var i = _poolsSetting.Capacity; i < pools.Count; i++) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("Pool({0}) over capacity, destroying..", pools[i]);
 #endif

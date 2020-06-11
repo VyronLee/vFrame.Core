@@ -9,6 +9,10 @@ namespace vFrame.Core.SpawnPools.Behaviours
         [SerializeField] private bool _pooling;
         [SerializeField] private int _uniqueId;
 
+        private void Awake() {
+            hideFlags = HideFlags.HideAndDontSave;
+        }
+
         public string AssetPath {
             get => _assetPath;
             internal set => _assetPath = value;
