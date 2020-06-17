@@ -10,7 +10,7 @@ namespace vFrame.Core.SpawnPools.Behaviours
         [SerializeField] private int _uniqueId;
 
         private void Awake() {
-            hideFlags = HideFlags.HideAndDontSave;
+            hideFlags = HideFlags.HideAndDontSave | HideFlags.HideInInspector;
         }
 
         public string AssetPath {

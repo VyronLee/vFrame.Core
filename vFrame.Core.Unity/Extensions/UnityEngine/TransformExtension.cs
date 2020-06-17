@@ -39,6 +39,15 @@ namespace vFrame.Core.Extensions.UnityEngine
             TravelSelfAndChildren<Renderer>(transform, v => v.enabled = true);
         }
 
+        public static void EnableAllRenderer(this Transform transform, Type exceptType) {
+            TravelSelfAndChildren<Renderer>(transform, v => {
+                if (exceptType == v.GetType()) {
+                    return;
+                }
+                v.enabled = true;
+            });
+        }
+
         public static void DisableAllRenderer(this Transform transform) {
             TravelSelfAndChildren<Renderer>(transform, v => v.enabled = false);
         }
@@ -113,7 +122,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         }
 
         public static void ClearAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRendererEx>(transform, v => v.Clear());
+            TravelSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
         }
 
         public static void ClearAllTrailRendererEx(this Transform transform) {

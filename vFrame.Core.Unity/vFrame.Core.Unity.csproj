@@ -138,8 +138,10 @@
     <Compile Include="SpawnPools\IPool.cs" />
     <Compile Include="SpawnPools\ISpawnPools.cs" />
     <Compile Include="SpawnPools\Pool.cs" />
+    <Compile Include="SpawnPools\Snapshots\BehaviourSnapshot.cs" />
     <Compile Include="SpawnPools\Snapshots\GameObjectSnapshot.cs" />
     <Compile Include="SpawnPools\Snapshots\PoolObjectSnapshot.cs" />
+    <Compile Include="SpawnPools\Snapshots\RendererSnapshot.cs" />
     <Compile Include="SpawnPools\Snapshots\Snapshot.cs" />
     <Compile Include="SpawnPools\Snapshots\TransformSnapshot.cs" />
     <Compile Include="SpawnPools\SpawnPools.cs" />

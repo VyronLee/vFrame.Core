@@ -237,9 +237,7 @@ namespace vFrame.Core.SpawnPools
                     go.SetActive(true);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.EnableAllAnimations();
-                    go.transform.EnableAllAnimators();
-                    go.transform.ClearAllTrailRendererEx();
+                    go.transform.ClearAllTrailRenderers();
                     go.transform.StartAllParticleSystems();
                     break;
                 default:
@@ -251,13 +249,12 @@ namespace vFrame.Core.SpawnPools
         private void HideGameObject(GameObject go) {
             switch (_spawnPools.PoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
+                    go.transform.ClearAllTrailRenderers();
                     go.SetActive(false);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.DisableAllAnimators();
-                    go.transform.DisableAllAnimations();
                     go.transform.StopAllParticleSystems();
-                    go.transform.ClearAllTrailRendererEx();
+                    go.transform.ClearAllTrailRenderers();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(

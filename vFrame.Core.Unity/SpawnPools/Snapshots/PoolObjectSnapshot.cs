@@ -11,11 +11,12 @@ namespace vFrame.Core.SpawnPools.Snapshots
         private static readonly List<Type> SnapshotTypes = new List<Type> {
             typeof(TransformSnapshot),
             typeof(GameObjectSnapshot),
+            typeof(RendererSnapshot),
+            typeof(BehaviourSnapshot),
         };
 
         private GameObject _target;
         private Dictionary<GameObject, List<Snapshot>> _snapshots;
-
 
         private Action<Transform> _takeNodeSnapshot;
         private Action<Transform> _restoreNodeSnapshot;
