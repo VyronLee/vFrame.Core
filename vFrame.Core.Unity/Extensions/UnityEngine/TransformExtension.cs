@@ -128,5 +128,21 @@ namespace vFrame.Core.Extensions.UnityEngine
         public static void ClearAllTrailRendererEx(this Transform transform) {
             TravelSelfAndChildren<TrailRendererEx>(transform, v => v.Clear());
         }
+
+        public static Bounds CalculateBounds(this Transform transform) {
+            var bounds = new Bounds();
+            transform.TravelSelfAndChildren<Transform>(v => {
+                var renderer = v.GetComponent<Renderer>();
+                if (null == renderer) {
+                    return;
+                }
+                var scale = v.transform.lossyScale;
+                var b = renderer.bounds;
+                b.center = new Vector3(b.center.x * scale.x, b.center.y * scale.y, b.center.z * scale.z);
+                b.extents = new Vector3(b.extents.x * scale.x, b.extents.y * scale.y, b.extents.z * scale.z);
+                bounds.Encapsulate(b);
+            });
+            return bounds;
+        }
     }
 }
