@@ -15,7 +15,7 @@ namespace vFrame.Core.FileSystems
         public abstract bool Exist(VFSPath relativeVfsPath);
 
         public abstract IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open,
-            FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
+            FileAccess access = FileAccess.Read, FileShare share = FileShare.Read);
 
         public abstract IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName);
 

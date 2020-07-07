@@ -60,8 +60,7 @@ namespace vFrame.Core.FileSystems.Package
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
 
-            var vpkStream = FileStreamFactory.Create(streamVfsPath,
-                FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            var vpkStream = FileStreamFactory.Create(streamVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
                 InternalOpen(vpkStream);
             }
@@ -85,19 +84,26 @@ namespace vFrame.Core.FileSystems.Package
 
         public override IVirtualFileStream GetStream(VFSPath fileName,
             FileMode mode = FileMode.Open,
-            FileAccess access = FileAccess.ReadWrite,
+            FileAccess access = FileAccess.Read,
             FileShare share = FileShare.Read
         ) {
             if (!Exist(fileName))
                 throw new PackageFileSystemFileNotFound();
+
+            if (mode != FileMode.Open) {
+                throw new NotSupportedException("Only 'FileMode.Open'  is supported in package virtual file system.");
+            }
+
+            if (access != FileAccess.Read) {
+                throw new NotSupportedException("Only 'FileAccess.Read' is supported in package virtual file system.");
+            }
 
             var idx = _fileList[fileName];
             if (idx < 0 || idx >= _blockInfos.Count)
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath,
-                FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            var vpkStream = FileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
                 //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
                 //    fileName, block.OriginalSize, block.CompressedSize);
@@ -117,8 +123,7 @@ namespace vFrame.Core.FileSystems.Package
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath,
-                FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            var vpkStream = FileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
             //    fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);

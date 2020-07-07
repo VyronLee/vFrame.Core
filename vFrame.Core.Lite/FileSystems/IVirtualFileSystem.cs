@@ -34,7 +34,7 @@ namespace vFrame.Core.FileSystems
         /// <param name="share"></param>
         /// <returns></returns>
         IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open,
-            FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
+            FileAccess access = FileAccess.Read, FileShare share = FileShare.Read);
 
         /// <summary>
         ///     Get readonly file stream async of specified name.

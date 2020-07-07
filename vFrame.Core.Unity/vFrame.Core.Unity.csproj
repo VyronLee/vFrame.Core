@@ -92,6 +92,7 @@
     <Compile Include="3rd\SerializableDictionary.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
+    <Compile Include="Behaviours\MethodInvoker.cs" />
     <Compile Include="Behaviours\TrailRendererEx.cs" />
     <Compile Include="Coroutine\CoroutineBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePool.cs" />
