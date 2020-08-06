@@ -9,9 +9,11 @@
 //============================================================
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using vFrame.Core.Behaviours;
+using vFrame.Core.ThirdParty;
 
 namespace vFrame.Core.Extensions.UnityEngine
 {
@@ -143,6 +145,20 @@ namespace vFrame.Core.Extensions.UnityEngine
                 bounds.Encapsulate(b);
             });
             return bounds;
+        }
+
+        public static string GetHierarchyPath(this Transform transform) {
+            var names = new List<string>();
+
+            do {
+                names.Add(transform.name);
+                transform = transform.parent;
+            }
+            while (transform);
+
+            names.Reverse();
+            var path = string.Join("/", names);
+            return path;
         }
     }
 }
