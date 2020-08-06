@@ -72,6 +72,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\ArrayExtension.cs" />
+    <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />
