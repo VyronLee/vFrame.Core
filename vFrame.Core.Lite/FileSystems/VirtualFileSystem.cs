@@ -6,7 +6,11 @@ namespace vFrame.Core.FileSystems
 {
     public abstract class VirtualFileSystem : IVirtualFileSystem
     {
-        protected FileStreamFactory FileStreamFactory { get; set; }
+        protected FileStreamFactory _fileStreamFactory;
+
+        protected VirtualFileSystem(FileStreamFactory streamFactory) {
+            _fileStreamFactory = streamFactory;
+        }
 
         public abstract void Open(VFSPath streamVfsPath);
 

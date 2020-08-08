@@ -11,7 +11,7 @@ namespace vFrame.Core.FileSystems
 {
     public class FileSystemManager<T> : BaseObject<T> , IFileSystemManager where T: FileStreamFactory
     {
-        private FileStreamFactory _factory;
+        protected FileStreamFactory _factory;
         private List<IVirtualFileSystem> _fileSystems;
 
         protected override void OnCreate(T factory) {

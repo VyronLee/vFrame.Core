@@ -37,9 +37,7 @@ namespace vFrame.Core.FileSystems.Package
         public PackageVirtualFileSystem() : this(new FileStreamFactory_Default()) {
         }
 
-        public PackageVirtualFileSystem(FileStreamFactory factory) {
-            FileStreamFactory = factory;
-
+        public PackageVirtualFileSystem(FileStreamFactory factory) : base(factory) {
             _fileList = new Dictionary<VFSPath, int>();
             _blockInfos = new List<PackageBlockInfo>();
             _opened = false;
@@ -47,7 +45,7 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public PackageVirtualFileSystem(PackageHeader header, List<PackageBlockInfo> blockInfos,
-            Dictionary<VFSPath, int> fileList, bool closed, bool opened, VFSPath vpkVfsPath) {
+            Dictionary<VFSPath, int> fileList, bool closed, bool opened, VFSPath vpkVfsPath) : this() {
             _header = header;
             _blockInfos = blockInfos;
             _fileList = fileList;
@@ -60,7 +58,7 @@ namespace vFrame.Core.FileSystems.Package
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
 
-            var vpkStream = FileStreamFactory.Create(streamVfsPath, FileMode.Open, FileAccess.Read);
+            var vpkStream = _fileStreamFactory.Create(streamVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
                 InternalOpen(vpkStream);
             }
@@ -103,9 +101,9 @@ namespace vFrame.Core.FileSystems.Package
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
+            var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
-                //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
+                //Logger.Info(FileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
                 //    fileName, block.OriginalSize, block.CompressedSize);
                 var stream = new PackageVirtualFileStream(vpkStream, block, access);
                 if (!stream.Open())
@@ -123,8 +121,8 @@ namespace vFrame.Core.FileSystems.Package
                 throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
 
             var block = _blockInfos[idx];
-            var vpkStream = FileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
-            //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
+            var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
+            //Logger.Info(FileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
             //    fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
         }

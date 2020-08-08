@@ -63,21 +63,22 @@ namespace vFrame.Core.Utils
         }
 
         public static string RelativeDataPathToAbsolutePath(string relativePath) {
-            var fullPath = Path.Combine(Application.dataPath, relativePath);
-            return NormalizePath(fullPath);
+            return Combine(Application.dataPath, relativePath);
         }
 
         public static string RelativeProjectPathToAbsolutePath(string relativePath) {
             var dataPath = Application.dataPath;
             var projectPath = dataPath.Remove(dataPath.Length - 6, 6);
-            var fullPath = Path.Combine(projectPath, relativePath);
-            return NormalizePath(fullPath);
+            return Combine(projectPath, relativePath);
         }
 
         public static string RelativeResourcesPathToAbsolutePath(string relativePath) {
             var resourcesPath = Path.Combine(Application.dataPath, "Resources");
-            var fullPath = Path.Combine(resourcesPath, relativePath);
-            return NormalizePath(fullPath);
+            return Combine(resourcesPath, relativePath);
+        }
+
+        public static string RelativeStreamingAssetsPathToAbsolutePath(string relativePath) {
+            return Combine(Application.streamingAssetsPath, relativePath);
         }
 
         public static string RelativeProjectPathToRelativeDataPath(string relativePath) {
@@ -119,6 +120,11 @@ namespace vFrame.Core.Utils
 
         public static bool IsFileInPersistentDataPath(string path) {
             return path.StartsWith(Application.persistentDataPath);
+        }
+
+        public static bool IsStreamingAssetsPath(string path) {
+            path = NormalizePath(path);
+            return path.StartsWith(Application.streamingAssetsPath);
         }
     }
 }

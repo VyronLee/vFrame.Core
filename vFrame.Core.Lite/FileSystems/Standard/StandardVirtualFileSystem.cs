@@ -11,10 +11,11 @@ namespace vFrame.Core.FileSystems.Standard
         private VFSPath _workingDir;
 
         public StandardVirtualFileSystem() : this(new FileStreamFactory_Default()) {
+
         }
 
-        public StandardVirtualFileSystem(FileStreamFactory factory) {
-            FileStreamFactory = factory;
+        public StandardVirtualFileSystem(FileStreamFactory factory) : base(factory) {
+
         }
 
         public override void Open(VFSPath streamVfsPath) {
@@ -38,7 +39,7 @@ namespace vFrame.Core.FileSystems.Standard
             FileShare share
         ) {
             var absolutePath = _workingDir + fileName;
-            var fileStream = FileStreamFactory.Create(absolutePath, mode, access, share);
+            var fileStream = _fileStreamFactory.Create(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
             return new StandardVirtualFileStream(fileStream);
         }
@@ -47,7 +48,7 @@ namespace vFrame.Core.FileSystems.Standard
             if (!Exist(fileName))
                 throw new FileNotFoundException("File not found: " + fileName);
             var absolutePath = _workingDir + fileName;
-            var fileStream = FileStreamFactory.Create(absolutePath);
+            var fileStream = _fileStreamFactory.Create(absolutePath);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }
