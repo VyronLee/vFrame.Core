@@ -27,6 +27,10 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
                 throw new DirectoryNotFoundException();
             }
 
+            if (!PathUtils.IsStreamingAssetsPath(streamVfsPath)) {
+                throw new ArgumentException("Input argument must be streaming-assets path.");
+            }
+
             _workingDir = streamVfsPath.AsDirectory();
             _workingDir = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(_workingDir);
         }
@@ -53,6 +57,10 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
 
         public override IList<VFSPath> List(IList<VFSPath> refs) {
             throw new NotSupportedException();
+        }
+
+        public override string ToString() {
+            return VFSPath.GetPath(Application.streamingAssetsPath) + _workingDir;
         }
     }
 }

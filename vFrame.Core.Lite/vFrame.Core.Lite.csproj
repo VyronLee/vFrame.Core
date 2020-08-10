@@ -163,7 +163,6 @@
     <Compile Include="FileSystems\VFSPath.cs" />
     <Compile Include="FileSystems\Standard\StandardVirtualFileStream.cs" />
     <Compile Include="FileSystems\Standard\StandardVirtualFileSystem.cs" />
-    <Compile Include="FileSystems\VirtualFileSystemThreadPool.cs" />
     <Compile Include="Localize\ILocalization.cs" />
     <Compile Include="Localize\Localization.cs" />
     <Compile Include="Localize\ILocalizationReader.cs" />

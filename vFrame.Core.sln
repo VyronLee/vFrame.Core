@@ -9,9 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Lite", "vFrame.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Editor", "vFrame.Core.Editor\vFrame.Core.Editor.csproj", "{3E558A1F-FFBE-466D-B277-9CA8EC22B55F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApplication1", "ConsoleApplication1\ConsoleApplication1.csproj", "{213499B1-1EDC-4511-A4FF-607EB69AF8D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vFrame.Core.Test", "vFrame.Core.Test\vFrame.Core.Test.csproj", "{213499B1-1EDC-4511-A4FF-607EB69AF8D5}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -39,5 +42,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3BAA3A33-8C2D-4AC2-94DC-1685277F4CF4}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

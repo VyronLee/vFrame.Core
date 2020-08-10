@@ -131,9 +131,8 @@ namespace vFrame.Core.FileSystems.Package
             if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
                 PerfProfile.Start(out var id);
                 PerfProfile.Pin($"PackageVirtualFileStream:Decompress size: {_blockInfo.OriginalSize:n0} bytes: ", id);
-                var decompressedStream = VirtualFileStreamPool.Instance()
-                    .GetStream("VPK:DecompressedStream", (int) _blockInfo.OriginalSize);
-                using (decompressedStream) {
+                var buffer = ArrayPool<byte>.Shared.Rent((int) _blockInfo.OriginalSize);
+                using (var decompressedStream = new MemoryStream(buffer)) {
                     var compressType = (_blockInfo.Flags & BlockFlags.BlockCompressed) >> 8;
                     var compressService = CompressService.CreateCompressService((CompressType) compressType);
 
@@ -144,8 +143,9 @@ namespace vFrame.Core.FileSystems.Package
                     tempStream.SetLength(0);
                     tempStream.Seek(0, SeekOrigin.Begin);
                     decompressedStream.Seek(0, SeekOrigin.Begin);
-                    decompressedStream.BufferedCopyTo(tempStream, (int)decompressedStream.Length);
+                    decompressedStream.BufferedCopyTo(tempStream, (int) _blockInfo.OriginalSize);
                 }
+                ArrayPool<byte>.Shared.Return(buffer);
                 PerfProfile.Unpin(id);
             }
 
@@ -153,9 +153,8 @@ namespace vFrame.Core.FileSystems.Package
             if ((_blockInfo.Flags & BlockFlags.BlockEncrypted) > 0) {
                 PerfProfile.Start(out var id);
                 PerfProfile.Pin($"PackageVirtualFileStream:Decrypt size: {_blockInfo.OriginalSize:n0} bytes", id);
-                var decryptedStream = VirtualFileStreamPool.Instance()
-                    .GetStream("VPK:DecryptedStream", (int)_blockInfo.OriginalSize);
-                using (decryptedStream) {
+                var buffer = ArrayPool<byte>.Shared.Rent((int) _blockInfo.OriginalSize);
+                using (var decryptedStream = new MemoryStream(buffer)) {
                     var cryptoKey = BitConverter.GetBytes(_blockInfo.EncryptKey);
                     var cryptoType = (_blockInfo.Flags & BlockFlags.BlockEncrypted) >> 12;
                     var cryptoService = CryptoService.CreateCryptoService((CryptoType) cryptoType);
@@ -167,8 +166,9 @@ namespace vFrame.Core.FileSystems.Package
                     tempStream.SetLength(0);
                     tempStream.Seek(0, SeekOrigin.Begin);
                     decryptedStream.Seek(0, SeekOrigin.Begin);
-                    decryptedStream.BufferedCopyTo(tempStream, (int)decryptedStream.Length);
+                    decryptedStream.BufferedCopyTo(tempStream, (int) _blockInfo.OriginalSize);
                 }
+                ArrayPool<byte>.Shared.Return(buffer);
                 PerfProfile.Unpin(id);
             }
 

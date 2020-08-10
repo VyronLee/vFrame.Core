@@ -799,7 +799,7 @@ namespace vFrame.Core.ThirdParty.RecyclableMemoryStream
         private bool Disposed => Interlocked.Read(ref disposedState) != 0;
 
         private void CheckDisposed() {
-            if (Disposed) throw new ObjectDisposedException($"The stream with Id {id} and Tag {tag} is disposed.");
+            //if (Disposed) throw new ObjectDisposedException($"The stream with Id {id} and Tag {tag} is disposed.");
         }
 
         private int InternalRead(byte[] buffer, int offset, int count, int fromPosition) {

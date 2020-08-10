@@ -11,7 +11,7 @@ namespace vFrame.Core.FileSystems.Standard
         private bool _finished;
 
         public StandardReadonlyVirtualFileStreamRequest(Stream stream) {
-            VirtualFileSystemThreadPool.Instance().AddTask(ReadFileStream, stream);
+            System.Threading.ThreadPool.QueueUserWorkItem(ReadFileStream, stream);
         }
 
         private void ReadFileStream(object state) {

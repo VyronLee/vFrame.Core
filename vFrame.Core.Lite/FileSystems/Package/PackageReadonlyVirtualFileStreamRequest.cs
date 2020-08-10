@@ -23,7 +23,7 @@ namespace vFrame.Core.FileSystems.Package
                 Stream = vpkStream,
                 BlockInfo = blockInfo,
             };
-            VirtualFileSystemThreadPool.Instance().AddTask(OpenPackageStreamAsync, context);
+            ThreadPool.QueueUserWorkItem(OpenPackageStreamAsync, context);
         }
 
         private void OpenPackageStreamAsync(object state) {
