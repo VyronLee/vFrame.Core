@@ -17,28 +17,71 @@ namespace vFrame.Core.Loggers
 {
     public static class Logger
     {
+        public const int DefaultCapacity = 1000;
+        public const string DefaultTagFormatter = "{0}";
+        public const int DefaultLogFormatMask =
+            LogFormatType.Tag | LogFormatType.Time | LogFormatType.Class | LogFormatType.Function;
+
         private static LogLevelDef _level = LogLevelDef.Error;
-        private static int _capacity = LoggerSetting.Capacity;
+        private static int _logFormatMask = DefaultLogFormatMask;
+        private static string _tagFormatter = DefaultTagFormatter;
+        private static int _capacity = DefaultCapacity;
+        private static readonly Queue<LogContext> _logQueue;
+        private static readonly object _queueLock;
+        private static string _logFilePath;
+        private static LogToFile _logFile;
 
-        private static readonly Queue<LogContext> LogQueue;
-        private static readonly object QueueLock;
-
-        static Logger() {
-            LogQueue = new Queue<LogContext>(_capacity);
-            QueueLock = new object();
-        }
-
+        #region Properties
         public static LogLevelDef LogLevel {
             get => _level;
             set => _level = value;
+        }
+
+        public static int LogFormatMask {
+            get => _logFormatMask;
+            set => _logFormatMask = value;
+        }
+
+        public static string LogTagFormatter {
+            get => _tagFormatter;
+            set => _tagFormatter = value;
         }
 
         public static int LogCapacity {
             get => _capacity;
             set => _capacity = value;
         }
+        #endregion
+
+        static Logger() {
+            _logQueue = new Queue<LogContext>(_capacity);
+            _queueLock = new object();
+        }
 
         public static event Action<LogContext> OnLogReceived;
+
+        public static string LogFilePath {
+            set {
+                _logFilePath = value;
+                RecreateLogFile();
+            }
+        }
+
+        private static void RecreateLogFile() {
+            Close();
+
+            if (string.IsNullOrEmpty(_logFilePath)) {
+                return;
+            }
+
+            _logFile = new LogToFile();
+            _logFile.Create(_logFilePath);
+        }
+
+        public static void Close() {
+            _logFile?.Destroy();
+            _logFile = null;
+        }
 
         public static void Debug(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Debug, tag, text, args);
@@ -93,44 +136,47 @@ namespace vFrame.Core.Loggers
             var stack = GetLogStack(skip);
 
             var context = new LogContext(level, tag, content, stack);
-            lock (QueueLock) {
-                if (LogQueue.Count >= _capacity)
-                    LogQueue.Dequeue();
-                LogQueue.Enqueue(context);
+            lock (_queueLock) {
+                if (_logQueue.Count >= _capacity)
+                    _logQueue.Dequeue();
+                _logQueue.Enqueue(context);
             }
+
+            _logFile?.AppendText(content);
 
             OnLogReceived?.Invoke(context);
         }
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
-            var stackFrame = new StackFrame(skip + 3);
-
             var builder = StringBuilderPool.Get();
-            if ((LoggerSetting.LogFormatMask & LogFormatType.Tag) > 0) {
-                builder.Append(string.Format(LoggerSetting.TagFormatter, tag.ToString()));
+            if ((_logFormatMask & LogFormatType.Tag) > 0) {
+                builder.Append(string.Format(_tagFormatter, tag.ToString()));
                 builder.Append(" ");
             }
 
-            if ((LoggerSetting.LogFormatMask & LogFormatType.Time) > 0) {
+            if ((_logFormatMask & LogFormatType.Time) > 0) {
                 builder.Append(DateTime.Now.ToString("[HH:mm:ss:fff]"));
                 builder.Append(" ");
             }
 
-            if ((LoggerSetting.LogFormatMask & LogFormatType.Class) > 0) {
-                if ((LoggerSetting.LogFormatMask & LogFormatType.Function) > 0) {
+            if ((_logFormatMask & LogFormatType.Class) > 0) {
+                var stackFrame = new StackFrame(skip + 3);
+                var methodBase = stackFrame.GetMethod();
+                if ((_logFormatMask & LogFormatType.Function) > 0) {
                     builder.Append("[");
-                    builder.Append(stackFrame.GetMethod().ReflectedType.Name);
+                    builder.Append(methodBase.ReflectedType?.Name);
                     builder.Append("::");
-                    builder.Append(stackFrame.GetMethod().Name);
+                    builder.Append(methodBase.Name);
                     builder.Append("]");
                 }
                 else {
                     builder.Append("[");
-                    builder.Append(stackFrame.GetMethod().ReflectedType.Name);
+                    builder.Append(methodBase.ReflectedType?.Name);
                     builder.Append("]");
                 }
             }
-            else if ((LoggerSetting.LogFormatMask & LogFormatType.Function) > 0) {
+            else if ((_logFormatMask & LogFormatType.Function) > 0) {
+                var stackFrame = new StackFrame(skip + 3);
                 builder.Append("[");
                 builder.Append(stackFrame.GetMethod().Name);
                 builder.Append("]");
@@ -173,8 +219,8 @@ namespace vFrame.Core.Loggers
         public static IEnumerable<LogContext> Logs(int logMask) {
             var logs = new Queue<LogContext>();
 
-            lock (QueueLock) {
-                foreach (var logContext in LogQueue)
+            lock (_queueLock) {
+                foreach (var logContext in _logQueue)
                     if (((int) logContext.Level & logMask) > 0)
                         logs.Enqueue(logContext);
             }

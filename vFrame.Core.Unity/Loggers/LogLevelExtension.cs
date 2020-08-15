@@ -16,7 +16,7 @@ namespace vFrame.Core.Loggers
                 case LogLevelDef.Fatal:
                     return UnityEngine.LogType.Exception;
                 default:
-                    throw new ArgumentOutOfRangeException("level");
+                    throw new ArgumentOutOfRangeException(nameof(level));
             }
         }
     }

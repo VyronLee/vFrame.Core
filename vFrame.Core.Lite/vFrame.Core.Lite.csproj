@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Extensions\ArrayExtension.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
+    <Compile Include="Loggers\LogToFile.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />
@@ -168,7 +169,6 @@
     <Compile Include="Localize\ILocalizationReader.cs" />
     <Compile Include="Loggers\LogFormatType.cs" />
     <Compile Include="Loggers\Logger.cs" />
-    <Compile Include="Loggers\LoggerSetting.cs" />
     <Compile Include="Loggers\LogLevelDef.cs" />
     <Compile Include="Loggers\LogTag.cs" />
     <Compile Include="Loggers\StackTraceUtility.cs" />

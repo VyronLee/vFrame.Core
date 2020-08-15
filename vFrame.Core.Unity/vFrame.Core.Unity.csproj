@@ -123,6 +123,7 @@
     <Compile Include="FileSystems\Unity\StreamingAssets\SAStandardVirtualFileStream.cs" />
     <Compile Include="FileSystems\Unity\StreamingAssets\SAStandardVirtualFileSystem.cs" />
     <Compile Include="Loggers\LogLevelExtension.cs" />
+    <Compile Include="Loggers\Unity\Logger.cs" />
     <Compile Include="Patch\Manifest.cs" />
     <Compile Include="Patch\ManifestJson.cs" />
     <Compile Include="Patch\PatchConst.cs" />

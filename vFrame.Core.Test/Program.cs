@@ -42,7 +42,7 @@ namespace ConsoleApplication1
 
         public static void Main(string[] args) {
             Logger.LogLevel = LogLevelDef.Info;
-            LoggerSetting.LogFormatMask = LogFormatType.Class | LogFormatType.Function;
+            Logger.LogFormatMask = LogFormatType.Class | LogFormatType.Function;
 
             var log1 = new StreamWriter(File.OpenWrite("log1.txt"));
             void Log1Proc(Logger.LogContext context) {
