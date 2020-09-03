@@ -1,6 +1,6 @@
-﻿namespace vFrame.Core.SpawnPools.Snapshots
+﻿namespace vFrame.Core.SpawnPools.Snapshots.Impls
 {
-    internal class GameObjectSnapshot : Snapshot
+    public class GameObjectSnapshot : Snapshot
     {
         private int _layer;
         private string _tag;

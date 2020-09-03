@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace vFrame.Core.SpawnPools.Snapshots
+namespace vFrame.Core.SpawnPools.Snapshots.Impls
 {
-    internal class BehaviourSnapshot : Snapshot
+    public class BehaviourSnapshot : Snapshot
     {
         private readonly Dictionary<int, bool> _behaviourEnables = new Dictionary<int, bool>(8);
 

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace vFrame.Core.SpawnPools.Snapshots
+namespace vFrame.Core.SpawnPools.Snapshots.Impls
 {
-    internal class RendererSnapshot : Snapshot
+    public class RendererSnapshot : Snapshot
     {
         private bool _rendererEnable;
 

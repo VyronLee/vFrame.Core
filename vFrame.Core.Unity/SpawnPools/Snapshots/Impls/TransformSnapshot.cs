@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace vFrame.Core.SpawnPools.Snapshots
+namespace vFrame.Core.SpawnPools.Snapshots.Impls
 {
-    internal class TransformSnapshot : Snapshot
+    public class TransformSnapshot : Snapshot
     {
         private Vector3 _localPosition;
         private Vector3 _localScale;

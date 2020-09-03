@@ -3,7 +3,7 @@ using vFrame.Core.Base;
 
 namespace vFrame.Core.SpawnPools.Snapshots
 {
-    internal abstract class Snapshot : BaseObject<GameObject>
+    public abstract class Snapshot : BaseObject<GameObject>
     {
         protected GameObject Target { get; private set; }
 
@@ -18,6 +18,5 @@ namespace vFrame.Core.SpawnPools.Snapshots
         public abstract void Take();
 
         public abstract void Restore();
-
     }
 }

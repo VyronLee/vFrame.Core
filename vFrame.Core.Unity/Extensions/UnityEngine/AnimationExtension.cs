@@ -38,5 +38,17 @@ namespace vFrame.Core.Extensions.UnityEngine
             animation.Play(name);
             yield return new WaitForSeconds(clip.length);
         }
+
+        /// <summary>
+        /// 播放动画，并一直等待到动画播放完成
+        /// </summary>
+        /// <param name="animation"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static IEnumerator CrossFadeUntilFinished(this Animation animation, string name) {
+            var clip = animation.GetClip(name);
+            animation.CrossFade(name);
+            yield return new WaitForSeconds(clip.length);
+        }
     }
 }

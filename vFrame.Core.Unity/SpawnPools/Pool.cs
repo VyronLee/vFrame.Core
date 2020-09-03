@@ -16,7 +16,6 @@ using vFrame.Core.Base;
 using vFrame.Core.Extensions.UnityEngine;
 using vFrame.Core.SpawnPools.Behaviours;
 using vFrame.Core.SpawnPools.Builders;
-using vFrame.Core.SpawnPools.Snapshots;
 using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
@@ -80,6 +79,10 @@ namespace vFrame.Core.SpawnPools
         }
 
         public GameObject Spawn() {
+            return Spawn(null);
+        }
+
+        public GameObject Spawn(IEnumerable<Type> additional) {
             GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
@@ -102,7 +105,7 @@ namespace vFrame.Core.SpawnPools
                 obj = _builder.Spawn();
 
                 var snapshot = new PoolObjectSnapshot();
-                snapshot.Create(obj);
+                snapshot.Create(obj, additional);
                 snapshot.Take();
                 _snapshots.Add(obj, snapshot);
             }
@@ -111,6 +114,10 @@ namespace vFrame.Core.SpawnPools
         }
 
         public IEnumerator SpawnAsync(Action<Object> callback) {
+            yield return SpawnAsync(callback, null);
+        }
+
+        public IEnumerator SpawnAsync(Action<Object> callback, IEnumerable<Type> additional) {
             GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
@@ -134,7 +141,7 @@ namespace vFrame.Core.SpawnPools
                     obj = v;
 
                     var snapshot = new PoolObjectSnapshot();
-                    snapshot.Create(obj);
+                    snapshot.Create(obj, additional);
                     snapshot.Take();
                     _snapshots.Add(obj, snapshot);
 

@@ -75,5 +75,28 @@ namespace vFrame.Core.Behaviours
             if (clip)
                 yield return _animation.PlayUntilFinished(clip.name);
         }
+
+        /// <summary>
+        /// 根据指定名称播放动画片段
+        /// </summary>
+        /// <param name="animationName"></param>
+        /// <returns></returns>
+        public void CrossFade(string animationName) {
+            var clip = GetAnimation(animationName);
+            if(!clip)
+                return;
+            _animation.CrossFade(clip.name);
+        }
+
+        /// <summary>
+        /// 根据指定名称播放动画片段，直到动画播放完成
+        /// </summary>
+        /// <param name="animationName"></param>
+        /// <returns></returns>
+        public IEnumerator CrossFadeUntilFinished(string animationName) {
+            var clip = GetAnimation(animationName);
+            if (clip)
+                yield return _animation.CrossFadeUntilFinished(clip.name);
+        }
     }
 }
