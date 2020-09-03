@@ -149,8 +149,13 @@ namespace vFrame.Core.Loggers
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
             var builder = StringBuilderPool.Get();
-            if ((_logFormatMask & LogFormatType.Tag) > 0) {
-                builder.Append(string.Format(_tagFormatter, tag.ToString()));
+            if ((_logFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(_tagFormatter)) {
+                try {
+                    builder.Append(string.Format(_tagFormatter, tag.ToString()));
+                }
+                catch (FormatException) {
+
+                }
                 builder.Append(" ");
             }
 
@@ -162,24 +167,29 @@ namespace vFrame.Core.Loggers
             if ((_logFormatMask & LogFormatType.Class) > 0) {
                 var stackFrame = new StackFrame(skip + 3);
                 var methodBase = stackFrame.GetMethod();
-                if ((_logFormatMask & LogFormatType.Function) > 0) {
-                    builder.Append("[");
-                    builder.Append(methodBase.ReflectedType?.Name);
-                    builder.Append("::");
-                    builder.Append(methodBase.Name);
-                    builder.Append("]");
-                }
-                else {
-                    builder.Append("[");
-                    builder.Append(methodBase.ReflectedType?.Name);
-                    builder.Append("]");
+                if (null != methodBase) {
+                    if ((_logFormatMask & LogFormatType.Function) > 0) {
+                        builder.Append("[");
+                        builder.Append(null == methodBase.ReflectedType ? "<Unknown>" : methodBase.ReflectedType.Name);
+                        builder.Append("::");
+                        builder.Append(methodBase.Name);
+                        builder.Append("]");
+                    }
+                    else {
+                        builder.Append("[");
+                        builder.Append(null == methodBase.ReflectedType ? "<Unknown>" : methodBase.ReflectedType.Name);
+                        builder.Append("]");
+                    }
                 }
             }
             else if ((_logFormatMask & LogFormatType.Function) > 0) {
                 var stackFrame = new StackFrame(skip + 3);
-                builder.Append("[");
-                builder.Append(stackFrame.GetMethod().Name);
-                builder.Append("]");
+                var methodBase = stackFrame.GetMethod();
+                if (null != methodBase) {
+                    builder.Append("[");
+                    builder.Append(methodBase.Name);
+                    builder.Append("]");
+                }
             }
 
             builder.Append(" ");
