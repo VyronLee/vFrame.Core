@@ -103,8 +103,7 @@ namespace vFrame.Core.FileSystems.Package
             var block = _blockInfos[idx];
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
-                //Logger.Info(FileSystemConst.LogTag, "Read stream: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
-                //    fileName, block.OriginalSize, block.CompressedSize);
+                OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
                 var stream = new PackageVirtualFileStream(vpkStream, block, access);
                 if (!stream.Open())
                     throw new PackageStreamOpenFailedException();
@@ -122,8 +121,7 @@ namespace vFrame.Core.FileSystems.Package
 
             var block = _blockInfos[idx];
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
-            //Logger.Info(FileSystemConst.LogTag, "Read stream async: {0}, size: {1:n0} bytes, compressed size: {2:n0} bytes",
-            //    fileName, block.OriginalSize, block.CompressedSize);
+            OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
         }
 
@@ -132,6 +130,8 @@ namespace vFrame.Core.FileSystems.Package
                 refs.Add(kv.Key);
             return refs;
         }
+
+        public override event OnGetStreamEventHandler OnGetStream;
 
         public override string ToString() {
             return _vpkVfsPath;

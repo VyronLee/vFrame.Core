@@ -28,5 +28,6 @@ namespace vFrame.Core.FileSystems
         }
 
         public abstract IList<VFSPath> List(IList<VFSPath> refs);
+        public abstract event OnGetStreamEventHandler OnGetStream;
     }
 }

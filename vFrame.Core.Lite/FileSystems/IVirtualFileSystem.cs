@@ -52,5 +52,13 @@ namespace vFrame.Core.FileSystems
         ///     List all files in this file system.
         /// </summary>
         IList<VFSPath> List(IList<VFSPath> refs);
+
+        /// <summary>
+        ///     On get stream callback.
+        /// </summary>
+        event OnGetStreamEventHandler OnGetStream;
+
     }
+
+    public delegate void OnGetStreamEventHandler(string filePath, long originalSize, long compressedSize);
 }

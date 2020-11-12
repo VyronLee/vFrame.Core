@@ -59,6 +59,8 @@ namespace vFrame.Core.FileSystems.Standard
             return refs;
         }
 
+        public override event OnGetStreamEventHandler OnGetStream;
+
         private void TravelDirectory(DirectoryInfo dir, IList<VFSPath> refs) {
             foreach (var fileInfo in dir.GetFiles()) {
                 var full = VFSPath.GetPath(fileInfo.FullName);
