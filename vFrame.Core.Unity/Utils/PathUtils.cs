@@ -41,14 +41,14 @@ namespace vFrame.Core.Utils
 
         public static string AbsolutePathToRelativeDataPath(string fullPath) {
             fullPath = NormalizePath(fullPath);
-            var projDataFullPath = NormalizePath(Path.GetFullPath(Application.dataPath) + "/");
+            var projDataFullPath = NormalizePath(Path.GetFullPath(DataPath) + "/");
             var relativaPath = fullPath.Replace(projDataFullPath, "");
             return NormalizePath(relativaPath);
         }
 
         public static string AbsolutePathToRelativeResourcesPath(string fullPath) {
             fullPath = NormalizePath(fullPath);
-            var resourcesPath = Path.Combine(Application.dataPath, "Resources");
+            var resourcesPath = Path.Combine(DataPath, "Resources");
             var projDataFullPath = NormalizePath(resourcesPath + "/");
             var relativePath = fullPath.Replace(projDataFullPath, "");
             return NormalizePath(relativePath);
@@ -57,28 +57,28 @@ namespace vFrame.Core.Utils
         public static string AbsolutePathToRelativeStreamingAssetsPath(string fullPath) {
             //Debug.LogError("AbsolutePathToRelativeStreamingAssetsPath - fullPath: " + fullPath);
             fullPath = NormalizePath(fullPath);
-            var projDataFullPath = NormalizePath(Application.streamingAssetsPath + "/");
+            var projDataFullPath = NormalizePath(StreamingAssetsPath + "/");
             var relativePath = fullPath.Replace(projDataFullPath, "");
             return NormalizePath(relativePath);
         }
 
         public static string RelativeDataPathToAbsolutePath(string relativePath) {
-            return Combine(Application.dataPath, relativePath);
+            return Combine(DataPath, relativePath);
         }
 
         public static string RelativeProjectPathToAbsolutePath(string relativePath) {
-            var dataPath = Application.dataPath;
+            var dataPath = DataPath;
             var projectPath = dataPath.Remove(dataPath.Length - 6, 6);
             return Combine(projectPath, relativePath);
         }
 
         public static string RelativeResourcesPathToAbsolutePath(string relativePath) {
-            var resourcesPath = Path.Combine(Application.dataPath, "Resources");
+            var resourcesPath = Path.Combine(DataPath, "Resources");
             return Combine(resourcesPath, relativePath);
         }
 
         public static string RelativeStreamingAssetsPathToAbsolutePath(string relativePath) {
-            return Combine(Application.streamingAssetsPath, relativePath);
+            return Combine(StreamingAssetsPath, relativePath);
         }
 
         public static string RelativeProjectPathToRelativeDataPath(string relativePath) {
@@ -119,12 +119,50 @@ namespace vFrame.Core.Utils
         }
 
         public static bool IsFileInPersistentDataPath(string path) {
-            return path.StartsWith(Application.persistentDataPath);
+            path = NormalizePath(path);
+            return path.StartsWith(PersistentDataPath);
         }
 
         public static bool IsStreamingAssetsPath(string path) {
             path = NormalizePath(path);
-            return path.StartsWith(Application.streamingAssetsPath);
+            return path.StartsWith(StreamingAssetsPath);
+        }
+
+        private static string _dataPath;
+        private static string DataPath {
+            get {
+                if (string.IsNullOrEmpty(_dataPath)) {
+                    _dataPath = Application.dataPath;
+                }
+                return _dataPath;
+            }
+        }
+
+        private static string _streamingAssetsPath;
+        private static string StreamingAssetsPath {
+            get {
+                if (string.IsNullOrEmpty(_streamingAssetsPath)) {
+                    _streamingAssetsPath = Application.streamingAssetsPath;
+                }
+                return _streamingAssetsPath;
+            }
+        }
+
+        private static string _persistentDataPath;
+        private static string PersistentDataPath {
+            get {
+                if (string.IsNullOrEmpty(_persistentDataPath)) {
+                    _persistentDataPath = Application.persistentDataPath;
+                }
+                return _persistentDataPath;
+            }
+        }
+
+        public static void Initialize() {
+            var _ = "";
+            _ = DataPath;
+            _ = StreamingAssetsPath;
+            _ = PersistentDataPath;
         }
     }
 }

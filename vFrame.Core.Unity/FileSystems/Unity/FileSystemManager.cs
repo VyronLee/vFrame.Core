@@ -9,6 +9,8 @@ namespace vFrame.Core.FileSystems.Unity
     {
         protected override void OnCreate() {
             BetterStreamingAssets.Initialize();
+            PathUtils.Initialize();
+
             base.OnCreate(new UnityFileStreamFactory());
         }
 
