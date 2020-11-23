@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using vFrame.Core.Base;
 
 namespace vFrame.Core.FileSystems
@@ -38,6 +39,12 @@ namespace vFrame.Core.FileSystems
         /// <param name="fileName"></param>
         /// <returns></returns>
         IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(string fileName);
+
+        /// <summary>
+        /// Get file system enumerator.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator<IVirtualFileSystem> GetEnumerator();
 
         /// <summary>
         /// Read all text from path.

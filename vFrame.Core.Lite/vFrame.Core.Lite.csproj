@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Extensions\ArrayExtension.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
+    <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />

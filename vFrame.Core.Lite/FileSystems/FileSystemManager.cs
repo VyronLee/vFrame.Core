@@ -70,6 +70,12 @@ namespace vFrame.Core.FileSystems
             return null;
         }
 
+        public IEnumerator<IVirtualFileSystem> GetEnumerator() {
+            foreach (var fileSystem in _fileSystems) {
+                yield return fileSystem;
+            }
+        }
+
         public string ReadAllText(string path) {
             using (var stream = GetStream(path)) {
                 return null == stream ? string.Empty : stream.ReadAllText();

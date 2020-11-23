@@ -23,7 +23,7 @@ using vFrame.Core.Profiles;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    internal class PackageVirtualFileSystem : VirtualFileSystem
+    internal class PackageVirtualFileSystem : VirtualFileSystem, IPackageVirtualFileSystem
     {
         private PackageHeader _header;
         private List<PackageBlockInfo> _blockInfos;
@@ -96,11 +96,7 @@ namespace vFrame.Core.FileSystems.Package
                 throw new NotSupportedException("Only 'FileAccess.Read' is supported in package virtual file system.");
             }
 
-            var idx = _fileList[fileName];
-            if (idx < 0 || idx >= _blockInfos.Count)
-                throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
-
-            var block = _blockInfos[idx];
+            var block = GetBlockInfo(fileName);
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
                 OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
@@ -112,14 +108,7 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
-            if (!Exist(fileName))
-                throw new PackageFileSystemFileNotFound();
-
-            var idx = _fileList[fileName];
-            if (idx < 0 || idx >= _blockInfos.Count)
-                throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
-
-            var block = _blockInfos[idx];
+            var block = GetBlockInfo(fileName);
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
@@ -132,6 +121,19 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override event OnGetStreamEventHandler OnGetStream;
+
+        public VFSPath PackageFilePath => _vpkVfsPath;
+
+        public PackageBlockInfo GetBlockInfo(string fileName) {
+            if (!Exist(fileName))
+                throw new PackageFileSystemFileNotFound();
+
+            var idx = _fileList[fileName];
+            if (idx < 0 || idx >= _blockInfos.Count)
+                throw new IndexOutOfRangeException($"Block count: {_blockInfos.Count}, but get idx: {idx}");
+
+            return _blockInfos[idx];
+        }
 
         public override string ToString() {
             return _vpkVfsPath;

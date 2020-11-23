@@ -10,7 +10,7 @@
 
 namespace vFrame.Core.FileSystems.Package
 {
-    internal struct PackageHeader
+    public struct PackageHeader
     {
         public long Id;
         public long Version;
@@ -28,7 +28,7 @@ namespace vFrame.Core.FileSystems.Package
         }
     }
 
-    internal struct PackageBlockInfo
+    public struct PackageBlockInfo
     {
         public long Flags;
         public long Offset;
