@@ -43,8 +43,9 @@ namespace vFrame.Core.ObjectPools
                 if (null == _instance)
                     lock (_instanceLockObject) {
                         if (null == _instance) {
-                            _instance = new ObjectPool<TClass>();
-                            _instance.Initialize();
+                            var instance = new ObjectPool<TClass>();
+                            instance.Initialize();
+                            _instance = instance;
                         }
                     }
 
@@ -57,8 +58,6 @@ namespace vFrame.Core.ObjectPools
                 _objects = new Stack<TClass>(InitSize);
                 for (var i = 0; i < InitSize; i++) _objects.Push(new TClass());
             }
-
-            _instance = this;
 
             ObjectPoolManager.Instance().RegisterPool(this);
         }
@@ -118,8 +117,9 @@ namespace vFrame.Core.ObjectPools
                 if (null == _instance)
                     lock (_instanceLockObject) {
                         if (null == _instance) {
-                            _instance = new ObjectPool<TClass, TAllocator>();
-                            _instance.Initialize();
+                            var instance = new ObjectPool<TClass, TAllocator>();
+                            instance.Initialize();
+                            _instance = instance;
                         }
                     }
 
@@ -133,8 +133,6 @@ namespace vFrame.Core.ObjectPools
                 _objects = new Stack<TClass>(InitSize);
                 for (var i = 0; i < InitSize; i++) _objects.Push(_allocator.Alloc());
             }
-
-            _instance = this;
 
             ObjectPoolManager.Instance().RegisterPool(this);
         }
