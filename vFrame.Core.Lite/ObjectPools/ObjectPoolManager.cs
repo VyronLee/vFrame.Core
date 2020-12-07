@@ -39,7 +39,7 @@ namespace vFrame.Core.ObjectPools
                 }
             }
 
-            throw new ArgumentOutOfRangeException("obj", "No object pool of type: " + obj.GetType().Name);
+            //throw new ArgumentOutOfRangeException("obj", "No object pool of type: " + obj.GetType().Name);
         }
     }
 }
