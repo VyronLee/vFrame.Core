@@ -60,13 +60,18 @@ namespace vFrame.Core.Coroutine
         public void Destroy() {
             foreach (var task in TasksRunning) {
                 var runner = CoroutineList[task.RunnerId];
+                if (!runner) {
+                    continue;
+                }
                 runner.CoStop();
                 Object.Destroy(runner.gameObject);
             }
             TasksRunning.Clear();
             TasksWaiting.Clear();
 
-            Object.Destroy(_holder);
+            if (_holder) {
+                Object.Destroy(_holder);
+            }
         }
 
         public int StartCoroutine(IEnumerator task) {
