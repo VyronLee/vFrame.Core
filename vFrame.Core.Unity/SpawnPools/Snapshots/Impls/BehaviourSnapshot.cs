@@ -10,6 +10,9 @@ namespace vFrame.Core.SpawnPools.Snapshots.Impls
         public override void Take() {
             var behaviours = Target.GetComponents<Behaviour>();
             foreach (var behaviour in behaviours) {
+                if (!behaviour) {
+                    continue;
+                }
                 var id = behaviour.GetInstanceID();
                 _behaviourEnables[id] = behaviour.enabled;
             }
@@ -18,6 +21,10 @@ namespace vFrame.Core.SpawnPools.Snapshots.Impls
         public override void Restore() {
             var behaviours = Target.GetComponents<Behaviour>();
             foreach (var behaviour in behaviours) {
+                if (!behaviour) {
+                    continue;
+                }
+
                 var id = behaviour.GetInstanceID();
                 if (_behaviourEnables.TryGetValue(id, out var enable)) {
                     behaviour.enabled = enable;
