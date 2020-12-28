@@ -73,4 +73,16 @@ namespace vFrame.Core.Base
         protected override void OnCreate() {
         }
     }
+
+    public abstract class BaseObject<T1, T2, T3, T4> : BaseObject, IBaseObject<T1, T2, T3, T4>
+    {
+        public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+            OnCreate(arg1, arg2, arg3, arg4);
+        }
+
+        protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
+
+        protected override void OnCreate() {
+        }
+    }
 }
