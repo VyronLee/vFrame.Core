@@ -238,7 +238,7 @@ namespace vFrame.Core.FileSystems.Package
             header.BlockOffset = header.BlockTableOffset + header.BlockTableSize;
             header.Reserved = 0;
 
-            var blockSize = blocksDataByte.Sum(bytes => bytes.Length);
+            var blockSize = blocksDataByte.Sum(bytes => (long) bytes.Length);
             header.Size = PackageHeader.GetMarshalSize() * header.FileListSize + header.BlockTableSize + blockSize;
 
             onProgress?.Invoke(ProcessState.WritingHeader, 0, 1);
