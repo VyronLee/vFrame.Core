@@ -148,7 +148,7 @@ namespace vFrame.Core.Loggers
         }
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
-            var builder = StringBuilderPool.Get();
+            var builder = StringBuilderPool.Shared.Get();
             if ((_logFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(_tagFormatter)) {
                 try {
                     builder.Append(string.Format(_tagFormatter, tag.ToString()));
@@ -196,7 +196,7 @@ namespace vFrame.Core.Loggers
             builder.Append(log);
 
             var text = builder.ToString();
-            StringBuilderPool.Return(builder);
+            StringBuilderPool.Shared.Return(builder);
 
             return text;
         }

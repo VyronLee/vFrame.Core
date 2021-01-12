@@ -33,10 +33,10 @@ namespace vFrame.Core.Crypto
             CryptoService service;
             switch (type) {
                 case CryptoType.Plain:
-                    service = ObjectPool<PlainCryptoService>.Get();
+                    service = ObjectPool<PlainCryptoService>.Shared.Get();
                     break;
                 case CryptoType.Xor:
-                    service = ObjectPool<XorCryptoService>.Get();
+                    service = ObjectPool<XorCryptoService>.Shared.Get();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));

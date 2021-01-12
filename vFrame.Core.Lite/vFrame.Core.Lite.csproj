@@ -76,6 +76,7 @@
     <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
+    <Compile Include="ObjectPools\IObjectPoolManager.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />

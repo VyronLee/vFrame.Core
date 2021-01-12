@@ -20,29 +20,29 @@ namespace vFrame.Core.Extensions
         }
 
         public static string ToHex(this byte[] bytes) {
-            var builder = StringBuilderPool.Get();
+            var builder = StringBuilderPool.Shared.Get();
             foreach (var b in bytes)
                 builder.Append(b.ToString("X2"));
             var str = builder.ToString();
-            StringBuilderPool.Return(builder);
+            StringBuilderPool.Shared.Return(builder);
             return str;
         }
 
         public static string ToHex(this byte[] bytes, string format) {
-            var builder = StringBuilderPool.Get();
+            var builder = StringBuilderPool.Shared.Get();
             foreach (var b in bytes)
                 builder.Append(b.ToString(format));
             var str = builder.ToString();
-            StringBuilderPool.Return(builder);
+            StringBuilderPool.Shared.Return(builder);
             return str;
         }
 
         public static string ToHex(this byte[] bytes, int offset, int count) {
-            var builder = StringBuilderPool.Get();
+            var builder = StringBuilderPool.Shared.Get();
             for (var i = offset; i < offset + count; ++i)
                 builder.Append(bytes[i].ToString("X2"));
             var str = builder.ToString();
-            StringBuilderPool.Return(builder);
+            StringBuilderPool.Shared.Return(builder);
             return str;
         }
 

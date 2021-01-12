@@ -108,7 +108,7 @@ namespace vFrame.Core.SpawnPools
                 return;
             _lastGC = 0;
 
-            var pools = ListPool<string>.Get();
+            var pools = ListPool<string>.Shared.Get();
 
             // Clear overtime pools
             foreach (var kv in _pools) {
@@ -139,7 +139,7 @@ namespace vFrame.Core.SpawnPools
                 _pools[pools[i]].Clear();
             }
 
-            ListPool<string>.Return(pools);
+            ListPool<string>.Shared.Return(pools);
         }
     }
 }
