@@ -57,8 +57,7 @@ namespace vFrame.Core.FileSystems
         ///     On get stream callback.
         /// </summary>
         event OnGetStreamEventHandler OnGetStream;
-
     }
 
-    public delegate void OnGetStreamEventHandler(string filePath, long originalSize, long compressedSize);
+    public delegate void OnGetStreamEventHandler(string vfsPath, string filePath, long originalSize, long compressedSize);
 }
