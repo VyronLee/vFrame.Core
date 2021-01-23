@@ -25,7 +25,7 @@ namespace vFrame.Core.Compress
             CompressService service;
             switch (type) {
                 case CompressType.LZMA:
-                    service = ObjectPool<LZMACompressService>.Get();
+                    service = ObjectPool<LZMACompressService>.Shared.Get();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));

@@ -4,42 +4,68 @@ using vFrame.Core.Singletons;
 
 namespace vFrame.Core.ObjectPools
 {
-    public class ObjectPoolManager : Singleton<ObjectPoolManager>
+    public class ObjectPoolManager : Singleton<ObjectPoolManager>, IObjectPoolManager
     {
         private Dictionary<Type, IObjectPool> _pools;
-        private readonly object _lockObject = new object();
+        private readonly object _lockObject_1 = new object();
+        private readonly object _lockObject_2 = new object();
 
         protected override void OnCreate() {
-            lock (_lockObject) {
+            lock (_lockObject_1) {
                 _pools = new Dictionary<Type, IObjectPool>(256);
             }
         }
 
-        public void RegisterPool<T>(IObjectPool<T> pool) {
-            lock (_lockObject) {
-                _pools.Add(typeof(T), pool);
-            }
-        }
+        public static ObjectPoolManager Shared => Instance();
 
         public T Get<T>() where T : class, new() {
-            IObjectPool pool = null;
-            lock (_lockObject) {
-                if (_pools.TryGetValue(typeof(T), out pool)) return ((IObjectPool<T>) pool).GetObject();
+            lock (_lockObject_1) {
+                return GetObjectPool<T>().Get();
             }
-
-            return ObjectPool<T>.Get();
         }
 
-        public void Return<T>(T obj) {
-            IObjectPool pool = null;
-            lock (_lockObject) {
-                if (_pools.TryGetValue(obj.GetType(), out pool)) {
-                    pool.ReturnObject(obj);
+        public void Return<T>(T obj) where T : class, new() {
+            lock (_lockObject_1) {
+                GetObjectPool<T>().Return(obj);
+            }
+        }
+
+        public void TryReturn<T>(T obj) where T : class {
+            lock (_lockObject_1) {
+                if (!_pools.TryGetValue(typeof(T), out var pool)) {
                     return;
                 }
+                ((IObjectPool<T>) pool).Return(obj);
             }
+        }
 
-            //throw new ArgumentOutOfRangeException("obj", "No object pool of type: " + obj.GetType().Name);
+        public IObjectPool<T> GetObjectPool<T>() where T : class, new() {
+            lock (_lockObject_2) {
+                if (_pools.TryGetValue(typeof(T), out var pool)) {
+                    return (IObjectPool<T>) pool;
+                }
+
+                var objPool = new ObjectPool<T>();
+                objPool.Initialize();
+                _pools.Add(typeof(T), objPool);
+                return objPool;
+            }
+        }
+
+        public IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
+            where TClass : class, new()
+            where TAllocator : IPoolObjectAllocator<TClass>, new() {
+
+            lock (_lockObject_2) {
+                if (_pools.TryGetValue(typeof(TClass), out var pool)) {
+                    return (IObjectPool<TClass>) pool;
+                }
+
+                var objPool = new ObjectPool<TClass, TAllocator>();
+                objPool.Initialize();
+                _pools.Add(typeof(TClass), objPool);
+                return objPool;
+            }
         }
     }
 }

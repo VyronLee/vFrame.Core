@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A2711064-B77A-47D1-BD1D-581BE4ED1FCE}</ProjectGuid>
+    <ProjectGuid>{78BB6750-7FEF-4A4F-A787-B94537805A10}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>vFrame.Core</RootNamespace>
@@ -76,6 +76,7 @@
     <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
+    <Compile Include="ObjectPools\IObjectPoolManager.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />

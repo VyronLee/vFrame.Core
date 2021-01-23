@@ -39,7 +39,7 @@ namespace vFrame.Core.Events
             if (listener == null)
                 throw new ArgumentNullException("listener");
 
-            var executor = EventExecutorPool.Get();
+            var executor = EventExecutorPool.Shared.Get();
             executor.EventId = eventId;
             executor.Listener = listener;
             executor.Handle = _index++;
@@ -53,7 +53,7 @@ namespace vFrame.Core.Events
         }
 
         public uint AddEventListener(Action<IEvent> action, int eventId) {
-            var delegateEventListener = ObjectPool<DelegateEventListener>.Get();
+            var delegateEventListener = ObjectPool<DelegateEventListener>.Shared.Get();
             delegateEventListener.Action = action;
 
             return AddEventListener(delegateEventListener, eventId);
@@ -72,7 +72,7 @@ namespace vFrame.Core.Events
 
             var eventListener = listener as DelegateEventListener;
             if (eventListener != null)
-                ObjectPool<DelegateEventListener>.Return(eventListener);
+                ObjectPool<DelegateEventListener>.Shared.Return(eventListener);
 
             return null;
         }
@@ -91,7 +91,7 @@ namespace vFrame.Core.Events
             var len = executorList.Count;
             for (var i = len - 1; i >= 0; --i)
                 if (executorList[i].Stopped) {
-                    EventExecutorPool.Return(executorList[i]);
+                    EventExecutorPool.Shared.Return(executorList[i]);
                     executorList.RemoveAt(i);
                 }
 
@@ -100,7 +100,7 @@ namespace vFrame.Core.Events
                 executor.Activate();
 
             // 循环执行
-            var e = EventPool.Get();
+            var e = EventPool.Shared.Get();
             e.EventId = eventId;
             e.Context = context;
             e.Target = this;
@@ -118,11 +118,11 @@ namespace vFrame.Core.Events
                 }
             }
 
-            EventPool.Return(e);
+            EventPool.Shared.Return(e);
         }
 
         public uint AddVoteListener(IVoteListener listener, int voteId) {
-            var executor = VoteExecutorPool.Get();
+            var executor = VoteExecutorPool.Shared.Get();
             executor.VoteId = voteId;
             executor.Listener = listener;
             executor.Handle = _index++;
@@ -136,7 +136,7 @@ namespace vFrame.Core.Events
         }
 
         public uint AddVoteListener(Func<IVote, bool> func, int voteId) {
-            var listener = ObjectPool<DelegateVoteListener>.Get();
+            var listener = ObjectPool<DelegateVoteListener>.Shared.Get();
             listener.VoteAction = func;
 
             return AddVoteListener(listener, voteId);
@@ -156,7 +156,7 @@ namespace vFrame.Core.Events
 
             var voteListener = listener as DelegateVoteListener;
             if (voteListener != null)
-                ObjectPool<DelegateVoteListener>.Return(voteListener);
+                ObjectPool<DelegateVoteListener>.Shared.Return(voteListener);
 
             return null;
         }
@@ -175,7 +175,7 @@ namespace vFrame.Core.Events
             var len = executorList.Count;
             for (var i = len - 1; i >= 0; --i)
                 if (executorList[i].Stopped) {
-                    VoteExecutorPool.Return(executorList[i]);
+                    VoteExecutorPool.Shared.Return(executorList[i]);
                     executorList.RemoveAt(i);
                 }
 
@@ -184,7 +184,7 @@ namespace vFrame.Core.Events
                 executor.Activate();
 
             // 循环执行
-            var e = VotePool.Get();
+            var e = VotePool.Shared.Get();
             e.VoteId = voteId;
             e.Context = context;
             e.Target = this;
@@ -207,7 +207,7 @@ namespace vFrame.Core.Events
                 }
             }
 
-            VotePool.Return(e);
+            VotePool.Shared.Return(e);
             return pass;
         }
 

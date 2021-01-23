@@ -96,10 +96,10 @@ namespace vFrame.Core.FileSystems.Package
                 throw new NotSupportedException("Only 'FileAccess.Read' is supported in package virtual file system.");
             }
 
-            var block = GetBlockInfo(fileName);
+            var block = GetBlockInfoInternal(fileName);
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             using (vpkStream) {
-                OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
+                OnGetStream?.Invoke(_vpkVfsPath, fileName, block.OriginalSize, block.CompressedSize);
                 var stream = new PackageVirtualFileStream(vpkStream, block, access);
                 if (!stream.Open())
                     throw new PackageStreamOpenFailedException();
@@ -108,9 +108,9 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
-            var block = GetBlockInfo(fileName);
+            var block = GetBlockInfoInternal(fileName);
             var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
-            OnGetStream?.Invoke(fileName, block.OriginalSize, block.CompressedSize);
+            OnGetStream?.Invoke(_vpkVfsPath, fileName, block.OriginalSize, block.CompressedSize);
             return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
         }
 
@@ -122,9 +122,16 @@ namespace vFrame.Core.FileSystems.Package
 
         public override event OnGetStreamEventHandler OnGetStream;
 
+        public event OnGetPackageBlockEventHandler OnGetBlock;
+
         public VFSPath PackageFilePath => _vpkVfsPath;
 
         public PackageBlockInfo GetBlockInfo(string fileName) {
+            OnGetBlock?.Invoke(_vpkVfsPath, fileName);
+            return GetBlockInfoInternal(fileName);
+        }
+
+        private PackageBlockInfo GetBlockInfoInternal(string fileName) {
             if (!Exist(fileName))
                 throw new PackageFileSystemFileNotFound();
 
