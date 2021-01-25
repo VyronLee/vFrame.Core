@@ -237,16 +237,23 @@ namespace vFrame.Core.Patch
 
                     if (gvc != 0 || avc > 0) {
                         Logger.Info(PatchConst.LogTag,
-                            "Local version({0}) greater than cache version({1}), deleting storage path: {2}..",
-                            _localManifest.EngineVersion, cachedManifest.EngineVersion, _storagePath);
+                            "Local version(engine: {0} asset: {1}) greater than cache version(engine: {2} asset: {3}), deleting storage path: {4}..",
+                            _localManifest.EngineVersion,
+                            _localManifest.AssetsVersion,
+                            cachedManifest.EngineVersion,
+                            cachedManifest.AssetsVersion,
+                            _storagePath);
 
                         Directory.Delete(_storagePath, true);
                         Directory.CreateDirectory(_storagePath);
                     }
                     else {
                         Logger.Info(PatchConst.LogTag,
-                            "Cache version({0}) greater than local version({1}), switching to cache manifest..",
-                            cachedManifest.EngineVersion, _localManifest.EngineVersion);
+                            "Cache version(engine: {0} asset: {1}) greater than local version(engine: {2} asset: {3}), switching to cache manifest..",
+                            cachedManifest.EngineVersion,
+                            cachedManifest.AssetsVersion,
+                            _localManifest.EngineVersion,
+                            _localManifest.AssetsVersion);
 
                         _localManifest = cachedManifest;
                     }
