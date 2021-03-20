@@ -9,19 +9,18 @@
 //============================================================
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.Extensions.UnityEngine;
 using vFrame.Core.SpawnPools.Behaviours;
-using vFrame.Core.SpawnPools.Builders;
+using vFrame.Core.SpawnPools.Loaders;
 using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools
 {
-    public class Pool : BaseObject<string, SpawnPools, IGameObjectBuilder>, IPool
+    public class Pool : BaseObject<string, SpawnPools, IGameObjectLoader>, IPool
     {
         private readonly Queue<GameObject> _objects = new Queue<GameObject>();
         private int _lastTime;
@@ -29,20 +28,25 @@ namespace vFrame.Core.SpawnPools
 
         private SpawnPools _spawnPools;
         private string _poolName;
-        private IGameObjectBuilder _builder;
+        private IGameObjectLoader _builder;
 
         private int _uniqueId;
         private int NewUniqueId => ++_uniqueId;
         private Dictionary<GameObject, PoolObjectSnapshot> _snapshots;
 
+        private Action<GameObject> _onGetGameObject;
+        private Action<GameObject, IEnumerable<Type>> _onLoadCallbackImmediately;
+
         public int SpawnedTimes { get; private set; }
 
-        protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectBuilder builder) {
+        protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectLoader builder) {
             _spawnPools = spawnPools;
             _lastTime = Time.frameCount;
             _poolName = poolName;
             _builder = builder;
             _snapshots = new Dictionary<GameObject, PoolObjectSnapshot>(32);
+            _onGetGameObject = OnGetGameObject;
+            _onLoadCallbackImmediately = OnLoadCallbackImmediately;
 
             _poolGo = new GameObject(string.Format("Pool({0})", poolName));
             _poolGo.transform.SetParent(_spawnPools.PoolsParent.transform, false);
@@ -102,22 +106,20 @@ namespace vFrame.Core.SpawnPools
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
-                obj = _builder.Spawn();
+                obj = _builder.Load();
 
-                var snapshot = new PoolObjectSnapshot();
-                snapshot.Create(obj, additional);
-                snapshot.Take();
-                _snapshots.Add(obj, snapshot);
+                OnLoadCallbackImmediately(obj, additional);
             }
 
-            return OnSpawn(obj);
+            OnGetGameObject(obj);
+            return obj;
         }
 
-        public IEnumerator SpawnAsync(Action<Object> callback) {
-            yield return SpawnAsync(callback, null);
+        public ILoaderAsyncRequest SpawnAsync() {
+            return SpawnAsync(null);
         }
 
-        public IEnumerator SpawnAsync(Action<Object> callback, IEnumerable<Type> additional) {
+        public ILoaderAsyncRequest SpawnAsync(IEnumerable<Type> additional) {
             GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
@@ -133,34 +135,44 @@ namespace vFrame.Core.SpawnPools
                 }
             }
 
-            if (null == obj) {
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
-#endif
-                yield return _builder.SpawnAsync(v => {
-                    obj = v;
-
-                    var snapshot = new PoolObjectSnapshot();
-                    snapshot.Create(obj, additional);
-                    snapshot.Take();
-                    _snapshots.Add(obj, snapshot);
-
-                    HideGameObject(obj);
-                });
-                ShowGameObject(obj);
+            LoadAsyncRequest request;
+            if (null != obj) {
+                request = LoadAsyncRequestOnLoaded.Create(obj);
+                request.AdditionalSnapshotTypes = additional;
+                request.OnLoadCallback = _onLoadCallbackImmediately;
+                request.OnGetGameObject = _onGetGameObject;
+                return request;
             }
 
-            OnSpawn(obj);
-            callback(obj);
+#if DEBUG_SPAWNPOOLS
+            Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
+#endif
+            request = _builder.LoadAsync();
+            request.AdditionalSnapshotTypes = additional;
+            request.OnLoadCallback = _onLoadCallbackImmediately;
+            request.OnGetGameObject = _onGetGameObject;
+            return request;
         }
 
-        private GameObject OnSpawn(GameObject obj) {
+        private void OnLoadCallbackImmediately(GameObject obj, IEnumerable<Type> additional) {
+            if (!_snapshots.TryGetValue(obj, out var snapshot)) {
+                snapshot = new PoolObjectSnapshot();
+                snapshot.Create(obj, additional);
+                snapshot.Take();
+                _snapshots.Add(obj, snapshot);
+            }
+            HideGameObject(obj);
+        }
+
+        private void OnGetGameObject(GameObject obj) {
+            OnSpawn(obj);
+        }
+
+        private void OnSpawn(GameObject obj) {
             ++SpawnedTimes;
             _lastTime = Time.frameCount;
 
             ObjectPreprocessBeforeReturn(obj);
-
-            return obj;
         }
 
         public void Recycle(GameObject obj) {
@@ -225,7 +237,7 @@ namespace vFrame.Core.SpawnPools
             identity.IsPooling = true;
 
             if (!_snapshots.TryGetValue(go, out _)) {
-                //Logger.Warning("No target snapshot in the pool: " + go);
+                Logger.Warning("No target snapshot in the pool: " + identity.AssetPath);
                 identity.Destroyed = true;
                 return false;
             }

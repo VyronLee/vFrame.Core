@@ -12,11 +12,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.ObjectPools.Builtin;
-using vFrame.Core.SpawnPools.Builders;
+using vFrame.Core.SpawnPools.Loaders;
 
 namespace vFrame.Core.SpawnPools
 {
-    public class SpawnPools : BaseObject<IGameObjectBuilderFactory, SpawnPoolsSetting>, ISpawnPools
+    public class SpawnPools : BaseObject<IGameObjectLoaderFactory, SpawnPoolsSetting>, ISpawnPools
     {
         private GameObject _poolsParent;
         private SpawnPoolsSetting _poolsSetting;
@@ -35,16 +35,14 @@ namespace vFrame.Core.SpawnPools
 
         private readonly Dictionary<string, Pool> _pools = new Dictionary<string, Pool>();
 
-        private IGameObjectBuilderFactory _builderFromPathFactory;
-        private IGameObjectBuilderFactory _builderFromPrefabInstanceFactory;
+        private IGameObjectLoaderFactory _builderFromPathFactory;
 
         private int _lastGC;
 
         public SpawnPoolsSetting PoolsSetting => _poolsSetting;
 
-        protected override void OnCreate(IGameObjectBuilderFactory factory, SpawnPoolsSetting poolsSetting) {
-            _builderFromPathFactory = factory ?? new DefaultGameObjectBuilderFromPathFactory();
-            _builderFromPrefabInstanceFactory = new DefaultGameObjectBuilderFromPrefabInstanceFactory();
+        protected override void OnCreate(IGameObjectLoaderFactory factory, SpawnPoolsSetting poolsSetting) {
+            _builderFromPathFactory = factory ?? new DefaultGameObjectLoaderFromPathFactory();
             _poolsSetting = poolsSetting;
         }
 
@@ -67,7 +65,7 @@ namespace vFrame.Core.SpawnPools
                 if (_pools.ContainsKey(assetName))
                     return _pools[assetName];
 
-                if (!(_builderFromPathFactory.CreateBuilder() is IGameObjectBuilderFromPath builder))
+                if (!(_builderFromPathFactory.CreateLoader() is IGameObjectLoaderFromPath builder))
                     return null;
 
                 builder.Create(assetName);
@@ -76,27 +74,6 @@ namespace vFrame.Core.SpawnPools
                 pool.Create(assetName, this, builder);
 
                 _pools.Add(assetName, pool);
-                PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
-
-                return pool;
-            }
-        }
-
-        public IPool this[GameObject prefab] {
-            get {
-                var prefabCode = $"Prefab-{prefab.name}-{prefab.GetInstanceID()}";
-                if (_pools.ContainsKey(prefabCode))
-                    return _pools[prefabCode];
-
-                if (!(_builderFromPrefabInstanceFactory.CreateBuilder() is IGameObjectBuilderFromPrefabInstance builder))
-                    return null;
-
-                builder.Create(prefab);
-
-                var pool = new Pool();
-                pool.Create(prefabCode, this, builder);
-
-                _pools.Add(prefabCode, pool);
                 PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
 
                 return pool;

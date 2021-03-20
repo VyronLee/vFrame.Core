@@ -12,7 +12,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -20,9 +19,16 @@ namespace vFrame.Core.SpawnPools
     {
         GameObject Spawn();
         GameObject Spawn(IEnumerable<Type> additional);
-        IEnumerator SpawnAsync(Action<Object> callback);
-        IEnumerator SpawnAsync(Action<Object> callback, IEnumerable<Type> additional);
+        ILoaderAsyncRequest SpawnAsync();
+        ILoaderAsyncRequest SpawnAsync(IEnumerable<Type> additional);
         void Recycle(GameObject obj);
         int Count { get; }
+    }
+
+    public interface ILoaderAsyncRequest : IDisposable
+    {
+        GameObject GetGameObject();
+        IEnumerator Await();
+        bool IsFinished { get; }
     }
 }

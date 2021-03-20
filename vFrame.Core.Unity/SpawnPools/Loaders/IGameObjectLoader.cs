@@ -8,16 +8,14 @@
 //   Copyright:  Copyright (c) 2018, VyronLee
 //============================================================
 
-using System;
-using System.Collections;
 using UnityEngine;
 using vFrame.Core.Base;
 
-namespace vFrame.Core.SpawnPools.Builders
+namespace vFrame.Core.SpawnPools.Loaders
 {
-    public interface IGameObjectBuilder : IBaseObject
+    public interface IGameObjectLoader : IBaseObject
     {
-        GameObject Spawn();
-        IEnumerator SpawnAsync(Action<GameObject> callback);
+        GameObject Load();
+        LoadAsyncRequest LoadAsync();
     }
 }
