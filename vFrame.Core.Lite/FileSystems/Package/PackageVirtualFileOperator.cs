@@ -205,7 +205,7 @@ namespace vFrame.Core.FileSystems.Package
                     var keyBytes = BitConverter.GetBytes(encryptKey);
                     var cryptoService = CryptoService.CreateCryptoService((CryptoType) (encryptType >> 12));
                     cryptoService.Encrypt(input, encrypted, keyBytes, keyBytes.Length);
-                    cryptoService.Destroy();
+                    CryptoService.DestroyCryptoService(cryptoService);
                     return encrypted.ToArray();
                 }
             }
@@ -216,7 +216,7 @@ namespace vFrame.Core.FileSystems.Package
                 using (var input = new MemoryStream(buffer)) {
                     var compressService = CompressService.CreateCompressService((CompressType) (compressType >> 8));
                     compressService.Compress(input, compressed);
-                    compressService.Destroy();
+                    CompressService.DestroyCompressService(compressService);
                     return compressed.ToArray();
                 }
             }

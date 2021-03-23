@@ -45,5 +45,19 @@ namespace vFrame.Core.Crypto
             service.Create();
             return service;
         }
+
+        public static void DestroyCryptoService(ICryptoService cryptoService) {
+            cryptoService.Destroy();
+            switch (cryptoService) {
+                case PlainCryptoService plainCryptoService:
+                    ObjectPool<PlainCryptoService>.Shared.Return(plainCryptoService);
+                    break;
+                case XorCryptoService xorCryptoService:
+                    ObjectPool<XorCryptoService>.Shared.Return(xorCryptoService);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(cryptoService.GetType().FullName);
+            }
+        }
     }
 }

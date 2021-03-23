@@ -34,5 +34,16 @@ namespace vFrame.Core.Compress
             service.Create(options);
             return service;
         }
+
+        public static void DestroyCompressService(CompressService service) {
+            service.Destroy();
+            switch (service) {
+                case LZMACompressService lzmaCompressService:
+                    ObjectPool<LZMACompressService>.Shared.Return(lzmaCompressService);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(service.GetType().FullName);
+            }
+        }
     }
 }

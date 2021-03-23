@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using vFrame.Core.ThirdParty.SevenZip;
 using vFrame.Core.ThirdParty.SevenZip.Compression.LZMA;
@@ -11,6 +13,29 @@ namespace vFrame.Core.Compress.LZMA
             DictionarySize = LZMACompressOptions.LZMADictionarySize.Small,
             Speed = LZMACompressOptions.LZMASpeed.Medium,
         };
+
+        private static readonly Dictionary<LZMACompressOptions.LZMADictionarySize, ConcurrentQueue<Encoder>> EncoderCache
+            = new Dictionary<LZMACompressOptions.LZMADictionarySize, ConcurrentQueue<Encoder>> {
+                {LZMACompressOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Encoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Small, new ConcurrentQueue<Encoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Encoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Large, new ConcurrentQueue<Encoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Encoder>()},
+                {LZMACompressOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Encoder>()},
+            };
+
+        private static readonly Dictionary<LZMACompressOptions.LZMADictionarySize, ConcurrentQueue<Decoder>> DecoderCache
+            = new Dictionary<LZMACompressOptions.LZMADictionarySize, ConcurrentQueue<Decoder>> {
+                {LZMACompressOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Decoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Small, new ConcurrentQueue<Decoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Decoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Large, new ConcurrentQueue<Decoder>()},
+                {LZMACompressOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Decoder>()},
+                {LZMACompressOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Decoder>()},
+            };
+
+        private static readonly ConcurrentQueue<object[]> ObjectArrayCache = new ConcurrentQueue<object[]>();
+        private static readonly ConcurrentQueue<byte[]> ByteArrayCache = new ConcurrentQueue<byte[]>();
 
         private static readonly CoderPropID[] PropIDs = {
             CoderPropID.DictionarySize,
@@ -35,42 +60,64 @@ namespace vFrame.Core.Compress.LZMA
             const string matchFinder = "BT4"; // default: BT4
             const bool endMarker = true;
 
-            object[] properties = {
-                (int) options.DictionarySize,
-                posStateBits,
-                litContextBits,
-                litPosBits,
-                (int) options.Speed,
-                matchFinder,
-                endMarker
-            };
+            if (!ObjectArrayCache.TryDequeue(out var properties)) {
+                properties = new object[7];
+            }
 
-            var lzmaEncoder = new Encoder();
+            properties[0] = (int) options.DictionarySize;
+            properties[1] = posStateBits;
+            properties[2] = litContextBits;
+            properties[3] = litPosBits;
+            properties[4] = (int) options.Speed;
+            properties[5] = matchFinder;
+            properties[6] = endMarker;
+
+            if (!EncoderCache.TryGetValue(options.DictionarySize, out var cache)) {
+                throw new NotSupportedException("Dictionary size not support: " + options.DictionarySize);
+            }
+            if (!cache.TryDequeue(out var lzmaEncoder)) {
+                lzmaEncoder = new Encoder();
+            }
             lzmaEncoder.SetCoderProperties(PropIDs, properties);
             lzmaEncoder.WriteCoderProperties(output);
             var fileSize = input.Length;
             for (var i = 0; i < 8; i++) output.WriteByte((byte) (fileSize >> (8 * i)));
             lzmaEncoder.Code(input, output, -1, -1, null);
+
+            cache.Enqueue(lzmaEncoder);
+            ObjectArrayCache.Enqueue(properties);
         }
 
         public override void Decompress(Stream input, Stream output) {
-            var decoder = new Decoder();
-
-            var properties = new byte[5];
+            if (!ByteArrayCache.TryDequeue(out var properties)) {
+                properties = new byte[5];
+            }
             if (input.Read(properties, 0, 5) != 5)
                 throw new Exception("input .lzma is too short");
 
-            decoder.SetDecoderProperties(properties);
+            uint dictionarySize = 0;
+            for (var i = 0; i < 4; i++)
+                dictionarySize += (uint) properties[1 + i] << (i * 8);
 
+            if (!DecoderCache.TryGetValue((LZMACompressOptions.LZMADictionarySize) dictionarySize, out var cache)) {
+                throw new NotSupportedException("Dictionary size not support: " + dictionarySize);
+            }
+
+            if (!cache.TryDequeue(out var decoder)) {
+                decoder = new Decoder();
+            }
+
+            decoder.SetDecoderProperties(properties);
             long fileLength = 0;
             for (var i = 0; i < 8; i++) {
                 var v = input.ReadByte();
                 if (v < 0) throw new Exception("Can't Read 1");
                 fileLength |= (long) (byte) v << (8 * i);
             }
-
             var compressedSize = input.Length - input.Position;
             decoder.Code(input, output, compressedSize, fileLength, null);
+            cache.Enqueue(decoder);
+            ByteArrayCache.Enqueue(properties);
         }
     }
 }
