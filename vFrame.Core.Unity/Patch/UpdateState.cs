@@ -1,6 +1,6 @@
 namespace vFrame.Core.Patch
 {
-    internal enum UpdateState
+    public enum UpdateState
     {
         /// <summary>
         /// 未检测

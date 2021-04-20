@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
-using vFrame.Core.Singletons;
 
 namespace vFrame.Core.Download
 {
-    public class DownloadManager : MonoSingleton<DownloadManager>
+    public class DownloadManager : MonoBehaviour
     {
         private const int DOWNLOAD_AGENT_COUNT = 3;
 
@@ -88,9 +87,12 @@ namespace vFrame.Core.Download
             return FormatSpeed(GetDownloadSpeed(serialId));
         }
 
-        protected new void Awake() {
-            base.Awake();
+        public static DownloadManager Create(string name = "DownloadManager") {
+            var inst = new GameObject(name) {hideFlags = HideFlags.HideAndDontSave};
+            return inst.AddComponent<DownloadManager>();
+        }
 
+        private void Awake() {
             for (var i = 0; i < DOWNLOAD_AGENT_COUNT; i++) {
                 AddDownloadAgent(new DownloadAgentWebClient());
             }
@@ -142,6 +144,24 @@ namespace vFrame.Core.Download
             }
 
             enabled = false;
+        }
+
+        public bool IsPaused { get; set; }
+
+        public void Pause() {
+            if (IsPaused) {
+                return;
+            }
+            IsPaused = true;
+            enabled = false;
+        }
+
+        public void Resume() {
+            if (!IsPaused) {
+                return;
+            }
+            IsPaused = false;
+            enabled = true;
         }
 
         private void Update() {

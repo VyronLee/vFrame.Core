@@ -34,12 +34,12 @@ namespace vFrame.Core.Patch
         /// <summary>
         /// The asset version
         /// </summary>
-        public Version AssetsVersion { get; private set; }
+        public Version AssetsVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
         /// The game engine version
         /// </summary>
-        public Version EngineVersion { get; private set; }
+        public Version EngineVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
         /// The build number
@@ -68,10 +68,18 @@ namespace vFrame.Core.Patch
         }
 
         /// <summary>
+        /// Get default manifest
+        /// </summary>
+        public static Manifest Default => new Manifest {Loaded = true, VersionLoaded = true};
+
+        /// <summary>
         /// Parse the whole file, caller should check where the file exist
         /// </summary>
         public void Parse(string manifestUrl) {
-            LoadJson(manifestUrl);
+            _json = LoadJson(manifestUrl);
+            if (null == _json) {
+                return;
+            }
 
             if (_json != null) {
                 LoadManifest();
@@ -82,7 +90,7 @@ namespace vFrame.Core.Patch
         /// Parse the version part, caller should check where the file exist
         /// </summary>
         public void ParseVersion(string versionUrl) {
-            LoadJson(versionUrl);
+            _json = LoadJson(versionUrl);
 
             if (_json != null) {
                 LoadVersion();
@@ -126,12 +134,33 @@ namespace vFrame.Core.Patch
             return list;
         }
 
+        /// <summary>
+        /// Get downloaded assets (not validated)
+        /// </summary>
+        /// <returns></returns>
         public List<AssetInfo> GetDownloadedAssets() {
             var list = new List<AssetInfo>();
 
             foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
                 if (asset.downloadState == DownloadState.DOWNLOADED) {
+                    list.Add(asset);
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// Get succeed downloaded assets (validated)
+        /// </summary>
+        /// <returns></returns>
+        public List<AssetInfo> GetSucceedDownloadedAssets() {
+            var list = new List<AssetInfo>();
+
+            foreach (var assetKV in _assets) {
+                var asset = assetKV.Value;
+                if (asset.downloadState == DownloadState.SUCCEED) {
                     list.Add(asset);
                 }
             }
@@ -189,20 +218,32 @@ namespace vFrame.Core.Patch
         }
 
         public void SaveToFile(string path) {
-            _json.assets = new List<AssetInfo>(_assets.Values);
-            var jsonStr = JsonUtility.ToJson(_json);
+            var manifest = _json;
+            if (null == manifest) {
+                manifest = new ManifestJson {
+                    buildNumber = BuildNumber ?? "0",
+                    assetsVersion = AssetsVersion.ToString(),
+                    engineVersion = EngineVersion.ToString(),
+                    assets = new List<AssetInfo>(_assets.Values)
+                };
+            }
+            else {
+                _json.assets = new List<AssetInfo>(_assets.Values);
+            }
+            var jsonStr = JsonUtility.ToJson(manifest);
             File.WriteAllText(path, jsonStr, Encoding.UTF8);
         }
 
-        private void LoadJson(string url) {
+        private ManifestJson LoadJson(string url) {
             Clear();
 
             try {
                 var text = new FileReader().ReadAllText(url);
-                _json = JsonUtility.FromJson<ManifestJson>(text);
+                return JsonUtility.FromJson<ManifestJson>(text);
             }
             catch (Exception e) {
                 Logger.Error(PatchConst.LogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
+                return null;
             }
         }
 
@@ -210,7 +251,9 @@ namespace vFrame.Core.Patch
         /// Load the version part
         /// </summary>
         private void LoadVersion() {
-            AssetsVersion = new Version(_json.assetsVersion);
+            AssetsVersion = string.IsNullOrEmpty(_json.assetsVersion)
+                ? new Version("0.0.0")
+                : new Version(_json.assetsVersion);
             EngineVersion = string.IsNullOrEmpty(_json.engineVersion)
                 ? new Version("0.0.0")
                 : new Version(_json.engineVersion);
@@ -234,8 +277,9 @@ namespace vFrame.Core.Patch
         private void Clear() {
             _assets.Clear();
             _json = null;
-            AssetsVersion = null;
-            EngineVersion = null;
+
+            AssetsVersion = new Version(0, 0, 0);
+            EngineVersion = new Version(0, 0, 0);
 
             Loaded = false;
             VersionLoaded = false;

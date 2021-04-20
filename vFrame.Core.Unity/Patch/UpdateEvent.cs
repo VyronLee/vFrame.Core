@@ -95,6 +95,6 @@
 
         public ulong DownloadedSize;
 
-        public string DownloadSpeed;
+        public float DownloadSpeed;
     }
 }

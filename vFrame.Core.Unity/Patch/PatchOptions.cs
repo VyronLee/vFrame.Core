@@ -6,5 +6,7 @@
         public string hotfixURL;
         public string versionFilename;
         public string manifestFilename;
+        public bool deleteCacheOutOfDate;
+        public float Timeout = float.MaxValue;
     }
 }

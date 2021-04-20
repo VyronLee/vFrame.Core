@@ -43,9 +43,15 @@ namespace vFrame.Core.Download
             m_WebClient = new WebClient();
             m_WebClient.Headers.Add("user-agent",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)");
-            m_WebClient.DownloadFileAsync(new Uri(Task.DownloadUrl), Task.DownloadPath);
             m_WebClient.DownloadFileCompleted += OnDownloadFileCompleted;
             m_WebClient.DownloadProgressChanged += OnDownloadProgressChanged;
+            try {
+                m_WebClient.DownloadFileAsync(new Uri(Task.DownloadUrl), Task.DownloadPath);
+            }
+            catch (Exception e) {
+                m_Error = e;
+                NotifyError(m_Error.ToString());
+            }
         }
 
         protected override void OnStop() {
@@ -54,6 +60,7 @@ namespace vFrame.Core.Download
                 m_WebClient.Dispose();
                 m_WebClient = null;
             }
+            m_Error = null;
         }
 
         protected override void OnUpdate(float elapseSeconds) {
