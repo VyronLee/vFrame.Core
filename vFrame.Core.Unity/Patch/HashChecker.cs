@@ -5,6 +5,7 @@ using System.IO;
 using System.Security.Cryptography;
 using UnityEngine;
 using vFrame.Core.Loggers;
+using vFrame.Core.ThreadPools;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Patch
@@ -19,7 +20,7 @@ namespace vFrame.Core.Patch
             return instance;
         }
 
-        private const int NUM_PER_FRAME = 5;
+        private const int MaxThread = 3;
 
         private string _storagePath;
         private List<AssetInfo> _assets;
@@ -32,11 +33,17 @@ namespace vFrame.Core.Patch
         public int HashNum { get; private set; }
         public int HashTotal { get; private set; }
 
+        private ThreadPool _threadPool;
+
         public void Check(List<AssetInfo> assets) {
             Valid = true;
             _assets = assets;
             HashNum = 0;
             HashTotal = _assets.Count;
+
+            _threadPool?.Destroy();
+            _threadPool = new ThreadPool();
+            _threadPool.Create(MaxThread);
 
             StopAllCoroutines();
             StartCoroutine(CO_Check());
@@ -51,43 +58,75 @@ namespace vFrame.Core.Patch
 
             for (HashNum = 1; HashNum <= HashTotal; HashNum++) {
                 var asset = _assets[HashNum - 1];
-                var valid = HashValid(asset);
+                var filePath = _storagePath + asset.fileName;
+                var process = new HashProcess(_threadPool, filePath);
+                yield return process;
 
+                var valid = null == process.Error && process.HashValue == asset.md5;
                 if (OnCheckProgress != null) {
                     OnCheckProgress(asset, valid);
                 }
 
                 if (!valid)
                     Valid = false;
-
-                if (HashNum % NUM_PER_FRAME == 0)
-                    yield return null;
             }
 
             yield return null;
+
             if (OnCheckFinished != null) {
                 OnCheckFinished();
             }
+
+            _threadPool?.Destroy();
+            _threadPool = null;
         }
 
-        private bool HashValid(AssetInfo asset) {
-            var fileName = _storagePath + asset.fileName;
+        private class HashProcess : CustomYieldInstruction
+        {
+            private readonly string _path;
+            private readonly object _lockObject = new object();
+            private bool _hashFinished;
 
-            try {
-                using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
-                    return CalculateMd5(fileStream) == asset.md5;
+            public Exception Error { get; private set; }
+            public string HashValue { get; private set; }
+
+            public HashProcess(ThreadPool threadPool, string path) {
+                _path = path;
+                _hashFinished = false;
+
+                threadPool.AddTask(HashStream, null, OnHashError);
+            }
+
+            private void HashStream(object obj) {
+                using (var stream = new FileStream(_path, FileMode.Open, FileAccess.Read)) {
+                    HashValue = CalculateMd5(stream);
+                }
+                lock (_lockObject) {
+                    _hashFinished = true;
                 }
             }
-            catch (Exception e) {
-                Logger.Info(new LogTag("AssetsUpdater"), e.Message);
-                return false;
-            }
-        }
 
-        private static string CalculateMd5(Stream stream) {
-            using (var md5 = MD5.Create()) {
-                var hash = md5.ComputeHash(stream);
-                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            private void OnHashError(Exception e) {
+                Error = e;
+
+                lock (_lockObject) {
+                    _hashFinished = true;
+                }
+            }
+
+            private static string CalculateMd5(Stream stream) {
+                using (var md5 = MD5.Create()) {
+                    var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+
+            public override bool keepWaiting {
+                get {
+                    lock (_lockObject) {
+                        return !_hashFinished;
+                    }
+                }
             }
         }
     }
