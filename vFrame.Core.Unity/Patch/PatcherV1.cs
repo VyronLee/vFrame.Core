@@ -297,8 +297,13 @@ namespace vFrame.Core.Patch
                 }
             }
             else {
-                Logger.Info(PatchConst.LogTag, "Local manifest does not exist, generate default version..", manifestPath);
-                _localManifest = Manifest.Default;
+                if (cachedManifest != null) {
+                    _localManifest = cachedManifest;
+                }
+                else {
+                    Logger.Info(PatchConst.LogTag, "Local manifest does not exist, generate default version..", manifestPath);
+                    _localManifest = Manifest.Default;
+                }
             }
         }
 
