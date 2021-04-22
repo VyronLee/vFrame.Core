@@ -94,7 +94,5 @@
         public float Percent;
 
         public ulong DownloadedSize;
-
-        public float DownloadSpeed;
     }
 }

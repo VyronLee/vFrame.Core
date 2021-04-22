@@ -141,6 +141,8 @@ namespace vFrame.Core.Patch
             get { return _totalSize; }
         }
 
+        public float DownloadSpeed => _downloadManager.Speed;
+
         public bool IsPaused => _downloadManager.IsPaused;
 
         public void Pause() {
@@ -179,7 +181,7 @@ namespace vFrame.Core.Patch
         /// </summary>
         public void CheckUpdate() {
             if (!_localManifest.Loaded) {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : No local manifest file found.");
+                Logger.Error(PatchConst.LogTag, "No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
                 return;
             }
@@ -206,7 +208,7 @@ namespace vFrame.Core.Patch
         /// </summary>
         public void StartUpdate() {
             if (!_localManifest.Loaded) {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : No local manifest file found.");
+                Logger.Error(PatchConst.LogTag, "No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
                 return;
             }
@@ -319,7 +321,7 @@ namespace vFrame.Core.Patch
                 ParseVersion();
             };
             task.DownloadFailure += args => {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Fail to download version. " + args.Error);
+                Logger.Error(PatchConst.LogTag, "Fail to download version: {0}, error: {1}", url, args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_VERSION);
                 _updateState = UpdateState.UNCHECKED;
             };
@@ -330,7 +332,7 @@ namespace vFrame.Core.Patch
         private void ParseVersion() {
             _remoteManifest.ParseVersion(_cacheVersionPath);
             if (!_remoteManifest.VersionLoaded) {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Error parsing version.");
+                Logger.Error(PatchConst.LogTag, "Error parsing version.");
 
                 _updateState = UpdateState.UNCHECKED;
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_PARSE_VERSION);
@@ -374,7 +376,7 @@ namespace vFrame.Core.Patch
                 ParseManifest();
             };
             task.DownloadFailure += args => {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Fail to download manifest." + args.Error);
+                Logger.Error(PatchConst.LogTag, "Fail to download manifest: {0}, error: {1}", url, args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_MANIFEST);
                 _updateState = UpdateState.NEED_UPDATE;
             };
@@ -386,7 +388,7 @@ namespace vFrame.Core.Patch
             _remoteManifest.Parse(_tempManifestPath);
 
             if (!_remoteManifest.Loaded) {
-                Logger.Error(PatchConst.LogTag, "AssetsUpdater : Error parsing manifest.");
+                Logger.Error(PatchConst.LogTag, "Error parsing manifest.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_PARSE_MANIFEST);
                 _updateState = UpdateState.NEED_UPDATE;
             }
@@ -623,7 +625,6 @@ namespace vFrame.Core.Patch
                 evt.Percent = (float) evt.DownloadedSize / _totalSize;
                 evt.PercentByFile = (float) (_totalToDownload - _totalWaitToDownload - _failedUnits.Count) /
                                     _totalToDownload;
-                evt.DownloadSpeed = _downloadManager.Speed;
             }
 
             if (OnUpdateEvent != null)

@@ -8,13 +8,13 @@ namespace vFrame.Core.Download
 
         bool TaskDone { get; }
 
+        ulong DownloadedSizeDelta { get; }
+
         ulong DownloadedSize { get; }
 
         ulong TotalSize { get; }
 
         float Progress { get; }
-
-        float Speed { get; }
 
         float Timeout { get; set; }
 

@@ -16,12 +16,7 @@ namespace vFrame.Core.Download
 
         public float ProgressUpdateInterval { get; set; }
 
-        private readonly DownloadSpeedCounter m_SpeedCounter = new DownloadSpeedCounter();
-
-        public float Speed {
-            get { return m_SpeedCounter.Speed; }
-        }
-
+        public ulong DownloadedSizeDelta { get; private set; }
         public abstract ulong DownloadedSize { get; }
         public abstract ulong TotalSize { get; }
         public abstract float Progress { get; }
@@ -31,8 +26,11 @@ namespace vFrame.Core.Download
         public event Action<IDownloadAgent> DownloadAgentSuccess;
         public event Action<IDownloadAgent, string> DownloadAgentFailure;
 
+        private ulong m_LastDownloadedSize;
+
         public void Start(DownloadTask task) {
             m_Task = task;
+            m_LastDownloadedSize = 0;
             TaskDone = false;
             NotifyStart();
 
@@ -44,7 +42,6 @@ namespace vFrame.Core.Download
 
         public void Stop() {
             m_Task = null;
-            m_SpeedCounter.Reset();
 
             OnStop();
         }
@@ -57,9 +54,10 @@ namespace vFrame.Core.Download
                 return;
             }
 
-            m_SpeedCounter.Update(elapseSeconds);
-
             OnUpdate(elapseSeconds);
+
+            DownloadedSizeDelta = Math.Max(DownloadedSize - m_LastDownloadedSize, 0);
+            m_LastDownloadedSize = DownloadedSize;
         }
 
         protected virtual void OnUpdate(float elapseSeconds) {
@@ -72,18 +70,12 @@ namespace vFrame.Core.Download
         }
 
         protected void NotifyUpdate() {
-            m_SpeedCounter.RecordDownloadSize(DownloadedSize);
-            m_SpeedCounter.Update(0);
-
             if (DownloadAgentUpdate != null) {
                 DownloadAgentUpdate(this);
             }
         }
 
         protected void NotifyComplete() {
-            m_SpeedCounter.RecordDownloadSize(TotalSize);
-            m_SpeedCounter.Update(0);
-
             if (DownloadAgentSuccess != null) {
                 DownloadAgentSuccess(this);
             }

@@ -19,19 +19,30 @@ namespace vFrame.Core.Download
         private WebClient m_WebClient;
 
         public override ulong DownloadedSize {
-            get { return m_DownloadedSize; }
+            get {
+                lock (m_LockObj) {
+                    return m_DownloadedSize;
+                }
+            }
         }
 
         public override ulong TotalSize {
-            get { return m_TotalSize; }
+            get {
+                lock (m_LockObj) {
+                    return m_TotalSize;
+                }
+            }
         }
 
         public override float Progress {
-            get { return m_Progress; }
+            get {
+                lock (m_LockObj) {
+                    return m_Progress;
+                }
+            }
         }
 
         protected override void OnStart() {
-            m_LastDownloadedSize = 0;
             m_DownloadedSize = 0;
             m_TotalSize = 0;
             m_Progress = 0f;
@@ -45,12 +56,12 @@ namespace vFrame.Core.Download
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)");
             m_WebClient.DownloadFileCompleted += OnDownloadFileCompleted;
             m_WebClient.DownloadProgressChanged += OnDownloadProgressChanged;
+
             try {
                 m_WebClient.DownloadFileAsync(new Uri(Task.DownloadUrl), Task.DownloadPath);
             }
             catch (Exception e) {
-                m_Error = e;
-                NotifyError(m_Error.ToString());
+                NotifyError((m_Error = e).ToString());
             }
         }
 
@@ -71,7 +82,7 @@ namespace vFrame.Core.Download
             if (!m_Done) {
                 m_WaitTime += elapseSeconds;
                 if (Timeout > 0 && m_WaitTime >= Timeout) {
-                    NotifyError("Timeout");
+                    NotifyError("Download file Timeout.");
                     return;
                 }
 
@@ -91,7 +102,7 @@ namespace vFrame.Core.Download
 
             lock (m_LockObj) {
                 if (m_Error != null) {
-                    NotifyError(m_Error.Message);
+                    NotifyError(m_Error.ToString());
                 }
                 else {
                     NotifyComplete();
@@ -100,9 +111,11 @@ namespace vFrame.Core.Download
         }
 
         private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) {
-            m_DownloadedSize = (ulong) e.BytesReceived;
-            m_TotalSize = (ulong) e.TotalBytesToReceive;
-            m_Progress = (float) e.ProgressPercentage / 100;
+            lock (m_LockObj) {
+                m_DownloadedSize = (ulong) e.BytesReceived;
+                m_TotalSize = (ulong) e.TotalBytesToReceive;
+                m_Progress = (float) e.ProgressPercentage / 100;
+            }
         }
 
         private void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs e) {
@@ -110,7 +123,6 @@ namespace vFrame.Core.Download
                 if (e.Error != null) {
                     m_Error = e.Error;
                 }
-
                 m_Done = true;
             }
         }

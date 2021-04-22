@@ -15,10 +15,7 @@ namespace vFrame.Core.Download
 
         private readonly List<IDownloadAgent> m_Agents = new List<IDownloadAgent>();
         private readonly LinkedList<DownloadTask> m_WaitingTasks = new LinkedList<DownloadTask>();
-
-        private float m_CachedSpeed;
-        private float m_LastGetSpeedTime;
-        private const float GET_SPEED_INTERVAL = 1f;
+        private readonly DownloadSpeedCounter m_SpeedCounter = new DownloadSpeedCounter();
 
         public event Action<DownloadEventArgs> DownloadStart;
         public event Action<DownloadEventArgs> DownloadUpdate;
@@ -50,41 +47,12 @@ namespace vFrame.Core.Download
                 if (!enabled) {
                     return 0f;
                 }
-
-                var curTime = Time.realtimeSinceStartup;
-                if (curTime - m_LastGetSpeedTime >= GET_SPEED_INTERVAL) {
-                    m_CachedSpeed = 0f;
-                    foreach (var agent in m_Agents) {
-                        m_CachedSpeed += agent.Speed;
-                    }
-
-                    m_LastGetSpeedTime = curTime;
-                }
-
-                return m_CachedSpeed;
+                return m_SpeedCounter.Speed;
             }
         }
 
         public string FormattedSpeed {
             get { return FormatSpeed(Speed); }
-        }
-
-        public float GetDownloadSpeed(int serialId) {
-            if (!enabled) {
-                return 0f;
-            }
-
-            foreach (var agent in m_Agents) {
-                if (agent.Task != null && agent.Task.SerialId == serialId) {
-                    return agent.Speed;
-                }
-            }
-
-            return 0f;
-        }
-
-        public string GetFormattedDownloadSpeed(int serialId) {
-            return FormatSpeed(GetDownloadSpeed(serialId));
         }
 
         public static DownloadManager Create(string name = "DownloadManager") {
@@ -165,6 +133,18 @@ namespace vFrame.Core.Download
         }
 
         private void Update() {
+            UpdateDownloadSpeed();
+            UpdateDownloadAgent();
+        }
+
+        private void UpdateDownloadSpeed() {
+            for (var i = 0; i < m_Agents.Count; i++) {
+                m_SpeedCounter.AddDownloadSize(m_Agents[i].DownloadedSizeDelta);
+            }
+            m_SpeedCounter.Update(Time.unscaledDeltaTime);
+        }
+
+        private void UpdateDownloadAgent() {
             var hasRunningTask = false;
             for (var i = 0; i < m_Agents.Count; i++) {
                 var agent = m_Agents[i];
@@ -217,7 +197,6 @@ namespace vFrame.Core.Download
                 UserData = sender.Task.UserData,
                 DownloadedSize = sender.DownloadedSize,
                 TotalSize = sender.TotalSize,
-                Speed = sender.Speed,
                 Progress = sender.Progress
             };
 
@@ -234,7 +213,6 @@ namespace vFrame.Core.Download
                 UserData = sender.Task.UserData,
                 DownloadedSize = sender.DownloadedSize,
                 TotalSize = sender.TotalSize,
-                Speed = sender.Speed,
                 Progress = 1
             };
 

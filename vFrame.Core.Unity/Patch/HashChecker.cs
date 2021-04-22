@@ -4,9 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using UnityEngine;
-using vFrame.Core.Loggers;
 using vFrame.Core.ThreadPools;
-using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Patch
 {
@@ -62,7 +60,8 @@ namespace vFrame.Core.Patch
                 var process = new HashProcess(_threadPool, filePath);
                 yield return process;
 
-                var valid = null == process.Error && process.HashValue == asset.md5;
+                var valid = null == process.Error
+                            && string.Equals(process.HashValue, asset.md5, StringComparison.CurrentCultureIgnoreCase);
                 if (OnCheckProgress != null) {
                     OnCheckProgress(asset, valid);
                 }
@@ -117,7 +116,7 @@ namespace vFrame.Core.Patch
             private static string CalculateMd5(Stream stream) {
                 using (var md5 = MD5.Create()) {
                     var hash = md5.ComputeHash(stream);
-                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                    return BitConverter.ToString(hash).Replace("-", "");
                 }
             }
 
