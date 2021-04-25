@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using vFrame.Core.Base;
-using vFrame.Core.Compress.LZMA;
+using vFrame.Core.Compress.Services.LZMA;
 using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compress.Services
 {
     public abstract class CompressService : BaseObject<CompressServiceOptions>, ICompressService
     {
@@ -17,8 +17,15 @@ namespace vFrame.Core.Compress
         protected override void OnDestroy() {
         }
 
-        public abstract void Compress(Stream input, Stream output);
-        public abstract void Decompress(Stream input, Stream output);
+        public virtual void Compress(Stream input, Stream output) {
+            Compress(input, output, null);
+        }
+        public abstract void Compress(Stream input, Stream output, Action<long, long> onProgress);
+
+        public virtual void Decompress(Stream input, Stream output) {
+            Decompress(input, output, null);
+        }
+        public abstract void Decompress(Stream input, Stream output, Action<long, long> onProgress);
 
 
         public static CompressService CreateCompressService(CompressType type, CompressServiceOptions options = null) {

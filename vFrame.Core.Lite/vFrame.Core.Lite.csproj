@@ -72,6 +72,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compress\BlockBasedCompression\BlockBasedCompression.cs" />
+    <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionConst.cs" />
+    <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionException.cs" />
+    <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionOptions.cs" />
+    <Compile Include="Compress\BlockBasedCompression\MultiThreadBlockBasedCompression.cs" />
+    <Compile Include="Compress\BlockBasedCompression\SingleThreadBlockBasedCompression.cs" />
+    <Compile Include="Compress\Services\CompressService.cs" />
+    <Compile Include="Compress\Services\CompressServiceOptions.cs" />
+    <Compile Include="Compress\Services\CompressType.cs" />
+    <Compile Include="Compress\Services\ICompressService.cs" />
+    <Compile Include="Compress\Services\LZMA\LZMACompressOptions.cs" />
+    <Compile Include="Compress\Services\LZMA\LZMACompressService.cs" />
     <Compile Include="Extensions\ArrayExtension.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
@@ -112,12 +124,6 @@
     <Compile Include="Components\Component.cs" />
     <Compile Include="Components\IContainer.cs" />
     <Compile Include="Components\IComponent.cs" />
-    <Compile Include="Compress\CompressService.cs" />
-    <Compile Include="Compress\CompressServiceOptions.cs" />
-    <Compile Include="Compress\CompressType.cs" />
-    <Compile Include="Compress\ICompressService.cs" />
-    <Compile Include="Compress\LZMA\LZMACompressOptions.cs" />
-    <Compile Include="Compress\LZMA\LZMACompressService.cs" />
     <Compile Include="Crypto\CryptoService.cs" />
     <Compile Include="Crypto\CryptoType.cs" />
     <Compile Include="Crypto\ICryptoService.cs" />

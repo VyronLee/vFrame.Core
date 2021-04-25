@@ -5,13 +5,14 @@ using System.IO;
 using System.Security.Cryptography;
 using UnityEngine;
 using vFrame.Core.ThreadPools;
+using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Patch
 {
     public class HashChecker : MonoBehaviour
     {
         public static HashChecker Create(string storagePath) {
-            var go = new GameObject("HashChecker");
+            var go = new GameObject("HashChecker") {hideFlags = HideFlags.HideAndDontSave};
             var instance = go.AddComponent<HashChecker>();
             instance._storagePath = storagePath;
 
@@ -59,6 +60,10 @@ namespace vFrame.Core.Patch
                 var filePath = _storagePath + asset.fileName;
                 var process = new HashProcess(_threadPool, filePath);
                 yield return process;
+
+                if (process.Error != null) {
+                    Logger.Error(PatchConst.LogTag, "Hash file failed: {0}, error: {1}", filePath, process.Error);
+                }
 
                 var valid = null == process.Error
                             && string.Equals(process.HashValue, asset.md5, StringComparison.CurrentCultureIgnoreCase);

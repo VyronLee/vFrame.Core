@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.Download
 {
@@ -32,6 +34,8 @@ namespace vFrame.Core.Download
             m_Task = task;
             m_LastDownloadedSize = 0;
             TaskDone = false;
+
+            EnsureDownloadDirectory();
             NotifyStart();
 
             OnStart();
@@ -61,6 +65,19 @@ namespace vFrame.Core.Download
         }
 
         protected virtual void OnUpdate(float elapseSeconds) {
+        }
+
+        private void EnsureDownloadDirectory() {
+            if (string.IsNullOrEmpty(m_Task.DownloadPath)) {
+                return;
+            }
+
+            var dir = Path.GetDirectoryName(m_Task.DownloadPath);
+            if (string.IsNullOrEmpty(dir)) {
+                return;
+            }
+
+            Directory.CreateDirectory(dir);
         }
 
         protected void NotifyStart() {

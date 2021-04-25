@@ -22,6 +22,12 @@ namespace vFrame.Core.Utils
             return ret.ToHex("x2");
         }
 
+        public static string MD5(Stream data) {
+            var md5 = new MD5CryptoServiceProvider();
+            var ret = md5.ComputeHash(data);
+            return ret.ToHex("x2");
+        }
+
         public static string SHA256(byte[] data) {
             var sha = new SHA256CryptoServiceProvider();
             var ret = sha.ComputeHash(data);
