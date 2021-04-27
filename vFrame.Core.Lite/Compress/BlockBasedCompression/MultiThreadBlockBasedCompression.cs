@@ -118,7 +118,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     Request = request,
                     BlockIndex = i
                 };
-                _threadPool.AddTask(DecompressInternal, stateContext);
+                _threadPool.AddTask(DecompressInternal, stateContext, OnException);
             }
 
             return request;
