@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO;
 using vFrame.Core.Base;
+using vFrame.Core.Compress.Services.LZ4;
 using vFrame.Core.Compress.Services.LZMA;
+using vFrame.Core.Compress.Services.Zlib;
+using vFrame.Core.Compress.Services.ZStd;
 using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Compress.Services
@@ -34,6 +37,15 @@ namespace vFrame.Core.Compress.Services
                 case CompressType.LZMA:
                     service = ObjectPool<LZMACompressService>.Shared.Get();
                     break;
+                case CompressType.LZ4:
+                    service = ObjectPool<LZ4CompressService>.Shared.Get();
+                    break;
+                case CompressType.ZStd:
+                    service = ObjectPool<ZStdCompressService>.Shared.Get();
+                    break;
+                case CompressType.Zlib:
+                    service = ObjectPool<ZlibCompressService>.Shared.Get();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
@@ -47,6 +59,15 @@ namespace vFrame.Core.Compress.Services
             switch (service) {
                 case LZMACompressService lzmaCompressService:
                     ObjectPool<LZMACompressService>.Shared.Return(lzmaCompressService);
+                    break;
+                case LZ4CompressService lz4CompressService:
+                    ObjectPool<LZ4CompressService>.Shared.Return(lz4CompressService);
+                    break;
+                case ZStdCompressService zStdCompressService:
+                    ObjectPool<ZStdCompressService>.Shared.Return(zStdCompressService);
+                    break;
+                case ZlibCompressService zlibCompressService:
+                    ObjectPool<ZlibCompressService>.Shared.Return(zlibCompressService);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(service.GetType().FullName);

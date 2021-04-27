@@ -82,8 +82,14 @@
     <Compile Include="Compress\Services\CompressServiceOptions.cs" />
     <Compile Include="Compress\Services\CompressType.cs" />
     <Compile Include="Compress\Services\ICompressService.cs" />
+    <Compile Include="Compress\Services\LZ4\LZ4CompressOptions.cs" />
+    <Compile Include="Compress\Services\LZ4\LZ4CompressService.cs" />
     <Compile Include="Compress\Services\LZMA\LZMACompressOptions.cs" />
     <Compile Include="Compress\Services\LZMA\LZMACompressService.cs" />
+    <Compile Include="Compress\Services\Zlib\ZlibCompressOptions.cs" />
+    <Compile Include="Compress\Services\Zlib\ZlibCompressService.cs" />
+    <Compile Include="Compress\Services\ZStd\ZStdCompressOptions.cs" />
+    <Compile Include="Compress\Services\ZStd\ZStdCompressService.cs" />
     <Compile Include="Extensions\ArrayExtension.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
@@ -200,14 +206,48 @@
     <Compile Include="Profiles\PerfProfile.cs" />
     <Compile Include="Properties\AssemblyInfo.Lite.cs" />
     <Compile Include="Singletons\Singleton.cs" />
+    <Compile Include="ThirdParty\Zlib\Deflate.cs" />
+    <Compile Include="ThirdParty\Zlib\DeflateStream.cs" />
+    <Compile Include="ThirdParty\Zlib\Inflate.cs" />
+    <Compile Include="ThirdParty\Zlib\InfTree.cs" />
+    <Compile Include="ThirdParty\Zlib\Zlib.cs" />
+    <Compile Include="ThirdParty\Zlib\ZlibBaseStream.cs" />
+    <Compile Include="ThirdParty\Zlib\ZlibCodec.cs" />
+    <Compile Include="ThirdParty\Zlib\ZlibConstants.cs" />
+    <Compile Include="ThirdParty\Zlib\ZlibTree.cs" />
+    <Compile Include="ThirdParty\ZStd\ZstandardDictionary.cs" />
+    <Compile Include="ThirdParty\ZStd\ZstandardInterop.cs" />
+    <Compile Include="ThirdParty\ZStd\ZstandardStream.cs" />
+    <Compile Include="ThirdParty\ZStd\ZStdApi.cs" />
     <Compile Include="ThreadPools\ThreadPool.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\MessageDigestUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="K4os.Compression.LZ4, Version=1.2.6.0, Culture=neutral, PublicKeyToken=2186fa9121ef231d">
+      <HintPath>..\packages\K4os.Compression.LZ4.1.2.6\lib\net46\K4os.Compression.LZ4.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="K4os.Compression.LZ4.Streams, Version=1.2.6.0, Culture=neutral, PublicKeyToken=2186fa9121ef231d">
+      <HintPath>..\packages\K4os.Compression.LZ4.Streams.1.2.6\lib\net46\K4os.Compression.LZ4.Streams.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="K4os.Hash.xxHash, Version=1.0.6.0, Culture=neutral, PublicKeyToken=32cd54395057cec3">
+      <HintPath>..\packages\K4os.Hash.xxHash.1.0.6\lib\net46\K4os.Hash.xxHash.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-      <HintPath>..\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

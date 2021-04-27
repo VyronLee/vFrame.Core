@@ -213,7 +213,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             var outBuffer = _buffers.Rent(options.BlockSize);
 
             SafeReadRawBlockData(input, options, blockIndex, ref dataBuffer, out var dataLength);
-            SafeBufferedCompress(dataBuffer, dataLength, options.CompressType, ref outBuffer, out var outLength);
+            SafeBufferedCompress(dataBuffer, dataLength, options, ref outBuffer, out var outLength);
             SafeWriteCompressedDataToOutput(output, outBuffer, outLength, out var offset);
             SafeSaveBlockInfo(blockIndex, offset, dataLength, outLength);
 
@@ -242,16 +242,23 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         private void SafeBufferedCompress(byte[] dataBuffer,
             int dataLength,
-            CompressType compressType,
+            BlockBasedCompressionOptions options,
             ref byte[] outBuffer,
             out int outLength)
         {
-            var service = CompressService.CreateCompressService(compressType);
+            var service = CompressService.CreateCompressService(options.CompressType, options.CompressOptions);
             using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
-                using (var outStream = new MemoryStream(outBuffer)) {
+                //using (var outStream = new MemoryStream(outBuffer)) {  //System.NotSupportedException: Memory stream is not expandable.
+                using (var outStream = new MemoryStream(dataLength)) {
                     outStream.SetLength(0);
                     service.Compress(inStream, outStream);
                     outLength = (int)outStream.Length;
+
+                    if (outLength > outBuffer.Length) { // Resize buffer
+                        _buffers.Return(outBuffer);
+                        outBuffer = _buffers.Rent(outLength);
+                    }
+                    Array.Copy(outStream.GetBuffer(), 0, outBuffer, 0, outLength);
                 }
             }
             CompressService.DestroyCompressService(service);
