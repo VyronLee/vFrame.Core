@@ -29,6 +29,9 @@ namespace vFrame.Core.Patch
             public DiffType diffType;
         }
 
+        /// <summary>
+        /// Json Manifest format
+        /// </summary>
         private ManifestJson _json = null;
 
         /// <summary>
@@ -81,9 +84,9 @@ namespace vFrame.Core.Patch
                 return;
             }
 
-            if (_json != null) {
-                LoadManifest();
-            }
+            LoadManifest();
+
+            OnLoadJson(_json);
         }
 
         /// <summary>
@@ -91,10 +94,12 @@ namespace vFrame.Core.Patch
         /// </summary>
         public void ParseVersion(string versionUrl) {
             _json = LoadJson(versionUrl);
+            if (_json == null)
+                return;
 
-            if (_json != null) {
-                LoadVersion();
-            }
+            LoadVersion();
+
+            OnLoadJson(_json);
         }
 
         /// <summary>
@@ -111,6 +116,11 @@ namespace vFrame.Core.Patch
             return EngineVersion.CompareTo(other.EngineVersion);
         }
 
+        /// <summary>
+        /// Set download state
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="state"></param>
         public void SetAssetDownloadState(string fileName, DownloadState state) {
             AssetInfo asset;
             if (_assets.TryGetValue(fileName, out asset)) {
@@ -217,6 +227,10 @@ namespace vFrame.Core.Patch
             return diffDic;
         }
 
+        /// <summary>
+        /// Save manifest to file
+        /// </summary>
+        /// <param name="path">File path to save</param>
         public void SaveToFile(string path) {
             var manifest = _json;
             if (null == manifest) {
@@ -234,6 +248,11 @@ namespace vFrame.Core.Patch
             File.WriteAllText(path, jsonStr, Encoding.UTF8);
         }
 
+        /// <summary>
+        /// Load json data from url
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
         private ManifestJson LoadJson(string url) {
             Clear();
 
@@ -272,6 +291,13 @@ namespace vFrame.Core.Patch
             }
 
             Loaded = true;
+        }
+
+        /// <summary>
+        /// On load json
+        /// </summary>
+        protected virtual void OnLoadJson(ManifestJson json) {
+
         }
 
         private void Clear() {
