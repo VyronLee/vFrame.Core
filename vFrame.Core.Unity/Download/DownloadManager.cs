@@ -114,6 +114,22 @@ namespace vFrame.Core.Download
             enabled = false;
         }
 
+        public DownloadTask GetDownload(int serialId) {
+            foreach (var task in m_WaitingTasks) {
+                if (task.SerialId == serialId) {
+                    return task;
+                }
+            }
+
+            foreach (var agent in m_Agents) {
+                if (agent.Task != null && agent.Task.SerialId == serialId) {
+                    return agent.Task;
+                }
+            }
+
+            return null;
+        }
+
         public bool IsPaused { get; set; }
 
         public void Pause() {

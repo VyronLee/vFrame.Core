@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using UnityEngine;
 using vFrame.Core.Download;
 using vFrame.Core.FileReaders;
@@ -95,9 +96,25 @@ namespace vFrame.Core.Patch
         /// </summary>
         private int _totalWaitToDownload;
 
+        /// <summary>
+        ///     CdnUrl to download files from.
+        /// </summary>
+        private string _cdnUrl;
+
+        /// <summary>
+        ///     Last update time of download progress.
+        /// </summary>
+        private float _lastUpdateTime;
+
+        /// <summary>
+        ///     Update confirm callback.
+        /// </summary>
         public Action<ulong, Action> OnUpdateConfirm;
 
-        private float _lastUpdateTime;
+        /// <summary>
+        ///     Update event callback.
+        /// </summary>
+        public event Action<UpdateEvent> OnUpdateEvent;
 
         public PatcherV1(PatchOptions options) {
             _options = options;
@@ -116,64 +133,149 @@ namespace vFrame.Core.Patch
             InitManifest();
         }
 
+        /// <summary>
+        /// Return cdnUrl, prefer value specified in remoteVersion manifest, then option's.
+        /// </summary>
+        /// <exception cref="WebException"></exception>
         public string CdnUrl {
             get {
-                var url = _options.cdnUrl;
+                if (!string.IsNullOrEmpty(_cdnUrl)) {
+                    return _cdnUrl;
+                }
+
+                _cdnUrl = _options.cdnUrl;
                 if (_remoteVersion.VersionLoaded && !string.IsNullOrEmpty(_remoteVersion.cdnUrl)) {
-                    url = _remoteVersion.cdnUrl;
+                    _cdnUrl = _remoteVersion.cdnUrl;
                 }
-                if (string.IsNullOrEmpty(url)) {
-                    return string.Empty;
+
+                if (string.IsNullOrEmpty(_cdnUrl)) {
+                    throw new WebException("Option.cdnUrl or remoteVersion.cdnUrl must be specified.");
                 }
-                return string.IsNullOrEmpty(_options.cdnDir) ? url : PathUtils.Combine(url, _options.cdnDir);
+                _cdnUrl = PathUtils.Combine(_cdnUrl, _options.cdnDir ?? string.Empty);
+                return _cdnUrl;
+            }
+            set {
+                _cdnUrl = value;
             }
         }
 
+        /// <summary>
+        /// Return downloadUrl specified in remoteVersion manifest.
+        /// </summary>
         public string DownloadUrl {
             get {
-                if (_remoteVersion.Loaded && !string.IsNullOrEmpty(_remoteVersion.downloadUrl))
+                if (_remoteVersion.VersionLoaded && !string.IsNullOrEmpty(_remoteVersion.downloadUrl))
                     return _remoteVersion.downloadUrl;
                 return string.Empty;
             }
         }
 
-        public int HashNum => _hashChecker ? _hashChecker.HashNum : 0;
+        /// <summary>
+        /// Return current validated hash number.
+        /// </summary>
+        public int HashNum {
+            get { return _hashChecker ? _hashChecker.HashNum : 0; }
+        }
 
-        public int HashTotal => _hashChecker ? _hashChecker.HashTotal : 0;
+        /// <summary>
+        /// Return total hash number.
+        /// </summary>
+        public int HashTotal {
+            get { return _hashChecker ? _hashChecker.HashTotal : 0; }
+        }
 
-        public string EngineVersion => _localManifest.EngineVersion.ToString();
+        /// <summary>
+        /// Return local engine version.
+        /// </summary>
+        public string EngineVersion {
+            get { return null != _localManifest ? _localManifest.EngineVersion.ToString() : string.Empty; }
+        }
 
-        public string AssetsVersion => _localManifest.AssetsVersion.ToString();
+        /// <summary>
+        /// Return local assets version.
+        /// </summary>
+        public string AssetsVersion {
+            get { return null != _localManifest ? _localManifest.AssetsVersion.ToString() : string.Empty; }
+        }
+
+        /// <summary>
+        /// Return remote engine version.
+        /// </summary>
+        public string RemoteEngineVersion {
+            get { return null != _remoteVersion ? _remoteVersion.EngineVersion.ToString() : string.Empty; }
+        }
+
+        /// <summary>
+        /// Return remote assets version.
+        /// </summary>
+        public string RemoteAssetsVersion {
+            get { return null != _remoteVersion ? _remoteVersion.AssetsVersion.ToString() : string.Empty; }
+        }
 
         /// <summary>
         ///     Total size need to download
         /// </summary>
         public ulong TotalSize { get; private set; }
 
-        public float DownloadSpeed => _downloadManager.Speed;
+        /// <summary>
+        /// Return current download speed
+        /// </summary>
+        public float DownloadSpeed {
+            get { return _downloadManager.Speed; }
+        }
 
-        public bool IsPaused => _downloadManager.IsPaused;
+        /// <summary>
+        /// Is Download paused?
+        /// </summary>
+        public bool IsPaused {
+            get { return _downloadManager.IsPaused; }
+        }
 
+        /// <summary>
+        /// Return current update state.
+        /// </summary>
         public UpdateState UpdateState { get; private set; } = UpdateState.UNCHECKED;
 
+        /// <summary>
+        /// Pause download.
+        /// </summary>
         public void Pause() {
             _downloadManager.Pause();
         }
 
+        /// <summary>
+        /// Resume download.
+        /// </summary>
         public void Resume() {
             _downloadManager.Resume();
         }
 
+        /// <summary>
+        /// Stop download.
+        /// </summary>
         public void Stop() {
             _downloadManager.RemoveAllDownloads();
         }
 
+        /// <summary>
+        /// Return local manifest
+        /// </summary>
+        /// <returns></returns>
         public Manifest GetLocalManifest() {
             return _localManifest;
         }
 
-        public event Action<UpdateEvent> OnUpdateEvent;
+        /// <summary>
+        /// Return remote version manifest
+        /// </summary>
+        /// <returns></returns>
+        public VersionManifest GetRemoteVersionManifest() {
+            return _remoteVersion;
+        }
 
+        /// <summary>
+        /// Release patcher.
+        /// </summary>
         public void Release() {
             if (_hashChecker)
                 Object.Destroy(_hashChecker.gameObject);
@@ -314,16 +416,26 @@ namespace vFrame.Core.Patch
         }
 
         private void DownloadVersion() {
-            Logger.Info(PatchConst.LogTag, "Start to download version file: {0}, to path: {1}", _options.versionUrl,
+            var versionUrl = _options.versionUrl;
+            if (string.IsNullOrEmpty(versionUrl)) {
+                versionUrl = PathUtils.Combine(_options.cdnUrl, _options.cdnDir, _options.versionFilename);
+            }
+
+            if (string.IsNullOrEmpty(versionUrl)) {
+                Logger.Error(PatchConst.LogTag, "Version url is empty, versionUrl or cdnUrl must be specified first!");
+                return;
+            }
+
+            Logger.Info(PatchConst.LogTag, "Start to download version file: {0}, to path: {1}", versionUrl,
                 _cacheVersionPath);
 
-            var task = _downloadManager.AddDownload(_cacheVersionPath, _options.versionUrl);
+            var task = _downloadManager.AddDownload(_cacheVersionPath, versionUrl);
             task.DownloadSuccess += args => {
                 Logger.Info(PatchConst.LogTag, "Download version file succeed, parsing remote version..");
                 ParseVersion();
             };
             task.DownloadFailure += args => {
-                Logger.Error(PatchConst.LogTag, "Fail to download version: {0}, error: {1}", _options.versionUrl,
+                Logger.Error(PatchConst.LogTag, "Fail to download version: {0}, error: {1}", versionUrl,
                     args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_VERSION);
                 UpdateState = UpdateState.UNCHECKED;
@@ -368,7 +480,7 @@ namespace vFrame.Core.Patch
         }
 
         private void DownloadManifest() {
-            var url = PathUtils.Combine(CdnUrl, _remoteVersion.AssetsVersion.ToString(), _options.manifestFilename);
+            var url = PathUtils.Combine(CdnUrl, _options.manifestFilename);
 
             Logger.Info(PatchConst.LogTag, "Start to download manifest file: {0}, to path: {1}", url,
                 _tempManifestPath);
@@ -442,6 +554,7 @@ namespace vFrame.Core.Patch
                 // Temporary manifest not exists or out of date,
                 var diffDic = _localManifest.GenDiff(_remoteManifest);
                 if (diffDic.Count == 0) {
+                    Logger.Info(PatchConst.LogTag, "No different files detected, update skip.");
                     UpdateSucceed();
                 }
                 else {
@@ -516,7 +629,7 @@ namespace vFrame.Core.Patch
 
             foreach (var asset in _downloadUnits) {
                 var storagePath = _storagePath + asset.fileName;
-                var url = CdnUrl + asset.fileName;
+                var url = PathUtils.Combine(CdnUrl, asset.fileName);
 
                 var dir = Path.GetDirectoryName(storagePath);
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
@@ -566,8 +679,12 @@ namespace vFrame.Core.Patch
 
         private void OnDownloadSuccess(DownloadEventArgs args) {
             var asset = (AssetInfo) args.UserData;
+            var task = _downloadManager.GetDownload(args.SerialId);
 
-            Logger.Info(PatchConst.LogTag, "Download file succeed: " + asset.fileName);
+            Logger.Info(PatchConst.LogTag, "Download file succeed: {0}, url: {1}, storage path: {2}",
+                asset.fileName,
+                task?.DownloadUrl ?? string.Empty,
+                task?.DownloadPath ?? string.Empty);
 
             _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.DOWNLOADED);
             _remoteManifest.SaveToFile(_tempManifestPath);
@@ -601,7 +718,12 @@ namespace vFrame.Core.Patch
 
         private void OnDownloadError(DownloadEventArgs args) {
             var asset = (AssetInfo) args.UserData;
-            Logger.Error(PatchConst.LogTag, "Download file failed: {0}, error: {1}", asset.fileName, args.Error);
+            var task = _downloadManager.GetDownload(args.SerialId);
+            Logger.Error(PatchConst.LogTag, "Download file failed: {0}, url: {1}, storage path: {2}, error: {3}",
+                asset.fileName,
+                task?.DownloadUrl ?? string.Empty,
+                task?.DownloadPath ?? string.Empty,
+                args.Error);
 
             _totalWaitToDownload--;
             _failedUnits.Add(asset);
