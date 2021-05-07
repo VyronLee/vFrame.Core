@@ -25,6 +25,22 @@ namespace vFrame.Core.Utils
             return NormalizePath(value);
         }
 
+        public static string Combine(params string[] paths) {
+            if (paths == null || paths.Length == 0) {
+                return "";
+            }
+
+            if (paths.Length <= 1) {
+                return paths[0];
+            }
+
+            var path = paths[0];
+            for (var i = 1; i < paths.Length; i++) {
+                path = Path.Combine(path, paths[i]);
+            }
+            return NormalizePath(path);
+        }
+
         public static string NormalizeAssetBundlePath(string value) {
             if (Path.IsPathRooted(value))
                 value = AbsolutePathToRelativeDataPath(value);

@@ -2,8 +2,10 @@
 {
     public class PatchOptions
     {
+        public string cdnUrl;
+        public string cdnDir;
+        public string versionUrl;
         public string storagePath;
-        public string hotfixURL;
         public string versionFilename;
         public string manifestFilename;
         public bool deleteCacheOutOfDate;

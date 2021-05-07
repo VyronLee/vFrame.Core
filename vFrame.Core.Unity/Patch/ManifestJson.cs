@@ -9,6 +9,8 @@ namespace vFrame.Core.Patch
         public string buildNumber;
         public string engineVersion;
         public string assetsVersion;
+        public string cdnUrl;
+        public string downloadUrl;
         public List<AssetInfo> assets = new List<AssetInfo>();
     }
 }
