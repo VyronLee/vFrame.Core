@@ -16,6 +16,7 @@ namespace vFrame.Core.Patch
             var instance = go.AddComponent<HashChecker>();
             instance._storagePath = storagePath;
 
+            DontDestroyOnLoad(go);
             return instance;
         }
 
@@ -31,6 +32,7 @@ namespace vFrame.Core.Patch
         public bool Valid { get; private set; }
         public int HashNum { get; private set; }
         public int HashTotal { get; private set; }
+        public int HashFailedNum { get; private set; }
 
         private ThreadPool _threadPool;
 
@@ -39,6 +41,7 @@ namespace vFrame.Core.Patch
             _assets = assets;
             HashNum = 0;
             HashTotal = _assets.Count;
+            HashFailedNum = 0;
 
             _threadPool?.Destroy();
             _threadPool = new ThreadPool();
@@ -55,6 +58,8 @@ namespace vFrame.Core.Patch
                 OnCheckStarted();
             }
 
+            Logger.Info(PatchConst.LogTag, "Validate file hash started, total count: {0}", HashTotal);
+
             for (HashNum = 1; HashNum <= HashTotal; HashNum++) {
                 var asset = _assets[HashNum - 1];
                 var filePath = _storagePath + asset.fileName;
@@ -63,17 +68,31 @@ namespace vFrame.Core.Patch
 
                 if (process.Error != null) {
                     Logger.Error(PatchConst.LogTag, "Hash file failed: {0}, error: {1}", filePath, process.Error);
+                    HashFailedNum++;
+                    Valid = false;
+                    continue;
                 }
 
-                var valid = null == process.Error
-                            && string.Equals(process.HashValue, asset.md5, StringComparison.CurrentCultureIgnoreCase);
+                var valid = string.Equals(process.HashValue, asset.md5, StringComparison.CurrentCultureIgnoreCase);
                 if (OnCheckProgress != null) {
                     OnCheckProgress(asset, valid);
                 }
 
-                if (!valid)
-                    Valid = false;
+                if (valid) {
+                    Logger.Info(PatchConst.LogTag, "Hash file succeed: {0}.", filePath);
+                    continue;
+                }
+
+                HashFailedNum++;
+                Valid = false;
+
+                Logger.Error(PatchConst.LogTag,
+                    "Validate file hash failed, hash not match, file path: {0}, md5 desired: {1}, got: {2}",
+                    filePath, asset.md5, process.HashValue);
             }
+
+            Logger.Info(PatchConst.LogTag, "Validate file hash finished, failed count: {0}, total count: {1}",
+                HashFailedNum, HashTotal);
 
             yield return null;
 

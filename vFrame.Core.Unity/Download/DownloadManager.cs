@@ -56,8 +56,10 @@ namespace vFrame.Core.Download
         }
 
         public static DownloadManager Create(string name = "DownloadManager") {
-            var inst = new GameObject(name) {hideFlags = HideFlags.HideAndDontSave};
-            return inst.AddComponent<DownloadManager>();
+            var go = new GameObject(name) {hideFlags = HideFlags.HideAndDontSave};
+            var inst = go.AddComponent<DownloadManager>();
+            DontDestroyOnLoad(go);
+            return inst;
         }
 
         private void Awake() {
