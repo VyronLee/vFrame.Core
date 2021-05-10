@@ -18,11 +18,11 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         public CompressType CompressType { get; set; } = CompressType.LZMA;
         public int BlockSize { get; set; } = 1024;
         public int BlockCount { get; set; }
-        public int BlockTableOffset { get; set; }
+        public long BlockTableOffset { get; set; }
         public string Md5 { get; set; }
 
         public static int GetMarshalSize() {
-            return sizeof(long) * 2 + sizeof(int) * 4 + 32;
+            return sizeof(long) * 3 + sizeof(int) * 3 + 32;
         }
     }
 
@@ -63,7 +63,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
     public class BlockBasedCompressionBlockInfo
     {
         public int BlockIndex;
-        public int BlockOffset;
+        public long BlockOffset;
         public int OriginSize;
         public int CompressedSize;
     }
@@ -87,8 +87,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         private BlockBasedCompressionHeader _header;
         private BlockBasedCompressionBlockTable _blockTable;
-        private int _inputStart;
-        private int _outputStart;
+        private long _inputStart;
+        private long _outputStart;
 
         protected int BlockCount => _header?.BlockCount ?? 0;
 
@@ -110,7 +110,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                         header.CompressType = (CompressType) reader.ReadInt32();
                         header.BlockSize = reader.ReadInt32();
                         header.BlockCount = reader.ReadInt32();
-                        header.BlockTableOffset = reader.ReadInt32();
+                        header.BlockTableOffset = reader.ReadInt64();
                         header.Md5 = reader.ReadBytes(32).ToStr();
                         return header;
                     }
@@ -139,13 +139,13 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         protected void BeginCompress(Stream input, Stream output, BlockBasedCompressionOptions options) {
             lock (_inputLock) {
-                _inputStart = (int) input.Position;
+                _inputStart = input.Position;
                 _header = CreateHeader(input, options);
                 _blockTable = CreateBlockTable(_header);
             }
 
             lock (_outputLock) {
-                _outputStart = (int) output.Position;
+                _outputStart = output.Position;
                 output.Seek(_outputStart + BlockBasedCompressionHeader.GetMarshalSize(), SeekOrigin.Begin);
             }
         }
@@ -264,14 +264,14 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             CompressService.DestroyCompressService(service);
         }
 
-        private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength, out int offset) {
+        private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength, out long offset) {
             lock (_outputLock) {
-                offset = (int)output.Position;
+                offset = output.Position;
                 output.Write(dataBuffer, 0, dataLength);
             }
         }
 
-        private void SafeSaveBlockInfo(int blockIndex, int offset, int originSize, int compressedSize) {
+        private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize) {
             lock (_blockTable) {
                 if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
                     throw new BlockBasedCompressionIndexOutOfRangeException();
@@ -294,13 +294,13 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         protected void BeginDecompress(Stream input, Stream output) {
             lock (_inputLock) {
-                _inputStart = (int) input.Position;
+                _inputStart = input.Position;
                 _header = ReadHeader(input);
                 _blockTable = ReadBlockTable(input);
             }
 
             lock (_outputLock) {
-                _outputStart = (int) output.Position;
+                _outputStart = output.Position;
                 output.Seek(_outputStart, SeekOrigin.Begin);
             }
         }
@@ -327,7 +327,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     for (var i = 0; i < _header.BlockCount; i++) {
                         blockTable.BlockInfos[i] = new BlockBasedCompressionBlockInfo {
                             BlockIndex = reader.ReadInt32(),
-                            BlockOffset = reader.ReadInt32(),
+                            BlockOffset = reader.ReadInt64(),
                             OriginSize = reader.ReadInt32(),
                             CompressedSize = reader.ReadInt32(),
                         };
@@ -393,6 +393,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 using (var outStream = new MemoryStream(outBuffer)) {
                     outStream.SetLength(0);
                     service.Decompress(inStream, outStream);
+                    if (outStream.Length > int.MaxValue) {
+                        throw new BlockBasedCompressionBufferSizeTooLargeException(outStream.Length);
+                    }
                     outLength = (int)outStream.Length;
                 }
             }

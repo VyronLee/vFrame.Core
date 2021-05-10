@@ -31,4 +31,15 @@ namespace vFrame.Core.Compress.BlockBasedCompression
     {
 
     }
+
+    public class BlockBasedCompressionBufferSizeTooLargeException : Exception
+    {
+        public BlockBasedCompressionBufferSizeTooLargeException() : base() {
+
+        }
+
+        public BlockBasedCompressionBufferSizeTooLargeException(long outLength) : base($"Size too large: {outLength}") {
+
+        }
+    }
 }
