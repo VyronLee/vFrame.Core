@@ -553,13 +553,24 @@ namespace vFrame.Core.Patch
             else {
                 // Temporary manifest not exists or out of date,
                 var diffDic = _localManifest.GenDiff(_remoteManifest);
+
+                // Save assets state which has not changed.
+                var assets = _remoteManifest.GetAssets();
+                foreach (var kv in assets) {
+                    var assetName = kv.Key;
+                    if (!diffDic.ContainsKey(assetName)) {
+                        _remoteManifest.SetAssetDownloadState(assetName, DownloadState.SUCCEED);
+                    }
+                }
+                _remoteManifest.SaveToFile(_tempManifestPath);
+
                 if (diffDic.Count == 0) {
                     Logger.Info(PatchConst.LogTag, "No different files detected, update skip.");
                     UpdateSucceed();
                 }
                 else {
-                    foreach (var diffKV in diffDic) {
-                        var diff = diffKV.Value;
+                    foreach (var kv in diffDic) {
+                        var diff = kv.Value;
                         if (diff.diffType == Manifest.DiffType.DELETED) {
                             if (File.Exists(_storagePath + diff.asset.fileName))
                                 File.Delete(_storagePath + diff.asset.fileName);
@@ -568,15 +579,6 @@ namespace vFrame.Core.Patch
                             _downloadUnits.Add(diff.asset);
                         }
                     }
-
-                    var assets = _remoteManifest.GetAssets();
-                    foreach (var assetKV in assets) {
-                        var assetName = assetKV.Key;
-                        if (!diffDic.ContainsKey(assetName))
-                            _remoteManifest.SetAssetDownloadState(assetName, DownloadState.SUCCEED);
-                    }
-
-                    _remoteManifest.SaveToFile(_tempManifestPath);
 
                     _totalWaitToDownload = _totalToDownload = _downloadUnits.Count;
                     TotalSize = CalculateTotalSize(_downloadUnits);
