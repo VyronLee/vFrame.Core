@@ -228,7 +228,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             out int dataLength)
         {
             lock (_inputLock) {
-                var blockOffset = _inputStart + blockIndex * options.BlockSize;
+                var blockOffset = _inputStart + blockIndex * (long)options.BlockSize;
                 input.Seek(blockOffset, SeekOrigin.Begin);
 
                 if (blockOffset >= input.Length) {
@@ -378,7 +378,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         private void SafeWriteRawDataToOutput(Stream output, byte[] dataBuffer, int dataLength, int blockIndex) {
             lock (_outputLock) {
-                output.Seek(_outputStart + blockIndex * _header.BlockSize, SeekOrigin.Begin);
+                output.Seek(_outputStart + blockIndex * (long)_header.BlockSize, SeekOrigin.Begin);
                 output.Write(dataBuffer, 0, dataLength);
             }
         }
