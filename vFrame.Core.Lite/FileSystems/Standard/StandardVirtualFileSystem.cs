@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using vFrame.Core.FileSystems.Adapters;
-using vFrame.Core.FileSystems.Constants;
-using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Standard
 {
@@ -10,20 +8,16 @@ namespace vFrame.Core.FileSystems.Standard
     {
         private VFSPath _workingDir;
 
-        public StandardVirtualFileSystem() : this(new FileStreamFactory_Default()) {
-
-        }
-
-        public StandardVirtualFileSystem(FileStreamFactory factory) : base(factory) {
-
-        }
-
-        public override void Open(VFSPath streamVfsPath) {
-            if (!Directory.Exists(streamVfsPath)) {
+        public override void Open(VFSPath fsPath) {
+            if (!Directory.Exists(fsPath)) {
                 throw new DirectoryNotFoundException();
             }
 
-            _workingDir = streamVfsPath.AsDirectory();
+            _workingDir = fsPath.AsDirectory();
+        }
+
+        public override void Open(Stream stream) {
+            throw new NotSupportedException();
         }
 
         public override void Close() {
@@ -39,7 +33,7 @@ namespace vFrame.Core.FileSystems.Standard
             FileShare share
         ) {
             var absolutePath = _workingDir + fileName;
-            var fileStream = _fileStreamFactory.Create(absolutePath, mode, access, share);
+            var fileStream = new FileStream(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
             return new StandardVirtualFileStream(fileStream);
         }
@@ -48,7 +42,7 @@ namespace vFrame.Core.FileSystems.Standard
             if (!Exist(fileName))
                 throw new FileNotFoundException("File not found: " + fileName);
             var absolutePath = _workingDir + fileName;
-            var fileStream = _fileStreamFactory.Create(absolutePath);
+            var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }

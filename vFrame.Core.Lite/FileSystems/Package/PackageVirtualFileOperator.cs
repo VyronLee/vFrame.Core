@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using vFrame.Core.Compress;
 using vFrame.Core.Compress.Services;
 using vFrame.Core.Crypto;
 using vFrame.Core.Extensions;
@@ -34,7 +33,7 @@ namespace vFrame.Core.FileSystems.Package
                 outputPath,
                 BlockFlags.BlockEncryptXor,
                 PackageFileSystemConst.Id,
-                BlockFlags.BlockCompressZlib,
+                BlockFlags.BlockCompressLZMA,
                 onProgress);
         }
 
@@ -140,7 +139,7 @@ namespace vFrame.Core.FileSystems.Package
                         PackageFileSystemConst.FileListEncryptKey);
 
                     // 启用压缩
-                    var compressBytes = CompressBytes(encryptBytes, BlockFlags.BlockCompressZlib);
+                    var compressBytes = CompressBytes(encryptBytes, BlockFlags.BlockCompressLZMA);
                     return compressBytes;
                 }
             }
@@ -161,43 +160,61 @@ namespace vFrame.Core.FileSystems.Package
             var idx = 0f;
             foreach (var path in files)
                 using (var fs = (Stream) vfs.GetStream(path, FileMode.Open, FileAccess.Read)) {
-                    var buffer = new byte[fs.Length];
-                    fs.Read(buffer, 0, (int) fs.Length);
-
-                    var blockInfo = new PackageBlockInfo {
-                        Flags = BlockFlags.BlockExists,
-                        OriginalSize = fs.Length,
-                        CompressedSize = fs.Length
-                    };
-
-                    // 启用加密
-                    if (encryptType != 0) {
-                        buffer = EncryptBytes(buffer, encryptType, encryptKey);
-                        blockInfo.Flags |= encryptType;
-                        blockInfo.EncryptKey = encryptKey;
+                    if (GetBlockInfoAndBytes(fs,
+                        encryptType,
+                        encryptKey,
+                        compressType,
+                        out var buffer,
+                        out var blockInfo)) {
+                        blocksDataByte.Add(buffer);
+                        ret.Add(blockInfo);
                     }
-
-                    // 启用压缩
-                    if (compressType != 0) {
-                        var temp = CompressBytes(buffer, compressType);
-                        if (temp.Length < buffer.Length) {
-                            blockInfo.Flags |= compressType;
-                            blockInfo.CompressedSize = temp.Length;
-                            buffer = temp;
-                        }
-                        else {
-                            Logger.Info($"Size({temp.Length:n0} bytes) greater than origin({buffer.Length:n0} bytes)"
-                                        + " after compressed, discard this operation.");
-                        }
-                    }
-
-                    blocksDataByte.Add(buffer);
-                    ret.Add(blockInfo);
-
                     onProgress?.Invoke(ProcessState.CalculatingBlockInfo, idx++, total);
                 }
 
             return ret;
+        }
+
+        public static bool GetBlockInfoAndBytes(Stream stream,
+            long encryptType,
+            long encryptKey,
+            long compressType,
+            out byte[] buffer,
+            out PackageBlockInfo blockInfo) {
+
+            blockInfo = new PackageBlockInfo {
+                Flags = BlockFlags.BlockExists,
+                OriginalSize = stream.Length,
+                CompressedSize = stream.Length
+            };
+
+            buffer = new byte[stream.Length];
+            if (stream.Read(buffer, 0, (int) stream.Length) <= 0) {
+                blockInfo.OriginalSize = blockInfo.CompressedSize = 0;
+            }
+
+            // 启用加密
+            if (encryptType != 0) {
+                buffer = EncryptBytes(buffer, encryptType, encryptKey);
+                blockInfo.Flags |= encryptType;
+                blockInfo.EncryptKey = encryptKey;
+            }
+
+            // 启用压缩
+            if (compressType != 0) {
+                var temp = CompressBytes(buffer, compressType);
+                if (temp.Length < buffer.Length) {
+                    blockInfo.Flags |= compressType;
+                    blockInfo.CompressedSize = temp.Length;
+                    buffer = temp;
+                }
+                else {
+                    Logger.Info($"Size({temp.Length:n0} bytes) greater than origin({buffer.Length:n0} bytes)"
+                                + " after compressed, discard this operation.");
+                }
+            }
+
+            return true;
         }
 
         private static byte[] EncryptBytes(byte[] buffer, long encryptType, long encryptKey) {

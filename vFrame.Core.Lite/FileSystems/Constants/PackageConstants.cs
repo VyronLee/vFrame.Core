@@ -33,7 +33,16 @@ namespace vFrame.Core.FileSystems.Constants
         public const long BlockCompressed = 0x00000F00;
 
         /// 压缩算法LZMA
-        public const long BlockCompressZlib = 0x00000100;
+        public const long BlockCompressLZMA = 0x00000100;
+
+        /// 压缩算法LZ4
+        public const long BlockCompressLZ4 = 0x00000200;
+
+        /// 压缩算法ZSTD
+        public const long BlockCompressZSTD = 0x00000300;
+
+        /// 压缩算法ZLIB
+        public const long BlockCompressZLIB = 0x00000400;
 
         /// 块是否进行了加密
         public const long BlockEncrypted = 0x0000F000;
@@ -52,5 +61,12 @@ namespace vFrame.Core.FileSystems.Constants
 
         /// 块的初始版本号
         public const long BlockInitVer = 0x01000000;
+    }
+
+    public static class BlockOpFlags
+    {
+        public const long New = 0x00000001;
+        public const long Deleted = 0x00000002;
+        public const long Modified = 0x00000004;
     }
 }

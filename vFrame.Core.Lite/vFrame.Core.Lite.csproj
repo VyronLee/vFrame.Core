@@ -156,10 +156,6 @@
     <Compile Include="Extensions\ByteExtension.cs" />
     <Compile Include="Extensions\StreamExtension.cs" />
     <Compile Include="Extensions\StringExtension.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamAdapter_Default.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamFactory.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamFactory_Default.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamAdapter.cs" />
     <Compile Include="FileSystems\Constants\PackageConstants.cs" />
     <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
     <Compile Include="FileSystems\IFileSystemManager.cs" />

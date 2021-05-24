@@ -22,17 +22,21 @@ namespace vFrame.Core.FileSystems.Exceptions
     public class FileAlreadyExistException : FileSystemException
     {
         public FileAlreadyExistException(string fileName)
-            : base($"{fileName} already exist."){
+            : base($"{fileName} already exist.") {
 
         }
 
         public FileAlreadyExistException(VFSPath fileName)
-            : base($"{fileName} already exist."){
+            : base($"{fileName} already exist.") {
 
         }
     }
 
     public class FileSystemAlreadyOpenedException : FileSystemException
+    {
+    }
+
+    public class FileSystemNotOpenedException : FileSystemException
     {
     }
 

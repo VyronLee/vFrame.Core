@@ -1,18 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using vFrame.Core.FileSystems.Adapters;
 
 namespace vFrame.Core.FileSystems
 {
     public abstract class VirtualFileSystem : IVirtualFileSystem
     {
-        protected FileStreamFactory _fileStreamFactory;
+        protected VirtualFileSystem() {
 
-        protected VirtualFileSystem(FileStreamFactory streamFactory) {
-            _fileStreamFactory = streamFactory;
         }
 
-        public abstract void Open(VFSPath streamVfsPath);
+        public abstract void Open(VFSPath fsPath);
+        public abstract void Open(Stream stream);
 
         public abstract void Close();
 
@@ -29,5 +27,9 @@ namespace vFrame.Core.FileSystems
 
         public abstract IList<VFSPath> List(IList<VFSPath> refs);
         public abstract event OnGetStreamEventHandler OnGetStream;
+
+        public void Dispose() {
+            Close();
+        }
     }
 }

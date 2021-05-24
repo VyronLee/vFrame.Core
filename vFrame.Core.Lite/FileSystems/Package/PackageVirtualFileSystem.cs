@@ -13,18 +13,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using vFrame.Core.Compress;
 using vFrame.Core.Compress.Services;
 using vFrame.Core.Crypto;
-using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
-using vFrame.Core.Loggers;
 using vFrame.Core.Profiles;
 
 namespace vFrame.Core.FileSystems.Package
 {
-    internal class PackageVirtualFileSystem : VirtualFileSystem, IPackageVirtualFileSystem
+    public class PackageVirtualFileSystem : VirtualFileSystem, IPackageVirtualFileSystem
     {
         private PackageHeader _header;
         private List<PackageBlockInfo> _blockInfos;
@@ -34,11 +31,9 @@ namespace vFrame.Core.FileSystems.Package
         private bool _opened;
 
         private VFSPath _vpkVfsPath;
+        private Stream _vpkStream;
 
-        public PackageVirtualFileSystem() : this(new FileStreamFactory_Default()) {
-        }
-
-        public PackageVirtualFileSystem(FileStreamFactory factory) : base(factory) {
+        public PackageVirtualFileSystem() {
             _fileList = new Dictionary<VFSPath, int>();
             _blockInfos = new List<PackageBlockInfo>();
             _opened = false;
@@ -55,29 +50,51 @@ namespace vFrame.Core.FileSystems.Package
             _vpkVfsPath = vpkVfsPath;
         }
 
-        public override void Open(VFSPath streamVfsPath) {
+        public override void Open(VFSPath fsPath) {
+            if (null == fsPath) {
+                throw new ArgumentNullException(nameof(fsPath));
+            }
+
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
 
-            var vpkStream = _fileStreamFactory.Create(streamVfsPath, FileMode.Open, FileAccess.Read);
-            using (vpkStream) {
-                InternalOpen(vpkStream);
+            _vpkVfsPath = fsPath;
+            _vpkStream = new FileStream(fsPath, FileMode.Open, FileAccess.Read);
+
+            InternalOpen(_vpkStream);
+        }
+
+        public override void Open(Stream stream) {
+            if (null == stream) {
+                throw new ArgumentNullException(nameof(stream));
             }
 
-            _vpkVfsPath = streamVfsPath;
+            if (_opened)
+                throw new FileSystemAlreadyOpenedException();
+
+            _vpkVfsPath = "(Streaming)";
+            _vpkStream = stream;
+
+            InternalOpen(stream);
         }
 
         public override void Close() {
             if (_closed)
                 throw new FileSystemAlreadyClosedException();
 
+            Flush();
+
             _fileList.Clear();
             _blockInfos.Clear();
 
+            _opened = false;
             _closed = true;
         }
 
         public override bool Exist(VFSPath relativeVfsPath) {
+            if (!_opened) {
+                throw new FileSystemNotOpenedException();
+            }
             return _fileList.ContainsKey(relativeVfsPath);
         }
 
@@ -86,6 +103,10 @@ namespace vFrame.Core.FileSystems.Package
             FileAccess access = FileAccess.Read,
             FileShare share = FileShare.Read
         ) {
+            if (!_opened) {
+                throw new FileSystemNotOpenedException();
+            }
+
             if (!Exist(fileName))
                 throw new PackageFileSystemFileNotFound();
 
@@ -98,24 +119,28 @@ namespace vFrame.Core.FileSystems.Package
             }
 
             var block = GetBlockInfoInternal(fileName);
-            var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
-            using (vpkStream) {
-                OnGetStream?.Invoke(_vpkVfsPath, fileName, block.OriginalSize, block.CompressedSize);
-                var stream = new PackageVirtualFileStream(vpkStream, block, access);
-                if (!stream.Open())
-                    throw new PackageStreamOpenFailedException();
-                return stream;
-            }
+            OnGetStream?.Invoke(_vpkVfsPath, fileName, block.OriginalSize, block.CompressedSize);
+            var stream = new PackageVirtualFileStream(_vpkStream, block);
+            if (!stream.Open())
+                throw new PackageStreamOpenFailedException();
+            return stream;
         }
 
         public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
+            if (!_opened) {
+                throw new FileSystemNotOpenedException();
+            }
+
             var block = GetBlockInfoInternal(fileName);
-            var vpkStream = _fileStreamFactory.Create(_vpkVfsPath, FileMode.Open, FileAccess.Read);
             OnGetStream?.Invoke(_vpkVfsPath, fileName, block.OriginalSize, block.CompressedSize);
-            return new PackageReadonlyVirtualFileStreamRequest(vpkStream, block);
+            return new PackageReadonlyVirtualFileStreamRequest(_vpkStream, block);
         }
 
         public override IList<VFSPath> List(IList<VFSPath> refs) {
+            if (!_opened) {
+                throw new FileSystemNotOpenedException();
+            }
+
             foreach (var kv in _fileList)
                 refs.Add(kv.Key);
             return refs;
@@ -125,12 +150,67 @@ namespace vFrame.Core.FileSystems.Package
 
         public event OnGetPackageBlockEventHandler OnGetBlock;
 
-        public VFSPath PackageFilePath => _vpkVfsPath;
+        public VFSPath PackageFilePath {
+            get => _vpkVfsPath;
+            protected set => _vpkVfsPath = value;
+        }
 
         public PackageBlockInfo GetBlockInfo(string fileName) {
+            if (!_opened) {
+                throw new FileSystemNotOpenedException();
+            }
+
             OnGetBlock?.Invoke(_vpkVfsPath, fileName);
             return GetBlockInfoInternal(fileName);
         }
+
+        public void AddFile(string filePath) {
+            AddFile(filePath, 0, 0, 0);
+        }
+
+        public void AddFile(string filePath, long encryptType, long encryptKey, long compressType) {
+            var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            AddStream(filePath, fs, encryptType, encryptKey, compressType);
+        }
+
+        public void AddStream(string filePath, Stream stream) {
+            AddStream(filePath, stream, 0, 0, 0);
+        }
+
+        public void AddStream(string filePath, Stream stream, long encryptType, long encryptKey, long compressType) {
+            var path = VFSPath.GetPath(filePath);
+            if (_fileList.ContainsKey(path)) {
+                throw new FileAlreadyExistException(filePath);
+            }
+
+            var idx = _blockInfos.Count;
+            _fileList.Add(filePath, idx);
+
+            PackageVirtualFileOperator.GetBlockInfoAndBytes(stream,
+                encryptType,
+                encryptKey,
+                compressType,
+                out var buffer,
+                out var blockInfo);
+            _blockInfos.Add(blockInfo);
+        }
+
+        public void DeleteFile(string filePath) {
+            if (!Exist(filePath)) {
+                return;
+            }
+
+            var idx = _fileList[filePath];
+            var blockInfo = _blockInfos[idx];
+            blockInfo.OpFlags = BlockOpFlags.Deleted;
+            _blockInfos[idx] = blockInfo;
+        }
+
+        public void Flush() {
+
+        }
+
+        public bool ReadOnly { get; protected set; } = false;
 
         private PackageBlockInfo GetBlockInfoInternal(string fileName) {
             if (!Exist(fileName))
@@ -173,6 +253,7 @@ namespace vFrame.Core.FileSystems.Package
             PerfProfile.Unpin(id);
 
             _opened = true;
+            _closed = false;
         }
 
         private bool ReadHeader(Stream vpkStream) {

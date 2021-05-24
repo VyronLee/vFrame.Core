@@ -116,9 +116,8 @@
     <Compile Include="FileReaders\FileReaderRequest.cs" />
     <Compile Include="FileReaders\IFileReader.cs" />
     <Compile Include="FileReaders\IFileReaderAsync.cs" />
-    <Compile Include="FileSystems\Unity\Adapters\UnityFileStreamAdapter.cs" />
-    <Compile Include="FileSystems\Unity\Adapters\UnityFileStreamFactory.cs" />
     <Compile Include="FileSystems\Unity\FileSystemManager.cs" />
+    <Compile Include="FileSystems\Unity\StreamingAssets\SAPackageVirtualFileSystem.cs" />
     <Compile Include="FileSystems\Unity\StreamingAssets\SAStandardReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\Unity\StreamingAssets\SAStandardVirtualFileStream.cs" />
     <Compile Include="FileSystems\Unity\StreamingAssets\SAStandardVirtualFileSystem.cs" />

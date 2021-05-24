@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems.Unity.StreamingAssets
@@ -11,28 +10,24 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
     {
         private VFSPath _workingDir;
 
-        public SAStandardVirtualFileSystem() : this(null) {
-
-        }
-
-        public SAStandardVirtualFileSystem(FileStreamFactory factory) : base(factory) {
-
-        }
-
-        public override void Open(VFSPath streamVfsPath) {
-            if (streamVfsPath == Application.streamingAssetsPath) {
+        public override void Open(VFSPath fsPath) {
+            if (fsPath == Application.streamingAssetsPath) {
                 // Root directory
             }
-            else if (!BetterStreamingAssets.DirectoryExists(streamVfsPath)) {
+            else if (!BetterStreamingAssets.DirectoryExists(fsPath)) {
                 throw new DirectoryNotFoundException();
             }
 
-            if (!PathUtils.IsStreamingAssetsPath(streamVfsPath)) {
+            if (!PathUtils.IsStreamingAssetsPath(fsPath)) {
                 throw new ArgumentException("Input argument must be streaming-assets path.");
             }
 
-            _workingDir = streamVfsPath.AsDirectory();
+            _workingDir = fsPath.AsDirectory();
             _workingDir = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(_workingDir);
+        }
+
+        public override void Open(Stream stream) {
+            throw new NotSupportedException();
         }
 
         public override void Close() {

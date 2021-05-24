@@ -40,5 +40,9 @@ namespace vFrame.Core.FileSystems.Package
         public static int GetMarshalSize() {
             return sizeof(long) * 5;
         }
+
+        // ==================================
+        // Not save
+        public long OpFlags;
     }
 }

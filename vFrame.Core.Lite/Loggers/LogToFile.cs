@@ -61,7 +61,7 @@ namespace vFrame.Core.Loggers
                 catch (TaskCanceledException) {
                     break;
                 }
-                catch (Exception e) {
+                catch (Exception) {
                     // Nothing to do
                 }
             }

@@ -1,16 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace vFrame.Core.FileSystems
 {
-    public interface IVirtualFileSystem
+    public interface IVirtualFileSystem : IDisposable
     {
         /// <summary>
         ///     Open file system.
         /// </summary>
-        /// <param name="streamVfsPath">Working directory or package file path.</param>
+        /// <param name="fsPath">Working directory or package file path.</param>
         /// <returns></returns>
-        void Open(VFSPath streamVfsPath);
+        void Open(VFSPath fsPath);
 
         /// <summary>
         ///     Close file system.

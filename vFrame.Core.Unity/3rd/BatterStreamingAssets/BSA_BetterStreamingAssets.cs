@@ -446,7 +446,7 @@ public static class BetterStreamingAssets
 
             Stream fileStream = File.OpenRead(info.readPath);
             try {
-                return new SubReadOnlyStream(fileStream, info.offset, info.size, leaveOpen: false);
+                return new SubReadOnlyStream(fileStream, info.offset, info.size);
             }
             catch (System.Exception) {
                 fileStream.Dispose();
