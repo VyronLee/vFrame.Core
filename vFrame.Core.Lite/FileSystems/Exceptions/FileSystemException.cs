@@ -32,6 +32,17 @@ namespace vFrame.Core.FileSystems.Exceptions
         }
     }
 
+    public class FileSystemNotSupportedException : FileSystemException
+    {
+        public FileSystemNotSupportedException() {
+
+        }
+
+        public FileSystemNotSupportedException(string message) : base(message) {
+
+        }
+    }
+
     public class FileSystemAlreadyOpenedException : FileSystemException
     {
     }
@@ -44,20 +55,36 @@ namespace vFrame.Core.FileSystems.Exceptions
     {
     }
 
-    public class PackageFileSystemHeaderDataError : FileSystemException
+    public class PackageFileSystemHeaderDataErrorException : FileSystemException
     {
     }
 
-    public class PackageFileSystemFileListDataError : FileSystemException
+    public class PackageFileSystemFileListDataErrorException : FileSystemException
     {
     }
 
-    public class PackageFileSystemBlockTableDataError : FileSystemException
+    public class PackageFileSystemBlockTableDataErrorException : FileSystemException
     {
     }
 
-    public class PackageFileSystemFileNotFound : FileSystemException
+    public class PackageFileSystemFileNotFoundException : FileSystemException
     {
+        public PackageFileSystemFileNotFoundException() {
+
+        }
+        public PackageFileSystemFileNotFoundException(string message) : base(message) {
+
+        }
+    }
+
+    public class PackageFileSystemApplicationException : FileSystemException
+    {
+        public PackageFileSystemApplicationException() {
+
+        }
+        public PackageFileSystemApplicationException(string message) : base(message) {
+
+        }
     }
 
     public class PackageStreamOpenFailedException : FileSystemException
@@ -74,6 +101,11 @@ namespace vFrame.Core.FileSystems.Exceptions
 
     public class PackageBlockDisposedException : FileSystemException
     {
+    }
+
+    public class PackageBlockIndexOutOfRangeException : FileSystemException
+    {
+
     }
 
     public class PackageBlockOffsetErrorException : FileSystemException

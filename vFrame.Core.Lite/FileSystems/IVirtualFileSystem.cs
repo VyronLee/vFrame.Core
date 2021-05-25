@@ -22,27 +22,27 @@ namespace vFrame.Core.FileSystems
         /// <summary>
         ///     Is file with relative path exist?
         /// </summary>
-        /// <param name="relativeVfsPath"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
-        bool Exist(VFSPath relativeVfsPath);
+        bool Exist(VFSPath filePath);
 
         /// <summary>
         ///     Get file stream of specified name.
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="filePath"></param>
         /// <param name="mode"></param>
         /// <param name="access"></param>
         /// <param name="share"></param>
         /// <returns></returns>
-        IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open,
+        IVirtualFileStream GetStream(VFSPath filePath, FileMode mode = FileMode.Open,
             FileAccess access = FileAccess.Read, FileShare share = FileShare.Read);
 
         /// <summary>
         ///     Get readonly file stream async of specified name.
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
-        IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName);
+        IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath);
 
         /// <summary>
         ///     List all files in this file system.

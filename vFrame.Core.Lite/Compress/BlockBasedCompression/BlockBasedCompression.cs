@@ -357,7 +357,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         {
             var blockInfo = _blockTable.FindBlock(blockIndex);
             if (null == blockInfo) {
-                throw new PackageFileSystemBlockTableDataError();
+                throw new PackageFileSystemBlockTableDataErrorException();
             }
 
             lock (_inputLock) {

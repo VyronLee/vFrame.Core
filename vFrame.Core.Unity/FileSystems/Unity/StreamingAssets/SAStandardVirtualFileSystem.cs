@@ -26,27 +26,23 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
             _workingDir = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(_workingDir);
         }
 
-        public override void Open(Stream stream) {
-            throw new NotSupportedException();
-        }
-
         public override void Close() {
 
         }
 
-        public override bool Exist(VFSPath relativeVfsPath) {
-            return BetterStreamingAssets.FileExists(_workingDir + relativeVfsPath);
+        public override bool Exist(VFSPath filePath) {
+            return BetterStreamingAssets.FileExists(_workingDir + filePath);
         }
 
-        public override IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read,
+        public override IVirtualFileStream GetStream(VFSPath filePath, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read,
             FileShare share = FileShare.Read) {
-            var fullPath = _workingDir + fileName;
+            var fullPath = _workingDir + filePath;
             var stream = BetterStreamingAssets.OpenRead(fullPath);
             return new SAStandardVirtualFileStream(stream);
         }
 
-        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
-            var fullPath = _workingDir + fileName;
+        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath) {
+            var fullPath = _workingDir + filePath;
             return new SAStandardReadonlyVirtualFileStreamRequest(fullPath);
         }
 

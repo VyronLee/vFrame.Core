@@ -14,7 +14,7 @@ namespace vFrame.Core.FileSystems.Constants
         public const long Id = 0x737172757368; // sqrush
 
         // 包文件版本号
-        public const long Version = 0x1;
+        public const long Version = 2;
 
         // 包文件后缀
         public const string Ext = ".vpk";
@@ -22,12 +22,21 @@ namespace vFrame.Core.FileSystems.Constants
         // ReSharper disable once CommentTypo
         // 文件列表加密密钥
         public const long FileListEncryptKey = 0x7368656e7175616e; // shenquan
+
+        // 文件名列表虚拟文件名
+        public const string FileListFileName = "//__VPK_FILE_LIST__//";
+
+        // 文件名列表压缩方式
+        public const long FileListCompressType = BlockFlags.BlockCompressLZMA;
     }
 
     public static class BlockFlags
     {
         /// 块是否存在
         public const long BlockExists = 0x00000001;
+
+        /// 块是否标记删除
+        public const long BlockDeleted = 0x00000002;
 
         /// 块是否进行了压缩
         public const long BlockCompressed = 0x00000F00;
@@ -67,6 +76,5 @@ namespace vFrame.Core.FileSystems.Constants
     {
         public const long New = 0x00000001;
         public const long Deleted = 0x00000002;
-        public const long Modified = 0x00000004;
     }
 }

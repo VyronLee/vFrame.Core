@@ -137,7 +137,7 @@ namespace vFrame.Core.FileSystems
         }
 
         public static implicit operator string(VFSPath vfsPath) {
-            return vfsPath.GetValue();
+            return vfsPath.Equals(null) ? null : vfsPath.GetValue();
         }
 
         public static implicit operator VFSPath(string value) {

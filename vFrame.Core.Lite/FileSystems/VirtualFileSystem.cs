@@ -10,16 +10,14 @@ namespace vFrame.Core.FileSystems
         }
 
         public abstract void Open(VFSPath fsPath);
-        public abstract void Open(Stream stream);
-
         public abstract void Close();
 
-        public abstract bool Exist(VFSPath relativeVfsPath);
+        public abstract bool Exist(VFSPath filePath);
 
-        public abstract IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open,
+        public abstract IVirtualFileStream GetStream(VFSPath filePath, FileMode mode = FileMode.Open,
             FileAccess access = FileAccess.Read, FileShare share = FileShare.Read);
 
-        public abstract IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName);
+        public abstract IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath);
 
         public virtual IList<VFSPath> List() {
             return List(new List<VFSPath>());
