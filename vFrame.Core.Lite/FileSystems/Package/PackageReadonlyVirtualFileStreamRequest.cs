@@ -33,12 +33,10 @@ namespace vFrame.Core.FileSystems.Package
 
                 var context = (PackageStreamContext) state;
                 var vpkStream = context.Stream;
-                using (vpkStream) {
-                    var stream = new PackageVirtualFileStream(vpkStream, context.BlockInfo, FileAccess.Read);
-                    if (!stream.Open())
-                        throw new PackageStreamOpenFailedException();
-                    Stream = stream;
-                }
+                var stream = new PackageVirtualFileStream(vpkStream, context.BlockInfo);
+                if (!stream.Open())
+                    throw new PackageStreamOpenFailedException();
+                Stream = stream;
 
                 PerfProfile.Unpin(id);
 

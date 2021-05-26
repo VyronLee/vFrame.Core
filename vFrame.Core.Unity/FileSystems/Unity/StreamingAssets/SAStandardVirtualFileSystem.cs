@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems.Unity.StreamingAssets
@@ -11,27 +10,19 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
     {
         private VFSPath _workingDir;
 
-        public SAStandardVirtualFileSystem() : this(null) {
-
-        }
-
-        public SAStandardVirtualFileSystem(FileStreamFactory factory) : base(factory) {
-
-        }
-
-        public override void Open(VFSPath streamVfsPath) {
-            if (streamVfsPath == Application.streamingAssetsPath) {
+        public override void Open(VFSPath fsPath) {
+            if (fsPath == Application.streamingAssetsPath) {
                 // Root directory
             }
-            else if (!BetterStreamingAssets.DirectoryExists(streamVfsPath)) {
+            else if (!BetterStreamingAssets.DirectoryExists(fsPath)) {
                 throw new DirectoryNotFoundException();
             }
 
-            if (!PathUtils.IsStreamingAssetsPath(streamVfsPath)) {
+            if (!PathUtils.IsStreamingAssetsPath(fsPath)) {
                 throw new ArgumentException("Input argument must be streaming-assets path.");
             }
 
-            _workingDir = streamVfsPath.AsDirectory();
+            _workingDir = fsPath.AsDirectory();
             _workingDir = PathUtils.AbsolutePathToRelativeStreamingAssetsPath(_workingDir);
         }
 
@@ -39,19 +30,19 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
 
         }
 
-        public override bool Exist(VFSPath relativeVfsPath) {
-            return BetterStreamingAssets.FileExists(_workingDir + relativeVfsPath);
+        public override bool Exist(VFSPath filePath) {
+            return BetterStreamingAssets.FileExists(_workingDir + filePath);
         }
 
-        public override IVirtualFileStream GetStream(VFSPath fileName, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read,
+        public override IVirtualFileStream GetStream(VFSPath filePath, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read,
             FileShare share = FileShare.Read) {
-            var fullPath = _workingDir + fileName;
+            var fullPath = _workingDir + filePath;
             var stream = BetterStreamingAssets.OpenRead(fullPath);
             return new SAStandardVirtualFileStream(stream);
         }
 
-        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
-            var fullPath = _workingDir + fileName;
+        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath) {
+            var fullPath = _workingDir + filePath;
             return new SAStandardReadonlyVirtualFileStreamRequest(fullPath);
         }
 

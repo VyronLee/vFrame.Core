@@ -12,8 +12,6 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using vFrame.Core.Compress;
 using vFrame.Core.Compress.Services;
 using vFrame.Core.Crypto;
 using vFrame.Core.Extensions;
@@ -26,7 +24,6 @@ namespace vFrame.Core.FileSystems.Package
     internal class PackageVirtualFileStream : VirtualFileStream
     {
         private readonly PackageBlockInfo _blockInfo;
-        private readonly FileAccess _mode = FileAccess.ReadWrite;
 
         private readonly Stream _vpkStream;
         private MemoryStream _memoryStream;
@@ -38,14 +35,9 @@ namespace vFrame.Core.FileSystems.Package
             _blockInfo = blockInfo;
         }
 
-        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo, FileAccess mode)
-            : this(vpkStream, blockInfo) {
-            _mode = mode;
-        }
-
-        public override bool CanRead => _opened && !_closed && (_mode & FileAccess.Read) > 0;
+        public override bool CanRead => _opened && !_closed;
         public override bool CanSeek => _opened && !_closed;
-        public override bool CanWrite => _opened && !_closed && (_mode & FileAccess.Write) > 0;
+        public override bool CanWrite => false;
         public override long Length => _blockInfo.OriginalSize;
 
         public override long Position {
@@ -57,7 +49,7 @@ namespace vFrame.Core.FileSystems.Package
             Debug.Assert(null != _vpkStream);
             PerfProfile.Start(out var id);
             PerfProfile.Pin("PackageVirtualFileStream:InternalOpen", id);
-            var ret = InternalOpen(_vpkStream);
+            var ret = InternalOpen();
             PerfProfile.Unpin(id);
             return ret;
         }
@@ -116,8 +108,8 @@ namespace vFrame.Core.FileSystems.Package
             if (_closed) throw new PackageStreamClosedException();
         }
 
-        private bool InternalOpen(Stream inputStream) {
-            ValidateBlockInfo(inputStream);
+        private bool InternalOpen() {
+            ValidateBlockInfo(_vpkStream);
 
             // 1. copy data to temp buffer first
             var dataSize = (_blockInfo.Flags & BlockFlags.BlockCompressed) > 0
@@ -125,8 +117,10 @@ namespace vFrame.Core.FileSystems.Package
                 : _blockInfo.OriginalSize;
 
             var tempStream = VirtualFileStreamPool.Instance().GetStream("VPK:TempStream", (int) dataSize);
-            inputStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
-            inputStream.BufferedCopyTo(tempStream, (int)dataSize);
+            lock (_vpkStream) {
+                _vpkStream.Seek(_blockInfo.Offset, SeekOrigin.Begin);
+                _vpkStream.BufferedCopyTo(tempStream, (int)dataSize);
+            }
 
             // 2. decompress
             if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {

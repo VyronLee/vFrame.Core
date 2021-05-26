@@ -14,17 +14,18 @@ namespace vFrame.Core.FileSystems.Package
     {
         public long Id;
         public long Version;
-        public long Size;
-        public long FileListOffset;
-        public long FileListSize;
+        public long TotalSize;
         public long BlockTableOffset;
         public long BlockTableSize;
         public long BlockOffset;
-        public long Reserved;
+        public long BlockSize;
+        public long Reserved1;
+        public long Reserved2;
+        public long Reserved3;
 
-        // 72 bytes
+        // 80 bytes
         public static int GetMarshalSize() {
-            return sizeof(long) * 9;
+            return sizeof(long) * 10;
         }
     }
 
@@ -40,5 +41,10 @@ namespace vFrame.Core.FileSystems.Package
         public static int GetMarshalSize() {
             return sizeof(long) * 5;
         }
+
+        // ==================================
+        // Not save
+        public long OpFlags;
+        public byte[] RawData;
     }
 }

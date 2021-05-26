@@ -1,21 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using vFrame.Core.Base;
-using vFrame.Core.FileSystems.Adapters;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Package;
 using vFrame.Core.FileSystems.Standard;
-using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems
 {
-    public class FileSystemManager<T> : BaseObject<T> , IFileSystemManager where T: FileStreamFactory
+    public class FileSystemManager : BaseObject , IFileSystemManager
     {
-        protected FileStreamFactory _factory;
         private List<IVirtualFileSystem> _fileSystems;
 
-        protected override void OnCreate(T factory) {
-            _factory = factory;
+        protected override void OnCreate() {
             _fileSystems = new List<IVirtualFileSystem>();
         }
 
@@ -25,14 +21,14 @@ namespace vFrame.Core.FileSystems
             _fileSystems.Clear();
         }
 
-        public IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
+        public virtual IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
             IVirtualFileSystem virtualFileSystem;
             switch (vfsPath.GetExtension()) {
                 case PackageFileSystemConst.Ext:
-                    virtualFileSystem = new PackageVirtualFileSystem(_factory);
+                    virtualFileSystem = new PackageVirtualFileSystem();
                     break;
                 default:
-                    virtualFileSystem = new StandardVirtualFileSystem(_factory);
+                    virtualFileSystem = new StandardVirtualFileSystem();
                     break;
             }
 
@@ -86,13 +82,6 @@ namespace vFrame.Core.FileSystems
             using (var stream = GetStream(path)) {
                 return stream?.ReadAllBytes();
             }
-        }
-    }
-
-    public class FileSystemManager : FileSystemManager<FileStreamFactory_Default>
-    {
-        protected override void OnCreate() {
-            base.OnCreate(new FileStreamFactory_Default());
         }
     }
 }

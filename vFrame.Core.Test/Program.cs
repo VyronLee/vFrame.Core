@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using vFrame.Core.FileSystems;
+using vFrame.Core.FileSystems.Package;
 using vFrame.Core.Loggers;
 using vFrame.Core.Profiles;
 
@@ -41,6 +42,13 @@ namespace ConsoleApplication1
         }
 
         public static void Main(string[] args) {
+            //PackageVirtualFileOperator.CreatePackage(@"F:\ZeusClient\Project\Assets\Lua\Core",
+            //    @"F:\ZeusClient\Project\Assets\pack.vpk");
+            PackageVirtualFileOperator.ExtractPackage(@"F:\ZeusClient\Project\Assets\pack.vpk", @"F:\ZeusClient\1111");
+        }
+
+        /*
+        public static void Main(string[] args) {
             Logger.LogLevel = LogLevelDef.Info;
             Logger.LogFormatMask = LogFormatType.Class | LogFormatType.Function;
 
@@ -78,5 +86,6 @@ namespace ConsoleApplication1
             log1.Dispose();
             log2.Dispose();
         }
+        */
     }
 }

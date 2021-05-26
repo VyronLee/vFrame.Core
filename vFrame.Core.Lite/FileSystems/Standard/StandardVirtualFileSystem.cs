@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using vFrame.Core.FileSystems.Adapters;
-using vFrame.Core.FileSystems.Constants;
-using vFrame.Core.Loggers;
 
 namespace vFrame.Core.FileSystems.Standard
 {
@@ -10,45 +8,37 @@ namespace vFrame.Core.FileSystems.Standard
     {
         private VFSPath _workingDir;
 
-        public StandardVirtualFileSystem() : this(new FileStreamFactory_Default()) {
-
-        }
-
-        public StandardVirtualFileSystem(FileStreamFactory factory) : base(factory) {
-
-        }
-
-        public override void Open(VFSPath streamVfsPath) {
-            if (!Directory.Exists(streamVfsPath)) {
+        public override void Open(VFSPath fsPath) {
+            if (!Directory.Exists(fsPath)) {
                 throw new DirectoryNotFoundException();
             }
 
-            _workingDir = streamVfsPath.AsDirectory();
+            _workingDir = fsPath.AsDirectory();
         }
 
         public override void Close() {
         }
 
-        public override bool Exist(VFSPath relativeVfsPath) {
-            return File.Exists(_workingDir + relativeVfsPath);
+        public override bool Exist(VFSPath filePath) {
+            return File.Exists(_workingDir + filePath);
         }
 
-        public override IVirtualFileStream GetStream(VFSPath fileName,
+        public override IVirtualFileStream GetStream(VFSPath filePath,
             FileMode mode,
             FileAccess access,
             FileShare share
         ) {
-            var absolutePath = _workingDir + fileName;
-            var fileStream = _fileStreamFactory.Create(absolutePath, mode, access, share);
+            var absolutePath = _workingDir + filePath;
+            var fileStream = new FileStream(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
             return new StandardVirtualFileStream(fileStream);
         }
 
-        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath fileName) {
-            if (!Exist(fileName))
-                throw new FileNotFoundException("File not found: " + fileName);
-            var absolutePath = _workingDir + fileName;
-            var fileStream = _fileStreamFactory.Create(absolutePath);
+        public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath) {
+            if (!Exist(filePath))
+                throw new FileNotFoundException("File not found: " + filePath);
+            var absolutePath = _workingDir + filePath;
+            var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }

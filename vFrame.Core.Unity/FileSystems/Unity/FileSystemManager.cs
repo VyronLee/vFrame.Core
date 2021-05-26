@@ -1,30 +1,30 @@
 ﻿using vFrame.Core.FileSystems.Constants;
-using vFrame.Core.FileSystems.Unity.Adapters;
 using vFrame.Core.FileSystems.Unity.StreamingAssets;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems.Unity
 {
-    public class FileSystemManager : FileSystemManager<UnityFileStreamFactory>
+    public class FileSystemManager : vFrame.Core.FileSystems.FileSystemManager
     {
         protected override void OnCreate() {
             BetterStreamingAssets.Initialize();
             PathUtils.Initialize();
-
-            base.OnCreate(new UnityFileStreamFactory());
+            base.OnCreate();
         }
 
         public new IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
             IVirtualFileSystem virtualFileSystem;
 
-            switch (vfsPath.GetExtension()) {
+            if (!PathUtils.IsStreamingAssetsPath(vfsPath)) {
+                return base.AddFileSystem(vfsPath);
+            }
+
+            switch (vfsPath.GetExtension().ToLower()) {
                 case PackageFileSystemConst.Ext:
-                    return base.AddFileSystem(vfsPath);
+                    virtualFileSystem = new SAPackageVirtualFileSystem();
+                    break;
                 default:
-                    if (!PathUtils.IsStreamingAssetsPath(vfsPath)) {
-                        return base.AddFileSystem(vfsPath);
-                    }
-                    virtualFileSystem = new SAStandardVirtualFileSystem(_factory);
+                    virtualFileSystem = new SAStandardVirtualFileSystem();
                     break;
             }
 

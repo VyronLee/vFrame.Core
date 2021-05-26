@@ -11,7 +11,7 @@
     <AssemblyName>vFrame.Core.Lite</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -93,6 +93,8 @@
     <Compile Include="Extensions\ArrayExtension.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
+    <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Reader.cs" />
+    <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Writer.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryPool.cs" />
@@ -156,10 +158,6 @@
     <Compile Include="Extensions\ByteExtension.cs" />
     <Compile Include="Extensions\StreamExtension.cs" />
     <Compile Include="Extensions\StringExtension.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamAdapter_Default.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamFactory.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamFactory_Default.cs" />
-    <Compile Include="FileSystems\Adapters\FileStreamAdapter.cs" />
     <Compile Include="FileSystems\Constants\PackageConstants.cs" />
     <Compile Include="FileSystems\Exceptions\FileSystemException.cs" />
     <Compile Include="FileSystems\IFileSystemManager.cs" />
