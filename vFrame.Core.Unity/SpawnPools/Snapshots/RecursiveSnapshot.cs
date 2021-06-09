@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.Extensions.UnityEngine;
+using vFrame.Core.ObjectPools.Builtin;
 
 namespace vFrame.Core.SpawnPools.Snapshots
 {
     public class RecursiveSnapshot : BaseObject<GameObject, IEnumerable<Type>>
     {
-        protected readonly List<Type> EmptyList = new List<Type>();
+        protected static readonly List<Type> EmptyList = new List<Type>();
 
         private GameObject _root;
         private Dictionary<GameObject, List<Snapshot>> _snapshots;
@@ -22,18 +22,25 @@ namespace vFrame.Core.SpawnPools.Snapshots
             _root = root;
             _photographer = snapshots ?? EmptyList;
 
-            _snapshots = new Dictionary<GameObject, List<Snapshot>>(32);
-
             _takeNodeSnapshot = TakeOneSnapshot;
             _restoreNodeSnapshot = RestoreOneSnapshot;
         }
 
         protected override void OnDestroy() {
-            _snapshots?.Clear();
-            _snapshots = null;
+            Reset();
+
+            _root = null;
+            _photographer = null;
+            _takeNodeSnapshot = null;
+            _restoreNodeSnapshot = null;
         }
 
         public void Take() {
+            Reset();
+
+            if (null == _snapshots) {
+                _snapshots = DictionaryPool<GameObject, List<Snapshot>>.Shared.Get();
+            }
             _root.transform.TravelSelfAndChildren(_takeNodeSnapshot);
         }
 
@@ -41,9 +48,20 @@ namespace vFrame.Core.SpawnPools.Snapshots
             _root.transform.TravelSelfAndChildren(_restoreNodeSnapshot);
         }
 
-        private void TakeOneSnapshot(Transform node) {
-            _snapshots[node.gameObject] = new List<Snapshot>(_photographer.Count());
+        private void Reset() {
+            if (null == _snapshots) {
+                return;
+            }
 
+            foreach (var kv in _snapshots) {
+                ListPool<Snapshot>.Shared.Return(kv.Value);
+            }
+            DictionaryPool<GameObject, List<Snapshot>>.Shared.Return(_snapshots);
+            _snapshots = null;
+        }
+
+        private void TakeOneSnapshot(Transform node) {
+            _snapshots[node.gameObject] = ListPool<Snapshot>.Shared.Get();
             foreach (var snapshotType in _photographer) {
                 var snapshot = Activator.CreateInstance(snapshotType) as Snapshot;
                 if (snapshot == null)

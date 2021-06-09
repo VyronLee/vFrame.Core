@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using vFrame.Core.Behaviours;
-using vFrame.Core.ThirdParty;
 
 namespace vFrame.Core.Extensions.UnityEngine
 {
@@ -159,6 +158,15 @@ namespace vFrame.Core.Extensions.UnityEngine
             names.Reverse();
             var path = string.Join("/", names);
             return path;
+        }
+
+        public static int GetAllChildrenCount(this Transform transform) {
+            var ret = 0;
+            ret += transform.childCount;
+            for (var i = 0; i < transform.childCount; i++) {
+                ret += GetAllChildrenCount(transform.GetChild(i));
+            }
+            return ret;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Snapshots;
 using vFrame.Core.SpawnPools.Snapshots.Impls;
 
@@ -16,11 +16,23 @@ namespace vFrame.Core.SpawnPools
             typeof(BehaviourSnapshot)
         };
 
-        protected override void OnCreate(GameObject target, IEnumerable<Type> additional) {
-            var snapshotTypes = DefaultSnapshotTypes.ToList();
-            snapshotTypes.AddRange(additional ?? EmptyList);
+        private List<Type> _snapshotTypes;
 
-            base.OnCreate(target, snapshotTypes);
+        protected override void OnCreate(GameObject target, IEnumerable<Type> additional) {
+            _snapshotTypes = ListPool<Type>.Shared.Get();
+            _snapshotTypes.AddRange(DefaultSnapshotTypes);
+            _snapshotTypes.AddRange(additional ?? EmptyList);
+
+            base.OnCreate(target, _snapshotTypes);
+        }
+
+        protected override void OnDestroy() {
+            if (null != _snapshotTypes) {
+                ListPool<Type>.Shared.Return(_snapshotTypes);
+            }
+            _snapshotTypes = null;
+
+            base.OnDestroy();
         }
     }
 }
