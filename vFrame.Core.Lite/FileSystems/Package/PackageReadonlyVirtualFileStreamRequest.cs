@@ -12,13 +12,13 @@ namespace vFrame.Core.FileSystems.Package
     {
         private class PackageStreamContext
         {
-            public Stream Stream;
+            public PackageVirtualFileSystemStream Stream;
             public PackageBlockInfo BlockInfo;
         }
 
         private bool _finished;
 
-        public PackageReadonlyVirtualFileStreamRequest(Stream vpkStream, PackageBlockInfo blockInfo) {
+        public PackageReadonlyVirtualFileStreamRequest(PackageVirtualFileSystemStream vpkStream, PackageBlockInfo blockInfo) {
             var context = new PackageStreamContext {
                 Stream = vpkStream,
                 BlockInfo = blockInfo,

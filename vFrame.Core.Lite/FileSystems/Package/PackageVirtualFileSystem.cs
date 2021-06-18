@@ -31,6 +31,7 @@ namespace vFrame.Core.FileSystems.Package
 
         private VFSPath _vpkVfsPath;
         private Stream _vpkStream;
+        private bool _openFromStream;
 
         public PackageVirtualFileSystem() {
             _header = new PackageHeader {
@@ -49,6 +50,7 @@ namespace vFrame.Core.FileSystems.Package
             _filePathList = new List<VFSPath>();
             _filePathMap = new Dictionary<string, int>();
             _blockInfos = new List<PackageBlockInfo>();
+            _openFromStream = false;
             _opened = false;
             _closed = false;
         }
@@ -59,8 +61,13 @@ namespace vFrame.Core.FileSystems.Package
 
             _vpkVfsPath = fsPath;
             _vpkStream = new FileStream(fsPath, FileMode.Open, FileAccess.Read);
+            _openFromStream = false;
 
             InternalOpen();
+
+            _vpkStream.Close();
+            _vpkStream.Dispose();
+            _vpkStream = null;
         }
 
         public void Open(Stream stream, bool leaveOpen = false) {
@@ -74,6 +81,7 @@ namespace vFrame.Core.FileSystems.Package
             _vpkVfsPath = "(Streaming)";
             _vpkStream = stream;
             _leaveOpen = leaveOpen;
+            _openFromStream = true;
 
             InternalOpen();
         }
@@ -139,7 +147,7 @@ namespace vFrame.Core.FileSystems.Package
 
             var block = GetBlockInfoInternal(filePath);
             OnGetStream?.Invoke(_vpkVfsPath, filePath, block.OriginalSize, block.CompressedSize);
-            var stream = new PackageVirtualFileStream(_vpkStream, block);
+            var stream = new PackageVirtualFileStream(GetVPKStream(), block);
             if (!stream.Open())
                 throw new PackageStreamOpenFailedException();
             return stream;
@@ -152,7 +160,7 @@ namespace vFrame.Core.FileSystems.Package
 
             var block = GetBlockInfoInternal(filePath);
             OnGetStream?.Invoke(_vpkVfsPath, filePath, block.OriginalSize, block.CompressedSize);
-            return new PackageReadonlyVirtualFileStreamRequest(_vpkStream, block);
+            return new PackageReadonlyVirtualFileStreamRequest(GetVPKStream(), block);
         }
 
         public override IList<VFSPath> List(IList<VFSPath> refs) {
@@ -265,12 +273,13 @@ namespace vFrame.Core.FileSystems.Package
             if (!_opened) {
                 throw new FileSystemNotOpenedException();
             }
-            if (ReadOnly) {
-                throw new FileSystemNotSupportedException("File system is readonly.");
-            }
 
             if (!_dirty) {
                 return;
+            }
+
+            if (ReadOnly) {
+                throw new FileSystemNotSupportedException("File system is readonly.");
             }
 
             PrepareWriting(clean);
@@ -367,6 +376,15 @@ namespace vFrame.Core.FileSystems.Package
 
         private static bool IsBlockWrite(PackageBlockInfo blockInfo) {
             return (blockInfo.Flags & BlockFlags.BlockExists) > 0;
+        }
+
+        private PackageVirtualFileSystemStream GetVPKStream() {
+            if (_openFromStream) {
+                return new PackageVirtualFileSystemStream(_vpkStream, true);
+            }
+
+            var fileStream = new FileStream(_vpkVfsPath, FileMode.Open, FileAccess.Read);
+            return new PackageVirtualFileSystemStream(fileStream, false);
         }
     }
 }

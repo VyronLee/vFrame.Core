@@ -16,6 +16,7 @@ namespace vFrame.Core.FileSystems.Package
         public Action<PackageVirtualFileOperator.ProcessState, float, float> OnProgress;
 
         private void PrepareWriting(bool skipDeleted = false) {
+            OpenFileStreamIfRequired();
             SaveBlockOperations();
             RecalculateFileListBlockInfo(skipDeleted);
             RecalculateHeader(skipDeleted);
@@ -24,6 +25,31 @@ namespace vFrame.Core.FileSystems.Package
 
         private void FinishWriting() {
             ClearBlockOperations();
+            CloseFileStreamIfRequired();
+        }
+
+        private void OpenFileStreamIfRequired() {
+            if (null != _vpkStream) {
+                return;
+            }
+
+            if (_openFromStream) {
+                return;
+            }
+            _vpkStream = new FileStream(_vpkVfsPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+        }
+
+        private void CloseFileStreamIfRequired() {
+            if (null == _vpkStream) {
+                return;
+            }
+
+            if (_openFromStream) {
+                return;
+            }
+            _vpkStream.Close();
+            _vpkStream.Dispose();
+            _vpkStream = null;
         }
 
         private void SaveBlockOperations() {

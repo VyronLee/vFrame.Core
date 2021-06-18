@@ -25,12 +25,12 @@ namespace vFrame.Core.FileSystems.Package
     {
         private readonly PackageBlockInfo _blockInfo;
 
-        private readonly Stream _vpkStream;
+        private readonly PackageVirtualFileSystemStream _vpkStream;
         private MemoryStream _memoryStream;
         private bool _opened;
         private bool _closed;
 
-        internal PackageVirtualFileStream(Stream vpkStream, PackageBlockInfo blockInfo) {
+        internal PackageVirtualFileStream(PackageVirtualFileSystemStream vpkStream, PackageBlockInfo blockInfo) {
             _vpkStream = vpkStream;
             _blockInfo = blockInfo;
         }
@@ -55,6 +55,9 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override void Close() {
+            _vpkStream.Close();
+            _vpkStream.Dispose();
+
             _memoryStream.Close();
             _memoryStream.Dispose();
 
@@ -76,7 +79,6 @@ namespace vFrame.Core.FileSystems.Package
         public override void Flush() {
             ValidateStreamState();
             _memoryStream.Flush();
-            //TODO: Flush to package.
         }
 
         public override int Read(byte[] buffer, int offset, int count) {

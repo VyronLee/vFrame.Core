@@ -95,6 +95,7 @@
     <Compile Include="FileSystems\Package\IPackageVirtualFileSystem.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Reader.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Writer.cs" />
+    <Compile Include="FileSystems\Package\PackageVirtualFileSystemStream.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryPool.cs" />

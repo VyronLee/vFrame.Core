@@ -33,7 +33,7 @@ namespace vFrame.Core.FileSystems.Package
             _filePathList.Clear();
 
             var blockInfo = _blockInfos[_blockInfos.Count - 1]; // Last block is filename list
-            using (var stream = new PackageVirtualFileStream(_vpkStream, blockInfo)) {
+            using (var stream = new PackageVirtualFileStream(GetVPKStream(), blockInfo)) {
                 if (!stream.Open()) {
                     throw new PackageFileSystemFileListDataErrorException();
                 }
