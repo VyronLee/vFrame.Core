@@ -34,6 +34,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// <returns></returns>
         public static IEnumerator PlayUntilFinished(this Animation animation, string name) {
             var clip = animation.GetClip(name);
+            animation.clip = clip;
             animation.Reset();
             animation.Play(name);
             yield return new WaitForSeconds(clip.length);
@@ -47,6 +48,7 @@ namespace vFrame.Core.Extensions.UnityEngine
         /// <returns></returns>
         public static IEnumerator CrossFadeUntilFinished(this Animation animation, string name) {
             var clip = animation.GetClip(name);
+            animation.clip = clip;
             animation.CrossFade(name);
             yield return new WaitForSeconds(clip.length);
         }

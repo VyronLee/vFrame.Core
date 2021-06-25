@@ -1,10 +1,10 @@
 SolutionFile = vFrame.Core.sln
 
-Compiler = msbuild /t:Rebuild  /p:Platform="Any CPU"
-PlatformContantsDefined_Editor = /p:DefineConstants="TRACE UNITY_EDITOR"
-PlatformContantsDefined_Android = /p:DefineConstants="TRACE UNITY_ANDROID"
-PlatformContantsDefined_IOS = /p:DefineConstants="TRACE UNITY_IOS"
-PlatformContantsDefined_Standalone = /p:DefineConstants="TRACE UNITY_STANDALONE"
+Compiler = MSBuild /t:Rebuild /p:Platform=Any\ CPU
+PlatformContantsDefined_Editor = /p:DefineConstants=TRACE\ UNITY_EDITOR
+PlatformContantsDefined_Android = /p:DefineConstants=TRACE\ UNITY_ANDROID
+PlatformContantsDefined_IOS = /p:DefineConstants=TRACE\ UNITY_IOS
+PlatformContantsDefined_Standalone = /p:DefineConstants=TRACE\ UNITY_STANDALONE
 
 ConfigDebug = /p:Configuration=Debug
 ConfigRelease = /p:Configuration=Release

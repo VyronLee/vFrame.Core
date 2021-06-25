@@ -18,6 +18,7 @@ using vFrame.Core.Extensions.UnityEngine;
 namespace vFrame.Core.Behaviours
 {
     [RequireComponent(typeof(Animation))]
+    [DisallowMultipleComponent]
     public class AnimationList : MonoBehaviour
     {
         [Serializable]
@@ -61,6 +62,7 @@ namespace vFrame.Core.Behaviours
             var clip = GetAnimation(animationName);
             if(!clip)
                 return false;
+            _animation.clip = clip;
             _animation.Reset();
             return _animation.Play(clip.name);
         }
@@ -85,6 +87,7 @@ namespace vFrame.Core.Behaviours
             var clip = GetAnimation(animationName);
             if(!clip)
                 return;
+            _animation.clip = clip;
             _animation.CrossFade(clip.name);
         }
 

@@ -88,8 +88,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Inspectors\AnimationListInspector.cs" />
     <Compile Include="Utils\EditorUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\vFrame.Core.Unity\vFrame.Core.Unity.csproj">
+      <Project>{95047269-9482-43b6-923c-5b7899385702}</Project>
+      <Name>vFrame.Core.Unity</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
