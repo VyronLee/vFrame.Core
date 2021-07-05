@@ -37,6 +37,7 @@ namespace vFrame.Core.Coroutine
         }
 
         internal readonly int Capacity;
+        internal readonly HashSet<int> IdleSlots;
         internal readonly List<CoroutineBehaviour> CoroutineList;
         internal readonly List<CoroutineTask> TasksRunning;
         internal readonly List<CoroutineTask> TasksWaiting;
@@ -47,6 +48,7 @@ namespace vFrame.Core.Coroutine
 
         public CoroutinePool(string name = null, int capacity = int.MaxValue) {
             Capacity = capacity;
+            IdleSlots = new HashSet<int>();
             CoroutineList = new List<CoroutineBehaviour>();
 
             TasksRunning = new List<CoroutineTask>(16);
@@ -194,17 +196,15 @@ namespace vFrame.Core.Coroutine
         }
 
         private int FindIdleRunner() {
-            for (var i = 0; i < Capacity; i++) {
-                var running = false;
-                foreach (var task in TasksRunning) {
-                    if (task.RunnerId != i)
-                        continue;
-                    running = true;
-                    break;
+            if (IdleSlots.Count > 0) {
+                foreach (var slot in IdleSlots) {
+                    IdleSlots.Remove(slot);
+                    return slot;
                 }
+            }
 
-                if (!running)
-                    return i;
+            if (TasksRunning.Count < Capacity) {
+                return TasksRunning.Count;
             }
 
             throw new System.IndexOutOfRangeException("No idling runner now.");
@@ -220,6 +220,7 @@ namespace vFrame.Core.Coroutine
             Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task finished: " + context.Task.GetHashCode());
 #endif
             TasksRunning.Remove(context);
+            IdleSlots.Add(context.RunnerId);
         }
 
         private void PopupAndRunNext() {
