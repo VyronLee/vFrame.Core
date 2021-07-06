@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\Box.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompression.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionConst.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionException.cs" />
@@ -97,6 +98,8 @@
     <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Writer.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileSystemStream.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
+    <Compile Include="ObjectPools\Builtin\BoxAllocator.cs" />
+    <Compile Include="ObjectPools\Builtin\BaseObjectPool.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryPool.cs" />
     <Compile Include="ObjectPools\IObjectPoolManager.cs" />
