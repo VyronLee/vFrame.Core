@@ -43,6 +43,13 @@ namespace vFrame.Core.FileSystems.Exceptions
         }
     }
 
+    public class FileSystemBufferPoolInitFailedException : FileSystemException
+    {
+        public FileSystemBufferPoolInitFailedException(string message) : base(message) {
+
+        }
+    }
+
     public class FileSystemAlreadyOpenedException : FileSystemException
     {
     }
@@ -111,6 +118,11 @@ namespace vFrame.Core.FileSystems.Exceptions
     public class PackageBlockOffsetErrorException : FileSystemException
     {
         public PackageBlockOffsetErrorException(long offset, long need) : base($"At least: {need}, got: {offset}") {
+        }
+    }
+    public class PackageBlockDataSizeTooLargeException : FileSystemException
+    {
+        public PackageBlockDataSizeTooLargeException(long size) : base($"Size too large: {size}") {
         }
     }
 

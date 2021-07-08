@@ -97,7 +97,9 @@
     <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Reader.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileSystem.Writer.cs" />
     <Compile Include="FileSystems\Package\PackageVirtualFileSystemStream.cs" />
+    <Compile Include="FileSystems\Pools\BufferPool.cs" />
     <Compile Include="Loggers\LogToFile.cs" />
+    <Compile Include="ObjectPools\ArrayPools\Bucket.cs" />
     <Compile Include="ObjectPools\Builtin\BoxAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\BaseObjectPool.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryAllocator.cs" />
@@ -171,7 +173,6 @@
     <Compile Include="FileSystems\Standard\StandardReadonlyVirtualFileStreamRequest.cs" />
     <Compile Include="FileSystems\VirtualFileStream.cs" />
     <Compile Include="FileSystems\ReadonlyVirtualFileStreamRequest.cs" />
-    <Compile Include="FileSystems\VirtualFileStreamPool.cs" />
     <Compile Include="FileSystems\VirtualFileSystem.cs" />
     <Compile Include="FileSystems\FileSystemManager.cs" />
     <Compile Include="FileSystems\IVirtualFileStream.cs" />

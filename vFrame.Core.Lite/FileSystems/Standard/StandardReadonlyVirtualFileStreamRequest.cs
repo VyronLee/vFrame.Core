@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.Loggers;
 
@@ -18,8 +17,8 @@ namespace vFrame.Core.FileSystems.Standard
             try {
                 var stream  = (Stream) state;
                 using (stream) {
-                    var memoryStream = VirtualFileStreamPool.Instance().GetStream();
-                    stream.BufferedCopyTo(memoryStream, (int)stream.Length);
+                    var memoryStream = new MemoryStream((int)stream.Length);
+                    stream.CopyTo(memoryStream, (int)stream.Length);
                     Stream = new StandardVirtualFileStream(memoryStream);
                 }
 

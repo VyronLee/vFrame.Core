@@ -31,6 +31,7 @@ namespace vFrame.Core.FileSystems.Standard
             var absolutePath = _workingDir + filePath;
             var fileStream = new FileStream(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
+            OnGetStream?.Invoke(_workingDir, filePath, fileStream.Length, fileStream.Length);
             return new StandardVirtualFileStream(fileStream);
         }
 
@@ -40,6 +41,7 @@ namespace vFrame.Core.FileSystems.Standard
             var absolutePath = _workingDir + filePath;
             var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
+            OnGetStream?.Invoke(_workingDir, filePath, fileStream.Length, fileStream.Length);
             return new StandardReadonlyVirtualFileStreamRequest(fileStream);
         }
 
