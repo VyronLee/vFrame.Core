@@ -52,8 +52,10 @@ namespace vFrame.Core.FileSystems.Pools
                 return buffer;
 
             buffer = new byte[minimumLength];
-            Logger.Warning(FileSystemConst.LogTag,
-                "Rent from buffer pool failed, size: {0}, force create new buffer..", minimumLength);
+            if (_logMissing) {
+                Logger.Warning(FileSystemConst.LogTag,
+                    "Rent from buffer pool failed, size: {0}, force create new buffer..", minimumLength);
+            }
             return buffer;
         }
 

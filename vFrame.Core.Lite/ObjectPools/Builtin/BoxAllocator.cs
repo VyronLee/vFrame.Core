@@ -9,7 +9,7 @@ namespace vFrame.Core.ObjectPools.Builtin
         }
 
         public void Reset(Box<T> obj) {
-
+            obj.Value = default;
         }
     }
 }
