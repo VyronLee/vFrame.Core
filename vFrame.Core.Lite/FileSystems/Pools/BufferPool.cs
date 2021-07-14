@@ -31,7 +31,7 @@ namespace vFrame.Core.FileSystems.Pools
         };
 
         private readonly ConcurrentDictionary<int, Bucket<byte>> _buckets = new ConcurrentDictionary<int, Bucket<byte>>();
-        private bool _logMissing;
+        private readonly bool _logMissing;
 
         private BufferPool(bool logMissing = false) {
             for (var index = 0; index < BucketCount; index++) {
@@ -47,9 +47,13 @@ namespace vFrame.Core.FileSystems.Pools
             if (idx < 0) {
                 return new byte[minimumLength];
             }
-            var buffer = _buckets[idx].Rent();
-            if (null != buffer)
-                return buffer;
+
+            byte[] buffer;
+            if (_buckets.TryGetValue(idx, out var bucket)) {
+                buffer = bucket.Rent();
+                if (null != buffer)
+                    return buffer;
+            }
 
             buffer = new byte[minimumLength];
             if (_logMissing) {
@@ -72,7 +76,10 @@ namespace vFrame.Core.FileSystems.Pools
             if (clearArray) {
                 Array.Clear(array, 0, array.Length);
             }
-            _buckets[idx].Return(array);
+
+            if (_buckets.TryGetValue(idx, out var bucket)) {
+                bucket.Return(array);
+            }
         }
 
         private static int SelectBucketToRent(int minimumLength) {
@@ -99,7 +106,7 @@ namespace vFrame.Core.FileSystems.Pools
 
         private static BufferPool EnsureSharedCreated()
         {
-            Interlocked.CompareExchange(ref s_sharedInstance, new BufferPool(true), null);
+            Interlocked.CompareExchange(ref s_sharedInstance, new BufferPool(false), null);
             return s_sharedInstance;
         }
     }

@@ -68,11 +68,6 @@ namespace vFrame.Core.ObjectPools.ArrayPools
                 throw new ArgumentException("Buffer not from pool", nameof(array));
             }
 
-            // bucket is full
-            if (_index >= _buffers.Length) {
-                return;
-            }
-
             // While holding the spin lock, if there's room available in the bucket,
             // put the buffer into the next available slot.  Otherwise, we just drop it.
             // The try/finally is necessary to properly handle thread aborts on platforms
@@ -81,7 +76,8 @@ namespace vFrame.Core.ObjectPools.ArrayPools
             try {
                 _lock.Enter(ref lockTaken);
 
-                if (_index != 0) {
+                // We not cache the array if bucket is full
+                if (_index < _buffers.Length && _index > 0) {
                     _buffers[--_index] = array;
                 }
             }

@@ -55,16 +55,21 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public override void Close() {
+            if (_closed) {
+                return;
+            }
+            _closed = true;
+
             _vpkStream?.Close();
             _vpkStream?.Dispose();
 
             if (null != _dataBuffer) {
-                BufferPool.Shared.Return(_dataBuffer);
+                BufferPool.Shared.Return(_dataBuffer, true);
             }
+            _dataBuffer = null;
+
             _memoryStream?.Close();
             _memoryStream?.Dispose();
-
-            _closed = true;
 
             base.Close();
         }
@@ -131,9 +136,9 @@ namespace vFrame.Core.FileSystems.Package
             tempStream.Seek(0, SeekOrigin.Begin);
             tempStream.SetLength(0);
 
-            lock (_vpkStream) {
-                BufferedCopyTo(_vpkStream, tempStream, _blockInfo.Offset, (int)dataSize);
-            }
+            _vpkStream.Lock();
+            BufferedCopyTo(_vpkStream, tempStream, _blockInfo.Offset, (int)dataSize);
+            _vpkStream.Unlock();
 
             // 2. decompress
             if ((_blockInfo.Flags & BlockFlags.BlockCompressed) > 0) {
@@ -149,7 +154,7 @@ namespace vFrame.Core.FileSystems.Package
 
                     tempStream.Seek(0, SeekOrigin.Begin);
                     compressService.Decompress(tempStream, decompressedStream);
-                    compressService.Destroy();
+                    CompressService.DestroyCompressService(compressService);
 
                     tempStream.SetLength(0);
                     tempStream.Seek(0, SeekOrigin.Begin);
@@ -175,7 +180,7 @@ namespace vFrame.Core.FileSystems.Package
 
                     tempStream.Seek(0, SeekOrigin.Begin);
                     cryptoService.Decrypt(tempStream, decryptedStream, cryptoKey, cryptoKey.Length);
-                    cryptoService.Destroy();
+                    CryptoService.DestroyCryptoService(cryptoService);
 
                     tempStream.SetLength(0);
                     tempStream.Seek(0, SeekOrigin.Begin);
@@ -192,7 +197,10 @@ namespace vFrame.Core.FileSystems.Package
             if (_memoryStream.Length != _blockInfo.OriginalSize) {
                 throw new PackageStreamDataLengthMismatchException(_memoryStream.Length, _blockInfo.OriginalSize);
             }
-            return _opened = true;
+
+            _opened = true;
+            _closed = false;
+            return true;
         }
 
         private void ValidateBlockInfo(Stream inputStream) {

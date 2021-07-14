@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Profiles;
@@ -23,6 +24,7 @@ namespace vFrame.Core.FileSystems.Package
         private readonly List<PackageBlockInfo> _blockInfos;
         private readonly List<VFSPath> _filePathList;
         private readonly Dictionary<string, int> _filePathMap;
+        private readonly object _vfsMonitorLock = new object();
 
         private bool _closed;
         private bool _opened;
@@ -71,15 +73,11 @@ namespace vFrame.Core.FileSystems.Package
         }
 
         public void Open(Stream stream, bool leaveOpen = false) {
-            if (null == stream) {
-                throw new ArgumentNullException(nameof(stream));
-            }
-
             if (_opened)
                 throw new FileSystemAlreadyOpenedException();
 
             _vpkVfsPath = "(Streaming)";
-            _vpkStream = stream;
+            _vpkStream = stream ?? throw new ArgumentNullException(nameof(stream));
             _leaveOpen = leaveOpen;
             _openFromStream = true;
 
@@ -289,7 +287,7 @@ namespace vFrame.Core.FileSystems.Package
             FinishWriting();
         }
 
-        public bool ReadOnly { get; protected set; } = false;
+        public bool ReadOnly { get; protected set; }
 
         public override string ToString() {
             return _vpkVfsPath;
@@ -380,11 +378,19 @@ namespace vFrame.Core.FileSystems.Package
 
         private PackageVirtualFileSystemStream GetVPKStream() {
             if (_openFromStream) {
-                return new PackageVirtualFileSystemStream(_vpkStream, true);
+                return new PackageVirtualFileSystemStream(_vpkStream, this, true);
             }
 
             var fileStream = new FileStream(_vpkVfsPath, FileMode.Open, FileAccess.Read);
-            return new PackageVirtualFileSystemStream(fileStream, false);
+            return new PackageVirtualFileSystemStream(fileStream, this, false);
+        }
+
+        internal void Lock() {
+            Monitor.Enter(_vfsMonitorLock);
+        }
+
+        internal void Unlock() {
+            Monitor.Exit(_vfsMonitorLock);
         }
     }
 }

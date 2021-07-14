@@ -1,19 +1,28 @@
 ﻿using System.IO;
+using System.Text;
 
 namespace vFrame.Core.FileSystems
 {
     public abstract class VirtualFileStream : Stream, IVirtualFileStream
     {
+        private const int BufferSize = 1024 * 8;
+        private StreamReader _streamReader;
+        private BinaryReader _binaryReader;
+
+        protected StreamReader StreamReader =>
+            _streamReader ?? (_streamReader = new StreamReader(this, Encoding.UTF8, true, BufferSize, true));
+
+        protected BinaryReader BinaryReader =>
+            _binaryReader ?? (_binaryReader = new BinaryReader(this, Encoding.UTF8, true));
+
         public string ReadAllText() {
-            using (var reader = new StreamReader(this)) {
-                return reader.ReadToEnd();
-            }
+            Seek(0, SeekOrigin.Begin);
+            return StreamReader.ReadToEnd();
         }
 
         public byte[] ReadAllBytes() {
-            using (var reader = new BinaryReader(this)) {
-                return reader.ReadBytes((int) Length);
-            }
+            Seek(0, SeekOrigin.Begin);
+            return BinaryReader.ReadBytes((int) Length);
         }
     }
 }

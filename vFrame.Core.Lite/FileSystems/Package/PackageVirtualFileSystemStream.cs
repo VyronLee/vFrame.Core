@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Threading;
 
 namespace vFrame.Core.FileSystems.Package
 {
@@ -6,9 +7,11 @@ namespace vFrame.Core.FileSystems.Package
     {
         private readonly Stream _origin;
         private readonly bool _leaveOpen;
+        private PackageVirtualFileSystem _fileSystem;
 
-        public PackageVirtualFileSystemStream(Stream other, bool leaveOpen) {
+        public PackageVirtualFileSystemStream(Stream other, PackageVirtualFileSystem fileSystem, bool leaveOpen) {
             _origin = other;
+            _fileSystem = fileSystem;
             _leaveOpen = leaveOpen;
         }
 
@@ -17,6 +20,8 @@ namespace vFrame.Core.FileSystems.Package
                 _origin?.Close();
                 _origin?.Dispose();
             }
+            _fileSystem = null;
+
             base.Dispose(disposing);
         }
 
@@ -48,6 +53,14 @@ namespace vFrame.Core.FileSystems.Package
         public override long Position {
             get => _origin.Position;
             set => _origin.Position = value;
+        }
+
+        internal void Lock() {
+            _fileSystem.Lock();
+        }
+
+        internal void Unlock() {
+            _fileSystem.Unlock();
         }
     }
 }
