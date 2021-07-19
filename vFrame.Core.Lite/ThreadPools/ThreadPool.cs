@@ -41,6 +41,8 @@ namespace vFrame.Core.ThreadPools
 
         private Queue<TaskContext> _waitingTask;
 
+        private int _initialized;
+
         protected override void OnCreate(int threadCount) {
             lock (_lockObject) {
                 _waitingTask = new Queue<TaskContext>();
@@ -54,6 +56,7 @@ namespace vFrame.Core.ThreadPools
 
                 thread.Start(context);
             }
+            Interlocked.Exchange(ref _initialized, 1);
         }
 
         protected override void OnDestroy() {
@@ -101,6 +104,10 @@ namespace vFrame.Core.ThreadPools
 
                 while (!threadContext.stopped) {
                     Thread.Sleep(1);
+
+                    if (_initialized <= 0) {
+                        continue;
+                    }
 
                     TaskContext task = null;
                     lock (_lockObject) {

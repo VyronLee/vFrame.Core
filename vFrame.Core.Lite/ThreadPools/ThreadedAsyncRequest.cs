@@ -29,7 +29,10 @@ namespace vFrame.Core.ThreadPools
         protected override void OnCreate(TArg arg) {
             base.OnCreate(arg);
 
-            GetOrSpawnThreadPool().AddTask(RunTask, arg, ErrorHandler);
+            lock (LockObject) {
+                Contexts.Add(arg);
+                GetOrSpawnThreadPool().AddTask(RunTask, arg, ErrorHandler);
+            }
         }
 
         protected override void OnDestroy() {
