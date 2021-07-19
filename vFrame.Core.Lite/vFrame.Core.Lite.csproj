@@ -224,6 +224,7 @@
     <Compile Include="ThirdParty\ZStd\ZstandardInterop.cs" />
     <Compile Include="ThirdParty\ZStd\ZstandardStream.cs" />
     <Compile Include="ThirdParty\ZStd\ZStdApi.cs" />
+    <Compile Include="ThreadPools\ParallelTaskRunner.cs" />
     <Compile Include="ThreadPools\ThreadPool.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\MessageDigestUtils.cs" />

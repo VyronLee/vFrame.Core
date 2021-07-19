@@ -57,9 +57,21 @@ namespace vFrame.Core.ThreadPools
         }
 
         protected override void OnDestroy() {
+            Stop();
+        }
+
+        public void Stop(bool force = false) {
             foreach (var threadContext in _threads) {
                 threadContext.stopped = true;
-                threadContext.thread.Join();
+            }
+
+            foreach (var threadContext in _threads) {
+                if (force) {
+                    threadContext.thread.Interrupt();
+                }
+                else {
+                    threadContext.thread.Join();
+                }
             }
         }
 
@@ -82,31 +94,36 @@ namespace vFrame.Core.ThreadPools
         }
 
         private void ThreadProc(object stateInfo) {
-            var threadContext = stateInfo as ThreadContext;
-            if (threadContext == null)
-                throw new ArgumentNullException("stateInfo");
+            try {
+                var threadContext = stateInfo as ThreadContext;
+                if (threadContext == null)
+                    throw new ArgumentNullException(nameof(stateInfo));
 
-            while (!threadContext.stopped) {
-                Thread.Sleep(1);
+                while (!threadContext.stopped) {
+                    Thread.Sleep(1);
 
-                TaskContext task = null;
-                lock (_lockObject) {
-                    if (_waitingTask.Count > 0)
-                        task = _waitingTask.Dequeue();
+                    TaskContext task = null;
+                    lock (_lockObject) {
+                        if (_waitingTask.Count > 0)
+                            task = _waitingTask.Dequeue();
+                    }
+
+                    if (task == null)
+                        continue;
+
+                    try {
+                        task.callback(task.param);
+                    }
+                    catch (Exception e) {
+                        if (task.handler != null)
+                            task.handler(e);
+                        else
+                            Logger.Error(ThreadPoolLogTag, "Error occured in thread, exception: {0}", e);
+                    }
                 }
-
-                if (task == null)
-                    continue;
-
-                try {
-                    task.callback(task.param);
-                }
-                catch (Exception e) {
-                    if (task.handler != null)
-                        task.handler(e);
-                    else
-                        Logger.Error(ThreadPoolLogTag, "Error occured in thread, exception: {0}", e);
-                }
+            }
+            catch (ThreadInterruptedException) {
+                // Thread force stopped.
             }
         }
     }
