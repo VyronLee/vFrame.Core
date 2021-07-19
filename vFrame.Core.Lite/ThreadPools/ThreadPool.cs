@@ -58,6 +58,9 @@ namespace vFrame.Core.ThreadPools
 
         protected override void OnDestroy() {
             Stop();
+
+            _threads = null;
+            _waitingTask = null;
         }
 
         public void Stop(bool force = false) {
@@ -65,12 +68,9 @@ namespace vFrame.Core.ThreadPools
                 threadContext.stopped = true;
             }
 
-            foreach (var threadContext in _threads) {
-                if (force) {
+            if (force) {
+                foreach (var threadContext in _threads) {
                     threadContext.thread.Interrupt();
-                }
-                else {
-                    threadContext.thread.Join();
                 }
             }
         }
@@ -104,7 +104,7 @@ namespace vFrame.Core.ThreadPools
 
                     TaskContext task = null;
                     lock (_lockObject) {
-                        if (_waitingTask.Count > 0)
+                        if (null != _waitingTask && _waitingTask.Count > 0)
                             task = _waitingTask.Dequeue();
                     }
 

@@ -59,5 +59,19 @@ namespace vFrame.Core.FileSystems
         /// <param name="path"></param>
         /// <returns></returns>
         byte[] ReadAllBytes(string path);
+
+        /// <summary>
+        /// Read all text from path async.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>ITextAsyncRequest</returns>
+        ITextAsyncRequest ReadAllTextAsync(string path);
+
+        /// <summary>
+        /// Read all bytes from path async.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>IBytesAsyncRequest</returns>
+        IBytesAsyncRequest ReadAllBytesAsync(string path);
     }
 }

@@ -83,5 +83,21 @@ namespace vFrame.Core.FileSystems
                 return stream?.ReadAllBytes();
             }
         }
+
+        public ITextAsyncRequest ReadAllTextAsync(string path) {
+            var request = new TextAsyncRequest {
+                _fileSystemManager = this
+            };
+            request.Create(path);
+            return request;
+        }
+
+        public IBytesAsyncRequest ReadAllBytesAsync(string path) {
+            var request = new BytesAsyncRequest {
+                _fileSystemManager = this
+            };
+            request.Create(path);
+            return request;
+        }
     }
 }
