@@ -8,30 +8,16 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System;
 using System.IO;
+using System.Threading;
 using vFrame.Core.Crypto;
 using vFrame.Core.Loggers;
-using vFrame.Core.ThreadPools;
 
 namespace vFrame.Core.FileReaders
 {
     public class FileReaderRequest : FileReader, IFileReaderRequest
     {
-        private const int MaxThread = 5;
-
-        private static ThreadPool _threadPool;
-
-        private static ThreadPool ThreadPool {
-            get {
-                if (_threadPool == null) {
-                    _threadPool = new ThreadPool();
-                    _threadPool.Create(MaxThread);
-                }
-
-                return _threadPool;
-            }
-        }
-
         private readonly object _lockObject = new object();
         private readonly string _path;
 
@@ -57,7 +43,7 @@ namespace vFrame.Core.FileReaders
             if (!IsFileExist(_path))
                 throw new FileNotFoundException(_path);
 
-            ThreadPool.AddTask(ReadBytesAndDecrypt, null, OnException);
+            ThreadPool.QueueUserWorkItem(ReadBytesAndDecrypt);
         }
 
         private void OnException(System.Exception e) {
@@ -67,7 +53,12 @@ namespace vFrame.Core.FileReaders
         private void ReadBytesAndDecrypt(object stateInfo) {
             Logger.Info("Read buffer started: {0}", _path);
 
-            _buffer = ReadAllBytes(_path);
+            try {
+                _buffer = ReadAllBytes(_path);
+            }
+            catch (Exception e) {
+                OnException(e);
+            }
 
             lock (_lockObject)
                 _finished = true;

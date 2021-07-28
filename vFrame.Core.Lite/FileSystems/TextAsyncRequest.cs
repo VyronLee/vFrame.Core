@@ -1,17 +1,13 @@
 ﻿using System;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.Loggers;
-using vFrame.Core.ThreadPools;
+using vFrame.Core.MultiThreading;
 
 namespace vFrame.Core.FileSystems
 {
     public class TextAsyncRequest : ThreadedAsyncRequest<string, string>, ITextAsyncRequest
     {
         internal IFileSystemManager _fileSystemManager { get; set; }
-
-        public TextAsyncRequest() {
-            ParallelCount = 4;
-        }
 
         protected override string OnThreadedHandle(string arg) {
             if (null == _fileSystemManager) {

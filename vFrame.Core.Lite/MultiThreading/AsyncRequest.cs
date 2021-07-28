@@ -1,7 +1,7 @@
 ﻿using System;
 using vFrame.Core.Base;
 
-namespace vFrame.Core.ThreadPools
+namespace vFrame.Core.MultiThreading
 {
     public class AsyncRequest<TRet, TArg> : BaseObject<TArg>, IAsyncRequest<TRet>, IDisposable
     {

@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
 using UnityEngine;
-using vFrame.Core.ThreadPools;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Patch
@@ -34,18 +34,12 @@ namespace vFrame.Core.Patch
         public int HashTotal { get; private set; }
         public int HashFailedNum { get; private set; }
 
-        private ThreadPool _threadPool;
-
         public void Check(List<AssetInfo> assets) {
             Valid = true;
             _assets = assets;
             HashNum = 0;
             HashTotal = _assets.Count;
             HashFailedNum = 0;
-
-            _threadPool?.Destroy();
-            _threadPool = new ThreadPool();
-            _threadPool.Create(MaxThread);
 
             StopAllCoroutines();
             StartCoroutine(CO_Check());
@@ -63,7 +57,7 @@ namespace vFrame.Core.Patch
             for (HashNum = 1; HashNum <= HashTotal; HashNum++) {
                 var asset = _assets[HashNum - 1];
                 var filePath = _storagePath + asset.fileName;
-                var process = new HashProcess(_threadPool, filePath);
+                var process = new HashProcess(filePath);
                 yield return process;
 
                 if (process.Error != null) {
@@ -99,9 +93,6 @@ namespace vFrame.Core.Patch
             if (OnCheckFinished != null) {
                 OnCheckFinished();
             }
-
-            _threadPool?.Destroy();
-            _threadPool = null;
         }
 
         private class HashProcess : CustomYieldInstruction
@@ -113,17 +104,23 @@ namespace vFrame.Core.Patch
             public Exception Error { get; private set; }
             public string HashValue { get; private set; }
 
-            public HashProcess(ThreadPool threadPool, string path) {
+            public HashProcess(string path) {
                 _path = path;
                 _hashFinished = false;
 
-                threadPool.AddTask(HashStream, null, OnHashError);
+                ThreadPool.QueueUserWorkItem(HashStream);
             }
 
             private void HashStream(object obj) {
-                using (var stream = new FileStream(_path, FileMode.Open, FileAccess.Read)) {
-                    HashValue = CalculateMd5(stream);
+                try {
+                    using (var stream = new FileStream(_path, FileMode.Open, FileAccess.Read)) {
+                        HashValue = CalculateMd5(stream);
+                    }
                 }
+                catch (Exception e) {
+                    OnHashError(e);
+                }
+
                 lock (_lockObject) {
                     _hashFinished = true;
                 }

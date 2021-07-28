@@ -228,11 +228,10 @@
     <Compile Include="ThirdParty\ZStd\ZstandardInterop.cs" />
     <Compile Include="ThirdParty\ZStd\ZstandardStream.cs" />
     <Compile Include="ThirdParty\ZStd\ZStdApi.cs" />
-    <Compile Include="ThreadPools\AsyncRequest.cs" />
-    <Compile Include="ThreadPools\IAsyncRequest.cs" />
-    <Compile Include="ThreadPools\ParallelTaskRunner.cs" />
-    <Compile Include="ThreadPools\ThreadedAsyncRequest.cs" />
-    <Compile Include="ThreadPools\ThreadPool.cs" />
+    <Compile Include="MultiThreading\AsyncRequest.cs" />
+    <Compile Include="MultiThreading\IAsyncRequest.cs" />
+    <Compile Include="MultiThreading\ParallelTaskRunner.cs" />
+    <Compile Include="MultiThreading\ThreadedAsyncRequest.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\MessageDigestUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />

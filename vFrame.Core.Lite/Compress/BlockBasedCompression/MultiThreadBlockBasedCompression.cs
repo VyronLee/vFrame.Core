@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
-using vFrame.Core.ThreadPools;
+using vFrame.Core.MultiThreading;
 
 namespace vFrame.Core.Compress.BlockBasedCompression
 {
@@ -18,35 +19,26 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         private const int DefaultThreadCount = 3;
         private const int MaxThreadCount = 16;
 
-        private ThreadPool _threadPool;
         private CompressionState _state = CompressionState.Idle;
+        private int _threadCount = DefaultThreadCount;
         private Stream _input;
         private Stream _output;
         private Exception _lastError;
 
+        private ParallelTaskRunner<CompressThreadState> _parallelTaskRunner;
+
         public Exception LastError => _lastError;
 
-        protected override void OnCreate() {
-            base.OnCreate();
-
-            _threadPool = new ThreadPool();
-            _threadPool.Create(DefaultThreadCount);
-        }
-
         protected override void OnDestroy() {
-            _threadPool?.Destroy();
-            _threadPool = null;
+            _parallelTaskRunner?.Destroy();
+            _parallelTaskRunner = null;
 
             base.OnDestroy();
         }
 
         public void SetThreadCount(int count) {
-            count = Math.Max(count, 0);
-            count = Math.Min(count, MaxThreadCount);
-
-            _threadPool?.Destroy();
-            _threadPool = new ThreadPool();
-            _threadPool.Create(count);
+            _threadCount = Math.Max(count, 0);
+            _threadCount = Math.Min(count, MaxThreadCount);
         }
 
         public BlockBasedCompressionRequest CompressAsync(
@@ -66,6 +58,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             var request = new BlockBasedCompressionRequest(this) {TotalCount = BlockCount};
 
+            var contexts = new List<CompressThreadState>(BlockCount);
             for (var i = 0; i < BlockCount; i++) {
                 var stateContext = new CompressThreadState {
                     Input = input,
@@ -74,17 +67,18 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     Request = request,
                     BlockIndex = i
                 };
-                _threadPool.AddTask(CompressInternal, stateContext, OnException);
+                contexts.Add(stateContext);
             }
+            ParallelTaskRunner<CompressThreadState>.Spawn(_threadCount)
+                .OnHandle(CompressInternal)
+                .OnComplete(OnCompressedFinished)
+                .OnError(OnException)
+                .Run(contexts);
 
             return request;
         }
 
-        private void CompressInternal(object threadState) {
-            if (!(threadState is CompressThreadState state)) {
-                return;
-            }
-
+        private void CompressInternal(CompressThreadState state) {
             SafeCompress(state.Input, state.Ouput, state.Options, state.BlockIndex);
 
             state.Request.IncreaseFinishedCount();
@@ -111,6 +105,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             var request = new BlockBasedDecompressionRequest(this) {TotalCount = BlockCount};
 
+            var contexts = new List<DecompressThreadState>(BlockCount);
             for (var i = 0; i < BlockCount; i++) {
                 var stateContext = new DecompressThreadState {
                     Input = input,
@@ -118,17 +113,18 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     Request = request,
                     BlockIndex = i
                 };
-                _threadPool.AddTask(DecompressInternal, stateContext, OnException);
+                contexts.Add(stateContext);
             }
+            ParallelTaskRunner<DecompressThreadState>.Spawn(_threadCount)
+                .OnHandle(DecompressInternal)
+                .OnComplete(OnDecompressedFinished)
+                .OnError(OnException)
+                .Run(contexts);
 
             return request;
         }
 
-        private void DecompressInternal(object threadState) {
-            if (!(threadState is DecompressThreadState state)) {
-                return;
-            }
-
+        private void DecompressInternal(DecompressThreadState state) {
             SafeDecompress(state.Input, state.Ouput, state.BlockIndex);
 
             state.Request.IncreaseFinishedCount();
@@ -182,8 +178,6 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 }
 
                 IsDone = true;
-
-                _compression.OnCompressedFinished();
             }
 
             public bool MoveNext() {
@@ -218,8 +212,6 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 }
 
                 IsDone = true;
-
-                _compression.OnDecompressedFinished();
             }
 
             public bool MoveNext() {

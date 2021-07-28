@@ -1,6 +1,6 @@
 ﻿using vFrame.Core.Base;
 
-namespace vFrame.Core.ThreadPools
+namespace vFrame.Core.MultiThreading
 {
     public interface IAsyncRequest<out TRet> : IAsync
     {
