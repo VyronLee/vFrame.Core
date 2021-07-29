@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using vFrame.Core.MultiThreading;
 
 namespace vFrame.Core.Compress.BlockBasedCompression
@@ -71,7 +72,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
             ParallelTaskRunner<CompressThreadState>.Spawn(_threadCount)
                 .OnHandle(CompressInternal)
-                .OnComplete(OnCompressedFinished)
+                .OnComplete(CompressedFinished(request))
                 .OnError(OnException)
                 .Run(contexts);
 
@@ -84,8 +85,13 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             state.Request.IncreaseFinishedCount();
         }
 
-        private void OnCompressedFinished() {
+        private Action CompressedFinished(BlockBasedCompressionRequest request) {
+            return () => OnCompressedFinished(request);
+        }
+
+        private void OnCompressedFinished(BlockBasedCompressionRequest request) {
             EndCompress(_output);
+            request.IsDone = true;
             _state = CompressionState.Idle;
         }
 
@@ -117,7 +123,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
             ParallelTaskRunner<DecompressThreadState>.Spawn(_threadCount)
                 .OnHandle(DecompressInternal)
-                .OnComplete(OnDecompressedFinished)
+                .OnComplete(DecompressedFinished(request))
                 .OnError(OnException)
                 .Run(contexts);
 
@@ -130,8 +136,13 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             state.Request.IncreaseFinishedCount();
         }
 
-        private void OnDecompressedFinished() {
+        private Action DecompressedFinished(BlockBasedDecompressionRequest request) {
+            return () => OnDecompressedFinished(request);
+        }
+
+        private void OnDecompressedFinished(BlockBasedDecompressionRequest request) {
             EndDecompress(_output);
+            request.IsDone = true;
             _state = CompressionState.Idle;
         }
 
@@ -159,9 +170,17 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         public class BlockBasedCompressionRequest : IEnumerator
         {
-            public int FinishedCount { get; set; }
+            private int _finishedCount;
+            public int FinishedCount => _finishedCount;
+
             public int TotalCount { get; set; }
-            public bool IsDone { get; private set; }
+
+            private int _isDone;
+            public bool IsDone {
+                get => _isDone > 0;
+                set => Interlocked.Exchange(ref _isDone, value ? 1 : 0);
+            }
+
             public Exception Error => _compression?.LastError;
 
             private readonly MultiThreadBlockBasedCompression _compression;
@@ -171,13 +190,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
 
             public void IncreaseFinishedCount() {
-                lock (this) {
-                    if (++FinishedCount < TotalCount) {
-                        return;
-                    }
-                }
-
-                IsDone = true;
+                Interlocked.Add(ref _finishedCount, 1);
             }
 
             public bool MoveNext() {
@@ -193,9 +206,17 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         public class BlockBasedDecompressionRequest : IEnumerator
         {
-            public int FinishedCount { get; set; }
+            private int _finishedCount;
+            public int FinishedCount => _finishedCount;
+
             public int TotalCount { get; set; }
-            public bool IsDone { get; private set; }
+
+            private int _isDone;
+            public bool IsDone {
+                get => _isDone > 0;
+                set => Interlocked.Exchange(ref _isDone, value ? 1 : 0);
+            }
+
             public Exception Error => _compression?.LastError;
 
             private readonly MultiThreadBlockBasedCompression _compression;
@@ -205,13 +226,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
 
             public void IncreaseFinishedCount() {
-                lock (this) {
-                    if (++FinishedCount < TotalCount) {
-                        return;
-                    }
-                }
-
-                IsDone = true;
+                Interlocked.Add(ref _finishedCount, 1);
             }
 
             public bool MoveNext() {

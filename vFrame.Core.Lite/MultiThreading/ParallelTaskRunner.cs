@@ -24,9 +24,8 @@ namespace vFrame.Core.MultiThreading
         private List<T> _taskWaiting;
         private int _taskTotalCount;
         private int _taskFinishedCount;
-        private Task[] _tasks;
         private readonly int _threadCount;
-        private readonly Action _taskHandler;
+        private readonly WaitCallback _taskHandler;
 
         private ParallelTaskRunner() {
             _abortOnError = true;
@@ -58,7 +57,6 @@ namespace vFrame.Core.MultiThreading
 
             _tokenSources = null;
             _taskWaiting = null;
-            _tasks = null;
         }
 
         public ParallelTaskRunner<T> Run(IEnumerable<T> contexts) {
@@ -66,18 +64,14 @@ namespace vFrame.Core.MultiThreading
             _taskTotalCount = _taskWaiting.Count;
             _taskFinishedCount = 0;
 
-            _tasks = new Task[_threadCount];
             _tokenSources = new CancellationTokenSource[_threadCount];
 
             for (var i = 0; i < _threadCount; i++) {
                 var source = _tokenSources[i] = new CancellationTokenSource();
-                _tasks[i] = new Task(_taskHandler, source.Token);
+                if (!ThreadPool.QueueUserWorkItem(_taskHandler, source)) {
+                    Logger.Error("Queue work item to thread pool failed: {0}", i);
+                }
             }
-
-            foreach (var task in _tasks) {
-                task.Start();
-            }
-
             return this;
         }
 
@@ -116,8 +110,9 @@ namespace vFrame.Core.MultiThreading
             return _taskFinishedCount >= _taskTotalCount;
         }
 
-        private void HandleTask() {
-            while (true) {
+        private void HandleTask(object state) {
+            var source = state as CancellationTokenSource;
+            while (!source.IsCancellationRequested) {
                 var task = ConsumeTaskContext();
                 if (null == task) {
                     break;
@@ -125,10 +120,6 @@ namespace vFrame.Core.MultiThreading
                 try {
                     _onHandle?.Invoke(task);
                     HandleTaskComplete(task);
-                }
-                catch (OperationCanceledException) {
-                    //Logger.Info("Operation canceled.");
-                    break;
                 }
                 catch (Exception e) {
                     HandleError(e);
@@ -151,7 +142,7 @@ namespace vFrame.Core.MultiThreading
             if (Interlocked.Add(ref _taskFinishedCount, 1) < _taskTotalCount)
                 return;
 
-            if (null != _lastError) {
+            if (null == _lastError) {
                 _onComplete?.Invoke();
             }
         }

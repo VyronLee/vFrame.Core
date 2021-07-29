@@ -112,13 +112,17 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                         header.BlockCount = reader.ReadInt32();
                         header.BlockTableOffset = reader.ReadInt64();
                         header.Md5 = reader.ReadBytes(32).ToStr();
-                        return header;
                     }
                 }
             }
             catch (Exception) {
                 throw new InvalidBlockBasedCompressionFormatException();
             }
+
+            if (!ValidateHeader(header)) {
+                throw new InvalidBlockBasedCompressionFormatException();
+            }
+            return header;
         }
 
         private void WriteBlockTable(Stream output, BlockBasedCompressionBlockTable blockTable) {
@@ -166,6 +170,15 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         private static int CalculateBlockCount(Stream input, int blockSize) {
             return (int)Math.Ceiling((input.Length - input.Position) / (double)blockSize);
+        }
+
+        private static bool ValidateHeader(BlockBasedCompressionHeader header) {
+            var ret = true;
+            ret &= header.Id == BlockBasedCompressionConst.Id;
+            ret &= header.Version == BlockBasedCompressionConst.Version;
+            ret &= header.CompressType != CompressType.Invalid;
+            ret &= header.Md5 != string.Empty;
+            return ret;
         }
 
         private static BlockBasedCompressionHeader CreateHeader(Stream input, BlockBasedCompressionOptions options) {
