@@ -113,8 +113,7 @@ namespace vFrame.Core.MultiThreading
         private void HandleTask(object state) {
             var source = state as CancellationTokenSource;
             while (!source.IsCancellationRequested) {
-                var task = ConsumeTaskContext();
-                if (null == task) {
+                if (!ConsumeTaskContext(out var task)) {
                     break;
                 }
                 try {
@@ -124,6 +123,7 @@ namespace vFrame.Core.MultiThreading
                 catch (Exception e) {
                     HandleError(e);
                 }
+                Thread.Sleep(1);
             }
         }
 
@@ -153,17 +153,19 @@ namespace vFrame.Core.MultiThreading
             }
         }
 
-        private T ConsumeTaskContext() {
+        private bool ConsumeTaskContext(out T value) {
             var lockTaken = false;
             try {
                 _waitingListLock.Enter(ref lockTaken);
                 if (_taskWaiting.Count <= 0) {
-                    return default;
+                    value = default;
+                    return false;
                 }
 
                 var context = _taskWaiting[0];
                 _taskWaiting.RemoveAt(0);
-                return context;
+                value = context;
+                return true;
             }
             finally {
                 if (lockTaken) {

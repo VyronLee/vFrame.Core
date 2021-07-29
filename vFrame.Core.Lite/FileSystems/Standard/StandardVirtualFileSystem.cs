@@ -28,6 +28,16 @@ namespace vFrame.Core.FileSystems.Standard
             FileAccess access,
             FileShare share
         ) {
+            if (null == filePath) {
+                throw new ArgumentNullException(nameof(filePath));
+            }
+            if (string.IsNullOrEmpty(filePath)) {
+                throw new ArgumentException("file path cannot be empty.", nameof(filePath));
+            }
+            if (!Exist(filePath)) {
+                throw new FileNotFoundException("File not found: " + filePath);
+            }
+
             var absolutePath = _workingDir + filePath;
             var fileStream = new FileStream(absolutePath, mode, access, share);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream: {0}", fileName);
@@ -36,8 +46,17 @@ namespace vFrame.Core.FileSystems.Standard
         }
 
         public override IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(VFSPath filePath) {
-            if (!Exist(filePath))
+            if (null == filePath) {
+                throw new ArgumentNullException(nameof(filePath));
+            }
+            if (string.IsNullOrEmpty(filePath)) {
+                throw new ArgumentException("file path cannot be empty.", nameof(filePath));
+            }
+
+            if (!Exist(filePath)) {
                 throw new FileNotFoundException("File not found: " + filePath);
+            }
+
             var absolutePath = _workingDir + filePath;
             var fileStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
             //Logger.Info(PackageFileSystemConst.LogTag, "Read stream async: {0}", fileName);
@@ -57,6 +76,9 @@ namespace vFrame.Core.FileSystems.Standard
             foreach (var fileInfo in dir.GetFiles()) {
                 var full = VFSPath.GetPath(fileInfo.FullName);
                 var relative = full.GetRelative(_workingDir);
+                if (string.IsNullOrEmpty(relative)) {
+                    continue;
+                }
                 refs.Add(relative);
             }
 

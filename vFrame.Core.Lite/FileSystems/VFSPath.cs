@@ -1,20 +1,27 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Exceptions;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.FileSystems
 {
-    public struct VFSPath
+    public struct VFSPath : IComparable
     {
         private string _value;
 
         private VFSPath(string value) {
+            if (null == value) {
+                throw new ArgumentNullException(nameof(value));
+            }
             _value = string.Empty;
             _value = Normalize(value);
         }
 
         public static VFSPath GetPath(string value) {
+            if (null == value) {
+                throw new ArgumentNullException(nameof(value));
+            }
             return new VFSPath(value);
         }
 
@@ -105,12 +112,23 @@ namespace vFrame.Core.FileSystems
             return _value;
         }
 
+        public int CompareTo(object obj) {
+            switch (obj) {
+                case VFSPath path:
+                    return _value.CompareTo(path._value);
+                case string str:
+                    return _value.CompareTo(str);
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
         public override bool Equals(object obj) {
             switch (obj) {
                 case VFSPath path:
-                    return path == this;
+                    return path._value == _value;
                 case string str:
-                    return str == this;
+                    return str == _value;
                 default:
                     return false;
             }
@@ -137,11 +155,11 @@ namespace vFrame.Core.FileSystems
         }
 
         public static implicit operator string(VFSPath vfsPath) {
-            return vfsPath.Equals(null) ? null : vfsPath.GetValue();
+            return vfsPath.GetValue();
         }
 
         public static implicit operator VFSPath(string value) {
-            return GetPath(value);
+            return GetPath(value ?? string.Empty);
         }
     }
 }
