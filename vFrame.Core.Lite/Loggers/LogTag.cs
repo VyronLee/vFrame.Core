@@ -8,9 +8,11 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System;
+
 namespace vFrame.Core.Loggers
 {
-    public struct LogTag
+    public struct LogTag : IEquatable<LogTag>
     {
         private readonly string _name;
 
@@ -20,6 +22,18 @@ namespace vFrame.Core.Loggers
 
         public override string ToString() {
             return _name;
+        }
+
+        public bool Equals(LogTag other) {
+            return _name == other._name;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is LogTag other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return (_name != null ? _name.GetHashCode() : 0);
         }
     }
 }

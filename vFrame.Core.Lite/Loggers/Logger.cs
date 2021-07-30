@@ -31,6 +31,8 @@ namespace vFrame.Core.Loggers
         private static string _logFilePath;
         private static LogToFile _logFile;
 
+        private static readonly LogTag EmptyLogTag = new LogTag("__EMPTY__");
+
         #region Properties
         public static LogLevelDef LogLevel {
             get => _level;
@@ -149,7 +151,7 @@ namespace vFrame.Core.Loggers
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
             var builder = StringBuilderPool.Shared.Get();
-            if ((_logFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(_tagFormatter)) {
+            if ((_logFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(_tagFormatter) && tag.Equals(EmptyLogTag)) {
                 try {
                     builder.Append(string.Format(_tagFormatter, tag.ToString()));
                 }
@@ -211,19 +213,19 @@ namespace vFrame.Core.Loggers
         }
 
         public static void Debug(string text, params object[] args) {
-            Log(LogLevelDef.Debug, new LogTag(), text, args);
+            Log(LogLevelDef.Debug, EmptyLogTag, text, args);
         }
 
         public static void Info(string text, params object[] args) {
-            Log(LogLevelDef.Info, new LogTag(), text, args);
+            Log(LogLevelDef.Info, EmptyLogTag, text, args);
         }
 
         public static void Warning(string text, params object[] args) {
-            Log(LogLevelDef.Warning, new LogTag(), text, args);
+            Log(LogLevelDef.Warning, EmptyLogTag, text, args);
         }
 
         public static void Error(string text, params object[] args) {
-            Log(LogLevelDef.Error, new LogTag(), text, args);
+            Log(LogLevelDef.Error, EmptyLogTag, text, args);
         }
 
         public static IEnumerable<LogContext> Logs(int logMask) {
