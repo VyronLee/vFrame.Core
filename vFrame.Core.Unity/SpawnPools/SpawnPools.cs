@@ -55,8 +55,10 @@ namespace vFrame.Core.SpawnPools
         }
 
         public void Clear() {
-            foreach (var kv in _pools)
+            foreach (var kv in _pools) {
                 kv.Value.Clear();
+                kv.Value.Destroy();
+            }
             _pools.Clear();
         }
 

@@ -55,6 +55,11 @@ namespace vFrame.Core.SpawnPools
         protected override void OnDestroy() {
             _snapshots?.Clear();
             _snapshots = null;
+
+            if (_poolGo) {
+                Object.Destroy(_poolGo);
+            }
+            _poolGo = null;
         }
 
         public void Clear() {
@@ -71,11 +76,6 @@ namespace vFrame.Core.SpawnPools
                 Object.Destroy(obj);
             }
             _objects.Clear();
-
-            if (_poolGo) {
-                Object.Destroy(_poolGo);
-            }
-            _poolGo = null;
 
 #if DEBUG_SPAWNPOOLS
             Logger.Info("Spawn pool cleared: {0}", _poolName);
