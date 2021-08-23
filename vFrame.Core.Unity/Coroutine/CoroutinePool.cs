@@ -183,7 +183,8 @@ namespace vFrame.Core.Coroutine
             }
 
             var runner = new GameObject("Coroutine_" + runnerId).AddComponent<CoroutineBehaviour>();
-            runner.OnFinished = PopupAndRunNext;
+            runner.RunnerId = runnerId;
+            runner.OnFinished = OnTaskFinished;
             runner.transform.SetParent(_holder.transform);
 
             CoroutineList.Add(runner);
@@ -220,7 +221,11 @@ namespace vFrame.Core.Coroutine
             Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task finished: " + context.Task.GetHashCode());
 #endif
             TasksRunning.Remove(context);
-            IdleSlots.Add(context.RunnerId);
+        }
+
+        private void OnTaskFinished(int runnerId) {
+            IdleSlots.Add(runnerId);
+            PopupAndRunNext();
         }
 
         private void PopupAndRunNext() {

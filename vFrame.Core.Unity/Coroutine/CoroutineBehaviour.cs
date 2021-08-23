@@ -21,7 +21,15 @@ namespace vFrame.Core.Coroutine
         [SerializeField]
         private CoroutineState _state;
 
-        public Action OnFinished;
+        [SerializeField]
+        private int _runnerId;
+
+        public Action<int> OnFinished;
+
+        public int RunnerId {
+            get => _runnerId;
+            set => _runnerId = value;
+        }
 
         public void Pause() {
             _state |= CoroutineState.Paused;
@@ -91,7 +99,7 @@ namespace vFrame.Core.Coroutine
             CoStop();
 
             if (null != OnFinished) {
-                OnFinished();
+                OnFinished(_runnerId);
             }
         }
     }
