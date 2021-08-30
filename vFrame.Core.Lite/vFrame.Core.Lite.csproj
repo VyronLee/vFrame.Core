@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\BaseObjectException.cs" />
     <Compile Include="Base\Box.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompression.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionConst.cs" />

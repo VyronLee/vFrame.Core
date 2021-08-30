@@ -33,7 +33,9 @@ namespace vFrame.Core.SpawnPools.Loaders
             var prefab = Resources.Load<GameObject>(_path);
             if (!prefab)
                 throw new Exception("Load asset failed: " + _path);
-            return Object.Instantiate(prefab);
+            var obj = Object.Instantiate(prefab);
+            Object.DontDestroyOnLoad(obj);
+            return obj;
         }
 
         public LoadAsyncRequest LoadAsync() {
@@ -47,28 +49,27 @@ namespace vFrame.Core.SpawnPools.Loaders
 
             public static DefaultLoadAsyncRequest Create(string path) {
                 var request = ObjectPool<DefaultLoadAsyncRequest>.Shared.Get();
+                request.Create();
                 request._path = path;
-                request.IsFinished = false;
                 return request;
             }
 
-            public override void Dispose() {
+            protected override void OnDestroy() {
+                base.OnDestroy();
+
                 _request = null;
                 _path = null;
-                IsFinished = false;
                 ObjectPool<DefaultLoadAsyncRequest>.Shared.Return(this);
             }
 
-            public override IEnumerator Await() {
-                IsFinished = false;
+            protected override IEnumerator OnProcessLoad() {
                 _request = Resources.LoadAsync<GameObject>(_path);
                 yield return _request;
                 var prefab = _request.asset as GameObject;
                 if (!prefab)
                     throw new Exception("Load asset failed: " + _path);
                 GameObject = Object.Instantiate(prefab);
-                InvokeLoadCallback();
-                IsFinished = true;
+                Object.DontDestroyOnLoad(GameObject);
             }
         }
     }

@@ -14,10 +14,16 @@ namespace vFrame.Core.Base
     public abstract class BaseObject : IBaseObject
     {
         /// <summary>
+        /// 是否已经销毁
+        /// </summary>
+        protected bool _destroyed = false;
+
+        /// <summary>
         ///     创建函数
         /// </summary>
         public void Create() {
             OnCreate();
+            _destroyed = false;
         }
 
         /// <summary>
@@ -25,6 +31,7 @@ namespace vFrame.Core.Base
         /// </summary>
         public void Destroy() {
             OnDestroy();
+            _destroyed = true;
         }
 
         /// <summary>
@@ -36,12 +43,24 @@ namespace vFrame.Core.Base
         ///     析构处理
         /// </summary>
         protected abstract void OnDestroy();
+
+        /// <summary>
+        /// 如果已经销毁，抛出异常
+        /// </summary>
+        /// <exception cref="BaseObjectDestroyedException"></exception>
+        protected void ThrowIfDestroyed() {
+            if (_destroyed) {
+                throw new BaseObjectDestroyedException();
+            }
+        }
+
     }
 
     public abstract class BaseObject<T1> : BaseObject, IBaseObject<T1>
     {
         public void Create(T1 arg1) {
             OnCreate(arg1);
+            _destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1);
@@ -54,6 +73,7 @@ namespace vFrame.Core.Base
     {
         public void Create(T1 arg1, T2 arg2) {
             OnCreate(arg1, arg2);
+            _destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2);
@@ -66,6 +86,7 @@ namespace vFrame.Core.Base
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3) {
             OnCreate(arg1, arg2, arg3);
+            _destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3);
@@ -78,6 +99,7 @@ namespace vFrame.Core.Base
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
             OnCreate(arg1, arg2, arg3, arg4);
+            _destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4);

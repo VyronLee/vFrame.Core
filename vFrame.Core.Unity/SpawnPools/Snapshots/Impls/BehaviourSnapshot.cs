@@ -42,7 +42,7 @@ namespace vFrame.Core.SpawnPools.Snapshots.Impls
             }
 
             var behaviours = ListPool<Behaviour>.Shared.Get();
-            Target.GetComponents<Behaviour>();
+            Target.GetComponents(behaviours);
 
             foreach (var behaviour in behaviours) {
                 if (!behaviour) {

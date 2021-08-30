@@ -9,9 +9,9 @@
 //============================================================
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.Asynchronous;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -25,10 +25,8 @@ namespace vFrame.Core.SpawnPools
         int Count { get; }
     }
 
-    public interface ILoaderAsyncRequest : IDisposable
+    public interface ILoaderAsyncRequest : IAsyncRequest
     {
         GameObject GetGameObject();
-        IEnumerator Await();
-        bool IsFinished { get; }
     }
 }

@@ -11,6 +11,7 @@
     <AssemblyName>vFrame.Core.Unity</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -90,6 +91,9 @@
     <Compile Include="3rd\BatterStreamingAssets\BSA_SubReadOnlyStream.cs" />
     <Compile Include="3rd\BatterStreamingAssets\BSA_ZipArchive.cs" />
     <Compile Include="3rd\SerializableDictionary.cs" />
+    <Compile Include="Asynchronous\AsyncRequest.cs" />
+    <Compile Include="Asynchronous\AsyncRequestException.cs" />
+    <Compile Include="Asynchronous\IAsyncRequest.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
     <Compile Include="Behaviours\MethodInvoker.cs" />
@@ -132,6 +136,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Singletons\MonoSingleton.cs" />
     <Compile Include="SpawnPools\Behaviours\PoolObjectIdentity.cs" />
+    <Compile Include="SpawnPools\Exceptions\SpawnAsyncRequestAlreadySetupException.cs" />
+    <Compile Include="SpawnPools\Exceptions\SpawnObjectLoadException.cs" />
+    <Compile Include="SpawnPools\Exceptions\SpawnObjectNotReadyException.cs" />
+    <Compile Include="SpawnPools\Exceptions\SpawnPoolException.cs" />
     <Compile Include="SpawnPools\Loaders\DefaultGameObjectLoaderFromPath.cs" />
     <Compile Include="SpawnPools\Loaders\DefaultGameObjectLoaderFromPathFactory.cs" />
     <Compile Include="SpawnPools\Loaders\IGameObjectLoader.cs" />

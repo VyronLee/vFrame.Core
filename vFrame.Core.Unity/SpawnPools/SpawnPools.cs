@@ -11,6 +11,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
+using vFrame.Core.Coroutine;
 using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Loaders;
 
@@ -20,15 +21,16 @@ namespace vFrame.Core.SpawnPools
     {
         private GameObject _poolsParent;
         private SpawnPoolsSetting _poolsSetting;
+        private CoroutinePool _coroutinePool;
 
-        public GameObject PoolsParent {
+        internal GameObject PoolsParent {
             get {
-                if (!_poolsParent) {
-                    _poolsParent = new GameObject("Pools");
-                    _poolsParent.transform.position = _poolsSetting.RootPosition;
-                    Object.DontDestroyOnLoad(PoolsParent);
-                }
+                if (_poolsParent)
+                    return _poolsParent;
 
+                _poolsParent = new GameObject("Pools");
+                _poolsParent.transform.position = _poolsSetting.RootPosition;
+                Object.DontDestroyOnLoad(PoolsParent);
                 return _poolsParent;
             }
         }
@@ -39,15 +41,25 @@ namespace vFrame.Core.SpawnPools
 
         private int _lastGC;
 
-        public SpawnPoolsSetting PoolsSetting => _poolsSetting;
+        internal SpawnPoolsSetting PoolsSetting => _poolsSetting;
+        internal CoroutinePool CoroutinePool => _coroutinePool;
 
         protected override void OnCreate(IGameObjectLoaderFactory factory, SpawnPoolsSetting poolsSetting) {
             _builderFromPathFactory = factory ?? new DefaultGameObjectLoaderFromPathFactory();
             _poolsSetting = poolsSetting;
+            _coroutinePool = new CoroutinePool(nameof(SpawnPools), _poolsSetting.AsyncUploadCount);
         }
 
         protected override void OnDestroy() {
             Clear();
+
+            _coroutinePool?.Destroy();
+            _coroutinePool = null;
+
+            if (_poolsParent) {
+                Object.Destroy(_poolsParent);
+            }
+            _poolsParent = null;
 
 #if DEBUG_SPAWNPOOLS
             Logger.Info("Spawn pools destroyed.");

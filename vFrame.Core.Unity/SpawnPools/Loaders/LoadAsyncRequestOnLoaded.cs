@@ -1,4 +1,13 @@
-﻿using System.Collections;
+﻿//------------------------------------------------------------
+//        File:  LoadAsyncRequestOnLoaded.cs
+//       Brief:  LoadAsyncRequestOnLoaded
+//
+//      Author:  VyronLee, lwz_jz@hotmail.com
+//
+//    Modified:  2021-03-22 15:51
+//   Copyright:  Copyright (c) 2021, VyronLee
+//============================================================
+using System.Collections;
 using UnityEngine;
 using vFrame.Core.ObjectPools;
 
@@ -8,18 +17,24 @@ namespace vFrame.Core.SpawnPools.Loaders
     {
         public static LoadAsyncRequestOnLoaded Create(GameObject obj) {
             var request = ObjectPool<LoadAsyncRequestOnLoaded>.Shared.Get();
+            request.Create();
             request.GameObject = obj;
-            request.IsFinished = true;
             return request;
         }
 
-        public override void Dispose() {
+        protected override void OnDestroy() {
+            base.OnDestroy();
             ObjectPool<LoadAsyncRequestOnLoaded>.Shared.Return(this);
         }
 
-        public override IEnumerator Await() {
+        protected override IEnumerator OnProcessLoad() {
             IsFinished = true;
-            yield break;
+
+#pragma warning disable 162
+            if (false) { // break is not required, otherwise it will wait for 1 frame
+                yield break;
+            }
+#pragma warning restore 162
         }
     }
 }

@@ -50,7 +50,9 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
             throw new NotSupportedException();
         }
 
+        #pragma warning disable 67
         public override event OnGetStreamEventHandler OnGetStream;
+        #pragma warning restore 67
 
         public override string ToString() {
             return VFSPath.GetPath(Application.streamingAssetsPath) + _workingDir;

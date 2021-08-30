@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
+using vFrame.Core.Coroutine;
 using vFrame.Core.Extensions.UnityEngine;
 using vFrame.Core.SpawnPools.Behaviours;
 using vFrame.Core.SpawnPools.Loaders;
@@ -37,7 +38,9 @@ namespace vFrame.Core.SpawnPools
         private Action<GameObject> _onGetGameObject;
         private Action<GameObject, IEnumerable<Type>> _onLoadCallbackImmediately;
 
-        public int SpawnedTimes { get; private set; }
+        private CoroutinePool _coroutinePool;
+
+        internal int SpawnedTimes { get; private set; }
 
         protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectLoader builder) {
             _spawnPools = spawnPools;
@@ -46,10 +49,12 @@ namespace vFrame.Core.SpawnPools
             _builder = builder;
             _snapshots = new Dictionary<GameObject, PoolObjectSnapshot>(32);
             _onGetGameObject = OnGetGameObject;
-            _onLoadCallbackImmediately = OnLoadCallbackImmediately;
+            _onLoadCallbackImmediately = OnLoadCallback;
 
             _poolGo = new GameObject(string.Format("Pool({0})", poolName));
             _poolGo.transform.SetParent(_spawnPools.PoolsParent.transform, false);
+
+            _coroutinePool = _spawnPools.CoroutinePool;
         }
 
         protected override void OnDestroy() {
@@ -82,11 +87,7 @@ namespace vFrame.Core.SpawnPools
 #endif
         }
 
-        public GameObject Spawn() {
-            return Spawn(null);
-        }
-
-        public GameObject Spawn(IEnumerable<Type> additional) {
+        private GameObject TryGetFromPool() {
             GameObject obj = null;
             while (_objects.Count > 0) {
 #if DEBUG_SPAWNPOOLS
@@ -101,14 +102,22 @@ namespace vFrame.Core.SpawnPools
                     break;
                 }
             }
+            return obj;
+        }
+
+        public GameObject Spawn() {
+            return Spawn(null);
+        }
+
+        public GameObject Spawn(IEnumerable<Type> additional) {
+            var obj = TryGetFromPool();
 
             if (null == obj) {
 #if DEBUG_SPAWNPOOLS
                 Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
                 obj = _builder.Load();
-
-                OnLoadCallbackImmediately(obj, additional);
+                OnLoadCallback(obj, additional);
             }
 
             OnGetGameObject(obj);
@@ -120,41 +129,21 @@ namespace vFrame.Core.SpawnPools
         }
 
         public ILoaderAsyncRequest SpawnAsync(IEnumerable<Type> additional) {
-            GameObject obj = null;
-            while (_objects.Count > 0) {
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
-#endif
-                obj = _objects.Dequeue();
-                if (null == obj) {
-                    Logger.Warning(
-                        "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
-                }
-                else {
-                    break;
-                }
-            }
-
-            LoadAsyncRequest request;
-            if (null != obj) {
-                request = LoadAsyncRequestOnLoaded.Create(obj);
-                request.AdditionalSnapshotTypes = additional;
-                request.OnLoadCallback = _onLoadCallbackImmediately;
-                request.OnGetGameObject = _onGetGameObject;
-                return request;
-            }
+            var obj = TryGetFromPool();
 
 #if DEBUG_SPAWNPOOLS
             Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
 #endif
-            request = _builder.LoadAsync();
+
+            var request = null != obj ? LoadAsyncRequestOnLoaded.Create(obj) : _builder.LoadAsync();
             request.AdditionalSnapshotTypes = additional;
             request.OnLoadCallback = _onLoadCallbackImmediately;
             request.OnGetGameObject = _onGetGameObject;
+            request.Setup(_coroutinePool);
             return request;
         }
 
-        private void OnLoadCallbackImmediately(GameObject obj, IEnumerable<Type> additional) {
+        private void OnLoadCallback(GameObject obj, IEnumerable<Type> additional) {
             if (!_snapshots.TryGetValue(obj, out var snapshot)) {
                 snapshot = new PoolObjectSnapshot();
                 snapshot.Create(obj, additional);
@@ -165,10 +154,6 @@ namespace vFrame.Core.SpawnPools
         }
 
         private void OnGetGameObject(GameObject obj) {
-            OnSpawn(obj);
-        }
-
-        private void OnSpawn(GameObject obj) {
             ++SpawnedTimes;
             _lastTime = Time.frameCount;
 
