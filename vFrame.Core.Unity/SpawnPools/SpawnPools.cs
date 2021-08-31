@@ -28,7 +28,7 @@ namespace vFrame.Core.SpawnPools
                 if (_poolsParent)
                     return _poolsParent;
 
-                _poolsParent = new GameObject("Pools");
+                _poolsParent = new GameObject("SpawnPools");
                 _poolsParent.transform.position = _poolsSetting.RootPosition;
                 Object.DontDestroyOnLoad(PoolsParent);
                 return _poolsParent;
