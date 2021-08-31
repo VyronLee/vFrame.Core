@@ -161,6 +161,7 @@ namespace vFrame.Core.Coroutine
 
         private void RunTask(CoroutineTask context) {
             context.RunnerId = FindIdleRunner();
+            TasksRunning.Add(context);
 
 #if DEBUG_COROUTINE_POOL
             Logger.Info(LogTag, "CoroutinePool:RunTask - Run task, runnerId: " + context.RunnerId);
@@ -168,10 +169,6 @@ namespace vFrame.Core.Coroutine
 
             var runner = GetOrSpawnRunner(context.RunnerId);
             runner.CoStart(TaskProcessWrap(context));
-
-            if (runner.IsRunning()) {
-                TasksRunning.Add(context);
-            }
         }
 
         private CoroutineBehaviour GetOrSpawnRunner(int runnerId) {

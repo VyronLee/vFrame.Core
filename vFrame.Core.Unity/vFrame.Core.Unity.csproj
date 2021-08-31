@@ -101,6 +101,7 @@
     <Compile Include="Coroutine\CoroutineBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePool.cs" />
     <Compile Include="Coroutine\CoroutinePoolBehaviour.cs" />
+    <Compile Include="Coroutine\CoroutinePoolException.cs" />
     <Compile Include="Coroutine\CoroutineState.cs" />
     <Compile Include="Coroutine\CoroutineTask.cs" />
     <Compile Include="Download\DownloadAgentBase.cs" />

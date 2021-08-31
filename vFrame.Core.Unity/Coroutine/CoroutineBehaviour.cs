@@ -40,6 +40,10 @@ namespace vFrame.Core.Coroutine
         }
 
         public void CoStart(IEnumerator task) {
+            if (IsRunning()) {
+                throw new CoroutinePoolInvalidStateException("Coroutine is running, cannot start another task!");
+            }
+
             Reset();
 
             _task = task;
@@ -87,13 +91,10 @@ namespace vFrame.Core.Coroutine
                     yield return null;
                 }
 
-                if (task != null && task.MoveNext()) {
-                    yield return task.Current;
-                }
-                else {
-                    _state |= CoroutineState.Finished;
-                    break;
-                }
+                yield return task;
+
+                _state |= CoroutineState.Finished;
+                break;
             }
 
             CoStop();
