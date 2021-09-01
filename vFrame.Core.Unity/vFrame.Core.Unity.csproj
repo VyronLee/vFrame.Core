@@ -98,7 +98,7 @@
     <Compile Include="Behaviours\AudioPlayer.cs" />
     <Compile Include="Behaviours\MethodInvoker.cs" />
     <Compile Include="Behaviours\TrailRendererEx.cs" />
-    <Compile Include="Coroutine\CoroutineBehaviour.cs" />
+    <Compile Include="Coroutine\CoroutineRunnerBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePool.cs" />
     <Compile Include="Coroutine\CoroutinePoolBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePoolException.cs" />

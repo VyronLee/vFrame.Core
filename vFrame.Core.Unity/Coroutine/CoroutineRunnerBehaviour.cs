@@ -14,9 +14,10 @@ using UnityEngine;
 
 namespace vFrame.Core.Coroutine
 {
-    internal class CoroutineBehaviour : MonoBehaviour
+    internal class CoroutineRunnerBehaviour : MonoBehaviour
     {
-        private IEnumerator _task;
+        [SerializeField]
+        private CoroutineTask _task;
 
         [SerializeField]
         private CoroutineState _state;
@@ -24,7 +25,7 @@ namespace vFrame.Core.Coroutine
         [SerializeField]
         private int _runnerId;
 
-        public Action<int> OnFinished;
+        public Action<CoroutineTask> OnFinished;
 
         public int RunnerId {
             get => _runnerId;
@@ -39,7 +40,7 @@ namespace vFrame.Core.Coroutine
             _state &= ~CoroutineState.Paused;
         }
 
-        public void CoStart(IEnumerator task) {
+        public void CoStart(CoroutineTask task) {
             if (IsRunning()) {
                 throw new CoroutinePoolInvalidStateException("Coroutine is running, cannot start another task!");
             }
@@ -77,11 +78,10 @@ namespace vFrame.Core.Coroutine
 
         private void Reset() {
             _state = 0;
-            _task = null;
         }
 
         public IEnumerator RunTask() {
-            var task = _task;
+            var taskContext = _task;
             while (IsRunning()) {
                 if (IsStopped()) {
                     break;
@@ -91,7 +91,7 @@ namespace vFrame.Core.Coroutine
                     yield return null;
                 }
 
-                yield return task;
+                yield return taskContext.Task;
 
                 _state |= CoroutineState.Finished;
                 break;
@@ -100,7 +100,7 @@ namespace vFrame.Core.Coroutine
             CoStop();
 
             if (null != OnFinished) {
-                OnFinished(_runnerId);
+                OnFinished(taskContext);
             }
         }
     }

@@ -8,11 +8,14 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Loggers;
 using Logger = vFrame.Core.Loggers.Logger;
+using Object = UnityEngine.Object;
+using StackTraceUtility = vFrame.Core.Loggers.StackTraceUtility;
 
 namespace vFrame.Core.Coroutine
 {
@@ -38,7 +41,7 @@ namespace vFrame.Core.Coroutine
 
         internal readonly int Capacity;
         internal readonly HashSet<int> IdleSlots;
-        internal readonly List<CoroutineBehaviour> CoroutineList;
+        internal readonly List<CoroutineRunnerBehaviour> CoroutineList;
         internal readonly List<CoroutineTask> TasksRunning;
         internal readonly List<CoroutineTask> TasksWaiting;
 
@@ -46,10 +49,12 @@ namespace vFrame.Core.Coroutine
         private int _taskHandle;
         private static readonly LogTag LogTag = new LogTag("CoroutinePool");
 
+        private Action<CoroutineTask> _onTaskFinished;
+
         public CoroutinePool(string name = null, int capacity = int.MaxValue) {
             Capacity = capacity;
             IdleSlots = new HashSet<int>();
-            CoroutineList = new List<CoroutineBehaviour>();
+            CoroutineList = new List<CoroutineRunnerBehaviour>();
 
             TasksRunning = new List<CoroutineTask>(16);
             TasksWaiting = new List<CoroutineTask>(16);
@@ -57,6 +62,8 @@ namespace vFrame.Core.Coroutine
             _holder = new GameObject(string.Format("Pool_{0}({1})", ++_index, name ?? "Unnamed"));
             _holder.AddComponent<CoroutinePoolBehaviour>().Pool = this;
             _holder.transform.SetParent(PoolParent.transform);
+
+            _onTaskFinished = OnTaskFinished;
         }
 
         public void Destroy() {
@@ -84,6 +91,9 @@ namespace vFrame.Core.Coroutine
 #endif
 
             var context = new CoroutineTask {Handle = handle, Task = task};
+#if DEBUG_COROUTINE_POOL
+            context.Stack = StackTraceUtility.ExtractStackTrace();
+#endif
 
             if (TasksRunning.Count < Capacity) {
 #if DEBUG_COROUTINE_POOL
@@ -168,10 +178,13 @@ namespace vFrame.Core.Coroutine
 #endif
 
             var runner = GetOrSpawnRunner(context.RunnerId);
-            runner.CoStart(TaskProcessWrap(context));
+            runner.CoStart(context);
         }
 
-        private CoroutineBehaviour GetOrSpawnRunner(int runnerId) {
+        private CoroutineRunnerBehaviour GetOrSpawnRunner(int runnerId) {
+            if (runnerId < 0 || runnerId >= Capacity) {
+                throw new IndexOutOfRangeException(string.Format("Runner id must between [0, {0})", Capacity));
+            }
             if (runnerId < CoroutineList.Count) {
 #if DEBUG_COROUTINE_POOL
                 Logger.Info(LogTag, "CoroutinePool:GetOrSpawnRunner - runner exist: " + runnerId);
@@ -179,55 +192,51 @@ namespace vFrame.Core.Coroutine
                 return CoroutineList[runnerId];
             }
 
-            var runner = new GameObject("Coroutine_" + runnerId).AddComponent<CoroutineBehaviour>();
-            runner.RunnerId = runnerId;
-            runner.OnFinished = OnTaskFinished;
-            runner.transform.SetParent(_holder.transform);
-
-            CoroutineList.Add(runner);
+            var idx = CoroutineList.Count;
+            while (idx <= runnerId) {
+                var runner = new GameObject("Coroutine_" + idx).AddComponent<CoroutineRunnerBehaviour>();
+                runner.transform.SetParent(_holder.transform);
+                runner.RunnerId = idx;
+                runner.OnFinished = _onTaskFinished;
+                CoroutineList.Add(runner);
+                ++idx;
+            }
 
 #if DEBUG_COROUTINE_POOL
             Logger.Info(LogTag, "CoroutinePool:GetOrSpawnRunner - spawning new runner: " + runnerId);
 #endif
 
-            return runner;
+            return CoroutineList[runnerId];
         }
 
         private int FindIdleRunner() {
-            if (IdleSlots.Count > 0) {
-                foreach (var slot in IdleSlots) {
-                    IdleSlots.Remove(slot);
-                    return slot;
-                }
+            foreach (var slot in IdleSlots) {
+                IdleSlots.Remove(slot);
+                return slot;
             }
 
             if (TasksRunning.Count < Capacity) {
                 return TasksRunning.Count;
             }
 
-            throw new System.IndexOutOfRangeException("No idling runner now.");
+            throw new IndexOutOfRangeException("No idling runner now.");
         }
 
-        private IEnumerator TaskProcessWrap(CoroutineTask context) {
-#if DEBUG_COROUTINE_POOL
-            Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task starting: " + context.Task.GetHashCode());
-#endif
-            yield return context.Task;
+        private void OnTaskFinished(CoroutineTask task) {
+            if (!IdleSlots.Add(task.RunnerId)) {
+                throw new CoroutineRunnerExistInIdleListException(
+                    string.Format("Runner(id: {0}) exist in idle list.", task.RunnerId));
+            }
 
-#if DEBUG_COROUTINE_POOL
-            Logger.Info(LogTag, "CoroutinePool:TaskProcessWrap - task finished: " + context.Task.GetHashCode());
-#endif
-            TasksRunning.Remove(context);
+            if (!TasksRunning.Remove(task)) {
+                throw new CoroutinePoolException(
+                    string.Format("Task does not exist in running list, runnerId: {0}, handle: {1}", task.RunnerId, task.Handle));
+            }
         }
 
-        private void OnTaskFinished(int runnerId) {
-            IdleSlots.Add(runnerId);
-            PopupAndRunNext();
-        }
-
-        private void PopupAndRunNext() {
-            if (TasksWaiting.Count <= 0)
-                return;
+        private bool TryPopupAndRunNext() {
+            if (TasksWaiting.Count <= 0 || TasksRunning.Count >= Capacity)
+                return false;
 
             var context = TasksWaiting[0];
             TasksWaiting.RemoveAt(0);
@@ -237,6 +246,14 @@ namespace vFrame.Core.Coroutine
 #endif
 
             RunTask(context);
+            return true;
         }
+
+        internal void OnUpdate() {
+            while (TryPopupAndRunNext()) {
+                // nothing to do
+            }
+        }
+
     }
 }

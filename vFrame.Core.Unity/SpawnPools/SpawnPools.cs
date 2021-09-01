@@ -19,6 +19,8 @@ namespace vFrame.Core.SpawnPools
 {
     public class SpawnPools : BaseObject<IGameObjectLoaderFactory, SpawnPoolsSetting>, ISpawnPools
     {
+        private const string PoolName = nameof(SpawnPools);
+
         private GameObject _poolsParent;
         private SpawnPoolsSetting _poolsSetting;
         private CoroutinePool _coroutinePool;
@@ -28,7 +30,7 @@ namespace vFrame.Core.SpawnPools
                 if (_poolsParent)
                     return _poolsParent;
 
-                _poolsParent = new GameObject("SpawnPools");
+                _poolsParent = new GameObject(PoolName);
                 _poolsParent.transform.position = _poolsSetting.RootPosition;
                 Object.DontDestroyOnLoad(PoolsParent);
                 return _poolsParent;
@@ -88,7 +90,7 @@ namespace vFrame.Core.SpawnPools
                 pool.Create(assetName, this, builder);
 
                 _pools.Add(assetName, pool);
-                PoolsParent.name = $"Pools({PoolsParent.transform.childCount})";
+                PoolsParent.name = $"{PoolName}({PoolsParent.transform.childCount})";
 
                 return pool;
             }

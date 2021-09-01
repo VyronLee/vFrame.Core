@@ -17,7 +17,8 @@ namespace vFrame.Core.Coroutine
     internal struct CoroutineTask
     {
         public int Handle;
-        public IEnumerator Task;
         public int RunnerId;
+        public IEnumerator Task;
+        public string Stack;
     }
 }

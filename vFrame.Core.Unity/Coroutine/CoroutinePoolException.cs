@@ -19,4 +19,11 @@ namespace vFrame.Core.Coroutine
 
         }
     }
+
+    public class CoroutineRunnerExistInIdleListException : CoroutinePoolException
+    {
+        public CoroutineRunnerExistInIdleListException(string message) : base(message) {
+
+        }
+    }
 }
