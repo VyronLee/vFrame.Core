@@ -89,6 +89,7 @@ namespace vFrame.Core.Coroutine
 
                 if (IsPause()) {
                     yield return null;
+                    continue;
                 }
 
                 yield return taskContext.Task;
