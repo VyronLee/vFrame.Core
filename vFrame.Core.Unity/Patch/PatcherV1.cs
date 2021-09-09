@@ -435,8 +435,7 @@ namespace vFrame.Core.Patch
                 ParseVersion();
             };
             task.DownloadFailure += args => {
-                Logger.Error(PatchConst.LogTag, "Fail to download version: {0}, error: {1}", versionUrl,
-                    args.Error);
+                Logger.Warning(PatchConst.LogTag, "Fail to download version: {0}, error: {1}", versionUrl, args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_VERSION);
                 UpdateState = UpdateState.UNCHECKED;
             };
@@ -491,7 +490,7 @@ namespace vFrame.Core.Patch
                 ParseManifest();
             };
             task.DownloadFailure += args => {
-                Logger.Error(PatchConst.LogTag, "Fail to download manifest: {0}, error: {1}", url, args.Error);
+                Logger.Warning(PatchConst.LogTag, "Fail to download manifest: {0}, error: {1}", url, args.Error);
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_MANIFEST);
                 UpdateState = UpdateState.NEED_UPDATE;
             };
@@ -721,7 +720,7 @@ namespace vFrame.Core.Patch
         private void OnDownloadError(DownloadEventArgs args) {
             var asset = (AssetInfo) args.UserData;
             var task = _downloadManager.GetDownload(args.SerialId);
-            Logger.Error(PatchConst.LogTag, "Download file failed: {0}, url: {1}, storage path: {2}, error: {3}",
+            Logger.Warning(PatchConst.LogTag, "Download file failed: {0}, url: {1}, storage path: {2}, error: {3}",
                 asset.fileName,
                 task?.DownloadUrl ?? string.Empty,
                 task?.DownloadPath ?? string.Empty,
@@ -783,7 +782,7 @@ namespace vFrame.Core.Patch
                 _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.UNSTARTED);
                 _failedUnits.Add(asset);
 
-                Logger.Error(PatchConst.LogTag, "Hash Invalid : {0}", asset.fileName);
+                Logger.Warning(PatchConst.LogTag, "Hash Invalid : {0}", asset.fileName);
             }
 
             _remoteManifest.SaveToFile(_tempManifestPath);
