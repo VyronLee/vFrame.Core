@@ -8,8 +8,6 @@ namespace vFrame.Core.Coroutine
         [SerializeField]
         private int _capacity;
         [SerializeField]
-        private List<CoroutineTask> _tasksRunning;
-        [SerializeField]
         private List<CoroutineTask> _tasksWaiting;
         [SerializeField]
         private List<CoroutineRunnerBehaviour> _coroutineList;
@@ -19,8 +17,7 @@ namespace vFrame.Core.Coroutine
         public CoroutinePool Pool {
             set {
                 _capacity = value.Capacity;
-                _coroutineList = value.CoroutineList;
-                _tasksRunning = value.TasksRunning;
+                _coroutineList = value.RunnerList;
                 _tasksWaiting = value.TasksWaiting;
                 _pool = value;
             }
