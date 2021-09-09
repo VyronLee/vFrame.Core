@@ -7,6 +7,7 @@ using vFrame.Core.Base;
 using vFrame.Core.Compress.Services;
 using vFrame.Core.Extensions;
 using vFrame.Core.FileSystems.Exceptions;
+using vFrame.Core.Profiles;
 using vFrame.Core.Utils;
 
 namespace vFrame.Core.Compress.BlockBasedCompression
@@ -92,6 +93,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         protected int BlockCount => _header?.BlockCount ?? 0;
 
+        public bool SkipValidation { get; set; } = false;
+
         protected override void OnCreate() {
             _buffers = ArrayPool<byte>.Create();
         }
@@ -142,6 +145,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         #region Compress
 
         protected void BeginCompress(Stream input, Stream output, BlockBasedCompressionOptions options) {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("BeginCompress", id);
             lock (_inputLock) {
                 _inputStart = input.Position;
                 _header = CreateHeader(input, options);
@@ -152,9 +157,12 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 _outputStart = output.Position;
                 output.Seek(_outputStart + BlockBasedCompressionHeader.GetMarshalSize(), SeekOrigin.Begin);
             }
+            PerfProfile.Unpin(id);
         }
 
         protected void EndCompress(Stream output) {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("EndCompress", id);
             _header.BlockTableOffset = BlockBasedCompressionHeader.GetMarshalSize();
 
             lock (_blockTable) {
@@ -166,6 +174,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 WriteHeader(output, _header);
                 WriteBlockTable(output, _blockTable);
             }
+            PerfProfile.Unpin(id);
         }
 
         private static int CalculateBlockCount(Stream input, int blockSize) {
@@ -222,6 +231,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             BlockBasedCompressionOptions options,
             int blockIndex)
         {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("SafeCompress, blockIndex: " + blockIndex, id);
+
             var dataBuffer = _buffers.Rent(options.BlockSize);
             var outBuffer = _buffers.Rent(options.BlockSize);
 
@@ -232,6 +244,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             _buffers.Return(dataBuffer);
             _buffers.Return(outBuffer);
+
+            PerfProfile.Unpin(id);
         }
 
         private void SafeReadRawBlockData(Stream input,
@@ -306,6 +320,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         #region Decompress
 
         protected void BeginDecompress(Stream input, Stream output) {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("BeginDecompress", id);
+
             lock (_inputLock) {
                 _inputStart = input.Position;
                 _header = ReadHeader(input);
@@ -316,17 +333,26 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 _outputStart = output.Position;
                 output.Seek(_outputStart, SeekOrigin.Begin);
             }
+
+            PerfProfile.Unpin(id);
         }
 
         protected void EndDecompress(Stream output) {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("EndDecompress", id);
+
             lock (_outputLock) {
                 output.Seek(_outputStart, SeekOrigin.Begin);
 
-                var md5 = MessageDigestUtils.MD5(output);
-                if (md5 != _header.Md5) {
-                    throw new BlockBasedCompressionHashNotMatchException();
+                if (!SkipValidation) {
+                    var md5 = MessageDigestUtils.MD5(output);
+                    if (md5 != _header.Md5) {
+                        throw new BlockBasedCompressionHashNotMatchException();
+                    }
                 }
             }
+
+            PerfProfile.Unpin(id);
         }
 
         private BlockBasedCompressionBlockTable ReadBlockTable(Stream input) {
@@ -352,6 +378,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         }
 
         protected void SafeDecompress(Stream input, Stream output, int blockIndex) {
+            PerfProfile.Start(out var id);
+            PerfProfile.Pin("SafeDecompress, blockIndex: " + blockIndex, id);
+
             var dataBuffer = _buffers.Rent(_header.BlockSize);
             var outBuffer = _buffers.Rent(_header.BlockSize);
 
@@ -361,6 +390,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             _buffers.Return(dataBuffer);
             _buffers.Return(outBuffer);
+
+            PerfProfile.Unpin(id);
         }
 
         private void SafeReadCompressedBlockData(Stream input,
