@@ -10,7 +10,10 @@ namespace vFrame.Core.MultiThreading
 
         protected override void OnCreate(TArg arg) {
             base.OnCreate(arg);
-            ThreadPool.QueueUserWorkItem(RunTask, Arg);
+
+            if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
+                throw new Exception("Queue work item to thread pool failed.");
+            }
         }
 
         private void RunTask(object state) {
@@ -45,7 +48,10 @@ namespace vFrame.Core.MultiThreading
 
         protected override void OnCreate(TArg arg) {
             base.OnCreate(arg);
-            ThreadPool.QueueUserWorkItem(RunTask, Arg);
+
+            if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
+                throw new Exception("Queue work item to thread pool failed.");
+            }
         }
 
         private void RunTask(object state) {

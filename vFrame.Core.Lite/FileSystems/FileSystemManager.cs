@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using vFrame.Core.Base;
 using vFrame.Core.FileSystems.Constants;
 using vFrame.Core.FileSystems.Package;
@@ -9,16 +11,26 @@ namespace vFrame.Core.FileSystems
 {
     public class FileSystemManager : BaseObject , IFileSystemManager
     {
-        private List<IVirtualFileSystem> _fileSystems;
+        private ConcurrentDictionary<int, IVirtualFileSystem> _fileSystems;
+        private int _count;
+
+        private readonly object _lockObject = new object();
 
         protected override void OnCreate() {
-            _fileSystems = new List<IVirtualFileSystem>();
+            lock (_lockObject) {
+                _fileSystems = new ConcurrentDictionary<int, IVirtualFileSystem>();
+            }
+            Interlocked.Exchange(ref _count, 0);
         }
 
         protected override void OnDestroy() {
-            foreach (var fileSystem in _fileSystems)
-                fileSystem.Close();
-            _fileSystems.Clear();
+            lock (_lockObject) {
+                foreach (var kv in _fileSystems) {
+                    kv.Value.Close();
+                }
+                _fileSystems.Clear();
+            }
+            Interlocked.Exchange(ref _count, 0);
         }
 
         public virtual IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
@@ -39,35 +51,68 @@ namespace vFrame.Core.FileSystems
         }
 
         public void AddFileSystem(IVirtualFileSystem virtualFileSystem) {
-            _fileSystems.Add(virtualFileSystem);
+            lock (_lockObject) {
+                if (_fileSystems.TryAdd(_count, virtualFileSystem)) {
+                    Interlocked.Increment(ref _count);
+                }
+            }
         }
 
         public void RemoveFileSystem(IVirtualFileSystem virtualFileSystem) {
-            _fileSystems.Remove(virtualFileSystem);
+            lock (_lockObject) {
+                var index = -1;
+                foreach (var kv in _fileSystems) {
+                    if (kv.Value != virtualFileSystem)
+                        continue;
+
+                    index = kv.Key;
+                    break;
+                }
+
+                if (index < 0)
+                    return;
+
+                if (_fileSystems.TryRemove(index, out var fs)) {
+                    Interlocked.Decrement(ref _count);
+                }
+            }
         }
 
         public IVirtualFileStream GetStream(string path, FileMode mode = FileMode.Open) {
-            foreach (var fileSystem in _fileSystems)
+            var count = _count;
+            for (var i = 0; i < count; i++) {
+                if (!_fileSystems.TryGetValue(i, out var fileSystem))
+                    continue;
+
                 if (fileSystem.Exist(path)) {
                     //Logger.Info(FileSystemConst.LogTag, "Get stream: \"{0}\" from file system: \"{1}\"",
                     //    path, fileSystem);
                     return fileSystem.GetStream(path, mode);
                 }
+            }
             return null;
         }
 
         public IReadonlyVirtualFileStreamRequest GetReadonlyStreamAsync(string path) {
-            foreach (var fileSystem in _fileSystems)
+            var count = _count;
+            for (var i = 0; i < count; i++) {
+                if (!_fileSystems.TryGetValue(i, out var fileSystem))
+                    continue;
+
                 if (fileSystem.Exist(path)) {
                     //Logger.Info(FileSystemConst.LogTag, "Get stream async: \"{0}\" from file system: \"{1}\"",
                     //    path, fileSystem);
                     return fileSystem.GetReadonlyStreamAsync(path);
                 }
+            }
             return null;
         }
 
         public IEnumerator<IVirtualFileSystem> GetEnumerator() {
-            foreach (var fileSystem in _fileSystems) {
+            var count = _count;
+            for (var i = 0; i < count; i++) {
+                if (!_fileSystems.TryGetValue(i, out var fileSystem))
+                    continue;
                 yield return fileSystem;
             }
         }
