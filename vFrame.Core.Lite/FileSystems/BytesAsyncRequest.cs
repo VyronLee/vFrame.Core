@@ -17,7 +17,7 @@ namespace vFrame.Core.FileSystems
         }
 
         protected override void ErrorHandler(Exception e) {
-            Logger.Error(FileSystemConst.LogTag, "Exception occurred while reading: {0}", Arg);
+            Logger.Error(FileSystemConst.LogTag, "Exception occurred while reading: {0}, msg: {1}", Arg, e);
         }
     }
 }

@@ -94,9 +94,18 @@
     <Compile Include="Asynchronous\AsyncRequest.cs" />
     <Compile Include="Asynchronous\AsyncRequestException.cs" />
     <Compile Include="Asynchronous\IAsyncRequest.cs" />
+    <Compile Include="Attributes\ShowOnlyAttribute.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
     <Compile Include="Behaviours\MethodInvoker.cs" />
+    <Compile Include="Behaviours\Snapshots\GameObjectSnapshotRecursiveBehaviour.cs" />
+    <Compile Include="Behaviours\Snapshots\GameObjectSnapshot.cs" />
+    <Compile Include="Behaviours\Snapshots\GameObjectSnapshotBehaviour.cs" />
+    <Compile Include="Behaviours\Snapshots\GameObjectSnapshotSettings.cs" />
+    <Compile Include="Behaviours\Snapshots\Impls\BehaviourEnableStateSnapshot.cs" />
+    <Compile Include="Behaviours\Snapshots\Impls\ParticleSystemEnableStateSnapshot.cs" />
+    <Compile Include="Behaviours\Snapshots\Impls\RendererEnableStateSnapshot.cs" />
+    <Compile Include="Behaviours\Snapshots\Impls\TransformSnapshot.cs" />
     <Compile Include="Behaviours\TrailRendererEx.cs" />
     <Compile Include="Coroutine\CoroutineRunnerBehaviour.cs" />
     <Compile Include="Coroutine\CoroutinePool.cs" />
@@ -177,6 +186,11 @@
       <Project>{a2711064-b77a-47d1-bd1d-581be4ed1fce}</Project>
       <Name>vFrame.Core.Lite</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="vFrame.UI.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\..\Project\Library\ScriptAssemblies\vFrame.UI.Runtime.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

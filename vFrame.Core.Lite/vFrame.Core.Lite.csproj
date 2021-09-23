@@ -134,9 +134,6 @@
     <Compile Include="ThirdParty\LitJson\JsonWriter.cs" />
     <Compile Include="ThirdParty\LitJson\Lexer.cs" />
     <Compile Include="ThirdParty\LitJson\ParserToken.cs" />
-    <Compile Include="ThirdParty\RecyclableMemoryStream\Events.cs" />
-    <Compile Include="ThirdParty\RecyclableMemoryStream\RecyclableMemoryStream.cs" />
-    <Compile Include="ThirdParty\RecyclableMemoryStream\RecyclableMemoryStreamManager.cs" />
     <Compile Include="ThirdParty\StringBuffer.cs" />
     <Compile Include="Base\BaseObject.cs" />
     <Compile Include="Base\IAsync.cs" />
@@ -228,7 +225,6 @@
     <Compile Include="ThirdParty\ZStd\ZstandardDictionary.cs" />
     <Compile Include="ThirdParty\ZStd\ZstandardInterop.cs" />
     <Compile Include="ThirdParty\ZStd\ZstandardStream.cs" />
-    <Compile Include="ThirdParty\ZStd\ZStdApi.cs" />
     <Compile Include="MultiThreading\AsyncRequest.cs" />
     <Compile Include="MultiThreading\IAsyncRequest.cs" />
     <Compile Include="MultiThreading\ParallelTaskRunner.cs" />

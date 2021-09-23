@@ -33,7 +33,6 @@ namespace vFrame.Core.SpawnPools
 
         private int _uniqueId;
         private int NewUniqueId => ++_uniqueId;
-        private Dictionary<GameObject, PoolObjectSnapshot> _snapshots;
 
         private Action<GameObject> _onGetGameObject;
         private Action<GameObject, IEnumerable<Type>> _onLoadCallbackImmediately;
@@ -47,7 +46,6 @@ namespace vFrame.Core.SpawnPools
             _lastTime = Time.frameCount;
             _poolName = poolName;
             _builder = builder;
-            _snapshots = new Dictionary<GameObject, PoolObjectSnapshot>(32);
             _onGetGameObject = OnGetGameObject;
             _onLoadCallbackImmediately = OnLoadCallback;
 
@@ -58,9 +56,6 @@ namespace vFrame.Core.SpawnPools
         }
 
         protected override void OnDestroy() {
-            _snapshots?.Clear();
-            _snapshots = null;
-
             if (_poolGo) {
                 Object.Destroy(_poolGo);
             }
@@ -69,11 +64,6 @@ namespace vFrame.Core.SpawnPools
 
         public void Clear() {
             foreach (var obj in _objects) {
-                if (_snapshots.TryGetValue(obj, out var snapshot)) {
-                    snapshot.Destroy();
-                    _snapshots.Remove(obj);
-                }
-
                 if (!obj) {
                     continue;
                 }
@@ -144,11 +134,9 @@ namespace vFrame.Core.SpawnPools
         }
 
         private void OnLoadCallback(GameObject obj, IEnumerable<Type> additional) {
-            if (!_snapshots.TryGetValue(obj, out var snapshot)) {
-                snapshot = new PoolObjectSnapshot();
-                snapshot.Create(obj, additional);
-                snapshot.Take();
-                _snapshots.Add(obj, snapshot);
+            if (!obj) {
+                Logger.Warning("Load gameObject callback, but target == null, pool name: " + _poolName);
+                return;
             }
             HideGameObject(obj);
         }
@@ -157,6 +145,10 @@ namespace vFrame.Core.SpawnPools
             ++SpawnedTimes;
             _lastTime = Time.frameCount;
 
+            if (!obj) {
+                Logger.Warning("Get gameObject callback, but target == null, pool name: " + _poolName);
+                return;
+            }
             ObjectPreprocessBeforeReturn(obj);
         }
 
@@ -190,10 +182,6 @@ namespace vFrame.Core.SpawnPools
 
             ShowGameObject(go);
 
-            if (_snapshots.TryGetValue(go, out var snapshot)) {
-                snapshot.Restore();
-            }
-
             var identity = go.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
                 identity = go.AddComponent<PoolObjectIdentity>();
@@ -220,13 +208,6 @@ namespace vFrame.Core.SpawnPools
                 return false;
             }
             identity.IsPooling = true;
-
-            if (!_snapshots.TryGetValue(go, out _)) {
-                Logger.Warning("No target snapshot in the pool: " + identity.AssetPath);
-                identity.Destroyed = true;
-                return false;
-            }
-
             return true;
         }
 
@@ -241,8 +222,6 @@ namespace vFrame.Core.SpawnPools
                     go.SetActive(true);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.ClearAllTrailRenderers();
-                    go.transform.StartAllParticleSystems();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -251,14 +230,14 @@ namespace vFrame.Core.SpawnPools
         }
 
         private void HideGameObject(GameObject go) {
+            if (!go) {
+                return;
+            }
             switch (_spawnPools.PoolsSetting.HiddenType) {
                 case SpawnPoolsSetting.PoolObjectHiddenType.Deactive:
-                    go.transform.ClearAllTrailRenderers();
                     go.SetActive(false);
                     break;
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
-                    go.transform.StopAllParticleSystems();
-                    go.transform.ClearAllTrailRenderers();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -276,8 +255,7 @@ namespace vFrame.Core.SpawnPools
                 return;
 
 #if DEBUG_SPAWNPOOLS
-            Logger.Info("Pool object(id: {0}, path: {1}) destroyed.",
-                identity.UniqueId, identity.AssetPath);
+            Logger.Info("Pool object(id: {0}, path: {1}) destroyed.", identity.UniqueId, identity.AssetPath);
 #endif
 
             identity.Destroyed = true;

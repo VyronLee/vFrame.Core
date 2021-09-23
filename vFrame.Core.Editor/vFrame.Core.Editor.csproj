@@ -89,7 +89,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Drawers\ShowOnlyDrawer.cs" />
     <Compile Include="Inspectors\AnimationListInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\BehaviourEnableStateSnapshotInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\GameObjectSnapshotBehaviourInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\GameObjectSnapshotInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\ParticleSystemEnableStateSnapshotInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\RendererEnableStateSnapshotInspector.cs" />
+    <Compile Include="Inspectors\Snapshots\TransformSnapshotInspector.cs" />
     <Compile Include="Utils\EditorUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

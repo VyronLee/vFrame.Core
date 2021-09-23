@@ -19,10 +19,6 @@ namespace vFrame.Core.Extensions.UnityEngine
     public static class TransformExtension
     {
         public static void TravelSelfAndChildren<T>(this Transform transform, Action<T> traveller) where T : Component {
-            var component = transform.GetComponent<T>();
-            if (component)
-                traveller.Invoke(component);
-
             var components = transform.GetComponentsInChildren<T>(true);
             foreach (var comp in components)
                 traveller.Invoke(comp);
