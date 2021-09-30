@@ -96,6 +96,13 @@ namespace vFrame.Core.SpawnPools
             }
         }
 
+        public IPreloadAsyncRequest PreloadAsync(string[] assetPaths) {
+            var request = new PreloadAsyncRequest();
+            request.Create(this, assetPaths);
+            request.Setup(_coroutinePool);
+            return request;
+        }
+
         public void Update() {
             if (++_lastGC < _poolsSetting.GCInterval)
                 return;

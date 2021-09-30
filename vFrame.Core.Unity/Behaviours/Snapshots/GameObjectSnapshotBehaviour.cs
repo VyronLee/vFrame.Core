@@ -27,14 +27,6 @@ namespace vFrame.Core.Behaviours.Snapshots
         private Action<Type> _takeSnapshot;
         private Action<GameObjectSnapshot> _restoreSnapshot;
 
-        private void Awake() {
-            if (null == _snapshots)
-                return;
-            foreach (var snapshot in _snapshots) {
-                snapshot.hideFlags |= HideFlags.HideInInspector;
-            }
-        }
-
         public void Take() {
             _snapshots.Clear();
 

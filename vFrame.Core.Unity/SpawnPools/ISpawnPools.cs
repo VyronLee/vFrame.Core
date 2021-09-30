@@ -8,11 +8,14 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using vFrame.Core.SpawnPools.Loaders;
+
 namespace vFrame.Core.SpawnPools
 {
     public interface ISpawnPools
     {
         IPool this[string assetName] { get; }
         void Update();
+        IPreloadAsyncRequest PreloadAsync(string[] assetPaths);
     }
 }

@@ -25,21 +25,25 @@ namespace vFrame.Core.Behaviours.Snapshots
 
         private Action<Transform> _takeInternal;
 
-        private void Awake() {
-            if (null == _snapshots)
-                return;
-            foreach (var snapshot in _snapshots) {
-                snapshot.hideFlags |= HideFlags.HideInInspector;
-            }
-        }
-
         public void Take() {
             _snapshots.Clear();
+            _takeInternal = _takeInternal ?? (_takeInternal = TakeInternal);
 
             if (!_snapshotSettings) {
                 return;
             }
-            transform.TravelSelfAndChildren<Transform>(_takeInternal ?? (_takeInternal = TakeInternal));
+
+            var components = transform.GetComponentsInChildren<Transform>(true);
+#if UNITY_EDITOR
+            Array.Sort(components, (a, b) => {
+                var pathA = a.GetHierarchyPath();
+                var pathB = b.GetHierarchyPath();
+                return string.Compare(pathA, pathB, StringComparison.Ordinal);
+            });
+#endif
+            foreach (var comp in components) {
+                _takeInternal.Invoke(comp);
+            }
         }
 
         public void Restore() {

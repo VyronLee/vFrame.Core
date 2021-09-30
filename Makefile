@@ -27,6 +27,9 @@ StandaloneOutputDir = $(RuntimeOutputDir)/Standalone
 EditorAssembly = vFrame.Core.Editor.dll
 RuntimeLiteAssembly = vFrame.Core.Lite.dll
 RuntimeUnityAssembly = vFrame.Core.Unity.dll
+EditorAssemblySymbol = vFrame.Core.Editor.pdb
+RuntimeLiteAssemblySymbol = vFrame.Core.Lite.pdb
+RuntimeUnityAssemblySymbol = vFrame.Core.Unity.pdb
 
 DeployDir = ../../Project/Assets/Core/vFrame.Core/
 
@@ -54,8 +57,11 @@ output_editor:
 	mkdir -p $(EditorOutputDir)
 	mkdir -p $(RuntimeOutputDir)
 	cp -rf $(DebugEditorDir)/$(EditorAssembly) $(EditorOutputDir)/$(EditorAssembly)
+	cp -rf $(DebugEditorDir)/$(EditorAssemblySymbol) $(EditorOutputDir)/$(EditorAssemblySymbol)
 	cp -rf $(DebugRuntimeDir)/$(RuntimeLiteAssembly) $(RuntimeOutputDir)/$(RuntimeLiteAssembly)
+	cp -rf $(DebugRuntimeDir)/$(RuntimeLiteAssemblySymbol) $(RuntimeOutputDir)/$(RuntimeLiteAssemblySymbol)
 	cp -rf $(DebugRuntimeDir)/$(RuntimeUnityAssembly) $(RuntimeOutputDir)/$(RuntimeUnityAssembly)
+	cp -rf $(DebugRuntimeDir)/$(RuntimeUnityAssemblySymbol) $(RuntimeOutputDir)/$(RuntimeUnityAssemblySymbol)
 
 output_android:
 	mkdir -p $(AndroidOutputDir)

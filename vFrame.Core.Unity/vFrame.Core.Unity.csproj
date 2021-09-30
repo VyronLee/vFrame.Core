@@ -155,10 +155,12 @@
     <Compile Include="SpawnPools\Loaders\IGameObjectLoader.cs" />
     <Compile Include="SpawnPools\Loaders\IGameObjectLoaderFactory.cs" />
     <Compile Include="SpawnPools\Loaders\IGameObjectLoaderFromPath.cs" />
+    <Compile Include="SpawnPools\Loaders\IPreloadAsyncRequest.cs" />
     <Compile Include="SpawnPools\Loaders\LoadAsyncRequest.cs" />
     <Compile Include="SpawnPools\IPool.cs" />
     <Compile Include="SpawnPools\ISpawnPools.cs" />
     <Compile Include="SpawnPools\Loaders\LoadAsyncRequestOnLoaded.cs" />
+    <Compile Include="SpawnPools\Loaders\PreloadAsyncRequest.cs" />
     <Compile Include="SpawnPools\Pool.cs" />
     <Compile Include="SpawnPools\PoolObjectSnapshot.cs" />
     <Compile Include="SpawnPools\Snapshots\Impls\BehaviourSnapshot.cs" />

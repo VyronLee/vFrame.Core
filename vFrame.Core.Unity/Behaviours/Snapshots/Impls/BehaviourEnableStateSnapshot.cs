@@ -16,6 +16,18 @@ namespace vFrame.Core.Behaviours.Snapshots
             _states.Clear();
             _takeInternal = _takeInternal ?? (_takeInternal = TakeInternal);
             var components = GetComponentsInChildren<Behaviour>(true);
+#if UNITY_EDITOR
+            Array.Sort(components, (a, b) => {
+                var ret = true;
+                ret &= UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(a, out var guidA, out long localIdA);
+                ret &= UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(a, out var guidB, out long localIdB);
+                if (!ret) {
+                    return a.GetInstanceID().CompareTo(b.GetInstanceID());
+                }
+                return localIdA.CompareTo(localIdB);
+            });
+#endif
+
             foreach (var comp in components) {
                 _takeInternal(comp);
             }
