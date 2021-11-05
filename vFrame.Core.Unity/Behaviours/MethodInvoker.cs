@@ -43,7 +43,7 @@ namespace vFrame.Core.Behaviours
             return StartCoroutine(InternalInvoke(action, param1, param2));
         }
 
-        public UnityEngine.Coroutine DelayInvoke<T1, T2, T3>(Func<T1, T2, T3, IEnumerator> action, T1 param1, T2 param2, T3 param3) {
+        public UnityEngine.Coroutine Invoke<T1, T2, T3>(Func<T1, T2, T3, IEnumerator> action, T1 param1, T2 param2, T3 param3) {
             return StartCoroutine(InternalInvoke(action, param1, param2, param3));
         }
 
@@ -61,6 +61,22 @@ namespace vFrame.Core.Behaviours
 
         public UnityEngine.Coroutine DelayInvoke<T1, T2, T3>(float time, Action<T1, T2, T3> action, T1 param1, T2 param2, T3 param3) {
             return StartCoroutine(InternalDelayInvoke(time, action, param1, param2, param3));
+        }
+
+        public UnityEngine.Coroutine LoopInvoke(float interval, Func<bool> action, bool invokeImmediately = true) {
+            return StartCoroutine(InternalLoopInvoke(interval, action, invokeImmediately));
+        }
+
+        public UnityEngine.Coroutine LoopInvoke<T1>(float interval, Func<T1, bool> action, T1 param1, bool invokeImmediately = true) {
+            return StartCoroutine(InternalLoopInvoke(interval, action, param1, invokeImmediately));
+        }
+
+        public UnityEngine.Coroutine LoopInvoke<T1, T2>(float interval, Func<T1, T2, bool> action, T1 param1, T2 param2, bool invokeImmediately = true) {
+            return StartCoroutine(InternalLoopInvoke(interval, action, param1, param2, invokeImmediately));
+        }
+
+        public UnityEngine.Coroutine LoopInvoke<T1, T2, T3>(float interval, Func<T1, T2, T3, bool> action, T1 param1, T2 param2, T3 param3, bool invokeImmediately = true) {
+            return StartCoroutine(InternalLoopInvoke(interval, action, param1, param2, param3, invokeImmediately));
         }
 
         //==============================================//
@@ -109,6 +125,78 @@ namespace vFrame.Core.Behaviours
                 yield return time -= Time.deltaTime * TimeScale;
             }
             action.Invoke(param1, param2, param3);
+        }
+
+        private IEnumerator<float> InternalLoopInvoke(float interval, Func<bool> action, bool invokeImmediately) {
+            if (invokeImmediately) {
+                if (action()) {
+                    yield break;
+                }
+            }
+            while (true) {
+                var time = interval;
+                while (time > 0) {
+                    yield return time -= Time.deltaTime * TimeScale;
+                }
+
+                if (action()) {
+                    break;
+                }
+            }
+        }
+
+        private IEnumerator<float> InternalLoopInvoke<T1>(float interval, Func<T1, bool> action, T1 param1, bool invokeImmediately) {
+            if (invokeImmediately) {
+                if (action(param1)) {
+                    yield break;
+                }
+            }
+            while (true) {
+                var time = interval;
+                while (time > 0) {
+                    yield return time -= Time.deltaTime * TimeScale;
+                }
+
+                if (action(param1)) {
+                    break;
+                }
+            }
+        }
+
+        private IEnumerator<float> InternalLoopInvoke<T1, T2>(float interval, Func<T1, T2, bool> action, T1 param1, T2 param2, bool invokeImmediately) {
+            if (invokeImmediately) {
+                if (action(param1, param2)) {
+                    yield break;
+                }
+            }
+            while (true) {
+                var time = interval;
+                while (time > 0) {
+                    yield return time -= Time.deltaTime * TimeScale;
+                }
+
+                if (action(param1, param2)) {
+                    break;
+                }
+            }
+        }
+
+        private IEnumerator<float> InternalLoopInvoke<T1, T2, T3>(float interval, Func<T1, T2, T3, bool> action, T1 param1, T2 param2, T3 param3, bool invokeImmediately) {
+            if (invokeImmediately) {
+                if (action(param1, param2, param3)) {
+                    yield break;
+                }
+            }
+            while (true) {
+                var time = interval;
+                while (time > 0) {
+                    yield return time -= Time.deltaTime * TimeScale;
+                }
+
+                if (action(param1, param2, param3)) {
+                    break;
+                }
+            }
         }
     }
 }
