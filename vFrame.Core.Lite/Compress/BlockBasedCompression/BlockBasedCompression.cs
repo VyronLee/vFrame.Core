@@ -67,6 +67,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         public long BlockOffset;
         public int OriginSize;
         public int CompressedSize;
+        public bool Compressed;
     }
 
     /// <summary>
@@ -137,6 +138,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                         writer.Write(blockInfo.BlockOffset);
                         writer.Write(blockInfo.OriginSize);
                         writer.Write(blockInfo.CompressedSize);
+                        writer.Write(blockInfo.Compressed);
                     }
                 }
             }
@@ -238,9 +240,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             var outBuffer = _buffers.Rent(options.BlockSize);
 
             SafeReadRawBlockData(input, options, blockIndex, ref dataBuffer, out var dataLength);
-            SafeBufferedCompress(dataBuffer, dataLength, options, ref outBuffer, out var outLength);
+            SafeBufferedCompress(dataBuffer, dataLength, options, ref outBuffer, out var outLength, out var compressed);
             SafeWriteCompressedDataToOutput(output, outBuffer, outLength, out var offset);
-            SafeSaveBlockInfo(blockIndex, offset, dataLength, outLength);
+            SafeSaveBlockInfo(blockIndex, offset, dataLength, outLength, compressed);
 
             _buffers.Return(dataBuffer);
             _buffers.Return(outBuffer);
@@ -271,7 +273,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             int dataLength,
             BlockBasedCompressionOptions options,
             ref byte[] outBuffer,
-            out int outLength)
+            out int outLength,
+            out bool compressed)
         {
             var service = CompressService.CreateCompressService(options.CompressType, options.CompressOptions);
             using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
@@ -279,13 +282,17 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 using (var outStream = new MemoryStream(dataLength)) {
                     outStream.SetLength(0);
                     service.Compress(inStream, outStream);
-                    outLength = (int)outStream.Length;
 
-                    if (outLength > outBuffer.Length) { // Resize buffer
-                        _buffers.Return(outBuffer);
-                        outBuffer = _buffers.Rent(outLength);
+                    if (outStream.Length > outBuffer.Length) { // Discard if size is larger after compressed.
+                        Array.Copy(dataBuffer, 0, outBuffer, 0, dataLength);
+                        outLength = dataLength;
+                        compressed = false;
                     }
-                    Array.Copy(outStream.GetBuffer(), 0, outBuffer, 0, outLength);
+                    else {
+                        Array.Copy(outStream.GetBuffer(), 0, outBuffer, 0, outStream.Length);
+                        outLength = (int)outStream.Length;
+                        compressed = true;
+                    }
                 }
             }
             CompressService.DestroyCompressService(service);
@@ -298,7 +305,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
         }
 
-        private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize) {
+        private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize, bool compressed) {
             lock (_blockTable) {
                 if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
                     throw new BlockBasedCompressionIndexOutOfRangeException();
@@ -309,6 +316,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     BlockOffset = offset,
                     OriginSize = originSize,
                     CompressedSize = compressedSize,
+                    Compressed = compressed,
                 };
                 _blockTable.AddBlock(blockInfo);
             }
@@ -369,6 +377,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                             BlockOffset = reader.ReadInt64(),
                             OriginSize = reader.ReadInt32(),
                             CompressedSize = reader.ReadInt32(),
+                            Compressed = reader.ReadBoolean(),
                         };
                     }
                 }
@@ -384,8 +393,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             var dataBuffer = _buffers.Rent(_header.BlockSize);
             var outBuffer = _buffers.Rent(_header.BlockSize);
 
-            SafeReadCompressedBlockData(input, blockIndex, ref dataBuffer, out var dataLength);
-            SafeBufferedDecompress(dataBuffer, dataLength, ref outBuffer, out var outLength);
+            SafeReadCompressedBlockData(input, blockIndex, ref dataBuffer, out var dataLength, out var compressed);
+            SafeBufferedDecompress(dataBuffer, dataLength, compressed, ref outBuffer, out var outLength);
             SafeWriteRawDataToOutput(output, outBuffer, outLength, blockIndex);
 
             _buffers.Return(dataBuffer);
@@ -397,7 +406,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         private void SafeReadCompressedBlockData(Stream input,
             int blockIndex,
             ref byte[] dataBuffer,
-            out int dataLength)
+            out int dataLength,
+            out bool compressed)
         {
             var blockInfo = _blockTable.FindBlock(blockIndex);
             if (null == blockInfo) {
@@ -412,12 +422,17 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     throw new BlockBasedCompressionDataNotEnoughException();
                 }
 
+                if (dataBuffer.Length < blockInfo.CompressedSize) {
+                    throw new BlockBasedCompressionBufferTooSmallException(dataBuffer, blockInfo.CompressedSize);
+                }
+
                 var lengthRead = input.Read(dataBuffer, 0, blockInfo.CompressedSize);
                 if (lengthRead != blockInfo.CompressedSize) {
                     throw new BlockBasedCompressionDataNotEnoughException();
                 }
                 dataLength = lengthRead;
             }
+            compressed = blockInfo.Compressed;
         }
 
         private void SafeWriteRawDataToOutput(Stream output, byte[] dataBuffer, int dataLength, int blockIndex) {
@@ -429,9 +444,15 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
         private void SafeBufferedDecompress(byte[] dataBuffer,
             int dataLength,
+            bool compressed,
             ref byte[] outBuffer,
             out int outLength)
         {
+            if (!compressed) {
+                Array.Copy(dataBuffer, 0, outBuffer, 0, outLength = dataLength);
+                return;
+            }
+
             var service = CompressService.CreateCompressService(_header.CompressType);
             using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
                 using (var outStream = new MemoryStream(outBuffer)) {
