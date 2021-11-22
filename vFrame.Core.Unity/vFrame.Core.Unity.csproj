@@ -97,6 +97,8 @@
     <Compile Include="Attributes\ShowOnlyAttribute.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
+    <Compile Include="Behaviours\Culling\CullingBehaviour.cs" />
+    <Compile Include="Behaviours\Culling\ParticleCulling.cs" />
     <Compile Include="Behaviours\MethodInvoker.cs" />
     <Compile Include="Behaviours\Snapshots\GameObjectSnapshotRecursiveBehaviour.cs" />
     <Compile Include="Behaviours\Snapshots\GameObjectSnapshot.cs" />
