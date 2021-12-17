@@ -105,7 +105,9 @@ namespace vFrame.Core.Events
             e.Context = context;
             e.Target = this;
 
-            foreach (var executor in executorList) {
+            // 注意这里不能用foreach, 否则事件派发的过程添加同ID的注册会导致异常
+            for (var i = 0; i < executorList.Count; i++) {
+                var executor = executorList[i];
                 if (!executor.Activated || executor.Stopped)
                     continue;
 
@@ -190,7 +192,9 @@ namespace vFrame.Core.Events
             e.Target = this;
 
             var pass = true;
-            foreach (var executor in executorList) {
+            // 注意这里不能用foreach, 否则事件派发的过程添加同ID的注册会导致异常
+            for (var i = 0; i < executorList.Count; i++) {
+                var executor = executorList[i];
                 if (!executor.Activated || executor.Stopped)
                     continue;
 
