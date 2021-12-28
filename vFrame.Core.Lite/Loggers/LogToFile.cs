@@ -10,8 +10,8 @@ namespace vFrame.Core.Loggers
     internal class LogToFile : BaseObject<string>
     {
         private readonly ConcurrentQueue<string> _logQueue = new ConcurrentQueue<string>();
-        private StreamWriter _writer;
         private Task _task;
+        private string _logPath;
 
         // 每10s写入一次日志
         private const int WaitForMilliseconds = 10000;
@@ -20,8 +20,7 @@ namespace vFrame.Core.Loggers
         protected override void OnCreate(string path) {
             CreateDirectory(path);
 
-            var fileStream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
-            _writer = new StreamWriter(fileStream);
+            _logPath = path;
             _cancellationTokenSource = new CancellationTokenSource();
             _task = Task.Run(Update);
         }
@@ -35,9 +34,6 @@ namespace vFrame.Core.Loggers
 
             // Flush before quit.
             WriteAllText();
-
-            _writer?.Dispose();
-            _writer = null;
         }
 
         private static void CreateDirectory(string filePath) {
@@ -68,13 +64,17 @@ namespace vFrame.Core.Loggers
         }
 
         private void WriteAllText() {
-            var writen = false;
-            while (_logQueue.TryDequeue(out var value)) {
-                _writer.WriteLine(value);
-                writen = true;
-            }
-            if (writen) {
-                _writer.Flush();
+            using (var fileStream = File.OpenWrite(_logPath)) {
+                using (var writer = new StreamWriter(fileStream)) {
+                    var written = false;
+                    while (_logQueue.TryDequeue(out var value)) {
+                        writer.WriteLine(value);
+                        written = true;
+                    }
+                    if (written) {
+                        writer.Flush();
+                    }
+                }
             }
         }
     }
