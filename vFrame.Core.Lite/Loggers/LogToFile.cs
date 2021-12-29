@@ -16,6 +16,7 @@ namespace vFrame.Core.Loggers
         // 每10s写入一次日志
         private const int WaitForMilliseconds = 10000;
         private CancellationTokenSource _cancellationTokenSource;
+        private readonly object _lockObject = new object();
 
         protected override void OnCreate(string path) {
             CreateDirectory(path);
@@ -44,7 +45,9 @@ namespace vFrame.Core.Loggers
         }
 
         public void AppendText(string value) {
-            _logQueue.Enqueue(value);
+            lock (_lockObject) {
+                _logQueue.Enqueue(value);
+            }
         }
 
         private async void Update() {
@@ -67,9 +70,11 @@ namespace vFrame.Core.Loggers
             using (var fileStream = File.OpenWrite(_logPath)) {
                 using (var writer = new StreamWriter(fileStream)) {
                     var written = false;
-                    while (_logQueue.TryDequeue(out var value)) {
-                        writer.WriteLine(value);
-                        written = true;
+                    lock (_lockObject) {
+                        while (_logQueue.TryDequeue(out var value)) {
+                            writer.WriteLine(value);
+                            written = true;
+                        }
                     }
                     if (written) {
                         writer.Flush();
