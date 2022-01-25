@@ -78,6 +78,7 @@ namespace vFrame.Core.Loggers
 
             _logFile = new LogToFile();
             _logFile.Create(_logFilePath);
+            _logFile.AppendTimestamp = true;
         }
 
         public static void Close() {

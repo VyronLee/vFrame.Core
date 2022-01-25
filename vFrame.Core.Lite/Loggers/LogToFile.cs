@@ -7,7 +7,7 @@ using vFrame.Core.Base;
 
 namespace vFrame.Core.Loggers
 {
-    internal class LogToFile : BaseObject<string>
+    public class LogToFile : BaseObject<string>
     {
         private readonly ConcurrentQueue<string> _logQueue = new ConcurrentQueue<string>();
         private Task _task;
@@ -17,6 +17,9 @@ namespace vFrame.Core.Loggers
         private const int WaitForMilliseconds = 10000;
         private CancellationTokenSource _cancellationTokenSource;
         private readonly object _lockObject = new object();
+
+        public bool AppendTimestamp { get; set; }
+        public string AppendTimestampFormat { get; set; } = "[yyyy-MM-dd HH:mm:ss.fff] ";
 
         protected override void OnCreate(string path) {
             CreateDirectory(path);
@@ -29,8 +32,8 @@ namespace vFrame.Core.Loggers
         protected override void OnDestroy() {
             _cancellationTokenSource.Cancel();
 
-            _task.Wait();
-            _task.Dispose();
+            _task?.Wait();
+            _task?.Dispose();
             _task = null;
 
             // Flush before quit.
@@ -45,9 +48,10 @@ namespace vFrame.Core.Loggers
         }
 
         public void AppendText(string value) {
-            lock (_lockObject) {
-                _logQueue.Enqueue(value);
+            if (AppendTimestamp) {
+                value = DateTime.Now.ToString(AppendTimestampFormat) + value;
             }
+            _logQueue.Enqueue(value);
         }
 
         private async void Update() {
@@ -67,16 +71,13 @@ namespace vFrame.Core.Loggers
         }
 
         private void WriteAllText() {
-            using (var fileStream = File.OpenWrite(_logPath)) {
-                using (var writer = new StreamWriter(fileStream)) {
-                    var written = false;
-                    lock (_lockObject) {
+            lock (_lockObject) {
+                using (var fileStream = File.OpenWrite(_logPath)) {
+                    fileStream.Seek(0, SeekOrigin.End);
+                    using (var writer = new StreamWriter(fileStream)) {
                         while (_logQueue.TryDequeue(out var value)) {
                             writer.WriteLine(value);
-                            written = true;
                         }
-                    }
-                    if (written) {
                         writer.Flush();
                     }
                 }
