@@ -15,6 +15,8 @@ BuildDebugDir = $(BuildDir)/Debug
 
 DebugEditorDir = $(BuildDebugDir)/Editor
 DebugRuntimeDir = $(BuildDebugDir)/Runtime
+
+ReleaseEditorDir = $(BuildReleaseDir)/Editor
 ReleaseRuntimeDir = $(BuildReleaseDir)/Runtime
 
 OutputDir = Output
@@ -27,22 +29,13 @@ StandaloneOutputDir = $(RuntimeOutputDir)/Standalone
 EditorAssembly = vFrame.Core.Editor.dll
 RuntimeLiteAssembly = vFrame.Core.Lite.dll
 RuntimeUnityAssembly = vFrame.Core.Unity.dll
-EditorAssemblySymbol = vFrame.Core.Editor.pdb
-RuntimeLiteAssemblySymbol = vFrame.Core.Lite.pdb
-RuntimeUnityAssemblySymbol = vFrame.Core.Unity.pdb
 
-all: release
-
-debug: editor output_editor
-release: editor output_editor android output_android ios output_ios standalone output_standalone
+all: editor output_editor android output_android ios output_ios standalone output_standalone
 
 clean:
 	rm -rf $(OutputDir)/Editor/*.dll
-	rm -rf $(OutputDir)/Editor/*.pdb
 	rm -rf $(OutputDir)/Runtime/*.dll
-	rm -rf $(OutputDir)/Runtime/*.pdb
 	rm -rf $(OutputDir)/Runtime/**/*.dll
-	rm -rf $(OutputDir)/Runtime/**/*.pdb
 	rm -rf $(BuildDir)
 
 editor:
@@ -61,11 +54,8 @@ output_editor:
 	mkdir -p $(EditorOutputDir)
 	mkdir -p $(RuntimeOutputDir)
 	cp -rf $(DebugEditorDir)/$(EditorAssembly) $(EditorOutputDir)/$(EditorAssembly)
-	cp -rf $(DebugEditorDir)/$(EditorAssemblySymbol) $(EditorOutputDir)/$(EditorAssemblySymbol)
 	cp -rf $(DebugRuntimeDir)/$(RuntimeLiteAssembly) $(RuntimeOutputDir)/$(RuntimeLiteAssembly)
-	cp -rf $(DebugRuntimeDir)/$(RuntimeLiteAssemblySymbol) $(RuntimeOutputDir)/$(RuntimeLiteAssemblySymbol)
 	cp -rf $(DebugRuntimeDir)/$(RuntimeUnityAssembly) $(RuntimeOutputDir)/$(RuntimeUnityAssembly)
-	cp -rf $(DebugRuntimeDir)/$(RuntimeUnityAssemblySymbol) $(RuntimeOutputDir)/$(RuntimeUnityAssemblySymbol)
 
 output_android:
 	mkdir -p $(AndroidOutputDir)
