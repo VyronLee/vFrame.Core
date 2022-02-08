@@ -72,7 +72,6 @@ StyleCopReport.xml
 *_p.c
 *_h.h
 *.ilk
-*.meta
 *.obj
 *.iobj
 *.pch
@@ -359,4 +358,3 @@ MigrationBackup/
 ### Custom settings
 .SpaceVim.d/
 .idea/
-Output/

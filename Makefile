@@ -1,10 +1,10 @@
 SolutionFile = vFrame.Core.sln
 
-Compiler = MSBuild /t:Rebuild /p:Platform=Any\ CPU
-PlatformContantsDefined_Editor = /p:DefineConstants=TRACE\ UNITY_EDITOR
-PlatformContantsDefined_Android = /p:DefineConstants=TRACE\ UNITY_ANDROID
-PlatformContantsDefined_IOS = /p:DefineConstants=TRACE\ UNITY_IOS
-PlatformContantsDefined_Standalone = /p:DefineConstants=TRACE\ UNITY_STANDALONE
+Compiler = MSBuild /t:Build /p:Platform=Any\ CPU
+PlatformConstantsDefined_Editor = /p:DefineConstants=TRACE\ UNITY_EDITOR
+PlatformConstantsDefined_Android = /p:DefineConstants=TRACE\ UNITY_ANDROID
+PlatformConstantsDefined_IOS = /p:DefineConstants=TRACE\ UNITY_IOS
+PlatformConstantsDefined_Standalone = /p:DefineConstants=TRACE\ UNITY_STANDALONE
 
 ConfigDebug = /p:Configuration=Debug
 ConfigRelease = /p:Configuration=Release
@@ -31,27 +31,31 @@ EditorAssemblySymbol = vFrame.Core.Editor.pdb
 RuntimeLiteAssemblySymbol = vFrame.Core.Lite.pdb
 RuntimeUnityAssemblySymbol = vFrame.Core.Unity.pdb
 
-DeployDir = ../../Project/Assets/Core/vFrame.Core/
+all: release
 
-all: clean editor output_editor android output_android ios output_ios standalone output_standalone
-
-debug: clean editor output_editor
+debug: editor output_editor
+release: editor output_editor android output_android ios output_ios standalone output_standalone
 
 clean:
-	rm -rf $(OutputDir)
+	rm -rf $(OutputDir)/Editor/*.dll
+	rm -rf $(OutputDir)/Editor/*.pdb
+	rm -rf $(OutputDir)/Runtime/*.dll
+	rm -rf $(OutputDir)/Runtime/*.pdb
+	rm -rf $(OutputDir)/Runtime/**/*.dll
+	rm -rf $(OutputDir)/Runtime/**/*.pdb
 	rm -rf $(BuildDir)
 
 editor:
-	$(Compiler) $(ConfigDebug) $(SolutionFile) $(PlatformContantsDefined_Editor)
+	$(Compiler) $(ConfigDebug) $(SolutionFile) $(PlatformConstantsDefined_Editor)
 
 android:
-	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformContantsDefined_Android)
+	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformConstantsDefined_Android)
 
 ios:
-	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformContantsDefined_iOS)
+	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformConstantsDefined_iOS)
 
 standalone:
-	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformContantsDefined_Standalone)
+	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformConstantsDefined_Standalone)
 
 output_editor:
 	mkdir -p $(EditorOutputDir)
@@ -77,10 +81,6 @@ output_standalone:
 	mkdir -p $(StandaloneOutputDir)
 	cp -rf $(ReleaseRuntimeDir)/$(RuntimeLiteAssembly) $(StandaloneOutputDir)/$(RuntimeLiteAssembly)
 	cp -rf $(ReleaseRuntimeDir)/$(RuntimeUnityAssembly) $(StandaloneOutputDir)/$(RuntimeUnityAssembly)
-
-deploy:
-	cp -rfv $(EditorOutputDir) $(DeployDir)
-	cp -rfv $(RuntimeOutputDir) $(DeployDir)
 
 .PHONY:
 	clean editor android ios standalone output_editor output_android output_ios output_standalone
