@@ -20,6 +20,17 @@ namespace vFrame.Core.Utils
             return value;
         }
 
+        public static void EnsureFileWritePath(string path) {
+            var dirName = Path.GetDirectoryName(path);
+            if (string.IsNullOrEmpty(dirName)) {
+                return;
+            }
+            if (Directory.Exists(dirName)) {
+                return;
+            }
+            Directory.CreateDirectory(dirName);
+        }
+
         public static string Combine(string path1, string path2) {
             var value = Path.Combine(path1, path2);
             return NormalizePath(value);

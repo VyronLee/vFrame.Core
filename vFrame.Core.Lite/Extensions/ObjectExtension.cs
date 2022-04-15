@@ -19,6 +19,32 @@ namespace vFrame.Core.Extensions
             return InternalCopy(originalObject, new Dictionary<object, object>(new ReferenceEqualityComparer()));
         }
 
+        public static object DeepCopyFrom(this object originalObject, object targetObject) {
+            var originObjectType = originalObject.GetType();
+            var targetObjectType = originalObject.GetType();
+            if (originObjectType != targetObjectType) {
+                throw new ArgumentException("Objects to clone from must be same type.");
+            }
+            return InternalCopyFrom(originalObject, targetObject, new Dictionary<object, object>(new ReferenceEqualityComparer()));
+        }
+
+        private static object InternalCopyFrom(object cloneObject, object originalObject, IDictionary<object, object> visited) {
+            var typeToReflect = originalObject.GetType();
+            if (typeToReflect.IsArray) {
+                var arrayType = typeToReflect.GetElementType();
+                if (IsPrimitive(arrayType) == false) {
+                    var clonedArray = (Array) originalObject;
+                    clonedArray.ForEach((array, indices) =>
+                        array.SetValue(InternalCopy(clonedArray.GetValue(indices), visited), indices));
+                }
+            }
+
+            visited.Add(originalObject, cloneObject);
+            CopyFields(originalObject, visited, cloneObject, typeToReflect);
+            RecursiveCopyBaseTypePrivateFields(originalObject, visited, cloneObject, typeToReflect);
+            return cloneObject;
+        }
+
         private static object InternalCopy(object originalObject, IDictionary<object, object> visited) {
             if (originalObject == null)
                 return null;
@@ -30,18 +56,7 @@ namespace vFrame.Core.Extensions
             if (typeof(Delegate).IsAssignableFrom(typeToReflect))
                 return null;
             var cloneObject = CloneMethod.Invoke(originalObject, null);
-            if (typeToReflect.IsArray) {
-                var arrayType = typeToReflect.GetElementType();
-                if (IsPrimitive(arrayType) == false) {
-                    var clonedArray = (Array) cloneObject;
-                    clonedArray.ForEach((array, indices) =>
-                        array.SetValue(InternalCopy(clonedArray.GetValue(indices), visited), indices));
-                }
-            }
-
-            visited.Add(originalObject, cloneObject);
-            CopyFields(originalObject, visited, cloneObject, typeToReflect);
-            RecursiveCopyBaseTypePrivateFields(originalObject, visited, cloneObject, typeToReflect);
+            InternalCopyFrom(cloneObject, originalObject, visited);
             return cloneObject;
         }
 
@@ -71,6 +86,10 @@ namespace vFrame.Core.Extensions
 
         public static T DeepCopy<T>(this T original) {
             return (T) DeepCopy((object) original);
+        }
+
+        public static T DeepCopyFrom<T>(this T original, T target) {
+            return (T) DeepCopyFrom((object)original, target);
         }
     }
 
