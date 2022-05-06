@@ -9,6 +9,7 @@
 //============================================================
 
 using UnityEngine;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -19,6 +20,8 @@ namespace vFrame.Core.SpawnPools
             Deactive,
             Position,
         }
+        
+        private static readonly SpawnPoolsSetting _default = new SpawnPoolsSetting();
 
         public const int DefaultCapacity = 40;
         public const int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
@@ -33,7 +36,7 @@ namespace vFrame.Core.SpawnPools
         public Vector3 RootPosition { get; set; } = DefaultRootPosition;
         public PoolObjectHiddenType HiddenType { get; set; } = PoolObjectHiddenType.Deactive;
 
-        private static readonly SpawnPoolsSetting _default = new SpawnPoolsSetting();
         public static SpawnPoolsSetting Default => _default;
+        public static LogTag LogTag = new LogTag("SpawnPools");
     }
 }

@@ -8,8 +8,6 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Asynchronous;
 
@@ -18,9 +16,7 @@ namespace vFrame.Core.SpawnPools
     public interface IPool
     {
         GameObject Spawn();
-        GameObject Spawn(IEnumerable<Type> additional);
         ILoaderAsyncRequest SpawnAsync();
-        ILoaderAsyncRequest SpawnAsync(IEnumerable<Type> additional);
         void Recycle(GameObject obj);
         int Count { get; }
     }

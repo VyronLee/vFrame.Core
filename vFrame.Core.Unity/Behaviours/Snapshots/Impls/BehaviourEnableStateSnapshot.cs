@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace vFrame.Core.Behaviours.Snapshots
 {
-    [AddComponentMenu("GameObjectSnapshot/BehaviourEnableState")]
     [DisallowMultipleComponent]
     public class BehaviourEnableStateSnapshot : GameObjectSnapshot
     {

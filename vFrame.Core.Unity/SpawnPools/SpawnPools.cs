@@ -14,6 +14,7 @@ using vFrame.Core.Base;
 using vFrame.Core.Coroutine;
 using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.SpawnPools.Loaders;
+using Debug = vFrame.Core.SpawnPools.SpawnPoolDebug;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -61,11 +62,10 @@ namespace vFrame.Core.SpawnPools
             if (_poolsParent) {
                 Object.Destroy(_poolsParent);
             }
+
             _poolsParent = null;
 
-#if DEBUG_SPAWNPOOLS
-            Logger.Info("Spawn pools destroyed.");
-#endif
+            Debug.Log("Spawn pools destroyed.");
         }
 
         public void Clear() {
@@ -73,6 +73,7 @@ namespace vFrame.Core.SpawnPools
                 kv.Value.Clear();
                 kv.Value.Destroy();
             }
+
             _pools.Clear();
         }
 
@@ -115,9 +116,7 @@ namespace vFrame.Core.SpawnPools
                 var pool = kv.Value;
                 if (!pool.IsTimeout())
                     continue;
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("Pool({0}) timeout, destroying..", kv.Key);
-#endif
+                Debug.Log("Pool({0}) timeout, destroying..", kv.Key);
                 pool.Clear();
                 pools.Add(kv.Key);
             }
@@ -133,9 +132,7 @@ namespace vFrame.Core.SpawnPools
             pools.Sort((a, b) => _pools[b].SpawnedTimes.CompareTo(_pools[a].SpawnedTimes));
 
             for (var i = _poolsSetting.Capacity; i < pools.Count; i++) {
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("Pool({0}) over capacity, destroying..", pools[i]);
-#endif
+                Debug.Log("Pool({0}) over capacity, destroying..", pools[i]);
                 _pools[pools[i]].Clear();
             }
 

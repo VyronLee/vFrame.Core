@@ -13,11 +13,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.Coroutine;
-using vFrame.Core.Extensions.UnityEngine;
 using vFrame.Core.SpawnPools.Behaviours;
 using vFrame.Core.SpawnPools.Loaders;
-using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
+using Debug = vFrame.Core.SpawnPools.SpawnPoolDebug;
 
 namespace vFrame.Core.SpawnPools
 {
@@ -35,11 +34,12 @@ namespace vFrame.Core.SpawnPools
         private int NewUniqueId => ++_uniqueId;
 
         private Action<GameObject> _onGetGameObject;
-        private Action<GameObject, IEnumerable<Type>> _onLoadCallbackImmediately;
+        private Action<GameObject> _onLoadCallbackImmediately;
 
         private CoroutinePool _coroutinePool;
 
-        internal int SpawnedTimes { get; private set; }
+        private int _spawnedTimes;
+        internal int SpawnedTimes => _spawnedTimes;
 
         protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectLoader builder) {
             _spawnPools = spawnPools;
@@ -49,7 +49,7 @@ namespace vFrame.Core.SpawnPools
             _onGetGameObject = OnGetGameObject;
             _onLoadCallbackImmediately = OnLoadCallback;
 
-            _poolGo = new GameObject(string.Format("Pool({0})", poolName));
+            _poolGo = new GameObject($"Pool({poolName})");
             _poolGo.transform.SetParent(_spawnPools.PoolsParent.transform, false);
 
             _coroutinePool = _spawnPools.CoroutinePool;
@@ -72,21 +72,17 @@ namespace vFrame.Core.SpawnPools
             }
             _objects.Clear();
 
-#if DEBUG_SPAWNPOOLS
-            Logger.Info("Spawn pool cleared: {0}", _poolName);
-#endif
+            Debug.Log("Spawn pool cleared: {0}", _poolName);
         }
 
         private GameObject TryGetFromPool() {
             GameObject obj = null;
             while (_objects.Count > 0) {
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("Spawning object from pool({0}) ", _poolName);
-#endif
+                Debug.Log("Spawning object from pool({0}) ", _poolName);
                 obj = _objects.Dequeue();
                 if (null == obj) {
-                    Logger.Warning(
-                        "Spawn object from pool, but obj == null, DONT destroy managed object outside the pool!");
+                    Debug.Warning(
+                        "Spawn object from pool, but obj == null, DON'T destroy managed object outside the pool!");
                 }
                 else {
                     break;
@@ -96,18 +92,11 @@ namespace vFrame.Core.SpawnPools
         }
 
         public GameObject Spawn() {
-            return Spawn(null);
-        }
-
-        public GameObject Spawn(IEnumerable<Type> additional) {
             var obj = TryGetFromPool();
-
-            if (null == obj) {
-#if DEBUG_SPAWNPOOLS
-                Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
-#endif
+            if (!obj) {
+                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
                 obj = _builder.Load();
-                OnLoadCallback(obj, additional);
+                OnLoadCallback(obj);
             }
 
             OnGetGameObject(obj);
@@ -115,38 +104,32 @@ namespace vFrame.Core.SpawnPools
         }
 
         public ILoaderAsyncRequest SpawnAsync() {
-            return SpawnAsync(null);
-        }
-
-        public ILoaderAsyncRequest SpawnAsync(IEnumerable<Type> additional) {
             var obj = TryGetFromPool();
-
-#if DEBUG_SPAWNPOOLS
-            Debug.LogFormat("No objects in pool({0}), spawning new one..", _poolName);
-#endif
+            if (!obj) {
+                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
+            }
 
             var request = null != obj ? LoadAsyncRequestOnLoaded.Create(obj) : _builder.LoadAsync();
-            request.AdditionalSnapshotTypes = additional;
             request.OnLoadCallback = _onLoadCallbackImmediately;
             request.OnGetGameObject = _onGetGameObject;
             request.Setup(_coroutinePool);
             return request;
         }
 
-        private void OnLoadCallback(GameObject obj, IEnumerable<Type> additional) {
+        private void OnLoadCallback(GameObject obj) {
             if (!obj) {
-                Logger.Warning("Load gameObject callback, but target == null, pool name: " + _poolName);
+                Debug.Warning("Load gameObject callback, but target == null, pool name: " + _poolName);
                 return;
             }
             HideGameObject(obj);
         }
 
         private void OnGetGameObject(GameObject obj) {
-            ++SpawnedTimes;
+            _spawnedTimes += 1;
             _lastTime = Time.frameCount;
 
             if (!obj) {
-                Logger.Warning("Get gameObject callback, but target == null, pool name: " + _poolName);
+                Debug.Warning("Get gameObject callback, but target == null, pool name: " + _poolName);
                 return;
             }
             ObjectPreprocessBeforeReturn(obj);
@@ -154,12 +137,12 @@ namespace vFrame.Core.SpawnPools
 
         public void Recycle(GameObject obj) {
             if (null == obj) {
-                Logger.Error("Item to recycle cannot be null!");
+                Debug.Error("Object to recycle cannot be null!");
                 return;
             }
-#if DEBUG_SPAWNPOOLS
-            Debug.LogFormat("Recycling object into pool({0})", _assetName);
-#endif
+            
+            Debug.Log("Recycling object into pool({0})", obj.name);
+            
             if (!ObjectPreprocessBeforeRecycle(obj)) {
                 // Cannot recycle, destroy it directly.
                 Object.Destroy(obj);
@@ -187,10 +170,7 @@ namespace vFrame.Core.SpawnPools
                 identity = go.AddComponent<PoolObjectIdentity>();
                 identity.AssetPath = _poolName;
                 identity.UniqueId = NewUniqueId;
-#if DEBUG_SPAWNPOOLS
-                Logger.Info("Pool object(id: {0}, path: {1}) created.",
-                    identity.UniqueId, identity.AssetPath);
-#endif
+                Debug.Log("Pool object(id: {0}, path: {1}) created.", identity.UniqueId, identity.AssetPath);
             }
             identity.IsPooling = false;
         }
@@ -198,12 +178,12 @@ namespace vFrame.Core.SpawnPools
         protected virtual bool ObjectPreprocessBeforeRecycle(GameObject go) {
             var identity = go.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
-                Logger.Error("Not a valid pool object: " + go);
+                Debug.Warning("Not a valid pool object: " + go);
                 return false;
             }
 
             if (identity.AssetPath != _poolName) {
-                Logger.Error("Object to recycle does not match the pool name, require: {0}, get: {1}",
+                Debug.Warning("Object to recycle does not match the pool name, require: {0}, get: {1}",
                     _poolName, identity.AssetPath);
                 return false;
             }
@@ -254,9 +234,7 @@ namespace vFrame.Core.SpawnPools
             if (!identity)
                 return;
 
-#if DEBUG_SPAWNPOOLS
-            Logger.Info("Pool object(id: {0}, path: {1}) destroyed.", identity.UniqueId, identity.AssetPath);
-#endif
+            Debug.Log("Pool object(id: {0}, path: {1}) destroyed.", identity.UniqueId, identity.AssetPath);
 
             identity.Destroyed = true;
             Object.Destroy(identity);

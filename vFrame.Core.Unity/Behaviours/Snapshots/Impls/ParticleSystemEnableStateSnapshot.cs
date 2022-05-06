@@ -2,7 +2,6 @@
 
 namespace vFrame.Core.Behaviours.Snapshots
 {
-    [AddComponentMenu("GameObjectSnapshot/ParticleSystemEnableState")]
     [DisallowMultipleComponent]
     public class ParticleSystemEnableStateSnapshot : GameObjectSnapshot
     {

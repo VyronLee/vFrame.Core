@@ -2,7 +2,6 @@
 
 namespace vFrame.Core.Behaviours.Snapshots
 {
-    [AddComponentMenu("GameObjectSnapshot/RendererEnableState")]
     [DisallowMultipleComponent]
     public class RendererEnableStateSnapshot : GameObjectSnapshot
     {

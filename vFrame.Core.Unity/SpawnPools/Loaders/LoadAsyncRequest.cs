@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Asynchronous;
 using vFrame.Core.SpawnPools.Exceptions;
@@ -10,8 +9,7 @@ namespace vFrame.Core.SpawnPools.Loaders
     public abstract class LoadAsyncRequest : AsyncRequest, ILoaderAsyncRequest
     {
         protected GameObject GameObject { get; set; }
-        internal IEnumerable<Type> AdditionalSnapshotTypes { get; set; }
-        internal Action<GameObject, IEnumerable<Type>> OnLoadCallback { get; set; }
+        internal Action<GameObject> OnLoadCallback { get; set; }
         internal Action<GameObject> OnGetGameObject;
 
         private bool _preprocessBeforeGet;
@@ -26,7 +24,6 @@ namespace vFrame.Core.SpawnPools.Loaders
         }
 
         protected void Clear() {
-            AdditionalSnapshotTypes = null;
             OnLoadCallback = null;
             OnGetGameObject = null;
             GameObject = null;
@@ -54,7 +51,7 @@ namespace vFrame.Core.SpawnPools.Loaders
             if (!GameObject) {
                 throw new SpawnObjectLoadException("Please ensure object loaded in load process.");
             }
-            OnLoadCallback?.Invoke(GameObject, AdditionalSnapshotTypes);
+            OnLoadCallback?.Invoke(GameObject);
             IsFinished = true;
         }
 

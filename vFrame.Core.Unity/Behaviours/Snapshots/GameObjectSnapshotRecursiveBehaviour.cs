@@ -26,7 +26,8 @@ namespace vFrame.Core.Behaviours.Snapshots
         private Action<Transform> _takeInternal;
 
         public void Take() {
-            _snapshots.Clear();
+            Clear();
+
             _takeInternal = _takeInternal ?? (_takeInternal = TakeInternal);
 
             if (!_snapshotSettings) {
@@ -52,6 +53,16 @@ namespace vFrame.Core.Behaviours.Snapshots
                     continue;
                 }
                 snapshot.Restore();
+            }
+        }
+
+        public void Clear() {
+            if (null == _snapshots) {
+                return;
+            }
+
+            foreach (var snapshot in _snapshots) {
+                snapshot.Clear();
             }
         }
 
