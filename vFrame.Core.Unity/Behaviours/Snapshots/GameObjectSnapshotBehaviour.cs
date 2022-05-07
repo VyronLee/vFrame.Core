@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using vFrame.Core.Extensions.UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -50,7 +50,7 @@ namespace vFrame.Core.Behaviours.Snapshots
             }
 
             foreach (var snapshot in _snapshots) {
-                DestroyInternal(snapshot);
+                snapshot.DestroyEx();
             }
             _snapshots.Clear();
         }
@@ -76,7 +76,7 @@ namespace vFrame.Core.Behaviours.Snapshots
             }
 
             if (!snapshot.Take()) {
-                DestroyInternal(snapshot);
+                snapshot.DestroyEx();
                 return;
             }
             snapshot.hideFlags = HideFlags.HideInInspector;
@@ -101,16 +101,6 @@ namespace vFrame.Core.Behaviours.Snapshots
 #endif
             comp = gameObject.AddComponent(type);
             return comp;
-        }
-
-        private void DestroyInternal(Object obj) {
-#if UNITY_EDITOR
-            if (!Application.isPlaying) {
-                DestroyImmediate(obj);
-                return;
-            }
-#endif
-            Destroy(obj);
         }
     }
 }

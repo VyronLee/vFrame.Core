@@ -63,7 +63,9 @@ namespace vFrame.Core.Behaviours.Snapshots
 
             foreach (var snapshot in _snapshots) {
                 snapshot.Clear();
+                snapshot.DestroyEx();
             }
+            _snapshots.Clear();
         }
 
         private void TakeInternal(Transform target) {

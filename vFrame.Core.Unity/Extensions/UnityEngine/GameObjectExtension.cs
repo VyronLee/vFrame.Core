@@ -51,5 +51,17 @@ namespace vFrame.Core.Extensions.UnityEngine
             }
             return comp;
         }
+
+        /// <summary>
+        /// 扩展销毁方法
+        /// </summary>
+        /// <param name="go"></param>
+        public static void DestroyEx(this Object go) {
+            if (Application.isPlaying) {
+                Object.Destroy(go);
+                return;
+            }
+            Object.DestroyImmediate(go);
+        }
     }
 }
