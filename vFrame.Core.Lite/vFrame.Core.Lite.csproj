@@ -110,6 +110,7 @@
     <Compile Include="ObjectPools\Builtin\SortedDictionaryAllocator.cs" />
     <Compile Include="ObjectPools\Builtin\SortedDictionaryPool.cs" />
     <Compile Include="ObjectPools\IObjectPoolManager.cs" />
+    <Compile Include="Reflections\Accessor.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />
