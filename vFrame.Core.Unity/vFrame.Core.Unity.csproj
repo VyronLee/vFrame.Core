@@ -96,6 +96,7 @@
     <Compile Include="Asynchronous\IAsyncRequest.cs" />
     <Compile Include="Attributes\ShowOnlyAttribute.cs" />
     <Compile Include="Behaviours\AnimationList.cs" />
+    <Compile Include="Behaviours\AnimatorEx.cs" />
     <Compile Include="Behaviours\AudioPlayer.cs" />
     <Compile Include="Behaviours\Culling\CullingBehaviour.cs" />
     <Compile Include="Behaviours\Culling\ParticleCulling.cs" />
