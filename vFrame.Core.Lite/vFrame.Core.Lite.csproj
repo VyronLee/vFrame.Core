@@ -111,6 +111,52 @@
     <Compile Include="ObjectPools\Builtin\SortedDictionaryPool.cs" />
     <Compile Include="ObjectPools\IObjectPoolManager.cs" />
     <Compile Include="Reflections\Accessor.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\AbstractComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\AbstractComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Attributes\IgnoreInComparisonAttribute.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\BaseComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Comparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ComparerOverridesCollection.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ComparersFactory.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Comparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ComparisonSettings.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\AbstractDynamicObjectsComprer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\AbstractEnumerablesComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\CompilerGeneratedObjectComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\DynamicObjectComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\EnumerablesComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\EnumerablesComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\ExpandoObjectComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\GenericEnumerablesComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\HashSetsComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\HashSetsComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\IComparerWithCondition.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\MultidimensionalArrayComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\MultidimensionalArraysComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\CustomComparers\TypesComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Difference.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\DifferenceTypes.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Exceptions\AmbiguousComparerOverrideResolutionException.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Exceptions\ValueComparerExistsException.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\IBaseComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\IComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\IComparersFactory.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\IComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Utils\MemberInfoExtensions.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Utils\PropertyHelper.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\Utils\TypeExtensions.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\AbstractValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\AbstractValueComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\DefaultValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\DefaultValueValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\DoNotCompareValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\DynamicValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\IgnoreCaseStringsValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\IValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\IValueComparer~1.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\NulableStringsValueComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\ToStringComparer.cs" />
+    <Compile Include="ThirdParty\ObjectsComparer\ValueComparers\UriComparer.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CommandLineParser.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\CRC.cs" />
     <Compile Include="ThirdParty\SevenZip\Common\InBuffer.cs" />
@@ -267,6 +313,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ThirdParty\ObjectsComparer\LICENSE" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

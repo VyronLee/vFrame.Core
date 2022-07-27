@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using vFrame.Core.ThirdParty.ObjectsComparer;
 
 namespace vFrame.Core.Extensions
 {
@@ -90,6 +91,16 @@ namespace vFrame.Core.Extensions
 
         public static T DeepCopyFrom<T>(this T original, T target) {
             return (T) DeepCopyFrom((object)original, target);
+        }
+
+        public static bool DeepCompare<T>(this T original, T target) {
+            var comparer = new ThirdParty.ObjectsComparer.Comparer<T>();
+            return comparer.Compare(original, target);
+        }
+
+        public static bool DeepCompare<T>(this T original, T target, out IEnumerable<Difference> differences) {
+            var comparer = new ThirdParty.ObjectsComparer.Comparer<T>();
+            return comparer.Compare(original, target, out differences);
         }
     }
 
