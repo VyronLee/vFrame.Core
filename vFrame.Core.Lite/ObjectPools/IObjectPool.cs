@@ -2,6 +2,8 @@
 {
     public interface IObjectPool
     {
+        void Return(object obj);
+        object Get();
     }
 
     public interface IObjectPool<T> : IObjectPool
@@ -10,7 +12,7 @@
         /// Get instance from pool.
         /// </summary>
         /// <returns></returns>
-        T Get();
+        new T Get();
 
         /// <summary>
         /// Return instance to pool.

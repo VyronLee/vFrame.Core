@@ -8,6 +8,7 @@
 //   Copyright:  Copyright (c) 2019, VyronLee
 //============================================================
 
+using System;
 using System.Collections.Generic;
 using vFrame.Core.Loggers;
 
@@ -22,6 +23,16 @@ namespace vFrame.Core.ObjectPools
         }
 
         protected abstract void OnInitialize();
+        protected abstract object OnGetInternal();
+        protected abstract void OnReturnInternal(object obj);
+        
+        public object Get() {
+            return OnGetInternal();
+        }
+
+        public void Return(object obj) {
+            OnReturnInternal(obj);
+        }
     }
 
     public class ObjectPool<TClass> : ObjectPool, IObjectPool<TClass> where TClass : class, new()
@@ -58,6 +69,20 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        protected override object OnGetInternal() {
+            return Get();
+        }
+
+        protected override void OnReturnInternal(object obj) {
+            if (obj == null) {
+                throw new ArgumentNullException(nameof(obj));
+            }
+            if (obj.GetType() != typeof(TClass)) {
+                throw new ArgumentException($"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
+            }
+            Return(obj as TClass);
+        }
+
         public void Return(TClass obj) {
             if (null == obj) {
                 Logger.Error(LogTag, "Return object cannot be null.");
@@ -74,7 +99,7 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
-        public TClass Get() {
+        public new TClass Get() {
             lock (_lockObject) {
                 return _objects.Count > 0 ? _objects.Pop() : new TClass();
             }
@@ -119,7 +144,21 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
-        public TClass Get() {
+        protected override object OnGetInternal() {
+            return Get();
+        }
+
+        protected override void OnReturnInternal(object obj) {
+            if (obj == null) {
+                throw new ArgumentNullException(nameof(obj));
+            }
+            if (obj.GetType() != typeof(TClass)) {
+                throw new ArgumentException($"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
+            }
+            Return(obj as TClass);
+        }
+
+        public new TClass Get() {
             lock (_lockObject) {
                 return _objects.Count > 0 ? _objects.Pop() : _allocator.Alloc();
             }
