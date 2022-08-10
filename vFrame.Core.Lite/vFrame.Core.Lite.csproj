@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Base\BaseObjectException.cs" />
     <Compile Include="Base\Box.cs" />
+    <Compile Include="Base\ObjectCopy.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompression.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionConst.cs" />
     <Compile Include="Compress\BlockBasedCompression\BlockBasedCompressionException.cs" />
