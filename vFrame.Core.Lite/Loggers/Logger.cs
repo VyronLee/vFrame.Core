@@ -106,6 +106,10 @@ namespace vFrame.Core.Loggers
             Log(LogLevelDef.Fatal, tag, text, args);
         }
 
+        public static void Fatal(LogTag tag, Exception exception) {
+            Log(LogLevelDef.Fatal, tag, exception);
+        }
+
         public static void Debug(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Debug, tag, text, args);
         }
@@ -138,7 +142,7 @@ namespace vFrame.Core.Loggers
             var content = GetFormattedLogText(skip, tag, logText);
             var stack = GetLogStack(skip);
 
-            var context = new LogContext(level, tag, content, stack);
+            var context = new LogContext(level, tag, content, stack, null);
             lock (_queueLock) {
                 if (_logQueue.Count >= _capacity)
                     _logQueue.Dequeue();
@@ -146,6 +150,22 @@ namespace vFrame.Core.Loggers
             }
 
             _logFile?.AppendText(content);
+
+            OnLogReceived?.Invoke(context);
+        }
+
+        private static void Log(LogLevelDef level, LogTag tag, Exception exception) {
+            if (_level > level)
+                return;
+
+            var context = new LogContext(level, tag, exception.Message, exception.StackTrace, exception);
+            lock (_queueLock) {
+                if (_logQueue.Count >= _capacity)
+                    _logQueue.Dequeue();
+                _logQueue.Enqueue(context);
+            }
+
+            _logFile?.AppendText(exception.ToString());
 
             OnLogReceived?.Invoke(context);
         }
@@ -247,12 +267,14 @@ namespace vFrame.Core.Loggers
             public string Content;
             public LogTag Tag;
             public string StackTrace;
+            public Exception Exception;
 
-            public LogContext(LogLevelDef level, LogTag tag, string content, string stackTrace) : this() {
+            public LogContext(LogLevelDef level, LogTag tag, string content, string stackTrace, Exception exception) : this() {
                 Level = level;
                 Content = content;
                 Tag = tag;
                 StackTrace = stackTrace;
+                Exception = exception;
             }
         }
     }

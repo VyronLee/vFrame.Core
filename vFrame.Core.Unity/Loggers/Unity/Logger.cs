@@ -42,8 +42,15 @@ namespace vFrame.Core.Loggers.Unity
                     Debug.LogWarning(context.Content);
                     break;
                 case LogLevelDef.Error:
-                case LogLevelDef.Fatal:
                     Debug.LogError(context.Content);
+                    break;
+                case LogLevelDef.Fatal:
+                    if (null != context.Exception) {
+                        Debug.LogException(context.Exception);
+                    }
+                    else {
+                        Debug.LogError(context.Content);
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
