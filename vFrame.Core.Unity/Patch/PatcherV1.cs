@@ -128,7 +128,7 @@ namespace vFrame.Core.Patch
             _tempManifestPath = _storagePath + options.manifestFilename + ".tmp";
 
             _downloadManager = DownloadManager.Create("PatcherV1 Download Manager");
-            _downloadManager.Timeout = _options.Timeout;
+            _downloadManager.Timeout = _options.timeout;
 
             InitManifest();
         }

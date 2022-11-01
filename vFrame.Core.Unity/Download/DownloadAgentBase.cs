@@ -14,7 +14,7 @@ namespace vFrame.Core.Download
 
         public bool TaskDone { get; private set; }
 
-        public float Timeout { get; set; }
+        public int Timeout { get; set; }
 
         public float ProgressUpdateInterval { get; set; }
 

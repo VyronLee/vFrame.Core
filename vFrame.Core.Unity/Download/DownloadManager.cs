@@ -9,7 +9,7 @@ namespace vFrame.Core.Download
     {
         private const int DOWNLOAD_AGENT_COUNT = 3;
 
-        [SerializeField] private float m_Timeout = 30f;
+        [SerializeField] private int m_Timeout = 300;
 
         [SerializeField] private float m_ProgressUpdateInterval = 0.1f;
 
@@ -22,9 +22,12 @@ namespace vFrame.Core.Download
         public event Action<DownloadEventArgs> DownloadSuccess;
         public event Action<DownloadEventArgs> DownloadFailure;
 
-        public float Timeout {
+        public int Timeout {
             get { return m_Timeout; }
             set {
+                if (value <= 0) {
+                    return;
+                }
                 m_Timeout = value;
                 foreach (var agent in m_Agents) {
                     agent.Timeout = value;
@@ -64,7 +67,7 @@ namespace vFrame.Core.Download
 
         private void Awake() {
             for (var i = 0; i < DOWNLOAD_AGENT_COUNT; i++) {
-                AddDownloadAgent(new DownloadAgentWebClient());
+                AddDownloadAgent(new DownloadAgentUnityWebRequest());
             }
 
             ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;

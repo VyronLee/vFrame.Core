@@ -16,7 +16,7 @@ namespace vFrame.Core.Download
 
         float Progress { get; }
 
-        float Timeout { get; set; }
+        int Timeout { get; set; }
 
         float ProgressUpdateInterval { get; set; }
 

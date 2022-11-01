@@ -9,6 +9,6 @@
         public string versionFilename;
         public string manifestFilename;
         public bool deleteCacheOutOfDate;
-        public float Timeout = float.MaxValue;
+        public int timeout = int.MaxValue;
     }
 }

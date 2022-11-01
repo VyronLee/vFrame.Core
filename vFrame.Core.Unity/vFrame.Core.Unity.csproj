@@ -117,6 +117,7 @@
     <Compile Include="Coroutine\CoroutineState.cs" />
     <Compile Include="Coroutine\CoroutineTask.cs" />
     <Compile Include="Download\DownloadAgentBase.cs" />
+    <Compile Include="Download\DownloadAgentUnityWebRequest.cs" />
     <Compile Include="Download\DownloadAgentWebClient.cs" />
     <Compile Include="Download\DownloadEventArgs.cs" />
     <Compile Include="Download\DownloadManager.cs" />
