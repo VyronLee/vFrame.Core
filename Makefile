@@ -1,4 +1,5 @@
 SolutionFile = vFrame.Core.sln
+UnityVersion = 2021
 
 Compiler = MSBuild /t:Build /p:Platform=Any\ CPU
 PlatformConstantsDefined_Editor = /p:DefineConstants=TRACE\ UNITY_EDITOR
@@ -6,16 +7,10 @@ PlatformConstantsDefined_Android = /p:DefineConstants=TRACE\ UNITY_ANDROID
 PlatformConstantsDefined_IOS = /p:DefineConstants=TRACE\ UNITY_IOS
 PlatformConstantsDefined_Standalone = /p:DefineConstants=TRACE\ UNITY_STANDALONE
 
-ConfigDebug = /p:Configuration=Debug
-ConfigRelease = /p:Configuration=Release
+ConfigRelease = /p:Configuration=Release_$(UnityVersion)
 
 BuildDir = Build
 BuildReleaseDir = $(BuildDir)/Release
-BuildDebugDir = $(BuildDir)/Debug
-
-DebugEditorDir = $(BuildDebugDir)/Editor
-DebugRuntimeDir = $(BuildDebugDir)/Runtime
-
 ReleaseEditorDir = $(BuildReleaseDir)/Editor
 ReleaseRuntimeDir = $(BuildReleaseDir)/Runtime
 
@@ -39,7 +34,7 @@ clean:
 	rm -rf $(BuildDir)
 
 editor:
-	$(Compiler) $(ConfigDebug) $(SolutionFile) $(PlatformConstantsDefined_Editor)
+	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformConstantsDefined_Editor)
 
 android:
 	$(Compiler) $(ConfigRelease) $(SolutionFile) $(PlatformConstantsDefined_Android)
@@ -53,9 +48,9 @@ standalone:
 output_editor:
 	mkdir -p $(EditorOutputDir)
 	mkdir -p $(RuntimeOutputDir)
-	cp -rf $(DebugEditorDir)/$(EditorAssembly) $(EditorOutputDir)/$(EditorAssembly)
-	cp -rf $(DebugRuntimeDir)/$(RuntimeLiteAssembly) $(RuntimeOutputDir)/$(RuntimeLiteAssembly)
-	cp -rf $(DebugRuntimeDir)/$(RuntimeUnityAssembly) $(RuntimeOutputDir)/$(RuntimeUnityAssembly)
+	cp -rf $(ReleaseEditorDir)/$(EditorAssembly) $(EditorOutputDir)/$(EditorAssembly)
+	cp -rf $(ReleaseRuntimeDir)/$(RuntimeLiteAssembly) $(RuntimeOutputDir)/$(RuntimeLiteAssembly)
+	cp -rf $(ReleaseRuntimeDir)/$(RuntimeUnityAssembly) $(RuntimeOutputDir)/$(RuntimeUnityAssembly)
 
 output_android:
 	mkdir -p $(AndroidOutputDir)
@@ -74,4 +69,3 @@ output_standalone:
 
 .PHONY:
 	clean editor android ios standalone output_editor output_android output_ios output_standalone
-

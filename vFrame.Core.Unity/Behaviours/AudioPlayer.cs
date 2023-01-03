@@ -25,14 +25,26 @@ namespace vFrame.Core.Behaviours
             _audioSource = GetComponent<AudioSource>();
         }
 
+        public void ResetAudioSource() {
+            if (!_audioSource) {
+                return;
+            }
+            _audioSource.time = 0f;
+            _audioSource.pitch = 1f;
+        }
+
         public void Pause() {
             _isPause = true;
-            _audioSource.Pause();
+            if (_audioSource) {
+                _audioSource.Pause();
+            }
         }
 
         public void UnPause() {
             _isPause = false;
-            _audioSource.UnPause();
+            if (_audioSource) {
+                _audioSource.UnPause();
+            }
         }
 
         public bool IsPause {
@@ -40,20 +52,44 @@ namespace vFrame.Core.Behaviours
         }
 
         public void Mute() {
-            _audioSource.mute = true;
+            if (_audioSource) {
+                _audioSource.mute = true;
+            }
         }
 
         public void UnMute() {
-            _audioSource.mute = false;
+            if (_audioSource) {
+                _audioSource.mute = false;
+            }
         }
 
         public float Volume {
-            get { return _audioSource.volume; }
-            set { _audioSource.volume = value; }
+            get {
+                if (_audioSource) {
+                    return _audioSource.volume;
+                }
+                return 0f;
+            }
+            set {
+                if (_audioSource) {
+                    _audioSource.volume = value;
+                }
+            }
+        }
+
+        public void SetClip(AudioClip clip) {
+            if (_audioSource) {
+                _audioSource.clip = clip;
+            }
         }
 
         public bool IsPlaying {
-            get { return _audioSource.isPlaying; }
+            get {
+                if (_audioSource) {
+                    return _audioSource.isPlaying;
+                }
+                return false;
+            }
         }
 
         public AudioSource Source {
@@ -61,14 +97,16 @@ namespace vFrame.Core.Behaviours
         }
 
         public void Stop() {
-            _audioSource.Stop();
+            if (_audioSource) {
+                _audioSource.Stop();
+            }
             _isDirty = false;
             _isPause = false;
             _onPlayFinished = null;
         }
 
         public void Play() {
-            if (null == _audioSource.clip) {
+            if (!_audioSource || !_audioSource.clip) {
                 Logger.Error("AudioClip not set.");
                 return;
             }
@@ -80,7 +118,7 @@ namespace vFrame.Core.Behaviours
         }
 
         public void Play(bool loop, float volume, Action onPlayFinished = null) {
-            if (null == _audioSource.clip) {
+            if (!_audioSource || !_audioSource.clip) {
                 Logger.Error("AudioClip not set.");
                 return;
             }
@@ -97,7 +135,7 @@ namespace vFrame.Core.Behaviours
         }
 
         public void Play(bool loop, float volume, bool destroyWhenFinished) {
-            if (null == _audioSource.clip) {
+            if (!_audioSource || !_audioSource.clip) {
                 Logger.Error("AudioClip not set.");
                 return;
             }
@@ -116,6 +154,10 @@ namespace vFrame.Core.Behaviours
         }
 
         public void Play(AudioClip clip, bool loop, float volume, Action onPlayFinished = null) {
+            if (!_audioSource) {
+                return;
+            }
+
             if (IsPlaying) {
                 Stop();
             }
@@ -133,7 +175,7 @@ namespace vFrame.Core.Behaviours
                 return;
             }
 
-            if (_isPause || _audioSource.isPlaying)
+            if (_isPause || !_audioSource || _audioSource.isPlaying)
                 return;
 
             if (null != _onPlayFinished) {

@@ -14,27 +14,45 @@
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\Build\Debug\Runtime</OutputPath>
-    <DefineConstants>DEBUG;TRACE;PERF_PROFILE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_2021|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Build\Release\Runtime</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
+    <OutputPath>..\Build\Release\Runtime</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_2018|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <OutputPath>..\Build\Release\Runtime</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_2021|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE;PERF_PROFILE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <OutputPath>..\Build\Debug\Runtime</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_2018|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE;PERF_PROFILE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <OutputPath>..\Build\Debug\Runtime</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
     <NoConfig>true</NoConfig>
@@ -43,34 +61,6 @@
     <ImplicitlyExpandNETStandardFacades>false</ImplicitlyExpandNETStandardFacades>
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(OS)' != 'Unix' ">
-    <Reference Include="mscorlib">
-      <HintPath>C:/Program Files/Unity/Editor/Data/NetStandard/compat/2.0.0/shims/netfx/mscorlib.dll</HintPath>
-    </Reference>
-    <Reference Include="netstandard">
-      <HintPath>C:/Program Files/Unity/Editor/Data/NetStandard/ref/2.0.0/netstandard.dll</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <HintPath>C:/Program Files/Unity/Editor/Data/NetStandard/compat/2.0.0/shims/netfx/System.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>C:/Program Files/Unity/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/Facades/System.Runtime.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition=" '$(OS)' == 'Unix' ">
-    <Reference Include="mscorlib">
-      <HintPath>/Applications/Unity.app/Contents/NetStandard/compat/2.0.0/shims/netfx/mscorlib.dll</HintPath>
-    </Reference>
-    <Reference Include="netstandard">
-      <HintPath>/Applications/Unity.app/Contents/NetStandard/ref/2.0.0/netstandard.dll</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <HintPath>/Applications/Unity.app/Contents/NetStandard/compat/2.0.0/shims/netfx/System.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>/Applications/Unity.app/Contents/MonoBleedingEdge/lib/mono/4.7.1-api/Facades/System.Runtime.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\BaseObjectException.cs" />
     <Compile Include="Base\Box.cs" />
@@ -281,6 +271,8 @@
     <Compile Include="Utils\MessageDigestUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
   </ItemGroup>
+  
+  <!-- Package Libraries Reference -->
   <ItemGroup>
     <Reference Include="K4os.Compression.LZ4, Version=1.2.6.0, Culture=neutral, PublicKeyToken=2186fa9121ef231d">
       <HintPath>..\packages\K4os.Compression.LZ4.1.2.6\lib\net46\K4os.Compression.LZ4.dll</HintPath>
@@ -302,7 +294,6 @@
       <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
       <Private>True</Private>
@@ -312,11 +303,56 @@
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+
+  <!-- Unity 2018 Libraries Reference -->
+  <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_2018|AnyCPU' or '$(Configuration)|$(Platform)' == 'Debug_2018|AnyCPU'">
+    <Reference Include="mscorlib">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="netstandard">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\netstandard.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\System.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\System.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\System.IO.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\System.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml">
+      <HintPath>..\Libraries\UnityEngine\2018.4\.Net\System.Xml.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <!-- Unity 2021 Libraries Reference -->
+  <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_2021|AnyCPU' or '$(Configuration)|$(Platform)' == 'Debug_2021|AnyCPU' ">
+    <Reference Include="mscorlib">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\System.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\System.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\System.IO.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\System.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml">
+      <HintPath>..\Libraries\UnityEngine\2021.3\.Net\System.Xml.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ThirdParty\ObjectsComparer\LICENSE" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

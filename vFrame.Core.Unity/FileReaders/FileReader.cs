@@ -40,6 +40,10 @@ namespace vFrame.Core.FileReaders
         }
 
         public bool FileExist(string path) {
+            return Exist(path);
+        }
+
+        public static bool Exist(string path) {
 #if UNITY_ANDROID
             if (!PathUtils.IsFileInPersistentDataPath(path))
             {
