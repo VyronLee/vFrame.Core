@@ -1,5 +1,5 @@
 SolutionFile = vFrame.Core.sln
-UnityVersion = 2021
+UnityVersion = 2018
 
 Compiler = MSBuild /t:Build /p:Platform=Any\ CPU
 PlatformConstantsDefined_Editor = /p:DefineConstants=TRACE\ UNITY_EDITOR

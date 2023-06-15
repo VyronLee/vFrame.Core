@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Networking;
+using vFrame.Core.Base;
 using vFrame.Core.FileReaders;
 using Logger = vFrame.Core.Loggers.Logger;
 
@@ -74,7 +77,7 @@ namespace vFrame.Core.Patch
         /// Get default manifest
         /// </summary>
         public static Manifest Default => new Manifest {Loaded = true, VersionLoaded = true};
-
+        
         /// <summary>
         /// Parse the whole file, caller should check where the file exist
         /// </summary>
@@ -90,12 +93,48 @@ namespace vFrame.Core.Patch
         }
 
         /// <summary>
+        /// Parse the whole file, caller should check where the file exist
+        /// </summary>
+        public IEnumerator ParseAsync(string manifestUrl) {
+            var result = new Box<(bool, ManifestJson)>();
+            yield return LoadJsonAsync(manifestUrl, result);
+
+            var (success, json) = result.Value;
+            if (!success) {
+                yield break;
+            }
+            _json = json;
+
+            LoadManifest();
+
+            OnLoadJson(_json);
+        }
+
+        /// <summary>
         /// Parse the version part, caller should check where the file exist
         /// </summary>
         public void ParseVersion(string versionUrl) {
             _json = LoadJson(versionUrl);
             if (_json == null)
                 return;
+
+            LoadVersion();
+
+            OnLoadJson(_json);
+        }
+
+        /// <summary>
+        /// Parse the version part, caller should check where the file exist
+        /// </summary>
+        public IEnumerator ParseVersionAsync(string versionUrl) {
+            var result = new Box<(bool, ManifestJson)>();
+            yield return LoadJsonAsync(versionUrl, result);
+
+            var (success, json) = result.Value;
+            if (!success) {
+                yield break;
+            }
+            _json = json;
 
             LoadVersion();
 
@@ -252,16 +291,47 @@ namespace vFrame.Core.Patch
         /// Load json data from url
         /// </summary>
         /// <param name="url"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private IEnumerator LoadJsonAsync(string url, Box<(bool, ManifestJson)> result) {
+            Clear();
+
+            var ret = new Box<(bool, string)>();
+            yield return LoadTextFromFileAsync(url, ret);
+
+            var (success, text) = ret.Value;
+            if (!success) {
+                result.Value = (false, null);
+                yield break;
+            }
+                
+            try {
+                var json = JsonUtility.FromJson<ManifestJson>(text);
+                result.Value = (true, json);
+            }
+            catch (Exception e) {
+                result.Value = (false, null);
+                Logger.Error(PatchConst.LogTag,
+                    "Load json failed, url: {0}, text: {1}, message: {2}", url, text, e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Load json data from url
+        /// </summary>
+        /// <param name="url"></param>
         /// <returns></returns>
         private ManifestJson LoadJson(string url) {
             Clear();
 
+            var text = string.Empty;
             try {
-                var text = new FileReader().ReadAllText(url);
+                text = new FileReader().ReadAllText(url);
                 return JsonUtility.FromJson<ManifestJson>(text);
             }
             catch (Exception e) {
-                Logger.Error(PatchConst.LogTag, "Load json failed, url: {0}, message: {1}", url, e.Message);
+                Logger.Error(PatchConst.LogTag,
+                    "Load json failed, url: {0}, text: {1}, message: {2}", url, text, e.Message);
                 return null;
             }
         }
@@ -300,6 +370,9 @@ namespace vFrame.Core.Patch
 
         }
 
+        /// <summary>
+        /// Clear all data
+        /// </summary>
         private void Clear() {
             _assets.Clear();
             _json = null;
@@ -309,6 +382,30 @@ namespace vFrame.Core.Patch
 
             Loaded = false;
             VersionLoaded = false;
+        }
+
+        /// <summary>
+        /// Load text from file async
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private static IEnumerator LoadTextFromFileAsync(string path, Box<(bool, string)> result) {
+            using (var webRequest = UnityWebRequest.Get(path)) {
+                yield return webRequest.SendWebRequest();
+                if (webRequest.isHttpError || webRequest.isNetworkError) {
+                    Logger.Info(PatchConst.LogTag,
+                        "Load text from file failed: {0}, error: {1}", path, webRequest.error);
+                    result.Value = (false, string.Empty);
+                    yield break;
+                }
+
+                var text = webRequest.downloadHandler.text;
+                result.Value = (true, text);
+                
+                Logger.Info(PatchConst.LogTag,
+                    "Load text from file succeed: {0}, text: {1}", path, text);
+            }
         }
     }
 }
