@@ -16,21 +16,14 @@ namespace vFrame.Core.Behaviours.Culling
 {
     public class ParticleCulling : CullingBehaviour
     {
-        private List<ParticleSystem> _particleSystems;
-        private List<Renderer> _renderer;
+        private readonly List<ParticleSystem> _particleSystems = new List<ParticleSystem>();
+        private readonly List<Renderer> _renderer = new List<Renderer>();
 
         protected override void Awake() {
             base.Awake();
 
-            _particleSystems = GetComponentsInChildren<ParticleSystem>().ToList();
-            var ps = GetComponent<ParticleSystem>();
-            if (ps)
-                _particleSystems.Add(ps);
-
-            _renderer = GetComponentsInChildren<Renderer>().ToList();
-            var render = GetComponent<Renderer>();
-            if (render)
-                _renderer.Add(render);
+            GetComponentsInChildren(_particleSystems);
+            GetComponentsInChildren(_renderer);
         }
 
         protected override void OnBecameVisible() {

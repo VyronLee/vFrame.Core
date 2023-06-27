@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -107,6 +108,11 @@ namespace vFrame.Core.Patch
         private float _lastUpdateTime;
 
         /// <summary>
+        ///     Is patcher initialized?
+        /// </summary>
+        private bool _initialized;
+        
+        /// <summary>
         ///     Update confirm callback.
         /// </summary>
         public Action<ulong, Action> OnUpdateConfirm;
@@ -130,7 +136,15 @@ namespace vFrame.Core.Patch
             _downloadManager = DownloadManager.Create("PatcherV1 Download Manager");
             _downloadManager.Timeout = _options.timeout;
 
-            InitManifest();
+        }
+
+        /// <summary>
+        /// Initial patcher.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerator Initialize() {
+            yield return InitManifest();
+            _initialized = true;
         }
 
         /// <summary>
@@ -282,12 +296,19 @@ namespace vFrame.Core.Patch
 
             if (_downloadManager)
                 Object.Destroy(_downloadManager.gameObject);
+
+            _initialized = false;
         }
 
         /// <summary>
         ///     Check for update
         /// </summary>
         public void CheckUpdate() {
+            if (!_initialized) {
+                Logger.Error(PatchConst.LogTag, "Patcher has not initialized.");
+                return;
+            }
+            
             if (!_localManifest.Loaded) {
                 Logger.Error(PatchConst.LogTag, "No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
@@ -315,6 +336,11 @@ namespace vFrame.Core.Patch
         ///     Start update from remote, must call CheckUpdate first
         /// </summary>
         public void StartUpdate() {
+            if (!_initialized) {
+                Logger.Error(PatchConst.LogTag, "Patcher has not initialized.");
+                return;
+            }
+            
             if (!_localManifest.Loaded) {
                 Logger.Error(PatchConst.LogTag, "No local manifest file found.");
                 DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_NO_LOCAL_MANIFEST);
@@ -334,9 +360,9 @@ namespace vFrame.Core.Patch
 
         #region private methods
 
-        private void InitManifest() {
+        private IEnumerator InitManifest() {
             // local
-            LoadLocalManifest();
+            yield return LoadLocalManifest();
 
             // temp
             if (File.Exists(_tempManifestPath)) {
@@ -346,7 +372,7 @@ namespace vFrame.Core.Patch
             }
         }
 
-        private void LoadLocalManifest() {
+        private IEnumerator LoadLocalManifest() {
             // Find the cached manifest file
             Manifest cachedManifest = null;
             if (File.Exists(_cacheManifestPath)) {
@@ -363,53 +389,47 @@ namespace vFrame.Core.Patch
             // Load local manifest in app package
             var localManifestPath = Path.Combine(Application.streamingAssetsPath, _options.manifestFilename);
             var localVersionPath = Path.Combine(Application.streamingAssetsPath, _options.versionFilename);
-            var manifestPath = "";
-            var fileReader = new FileReader();
-            if (fileReader.FileExist(localManifestPath))
-                manifestPath = localManifestPath;
-            else if (fileReader.FileExist(localVersionPath))
-                manifestPath = localVersionPath;
 
-            if (!string.IsNullOrEmpty(manifestPath)) {
-                Logger.Info(PatchConst.LogTag, "Load local manifest at streaming assets: {0}, parsing..", manifestPath);
+            yield return _localManifest.ParseAsync(localManifestPath);
+            if (!_localManifest.Loaded) {
+                yield return _localManifest.ParseAsync(localVersionPath);
+            }
 
-                _localManifest.Parse(manifestPath);
-                if (_localManifest.Loaded)
-                    if (cachedManifest != null) {
-                        var gvc = _localManifest.GameVersionCompareTo(cachedManifest);
-                        var avc = _localManifest.AssetsVersionCompareTo(cachedManifest);
+            if (_localManifest.Loaded) {
+                if (cachedManifest != null) {
+                    var gvc = _localManifest.GameVersionCompareTo(cachedManifest);
+                    var avc = _localManifest.AssetsVersionCompareTo(cachedManifest);
 
-                        if ((gvc != 0 || avc > 0) && _options.deleteCacheOutOfDate) {
-                            Logger.Info(PatchConst.LogTag,
-                                "Local version(engine: {0} asset: {1}) greater than cache version(engine: {2} asset: {3}), deleting storage path: {4}..",
-                                _localManifest.EngineVersion,
-                                _localManifest.AssetsVersion,
-                                cachedManifest.EngineVersion,
-                                cachedManifest.AssetsVersion,
-                                _storagePath);
+                    if ((gvc != 0 || avc > 0) && _options.deleteCacheOutOfDate) {
+                        Logger.Info(PatchConst.LogTag,
+                            "Local version(engine: {0} asset: {1}) greater than cache version(engine: {2} asset: {3}), deleting storage path: {4}..",
+                            _localManifest.EngineVersion,
+                            _localManifest.AssetsVersion,
+                            cachedManifest.EngineVersion,
+                            cachedManifest.AssetsVersion,
+                            _storagePath);
 
-                            Directory.Delete(_storagePath, true);
-                            Directory.CreateDirectory(_storagePath);
-                        }
-                        else {
-                            Logger.Info(PatchConst.LogTag,
-                                "Cache version(engine: {0} asset: {1}) greater than local version(engine: {2} asset: {3}), switching to cache manifest..",
-                                cachedManifest.EngineVersion,
-                                cachedManifest.AssetsVersion,
-                                _localManifest.EngineVersion,
-                                _localManifest.AssetsVersion);
-
-                            _localManifest = cachedManifest;
-                        }
+                        Directory.Delete(_storagePath, true);
+                        Directory.CreateDirectory(_storagePath);
                     }
+                    else {
+                        Logger.Info(PatchConst.LogTag,
+                            "Cache version(engine: {0} asset: {1}) greater than local version(engine: {2} asset: {3}), switching to cache manifest..",
+                            cachedManifest.EngineVersion,
+                            cachedManifest.AssetsVersion,
+                            _localManifest.EngineVersion,
+                            _localManifest.AssetsVersion);
+
+                        _localManifest = cachedManifest;
+                    }
+                }
             }
             else {
                 if (cachedManifest != null) {
                     _localManifest = cachedManifest;
                 }
                 else {
-                    Logger.Info(PatchConst.LogTag, "Local manifest does not exist, generate default version..",
-                        manifestPath);
+                    Logger.Info(PatchConst.LogTag, "Local manifest does not exist, generate default version..");
                     _localManifest = Manifest.Default;
                 }
             }

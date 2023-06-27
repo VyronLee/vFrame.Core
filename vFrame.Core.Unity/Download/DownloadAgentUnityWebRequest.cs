@@ -124,7 +124,7 @@ namespace vFrame.Core.Download
                 return;
             }
 
-            if (m_HeadRequest.isHttpError || m_HeadRequest.isNetworkError) {
+            if (IsWebRequestError(m_HeadRequest)) {
                 Logger.Warning("Request file head failed, uri: {0}, error: {1}", Task.DownloadUrl, m_HeadRequest.error);
                 m_State = DownloadProcessState.HeadRequested;
                 m_TotalSize = 1;
@@ -183,7 +183,7 @@ namespace vFrame.Core.Download
                 return;
             }
 
-            if (m_ContentRequest.isHttpError || m_ContentRequest.isNetworkError) {
+            if (IsWebRequestError(m_ContentRequest)) {
                 Logger.Warning("Download error, uri: {0}, msg: {1}", Task.DownloadUrl, m_ContentRequest.error);
                 m_State = DownloadProcessState.Error;
                 m_Error = m_ContentRequest.error;
@@ -191,6 +191,14 @@ namespace vFrame.Core.Download
             }
 
             m_State = DownloadProcessState.ContentDownloaded;
+        }
+
+        private bool IsWebRequestError(UnityWebRequest request) {
+#if UNITY_2020_1_OR_NEWER
+            return request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError;
+#else
+            return request.isHttpError || request.isNetworkError;
+#endif
         }
     }
 }

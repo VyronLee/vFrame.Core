@@ -13,15 +13,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using vFrame.Core.Behaviours;
+using vFrame.Core.ObjectPools.Builtin;
 
 namespace vFrame.Core.Extensions.UnityEngine
 {
     public static class TransformExtension
     {
         public static void TravelSelfAndChildren<T>(this Transform transform, Action<T> traveller) where T : Component {
-            var components = transform.GetComponentsInChildren<T>(true);
-            foreach (var comp in components)
+            var buffer = ListPool<T>.Shared.Get();
+            transform.GetComponentsInChildren(true, buffer);
+            foreach (var comp in buffer)
                 traveller.Invoke(comp);
+            ListPool<T>.Shared.Return(buffer);
         }
 
         public static void EnableComponents<T>(this Transform transform) where T : Behaviour {

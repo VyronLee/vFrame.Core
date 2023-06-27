@@ -13,12 +13,11 @@ namespace vFrame.Core.FileSystems.Unity
         }
 
         public new IVirtualFileSystem AddFileSystem(VFSPath vfsPath) {
-            IVirtualFileSystem virtualFileSystem;
-
             if (!PathUtils.IsStreamingAssetsPath(vfsPath)) {
                 return base.AddFileSystem(vfsPath);
             }
 
+            IVirtualFileSystem virtualFileSystem;
             switch (vfsPath.GetExtension().ToLower()) {
                 case PackageFileSystemConst.Ext:
                     virtualFileSystem = new SAPackageVirtualFileSystem();

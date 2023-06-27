@@ -32,11 +32,19 @@ namespace vFrame.Core.FileSystems.Unity.StreamingAssets
                 return false;
             }
 
+#if UNITY_2020_1_OR_NEWER
+            if (_request.result == UnityWebRequest.Result.ConnectionError || _request.result == UnityWebRequest.Result.ProtocolError) {
+                Logger.Error(FileSystemConst.LogTag, "Error occurred while reading file: {0}", _request.error);
+                _failed = true;
+                return false;
+            }
+#else
             if (_request.isNetworkError || _request.isHttpError) {
                 Logger.Error(FileSystemConst.LogTag, "Error occurred while reading file: {0}", _request.error);
                 _failed = true;
                 return false;
             }
+#endif
 
             return true;
         }
