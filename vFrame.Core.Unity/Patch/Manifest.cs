@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using vFrame.Core.Base;
 using vFrame.Core.FileReaders;
+using vFrame.Core.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Patch
@@ -391,7 +392,8 @@ namespace vFrame.Core.Patch
         /// <param name="result"></param>
         /// <returns></returns>
         private static IEnumerator LoadTextFromFileAsync(string path, Box<(bool, string)> result) {
-            using (var webRequest = UnityWebRequest.Get(path)) {
+            var fileUrl = path.NormalizeLocalFileURL();
+            using (var webRequest = UnityWebRequest.Get(fileUrl)) {
                 yield return webRequest.SendWebRequest();
                 if (webRequest.isHttpError || webRequest.isNetworkError) {
                     Logger.Info(PatchConst.LogTag,
