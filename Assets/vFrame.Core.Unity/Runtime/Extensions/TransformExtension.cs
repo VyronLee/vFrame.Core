@@ -12,10 +12,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using vFrame.Core.Behaviours;
 using vFrame.Core.ObjectPools.Builtin;
 
-namespace vFrame.Core.Extensions.UnityEngine
+namespace vFrame.Core.Unity.Extensions
 {
     public static class TransformExtension
     {
@@ -123,10 +122,6 @@ namespace vFrame.Core.Extensions.UnityEngine
 
         public static void ClearAllTrailRenderers(this Transform transform) {
             TravelSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
-        }
-
-        public static void ClearAllTrailRendererEx(this Transform transform) {
-            TravelSelfAndChildren<TrailRendererEx>(transform, v => v.Clear());
         }
 
         public static Bounds CalculateBounds(this Transform transform) {

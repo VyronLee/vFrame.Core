@@ -156,3 +156,6 @@ sysinfo.txt
 
 # Custom
 .idea
+Assets/Plugins.meta
+
+Assets/Plugins/Editor.meta
