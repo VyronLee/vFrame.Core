@@ -11,7 +11,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace vFrame.Core.Extensions.UnityEngine
+namespace vFrame.Core.Unity.Extensions
 {
     public static class AnimationExtension
     {
