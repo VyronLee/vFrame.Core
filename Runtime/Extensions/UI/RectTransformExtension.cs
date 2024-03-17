@@ -10,7 +10,7 @@
 
 using UnityEngine;
 
-namespace vFrame.Core.Extensions.UnityEngine.UI
+namespace vFrame.Core.Unity.Extensions.UI
 {
     public static class RectTransformExtension
     {
