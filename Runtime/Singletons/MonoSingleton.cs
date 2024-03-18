@@ -4,13 +4,13 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-09-08 23:37
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-09-08 23:37
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using UnityEngine;
 
-namespace vFrame.Core.Singletons
+namespace vFrame.Core.Unity.Singletons
 {
     public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {

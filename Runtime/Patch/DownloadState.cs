@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.Patch
+namespace vFrame.Core.Unity.Patch
 {
     [Serializable]
     public enum DownloadState

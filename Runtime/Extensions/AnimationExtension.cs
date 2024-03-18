@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-02-11 09:57
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-02-11 09:57
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System.Collections;
@@ -27,17 +27,43 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
+        /// 播放动画到最后一帧
+        /// </summary>
+        /// <param name="animation"></param>
+        /// <returns></returns>
+        public static bool PlayToEnd(this Animation animation) {
+            if (!animation.clip) {
+                return false;
+            }
+
+            var state = animation[animation.clip.name];
+            if (!state) {
+                return false;
+            }
+
+            animation.Play();
+            state.normalizedTime = 1f;
+            animation.Sample();
+            animation.Stop();
+
+            return true;
+        }
+
+        /// <summary>
         /// 播放动画，并一直等待到动画播放完成
         /// </summary>
         /// <param name="animation"></param>
         /// <param name="name"></param>
+        /// <param name="reset"></param>
         /// <returns></returns>
-        public static IEnumerator PlayUntilFinished(this Animation animation, string name) {
+        public static IEnumerator PlayUntilFinished(this Animation animation, string name, bool reset = true) {
+            if (reset) {
+                animation.Reset();
+            }
             var clip = animation.GetClip(name);
             animation.clip = clip;
-            animation.Reset();
             animation.Play(name);
-            yield return new WaitForSeconds(clip.length);
+            yield return WaitUntilFinished(animation);
         }
 
         /// <summary>
@@ -50,7 +76,28 @@ namespace vFrame.Core.Unity.Extensions
             var clip = animation.GetClip(name);
             animation.clip = clip;
             animation.CrossFade(name);
-            yield return new WaitForSeconds(clip.length);
+            yield return WaitUntilFinished(animation);
+        }
+
+        /// <summary>
+        /// 等待动画播放完成
+        /// </summary>
+        /// <param name="animation"></param>
+        /// <returns></returns>
+        private static IEnumerator WaitUntilFinished(Animation animation) {
+            while (true) {
+                if (!animation.clip) {
+                    yield break;
+                }
+                var state = animation[animation.clip.name];
+                if (!state) {
+                    yield break;
+                }
+                if (state.normalizedTime >= 1) {
+                    yield break;
+                }
+                yield return null;
+            }
         }
     }
 }

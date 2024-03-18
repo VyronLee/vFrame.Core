@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.Asynchronous
+namespace vFrame.Core.Unity.Asynchronous
 {
     public class AsyncRequestException : Exception
     {

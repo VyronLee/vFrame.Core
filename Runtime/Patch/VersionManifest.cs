@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.Patch
+﻿namespace vFrame.Core.Unity.Patch
 {
     public class VersionManifest : Manifest
     {

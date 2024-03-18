@@ -1,6 +1,6 @@
 using System;
 
-namespace vFrame.Core.Coroutine
+namespace vFrame.Core.Unity.Coroutine
 {
     [Flags][Serializable]
     public enum CoroutineState

@@ -4,14 +4,15 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2021-03-22 15:51
-//   Copyright:  Copyright (c) 2021, VyronLee
+//     Created:  2021-03-22 15:51
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
+
 using System.Collections;
 using UnityEngine;
 using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.SpawnPools.Loaders
+namespace vFrame.Core.Unity.SpawnPools
 {
     public class LoadAsyncRequestOnLoaded : LoadAsyncRequest
     {

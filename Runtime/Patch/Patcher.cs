@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using UnityEngine;
-using vFrame.Core.Download;
-using vFrame.Core.Utils;
+using vFrame.Core.Unity.Download;
+using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.Patch
+namespace vFrame.Core.Unity.Patch
 {
     public class Patcher
     {

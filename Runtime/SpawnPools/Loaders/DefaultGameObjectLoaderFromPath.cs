@@ -4,18 +4,17 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-02-18 15:04
-//   Copyright:  Copyright (c) 2018, VyronLee
+//     Created:  2019-02-18 15:04
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-using System;
 using System.Collections;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.ObjectPools;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.SpawnPools.Loaders
+namespace vFrame.Core.Unity.SpawnPools
 {
     internal class DefaultGameObjectLoaderFromPath : BaseObject<string>, IGameObjectLoaderFromPath
     {
@@ -32,7 +31,7 @@ namespace vFrame.Core.SpawnPools.Loaders
         public GameObject Load() {
             var prefab = Resources.Load<GameObject>(_path);
             if (!prefab)
-                throw new Exception("Load asset failed: " + _path);
+                throw new AssetLoadFailedException(_path);
             var obj = Object.Instantiate(prefab);
             Object.DontDestroyOnLoad(obj);
             return obj;
@@ -67,10 +66,14 @@ namespace vFrame.Core.SpawnPools.Loaders
                 yield return _request;
                 var prefab = _request.asset as GameObject;
                 if (!prefab)
-                    throw new Exception("Load asset failed: " + _path);
+                    throw new AssetLoadFailedException(_path);
                 GameObject = Object.Instantiate(prefab);
                 Object.DontDestroyOnLoad(GameObject);
             }
+        }
+
+        public void Create() {
+            throw new System.NotImplementedException();
         }
     }
 }

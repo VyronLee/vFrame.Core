@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Net;
 
-namespace vFrame.Core.Download
+namespace vFrame.Core.Unity.Download
 {
     public class DownloadAgentWebClient : DownloadAgentBase
     {

@@ -6,11 +6,11 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using vFrame.Core.Base;
-using vFrame.Core.Utils;
+using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
 using Version = System.Version;
 
-namespace vFrame.Core.Patch
+namespace vFrame.Core.Unity.Patch
 {
     public class Manifest
     {

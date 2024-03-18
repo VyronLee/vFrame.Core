@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.Download
+namespace vFrame.Core.Unity.Download
 {
     public sealed class DownloadTask
     {

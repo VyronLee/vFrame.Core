@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using vFrame.Core.Loggers;
 
-namespace vFrame.Core.SpawnPools
+namespace vFrame.Core.Unity.SpawnPools
 {
     internal static class SpawnPoolDebug
     {

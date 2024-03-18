@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
-using vFrame.Core.Loggers;
 
-namespace vFrame.Core.Download
+namespace vFrame.Core.Unity.Download
 {
     public abstract class DownloadAgentBase : IDownloadAgent
     {

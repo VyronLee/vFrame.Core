@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using vFrame.Core.Base;
-using vFrame.Core.Coroutine;
+using vFrame.Core.Unity.Coroutine;
 
-namespace vFrame.Core.Asynchronous
+namespace vFrame.Core.Unity.Asynchronous
 {
     public abstract class AsyncRequest : BaseObject, IAsyncRequest
     {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace vFrame.Core.Coroutine
+namespace vFrame.Core.Unity.Coroutine
 {
     internal class CoroutinePoolBehaviour : MonoBehaviour
     {

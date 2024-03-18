@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using vFrame.Core.Asynchronous;
-using vFrame.Core.SpawnPools.Exceptions;
+using vFrame.Core.Unity.Asynchronous;
 
-namespace vFrame.Core.SpawnPools.Loaders
+namespace vFrame.Core.Unity.SpawnPools
 {
     public abstract class LoadAsyncRequest : AsyncRequest, ILoaderAsyncRequest
     {
@@ -35,7 +34,7 @@ namespace vFrame.Core.SpawnPools.Loaders
             ThrowIfDestroyed();
 
             if (!IsFinished) {
-                throw new SpawnObjectNotReadyException();
+                throw new ObjectNotReadyException();
             }
             if (!_preprocessBeforeGet) {
                 OnGetGameObject?.Invoke(GameObject);
@@ -49,7 +48,7 @@ namespace vFrame.Core.SpawnPools.Loaders
             yield return OnProcessLoad();
 
             if (!GameObject) {
-                throw new SpawnObjectLoadException("Please ensure object loaded in load process.");
+                throw new ObjectNotLoadedException();
             }
             OnLoadCallback?.Invoke(GameObject);
             IsFinished = true;

@@ -4,13 +4,13 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-02-28 14:34
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-02-28 14:34
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using UnityEngine;
 
-namespace vFrame.Core.Unity.Extensions.UI
+namespace vFrame.Core.Unity.Extensions
 {
     public static class RectTransformExtension
     {

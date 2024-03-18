@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace vFrame.Core.Utils.Unity
+namespace vFrame.Core.Unity.Utils
 {
     public static class GameObjectUtils
     {

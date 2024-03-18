@@ -1,6 +1,7 @@
 using System;
+using vFrame.Core.Loggers;
 
-namespace vFrame.Core.Loggers
+namespace vFrame.Core.Unity.Loggers
 {
     public static class LogLevelExtension
     {
