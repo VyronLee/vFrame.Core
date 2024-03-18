@@ -6,7 +6,7 @@
 //
 //   @internal
 //    Modified  2016-07-28 11:00
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
@@ -37,8 +37,7 @@ namespace vFrame.Core.Components
         public IComponent AddComponent(Type type) {
             Debug.Assert(type.IsSubclassOf(typeof(Component)));
 
-            Component component;
-            if (_components.TryGetValue(type, out component)) {
+            if (_components.TryGetValue(type, out var component)) {
                 Loggers.Logger.Error("Component '{0}' has already exist.", type.Name);
                 return component;
             }

@@ -1,7 +1,9 @@
 ﻿using System;
 using UnityEngine;
+using vFrame.Core.Loggers;
+using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.Loggers.Unity
+namespace vFrame.Core.Unity.Loggers
 {
     public static class UnityLogger
     {

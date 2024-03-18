@@ -1,15 +1,14 @@
-﻿using System;
+﻿using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Base
 {
-    public class BaseObjectException : Exception
+    public class BaseObjectDestroyedException : vFrameException
     {
 
     }
 
-    public class BaseObjectDestroyedException : BaseObjectException
+    public class BaseObjectNotCreatedException : vFrameException
     {
 
     }
-
 }

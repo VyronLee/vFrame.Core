@@ -4,21 +4,19 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-03-29 16:53
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-03-29 16:53
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
-using vFrame.Core.Coroutine;
-using vFrame.Core.SpawnPools.Behaviours;
-using vFrame.Core.SpawnPools.Loaders;
+using vFrame.Core.Unity.Coroutine;
 using Object = UnityEngine.Object;
-using Debug = vFrame.Core.SpawnPools.SpawnPoolDebug;
+using Debug = vFrame.Core.Unity.SpawnPools.SpawnPoolDebug;
 
-namespace vFrame.Core.SpawnPools
+namespace vFrame.Core.Unity.SpawnPools
 {
     public class Pool : BaseObject<string, SpawnPools, IGameObjectLoader>, IPool
     {
@@ -140,9 +138,9 @@ namespace vFrame.Core.SpawnPools
                 Debug.Error("Object to recycle cannot be null!");
                 return;
             }
-            
+
             Debug.Log("Recycling object into pool({0})", obj.name);
-            
+
             if (!ObjectPreprocessBeforeRecycle(obj)) {
                 // Cannot recycle, destroy it directly.
                 Object.Destroy(obj);

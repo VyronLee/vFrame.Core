@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.Coroutine
+namespace vFrame.Core.Unity.Coroutine
 {
     public class CoroutinePoolException : Exception
     {

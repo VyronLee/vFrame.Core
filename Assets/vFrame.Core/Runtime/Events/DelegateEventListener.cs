@@ -6,7 +6,7 @@
 //
 //   @internal
 //    Modified  2016-09-20 20:35
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;

@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-09-08 22:09
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-09-08 22:09
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
@@ -13,11 +13,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Loggers;
-using Logger = vFrame.Core.Loggers.Logger;
 using Object = UnityEngine.Object;
-using StackTraceUtility = vFrame.Core.Loggers.StackTraceUtility;
 
-namespace vFrame.Core.Coroutine
+namespace vFrame.Core.Unity.Coroutine
 {
     public class CoroutinePool
     {

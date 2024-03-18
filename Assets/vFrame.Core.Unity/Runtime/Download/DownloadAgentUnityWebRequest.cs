@@ -3,7 +3,7 @@ using System.IO;
 using UnityEngine.Networking;
 using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.Download
+namespace vFrame.Core.Unity.Download
 {
     public class DownloadAgentUnityWebRequest : DownloadAgentBase
     {

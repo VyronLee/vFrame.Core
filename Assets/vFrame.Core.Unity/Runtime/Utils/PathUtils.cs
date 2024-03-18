@@ -4,14 +4,14 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-02-15 20:15
-//   Copyright:  Copyright (c) 2018, VyronLee
+//     Created:  2019-02-15 20:15
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System.IO;
 using UnityEngine;
 
-namespace vFrame.Core.Utils
+namespace vFrame.Core.Unity.Utils
 {
     public static class PathUtils
     {

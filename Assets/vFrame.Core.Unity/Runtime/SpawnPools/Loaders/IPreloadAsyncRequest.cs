@@ -1,6 +1,6 @@
-﻿using vFrame.Core.Asynchronous;
+﻿using vFrame.Core.Unity.Asynchronous;
 
-namespace vFrame.Core.SpawnPools.Loaders
+namespace vFrame.Core.Unity.SpawnPools
 {
     public interface IPreloadAsyncRequest : IAsyncRequest
     {

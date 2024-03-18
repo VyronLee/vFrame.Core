@@ -4,13 +4,11 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-09-08 23:47
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-09-08 23:47
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-using vFrame.Core.SpawnPools.Loaders;
-
-namespace vFrame.Core.SpawnPools
+namespace vFrame.Core.Unity.SpawnPools
 {
     public interface ISpawnPools
     {

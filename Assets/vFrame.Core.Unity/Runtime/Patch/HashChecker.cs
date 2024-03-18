@@ -7,7 +7,7 @@ using System.Threading;
 using UnityEngine;
 using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.Patch
+namespace vFrame.Core.Unity.Patch
 {
     public class HashChecker : MonoBehaviour
     {

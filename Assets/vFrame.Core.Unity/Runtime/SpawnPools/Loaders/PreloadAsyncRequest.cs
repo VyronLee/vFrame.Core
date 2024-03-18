@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using vFrame.Core.Asynchronous;
 using vFrame.Core.Loggers;
+using vFrame.Core.Unity.Asynchronous;
 
-namespace vFrame.Core.SpawnPools.Loaders
+namespace vFrame.Core.Unity.SpawnPools
 {
     public class PreloadAsyncRequest : AsyncRequest<SpawnPools, string[]>, IPreloadAsyncRequest
     {
@@ -20,8 +20,9 @@ namespace vFrame.Core.SpawnPools.Loaders
             while (requests.Count > 0) {
                 for (var index = requests.Count - 1; index >= 0; index--) {
                     var request = requests[index];
-                    if (request.MoveNext())
+                    if (request.MoveNext()) {
                         continue;
+                    }
 
                     var path = paths[index];
                     requests.RemoveAt(index);

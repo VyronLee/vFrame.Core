@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-01-02 21:37
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-01-02 21:37
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System.Reflection;
@@ -23,10 +23,12 @@ namespace vFrame.Core.Unity.Extensions
 
         public static T GetCopyOf<T>(this Component comp, T other) where T : Component {
             var type = comp.GetType();
-            if (type != other.GetType()) return null; // type mis-match
+            if (type != other.GetType()){
+                return null; // type mis-match
+            }
             var propertiesInfo = type.GetProperties(Flags);
-            foreach (var info in propertiesInfo)
-                if (info.CanWrite)
+            foreach (var info in propertiesInfo) {
+                if (info.CanWrite) {
                     try {
                         info.SetValue(comp, info.GetValue(other, null), null);
                     }
@@ -35,10 +37,13 @@ namespace vFrame.Core.Unity.Extensions
                         // For some reason specifying that exception didn't seem to catch it,
                         // so I didn't catch anything specific.
                     }
+                }
+            }
 
             var fieldsInfo = type.GetFields(Flags);
-            foreach (var info in fieldsInfo)
+            foreach (var info in fieldsInfo) {
                 info.SetValue(comp, info.GetValue(other));
+            }
             return comp as T;
         }
     }

@@ -6,7 +6,7 @@
 //
 //   @internal
 //    Modified  2016-09-21 19:18
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 namespace vFrame.Core.Components

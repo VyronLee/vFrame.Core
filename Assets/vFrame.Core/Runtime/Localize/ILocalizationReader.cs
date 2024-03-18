@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-09-30 21:05
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-09-30 21:05
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 namespace vFrame.Core.Localize

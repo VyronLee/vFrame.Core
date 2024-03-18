@@ -6,12 +6,13 @@
 //
 //   @internal
 //    Modified  2016-07-31 22:34
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
 using System.Collections.Generic;
 using vFrame.Core.Components;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 using vFrame.Core.ObjectPools;
 
@@ -25,6 +26,8 @@ namespace vFrame.Core.Events
         private Dictionary<int, List<EventExecutor>> _eventExecutorLists;
         private Dictionary<int, List<VoteExecutor>> _voteExecutorLists;
 
+        private EventDispatcher() {}
+
         protected override void OnCreate() {
             _eventExecutorLists = new Dictionary<int, List<EventExecutor>>();
             _voteExecutorLists = new Dictionary<int, List<VoteExecutor>>();
@@ -36,8 +39,7 @@ namespace vFrame.Core.Events
         }
 
         public uint AddEventListener(IEventListener listener, int eventId) {
-            if (listener == null)
-                throw new ArgumentNullException("listener");
+            ThrowHelper.ThrowIfNull(listener, nameof(listener));
 
             var executor = EventExecutorPool.Shared.Get();
             executor.EventId = eventId;

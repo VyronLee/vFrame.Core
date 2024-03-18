@@ -1,16 +1,21 @@
 ﻿using UnityEngine;
 using Logger = vFrame.Core.Loggers.Logger;
 
-namespace vFrame.Core.SpawnPools.Behaviours
+namespace vFrame.Core.Unity.SpawnPools
 {
     public class PoolObjectIdentity : MonoBehaviour
     {
-        [SerializeField] private string _assetPath;
-        [SerializeField] private bool _pooling;
-        [SerializeField] private int _uniqueId;
+        [SerializeField]
+        private string _assetPath;
+
+        [SerializeField]
+        private bool _pooling;
+
+        [SerializeField]
+        private int _uniqueId;
 
         private void Awake() {
-            hideFlags = HideFlags.HideAndDontSave | HideFlags.HideInInspector;
+            hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor | HideFlags.HideInInspector;
         }
 
         public string AssetPath {

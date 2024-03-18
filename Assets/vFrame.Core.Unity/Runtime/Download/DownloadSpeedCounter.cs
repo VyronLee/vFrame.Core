@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.Download
+﻿namespace vFrame.Core.Unity.Download
 {
     public class DownloadSpeedCounter
     {

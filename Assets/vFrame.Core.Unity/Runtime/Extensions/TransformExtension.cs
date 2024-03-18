@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//     Modified:  2019-05-09 15:47
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-05-09 15:47
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
@@ -18,28 +18,33 @@ namespace vFrame.Core.Unity.Extensions
 {
     public static class TransformExtension
     {
-        public static void TravelSelfAndChildren<T>(this Transform transform, Action<T> traveller) where T : Component {
+        public static void TraverseSelfAndChildren<T>(this Transform transform, Action<T> traveller) where T : Component {
             var buffer = ListPool<T>.Shared.Get();
             transform.GetComponentsInChildren(true, buffer);
-            foreach (var comp in buffer)
-                traveller.Invoke(comp);
-            ListPool<T>.Shared.Return(buffer);
+            try {
+                foreach (var comp in buffer) {
+                    traveller.Invoke(comp);
+                }
+            }
+            finally {
+                ListPool<T>.Shared.Return(buffer);
+            }
         }
 
         public static void EnableComponents<T>(this Transform transform) where T : Behaviour {
-            TravelSelfAndChildren<T>(transform, v => v.enabled = true);
+            TraverseSelfAndChildren<T>(transform, v => v.enabled = true);
         }
 
         public static void DisableComponents<T>(this Transform transform) where T : Behaviour {
-            TravelSelfAndChildren<T>(transform, v => v.enabled = false);
+            TraverseSelfAndChildren<T>(transform, v => v.enabled = false);
         }
 
         public static void EnableAllRenderer(this Transform transform) {
-            TravelSelfAndChildren<Renderer>(transform, v => v.enabled = true);
+            TraverseSelfAndChildren<Renderer>(transform, v => v.enabled = true);
         }
 
         public static void EnableAllRenderer(this Transform transform, Type exceptType) {
-            TravelSelfAndChildren<Renderer>(transform, v => {
+            TraverseSelfAndChildren<Renderer>(transform, v => {
                 if (exceptType == v.GetType()) {
                     return;
                 }
@@ -48,28 +53,28 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         public static void DisableAllRenderer(this Transform transform) {
-            TravelSelfAndChildren<Renderer>(transform, v => v.enabled = false);
+            TraverseSelfAndChildren<Renderer>(transform, v => v.enabled = false);
         }
 
         public static void EnableAllGraphic(this Transform transform) {
-            TravelSelfAndChildren<Graphic>(transform, v => v.enabled = true);
+            TraverseSelfAndChildren<Graphic>(transform, v => v.enabled = true);
         }
 
         public static void DisableAllGraphic(this Transform transform) {
-            TravelSelfAndChildren<Graphic>(transform, v => v.enabled = false);
+            TraverseSelfAndChildren<Graphic>(transform, v => v.enabled = false);
         }
 
         public static void StartAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform, v => v.Play());
+            TraverseSelfAndChildren<ParticleSystem>(transform, v => v.Play());
         }
 
         public static void StopAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform,
+            TraverseSelfAndChildren<ParticleSystem>(transform,
                 v => v.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear));
         }
 
         public static void ClearAllParticleSystems(this Transform transform) {
-            TravelSelfAndChildren<ParticleSystem>(transform, v => {
+            TraverseSelfAndChildren<ParticleSystem>(transform, v => {
                 v.Clear(true);
             });
         }
@@ -91,42 +96,42 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         public static void StopAllAnimations(this Transform transform) {
-            TravelSelfAndChildren<Animation>(transform, v => v.Stop());
+            TraverseSelfAndChildren<Animation>(transform, v => v.Stop());
         }
 
         public static void StopAllAnimators(this Transform transform) {
-            TravelSelfAndChildren<Animator>(transform, v => v.enabled = false);
+            TraverseSelfAndChildren<Animator>(transform, v => v.enabled = false);
         }
 
         public static void EnableAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => v.enabled = true);
+            TraverseSelfAndChildren<TrailRenderer>(transform, v => v.enabled = true);
         }
 
         public static void DisableAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => v.enabled = false);
+            TraverseSelfAndChildren<TrailRenderer>(transform, v => v.enabled = false);
         }
 
         public static void EnableAndClearAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => {
+            TraverseSelfAndChildren<TrailRenderer>(transform, v => {
                 v.enabled = true;
                 v.Clear();
             });
         }
 
         public static void DisableAndClearAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => {
+            TraverseSelfAndChildren<TrailRenderer>(transform, v => {
                 v.enabled = false;
                 v.Clear();
             });
         }
 
         public static void ClearAllTrailRenderers(this Transform transform) {
-            TravelSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
+            TraverseSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
         }
 
         public static Bounds CalculateBounds(this Transform transform) {
             var bounds = new Bounds();
-            transform.TravelSelfAndChildren<Transform>(v => {
+            transform.TraverseSelfAndChildren<Transform>(v => {
                 var renderer = v.GetComponent<Renderer>();
                 if (null == renderer) {
                     return;

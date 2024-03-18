@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2018-10-20 18:09
-//   Copyright:  Copyright (c) 2018, VyronLee
+//     Created:  2018-10-20 18:09
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;
@@ -102,10 +102,6 @@ namespace vFrame.Core.Loggers
             Log(LogLevelDef.Error, tag, text, args);
         }
 
-        public static void Fatal(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Fatal, tag, text, args);
-        }
-
         public static void Fatal(LogTag tag, Exception exception) {
             Log(LogLevelDef.Fatal, tag, exception);
         }
@@ -124,10 +120,6 @@ namespace vFrame.Core.Loggers
 
         public static void Error(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Error, tag, text, args);
-        }
-
-        public static void Fatal(int skip, LogTag tag, string text, params object[] args) {
-            Log(skip, LogLevelDef.Fatal, tag, text, args);
         }
 
         private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args) {
@@ -247,6 +239,10 @@ namespace vFrame.Core.Loggers
 
         public static void Error(string text, params object[] args) {
             Log(LogLevelDef.Error, EmptyLogTag, text, args);
+        }
+
+        public static void Fatal(Exception exception) {
+            Fatal(EmptyLogTag, exception);
         }
 
         public static IEnumerable<LogContext> Logs(int logMask) {

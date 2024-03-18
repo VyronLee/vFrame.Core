@@ -1,11 +1,12 @@
 ﻿using System.IO;
+using ByteArrayPool = System.Buffers.ArrayPool<byte>;
 
 namespace vFrame.Core.Extensions
 {
     public static class StreamExtension
     {
         public static void BufferedCopyTo(this Stream fromStream, Stream toStream, int size) {
-            var byteArrayPool = System.Buffers.ArrayPool<byte>.Shared;
+            var byteArrayPool = ByteArrayPool.Shared;
             var buffer = byteArrayPool.Rent(size);
 
             var count = fromStream.Read(buffer, 0, size);

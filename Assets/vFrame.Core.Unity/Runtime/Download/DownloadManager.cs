@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
-namespace vFrame.Core.Download
+namespace vFrame.Core.Unity.Download
 {
     public class DownloadManager : MonoBehaviour
     {

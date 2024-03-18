@@ -17,7 +17,7 @@ namespace vFrame.Core.MultiThreading
         }
 
         private void RunTask(object state) {
-            if (IsDestroyed) {
+            if (Destroyed) {
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace vFrame.Core.MultiThreading
         }
 
         private void RunTask(object state) {
-            if (IsDestroyed) {
+            if (Destroyed) {
                 return;
             }
 

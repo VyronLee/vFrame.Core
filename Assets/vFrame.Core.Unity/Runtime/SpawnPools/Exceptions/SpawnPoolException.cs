@@ -1,16 +1,10 @@
-﻿using System;
+﻿using vFrame.Core.Exceptions;
 
-namespace vFrame.Core.SpawnPools.Exceptions
+namespace vFrame.Core.Unity.SpawnPools
 {
-    public class SpawnPoolException : Exception
+    public class SpawnPoolException : vFrameException
     {
-        public SpawnPoolException() {
-
-        }
-
-        public SpawnPoolException(string message) : base(message) {
-
-        }
-
+        public SpawnPoolException() {}
+        public SpawnPoolException(string message) : base(message) {}
     }
 }

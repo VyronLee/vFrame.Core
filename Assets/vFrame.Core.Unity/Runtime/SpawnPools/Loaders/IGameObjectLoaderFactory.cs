@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.SpawnPools.Loaders
+﻿namespace vFrame.Core.Unity.SpawnPools
 {
     public interface IGameObjectLoaderFactory
     {

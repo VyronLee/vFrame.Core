@@ -4,15 +4,15 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2018-12-24 11:52
-//   Copyright:  Copyright (c) 2018, VyronLee
+//     Created:  2018-12-24 11:52
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace vFrame.Core.Utils.Unity
+namespace vFrame.Core.Unity.Utils
 {
     public static class InputUtils
     {

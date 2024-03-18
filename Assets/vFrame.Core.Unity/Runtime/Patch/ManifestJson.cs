@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace vFrame.Core.Patch
+namespace vFrame.Core.Unity.Patch
 {
     [Serializable]
     public class ManifestJson
