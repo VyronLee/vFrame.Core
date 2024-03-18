@@ -1,6 +1,4 @@
-﻿using vFrame.Core.Base;
-
-namespace vFrame.Core.MultiThreading
+﻿namespace vFrame.Core.MultiThreading
 {
     public interface IAsyncRequest : IAsync
     {

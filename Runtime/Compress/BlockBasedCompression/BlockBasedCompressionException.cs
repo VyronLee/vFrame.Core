@@ -1,56 +1,53 @@
-﻿using System;
+﻿using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Compress.BlockBasedCompression
 {
-    public class BlockBasedCompressionException : Exception
+    public class BlockBasedCompressionException : vFrameException
+    {
+        public BlockBasedCompressionException(){}
+        public BlockBasedCompressionException(string message) : base(message) {}
+    }
+
+    public class InvalidBlockBasedCompressionFormatException : BlockBasedCompressionException
     {
 
     }
 
-    public class InvalidBlockBasedCompressionFormatException : Exception
+    public class BlockTableDataErrorException : BlockBasedCompressionException
     {
 
     }
 
-    public class BlockBasedCompressionBlockTableDataErrorException : Exception
+    public class DataNotEnoughException : BlockBasedCompressionException
     {
 
     }
 
-    public class BlockBasedCompressionDataNotEnoughException : Exception
+    public class IndexOutOfRangeException : BlockBasedCompressionException
     {
 
     }
 
-    public class BlockBasedCompressionIndexOutOfRangeException : Exception
+    public class HashNotMatchException : BlockBasedCompressionException
     {
 
     }
 
-    public class BlockBasedCompressionHashNotMatchException : Exception
+    public class StateBusyException : BlockBasedCompressionException
     {
 
     }
 
-    public class BlockBasedCompressionStateBusyException : Exception
+    public class BufferSizeTooSmallException : BlockBasedCompressionException
     {
-
-    }
-
-    public class BlockBasedCompressionBufferTooSmallException : Exception
-    {
-        public BlockBasedCompressionBufferTooSmallException(byte[] buffer, long excepted)
+        public BufferSizeTooSmallException(byte[] buffer, long excepted)
             : base($"Buffer too small: {buffer.Length}, excepted: {excepted}") {
         }
     }
 
-    public class BlockBasedCompressionBufferSizeTooLargeException : Exception
+    public class BufferSizeTooLargeException : BlockBasedCompressionException
     {
-        public BlockBasedCompressionBufferSizeTooLargeException() : base() {
-
-        }
-
-        public BlockBasedCompressionBufferSizeTooLargeException(long outLength) : base($"Size too large: {outLength}") {
+        public BufferSizeTooLargeException(long outLength) : base($"Size too large: {outLength}") {
 
         }
     }

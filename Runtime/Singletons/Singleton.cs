@@ -6,10 +6,9 @@
 //
 //   @internal
 //    Modified  2016-07-28 15:19
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-using System.Diagnostics;
 using vFrame.Core.Base;
 
 namespace vFrame.Core.Singletons
@@ -24,7 +23,9 @@ namespace vFrame.Core.Singletons
         /// 构造函数
         /// </summary>
         protected Singleton() {
-            Debug.Assert(null == _instance, "Singleton duplicate.");
+            if (null != _instance) {
+                throw new SingletonDuplicatedException();
+            }
             _instance = this as T;
         }
 
@@ -32,20 +33,22 @@ namespace vFrame.Core.Singletons
         /// 销毁函数
         /// </summary>
         protected override void OnDestroy() {
-            if (_instance == this)
+            if (_instance == this) {
                 _instance = null;
+            }
         }
 
         /// <summary>
         ///     获取单例
         /// </summary>
         public static T Instance() {
-            if (null == _instance)
+            if (null == _instance) {
                 lock (_lockObject) {
-                    if (null == _instance)
+                    if (null == _instance) {
                         _instance = NewInstance();
+                    }
                 }
-
+            }
             return _instance;
         }
 

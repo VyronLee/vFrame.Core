@@ -12,15 +12,15 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 {
     public class BlockBasedCompressionHeader
     {
-        public long Id;
-        public long Version;
+        public long Id { get; set; }
+        public long Version { get; set; }
         public CompressType CompressType { get; set; } = CompressType.LZMA;
         public int BlockSize { get; set; } = 1024;
         public int BlockCount { get; set; }
         public long BlockTableOffset { get; set; }
         public string Md5 { get; set; }
 
-        public static int GetMarshalSize() {
+        public static int GetStructSize() {
             return sizeof(long) * 3 + sizeof(int) * 3 + 32;
         }
     }
@@ -37,7 +37,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             }
 
             if (blockIndex < 0 || blockIndex >= BlockInfos.Length) {
-                throw new BlockBasedCompressionIndexOutOfRangeException();
+                throw new IndexOutOfRangeException();
             }
 
             foreach (var blockInfo in BlockInfos) {
@@ -53,7 +53,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 return;
             }
             if (_blockIterator < 0 || _blockIterator >= BlockInfos.Length) {
-                throw new BlockBasedCompressionIndexOutOfRangeException();
+                throw new IndexOutOfRangeException();
             }
             BlockInfos[_blockIterator++] = blockInfo;
         }
@@ -155,7 +155,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             lock (_outputLock) {
                 _outputStart = output.Position;
-                output.Seek(_outputStart + BlockBasedCompressionHeader.GetMarshalSize(), SeekOrigin.Begin);
+                output.Seek(_outputStart + BlockBasedCompressionHeader.GetStructSize(), SeekOrigin.Begin);
             }
             PerfProfile.Unpin(id);
         }
@@ -163,7 +163,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         protected void EndCompress(Stream output) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("EndCompress", id);
-            _header.BlockTableOffset = BlockBasedCompressionHeader.GetMarshalSize();
+            _header.BlockTableOffset = BlockBasedCompressionHeader.GetStructSize();
 
             lock (_blockTable) {
                 var lastBlock = _blockTable?.BlockInfos?.Last();
@@ -259,7 +259,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 input.Seek(blockOffset, SeekOrigin.Begin);
 
                 if (blockOffset >= input.Length) {
-                    throw new BlockBasedCompressionDataNotEnoughException();
+                    throw new DataNotEnoughException();
                 }
 
                 // Read data
@@ -306,7 +306,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize, bool compressed) {
             lock (_blockTable) {
                 if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
-                    throw new BlockBasedCompressionIndexOutOfRangeException();
+                    throw new IndexOutOfRangeException();
                 }
 
                 var blockInfo = new BlockBasedCompressionBlockInfo {
@@ -353,7 +353,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 if (!SkipValidation) {
                     var md5 = MessageDigestUtils.MD5(output);
                     if (md5 != _header.Md5) {
-                        throw new BlockBasedCompressionHashNotMatchException();
+                        throw new HashNotMatchException();
                     }
                 }
             }
@@ -409,7 +409,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         {
             var blockInfo = _blockTable.FindBlock(blockIndex);
             if (null == blockInfo) {
-                throw new BlockBasedCompressionBlockTableDataErrorException();
+                throw new BlockTableDataErrorException();
             }
 
             lock (_inputLock) {
@@ -417,16 +417,16 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
                 // Read data
                 if (input.Position + blockInfo.CompressedSize >= input.Length) {
-                    throw new BlockBasedCompressionDataNotEnoughException();
+                    throw new DataNotEnoughException();
                 }
 
                 if (dataBuffer.Length < blockInfo.CompressedSize) {
-                    throw new BlockBasedCompressionBufferTooSmallException(dataBuffer, blockInfo.CompressedSize);
+                    throw new BufferSizeTooSmallException(dataBuffer, blockInfo.CompressedSize);
                 }
 
                 var lengthRead = input.Read(dataBuffer, 0, blockInfo.CompressedSize);
                 if (lengthRead != blockInfo.CompressedSize) {
-                    throw new BlockBasedCompressionDataNotEnoughException();
+                    throw new DataNotEnoughException();
                 }
                 dataLength = lengthRead;
             }
@@ -457,7 +457,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     outStream.SetLength(0);
                     service.Decompress(inStream, outStream);
                     if (outStream.Length > int.MaxValue) {
-                        throw new BlockBasedCompressionBufferSizeTooLargeException(outStream.Length);
+                        throw new BufferSizeTooLargeException(outStream.Length);
                     }
                     outLength = (int)outStream.Length;
                 }

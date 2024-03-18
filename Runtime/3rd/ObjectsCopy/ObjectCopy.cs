@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using vFrame.Core.Extensions;
 
-namespace vFrame.Core.Base
+namespace vFrame.Core.ThirdParty.ObjectsCopy
 {
     internal static class ObjectCopy
     {
@@ -46,7 +46,7 @@ namespace vFrame.Core.Base
             if (originalObject == null) {
                 return null;
             }
-            
+
             var typeToReflect = originalObject.GetType();
             if (typeToReflect.IsPrimitive()) {
                 return originalObject;
@@ -59,7 +59,7 @@ namespace vFrame.Core.Base
             if (typeof(Delegate).IsAssignableFrom(typeToReflect)) {
                 return null;
             }
-            
+
             var cloneObject = CloneMethod.Invoke(originalObject, null);
             InternalCopyFrom(cloneObject, originalObject, visited);
             return cloneObject;
@@ -73,7 +73,7 @@ namespace vFrame.Core.Base
             if (typeToReflect.BaseType == null) {
                 return;
             }
-            
+
             RecursiveCopyBaseTypePrivateFields(originalObject, visited, cloneObject, typeToReflect.BaseType);
             CopyFields(originalObject,
                 visited,

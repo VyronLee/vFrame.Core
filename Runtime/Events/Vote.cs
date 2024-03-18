@@ -6,7 +6,7 @@
 //
 //   @internal
 //    Modified  2016-08-03 18:03
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 using vFrame.Core.Base;

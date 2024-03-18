@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using vFrame.Core.Exceptions;
 using vFrame.Core.MultiThreading;
 
 namespace vFrame.Core.Compress.BlockBasedCompression
@@ -48,7 +49,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             BlockBasedCompressionOptions options)
         {
             if (_state != CompressionState.Idle) {
-                throw new BlockBasedCompressionStateBusyException();
+                throw new StateBusyException();
             }
 
             _state = CompressionState.Compressing;
@@ -63,7 +64,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             for (var i = 0; i < BlockCount; i++) {
                 var stateContext = new CompressThreadState {
                     Input = input,
-                    Ouput = output,
+                    Output = output,
                     Options = options,
                     Request = request,
                     BlockIndex = i
@@ -80,7 +81,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         }
 
         private void CompressInternal(CompressThreadState state) {
-            SafeCompress(state.Input, state.Ouput, state.Options, state.BlockIndex);
+            SafeCompress(state.Input, state.Output, state.Options, state.BlockIndex);
 
             state.Request.IncreaseFinishedCount();
         }
@@ -100,7 +101,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             Stream output)
         {
             if (_state != CompressionState.Idle) {
-                throw new BlockBasedCompressionStateBusyException();
+                throw new StateBusyException();
             }
 
             _state = CompressionState.Decompressing;
@@ -115,7 +116,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             for (var i = 0; i < BlockCount; i++) {
                 var stateContext = new DecompressThreadState {
                     Input = input,
-                    Ouput = output,
+                    Output = output,
                     Request = request,
                     BlockIndex = i
                 };
@@ -131,7 +132,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         }
 
         private void DecompressInternal(DecompressThreadState state) {
-            SafeDecompress(state.Input, state.Ouput, state.BlockIndex);
+            SafeDecompress(state.Input, state.Output, state.BlockIndex);
 
             state.Request.IncreaseFinishedCount();
         }
@@ -154,7 +155,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         private class CompressThreadState
         {
             public Stream Input { get; set; }
-            public Stream Ouput { get; set; }
+            public Stream Output { get; set; }
             public int BlockIndex { get; set; }
             public BlockBasedCompressionOptions Options { get; set; }
             public BlockBasedCompressionRequest Request { get; set; }
@@ -163,7 +164,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
         private class DecompressThreadState
         {
             public Stream Input { get; set; }
-            public Stream Ouput { get; set; }
+            public Stream Output { get; set; }
             public int BlockIndex { get; set; }
             public BlockBasedDecompressionRequest Request { get; set; }
         }
@@ -186,7 +187,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             private readonly MultiThreadBlockBasedCompression _compression;
 
             public BlockBasedCompressionRequest(MultiThreadBlockBasedCompression compression) {
-                _compression = compression ?? throw new ArgumentNullException(nameof(compression));
+                ThrowHelper.ThrowIfNull(compression, nameof(compression));
+                _compression = compression;
             }
 
             public void IncreaseFinishedCount() {
@@ -222,7 +224,8 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             private readonly MultiThreadBlockBasedCompression _compression;
 
             public BlockBasedDecompressionRequest(MultiThreadBlockBasedCompression compression) {
-                _compression = compression ?? throw new ArgumentNullException(nameof(compression));
+                ThrowHelper.ThrowIfNull(compression, nameof(compression));
+                _compression = compression;
             }
 
             public void IncreaseFinishedCount() {

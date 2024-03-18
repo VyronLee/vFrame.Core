@@ -1,110 +1,143 @@
 ﻿//------------------------------------------------------------
 //       @file  BaseObject.cs
-//      @brief  扩展基础类型
+//      @brief  Base object class.
 //
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
 //    Modified  2016-07-29 11:01
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 namespace vFrame.Core.Base
 {
-    public abstract class BaseObject : IBaseObject
+    public abstract class Object : IDestroyable
     {
-        /// <summary>
-        /// 是否已经销毁
-        /// </summary>
-        protected bool _destroyed = false;
+        public bool Created { get; protected set; }
+        public bool Destroyed { get; protected set; }
 
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        public void Create() {
-            OnCreate();
-            _destroyed = false;
-        }
-
-        /// <summary>
-        ///     释放函数
-        /// </summary>
         public void Destroy() {
-            OnDestroy();
-            _destroyed = true;
+            if (Destroyed) {
+                return;
+            }
+            try {
+                OnDestroy();
+            }
+            finally {
+                Destroyed = true;
+                Created = false;
+            }
         }
 
-        /// <summary>
-        ///     构造处理
-        /// </summary>
-        protected abstract void OnCreate();
-
-        /// <summary>
-        ///     析构处理
-        /// </summary>
         protected abstract void OnDestroy();
 
-        /// <summary>
-        /// 如果已经销毁，抛出异常
-        /// </summary>
-        /// <exception cref="BaseObjectDestroyedException"></exception>
+        public void Dispose() {
+            Destroy();
+        }
+
         protected void ThrowIfDestroyed() {
-            if (_destroyed) {
+            if (Destroyed) {
                 throw new BaseObjectDestroyedException();
             }
         }
 
+        protected void ThrowIfNotCreated() {
+            if (!Created) {
+                throw new BaseObjectNotCreatedException();
+            }
+        }
     }
 
-    public abstract class BaseObject<T1> : BaseObject, IBaseObject<T1>
+    public abstract class BaseObject : Object, IBaseObject
+    {
+        public void Create() {
+            if (Created) {
+                return;
+            }
+            try {
+                OnCreate();
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
+        }
+
+        protected abstract void OnCreate();
+    }
+
+    public abstract class BaseObject<T1> : Object, IBaseObject<T1>
     {
         public void Create(T1 arg1) {
-            OnCreate(arg1);
-            _destroyed = false;
+            try {
+                OnCreate(arg1);
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
         }
 
         protected abstract void OnCreate(T1 arg1);
-
-        protected override void OnCreate() {
-        }
     }
 
-    public abstract class BaseObject<T1, T2> : BaseObject, IBaseObject<T1, T2>
+    public abstract class BaseObject<T1, T2> : Object, IBaseObject<T1, T2>
     {
         public void Create(T1 arg1, T2 arg2) {
-            OnCreate(arg1, arg2);
-            _destroyed = false;
+            try {
+                OnCreate(arg1, arg2);
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2);
-
-        protected override void OnCreate() {
-        }
     }
 
-    public abstract class BaseObject<T1, T2, T3> : BaseObject, IBaseObject<T1, T2, T3>
+    public abstract class BaseObject<T1, T2, T3> : Object, IBaseObject<T1, T2, T3>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3) {
-            OnCreate(arg1, arg2, arg3);
-            _destroyed = false;
+            try {
+                OnCreate(arg1, arg2, arg3);
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3);
-
-        protected override void OnCreate() {
-        }
     }
 
-    public abstract class BaseObject<T1, T2, T3, T4> : BaseObject, IBaseObject<T1, T2, T3, T4>
+    public abstract class BaseObject<T1, T2, T3, T4> : Object, IBaseObject<T1, T2, T3, T4>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-            OnCreate(arg1, arg2, arg3, arg4);
-            _destroyed = false;
+            try {
+                OnCreate(arg1, arg2, arg3, arg4);
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
+    }
 
-        protected override void OnCreate() {
+    public abstract class BaseObject<T1, T2, T3, T4, T5> : Object, IBaseObject<T1, T2, T3, T4, T5>
+    {
+        public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+            try {
+                OnCreate(arg1, arg2, arg3, arg4, arg5);
+            }
+            finally {
+                Created = true;
+                Destroyed = false;
+            }
         }
+
+        protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
     }
 }

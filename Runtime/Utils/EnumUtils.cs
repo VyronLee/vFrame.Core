@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-09-09 17:01
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-09-09 17:01
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System;

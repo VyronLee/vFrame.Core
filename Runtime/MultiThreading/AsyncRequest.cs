@@ -3,26 +3,16 @@ using vFrame.Core.Base;
 
 namespace vFrame.Core.MultiThreading
 {
-    public class AsyncRequest<TArg> : BaseObject<TArg>, IAsyncRequest, IDisposable
+    public class AsyncRequest<TArg> : BaseObject<TArg>, IAsyncRequest
     {
         protected TArg Arg { get; private set; }
-        protected bool IsDestroyed { get; private set; }
 
         protected override void OnCreate(TArg arg) {
             Arg = arg;
-            IsDestroyed = false;
         }
 
         protected override void OnDestroy() {
             Arg = default;
-            IsDestroyed = true;
-        }
-
-        public void Dispose() {
-            if (IsDestroyed) {
-                return;
-            }
-            Destroy();
         }
 
         public bool MoveNext() {
@@ -38,28 +28,18 @@ namespace vFrame.Core.MultiThreading
         public float Progress { get; protected set; }
     }
 
-    public class AsyncRequest<TRet, TArg> : BaseObject<TArg>, IAsyncRequest<TRet>, IDisposable
+    public class AsyncRequest<TRet, TArg> : BaseObject<TArg>, IAsyncRequest<TRet>
     {
         public TRet Value { get; protected set; }
         protected TArg Arg { get; private set; }
-        protected bool IsDestroyed { get; private set; }
 
         protected override void OnCreate(TArg arg) {
             Arg = arg;
-            IsDestroyed = false;
         }
 
         protected override void OnDestroy() {
             Arg = default;
             Value = default;
-            IsDestroyed = true;
-        }
-
-        public void Dispose() {
-            if (IsDestroyed) {
-                return;
-            }
-            Destroy();
         }
 
         public bool MoveNext() {
@@ -72,7 +52,7 @@ namespace vFrame.Core.MultiThreading
 
         public object Current => Value;
 
-        public bool IsDone { get; protected set; }
-        public float Progress { get; protected set; }
+        public virtual bool IsDone { get; protected set; }
+        public virtual float Progress { get; protected set; }
     }
 }

@@ -4,13 +4,13 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2019-02-15 20:05
-//   Copyright:  Copyright (c) 2019, VyronLee
+//     Created:  2019-02-15 20:05
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 using System.Collections;
 
-namespace vFrame.Core.Base
+namespace vFrame.Core.MultiThreading
 {
     public interface IAsync : IEnumerator
     {

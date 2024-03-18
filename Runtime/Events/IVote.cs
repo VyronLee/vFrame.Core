@@ -6,7 +6,7 @@
 //
 //   @internal
 //    Modified  2016-07-31 22:24
-//   Copyright  Copyright (c) 2016, VyronLee
+//   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
 namespace vFrame.Core.Events

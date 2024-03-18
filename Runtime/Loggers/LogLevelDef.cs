@@ -4,8 +4,8 @@
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//    Modified:  2018-10-20 18:06
-//   Copyright:  Copyright (c) 2018, VyronLee
+//     Created:  2018-10-20 18:06
+//   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
 namespace vFrame.Core.Loggers
