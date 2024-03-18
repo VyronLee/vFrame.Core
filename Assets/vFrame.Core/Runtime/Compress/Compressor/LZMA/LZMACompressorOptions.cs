@@ -1,6 +1,6 @@
-﻿namespace vFrame.Core.Compress.Services.LZMA
+﻿namespace vFrame.Core.Compress
 {
-    public class LZMACompressOptions : CompressServiceOptions
+    public class LZMACompressorOptions : CompressorOptions
     {
         public enum LZMASpeed
         {

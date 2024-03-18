@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace vFrame.Core.Compress.Services
+namespace vFrame.Core.Compress
 {
-    public interface ICompressService
+    public interface ICompressor : IDisposable
     {
         void Compress(Stream input, Stream output);
         void Compress(Stream input, Stream output, Action<long, long> onProgress);

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace vFrame.Core.Compress.BlockBasedCompression
+namespace vFrame.Core.Compress
 {
-    public class SingleThreadBlockBasedCompression : BlockBasedCompression
+    public class SynchronousBlockBasedCompression : BlockBasedCompression
     {
         public void Compress(Stream input, Stream output, BlockBasedCompressionOptions options, Action<int, int> onProgress = null) {
             BeginCompress(input, output, options);

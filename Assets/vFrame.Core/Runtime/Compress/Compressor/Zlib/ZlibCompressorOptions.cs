@@ -1,8 +1,8 @@
 ﻿using vFrame.Core.ThirdParty.Zlib;
 
-namespace vFrame.Core.Compress.Services.Zlib
+namespace vFrame.Core.Compress
 {
-    public class ZlibCompressOptions : CompressServiceOptions
+    public class ZlibCompressorOptions : CompressorOptions
     {
         public CompressionLevel Level { get; set; } = CompressionLevel.BestCompression;
     }
