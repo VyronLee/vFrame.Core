@@ -1,6 +1,6 @@
-﻿namespace vFrame.Core.Compress.Services
+﻿namespace vFrame.Core.Compress
 {
-    public enum CompressType
+    public enum CompressorType
     {
         Invalid = 0,
         LZMA = 1,

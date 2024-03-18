@@ -3,18 +3,17 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using vFrame.Core.Base;
-using vFrame.Core.Compress.Services;
 using vFrame.Core.Extensions;
 using vFrame.Core.Profiles;
 using vFrame.Core.Utils;
 
-namespace vFrame.Core.Compress.BlockBasedCompression
+namespace vFrame.Core.Compress
 {
     public class BlockBasedCompressionHeader
     {
         public long Id { get; set; }
         public long Version { get; set; }
-        public CompressType CompressType { get; set; } = CompressType.LZMA;
+        public CompressorType CompressorType { get; set; } = CompressorType.LZMA;
         public int BlockSize { get; set; } = 1024;
         public int BlockCount { get; set; }
         public long BlockTableOffset { get; set; }
@@ -109,7 +108,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                     using (var reader = new BinaryReader(input, Encoding.UTF8, true)) {
                         header.Id = reader.ReadInt64();
                         header.Version = reader.ReadInt64();
-                        header.CompressType = (CompressType) reader.ReadInt32();
+                        header.CompressorType = (CompressorType) reader.ReadInt32();
                         header.BlockSize = reader.ReadInt32();
                         header.BlockCount = reader.ReadInt32();
                         header.BlockTableOffset = reader.ReadInt64();
@@ -185,7 +184,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             var ret = true;
             ret &= header.Id == BlockBasedCompressionConst.Id;
             ret &= header.Version == BlockBasedCompressionConst.Version;
-            ret &= header.CompressType != CompressType.Invalid;
+            ret &= header.CompressorType != CompressorType.Invalid;
             ret &= header.Md5 != string.Empty;
             return ret;
         }
@@ -196,7 +195,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             var header = new BlockBasedCompressionHeader {
                 Id = BlockBasedCompressionConst.Id,
                 Version = BlockBasedCompressionConst.Version,
-                CompressType = options.CompressType,
+                CompressorType = options.CompressorType,
                 BlockSize = options.BlockSize,
                 BlockCount = blockCount,
                 Md5 = md5
@@ -217,7 +216,7 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 using (var writer = new BinaryWriter(output, Encoding.UTF8, true)) {
                     writer.Write(BlockBasedCompressionConst.Id);
                     writer.Write(BlockBasedCompressionConst.Version);
-                    writer.Write((int)header.CompressType);
+                    writer.Write((int)header.CompressorType);
                     writer.Write(header.BlockSize);
                     writer.Write(header.BlockCount);
                     writer.Write(header.BlockTableOffset);
@@ -274,26 +273,26 @@ namespace vFrame.Core.Compress.BlockBasedCompression
             out int outLength,
             out bool compressed)
         {
-            var service = CompressService.CreateCompressService(options.CompressType, options.CompressOptions);
-            using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
-                //using (var outStream = new MemoryStream(outBuffer)) {  //System.NotSupportedException: Memory stream is not expandable.
-                using (var outStream = new MemoryStream(dataLength)) {
-                    outStream.SetLength(0);
-                    service.Compress(inStream, outStream);
+            using (var compressor = CompressorPool.Instance().Rent(options.CompressorType, options.CompressOptions)) {
+                using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
+                    //using (var outStream = new MemoryStream(outBuffer)) {  //System.NotSupportedException: Memory stream is not expandable.
+                    using (var outStream = new MemoryStream(dataLength)) {
+                        outStream.SetLength(0);
+                        compressor.Compress(inStream, outStream);
 
-                    if (outStream.Length > outBuffer.Length) { // Discard if size is larger after compressed.
-                        Array.Copy(dataBuffer, 0, outBuffer, 0, dataLength);
-                        outLength = dataLength;
-                        compressed = false;
-                    }
-                    else {
-                        Array.Copy(outStream.GetBuffer(), 0, outBuffer, 0, outStream.Length);
-                        outLength = (int)outStream.Length;
-                        compressed = true;
+                        if (outStream.Length > outBuffer.Length) { // Discard if size is larger after compressed.
+                            Array.Copy(dataBuffer, 0, outBuffer, 0, dataLength);
+                            outLength = dataLength;
+                            compressed = false;
+                        }
+                        else {
+                            Array.Copy(outStream.GetBuffer(), 0, outBuffer, 0, outStream.Length);
+                            outLength = (int)outStream.Length;
+                            compressed = true;
+                        }
                     }
                 }
             }
-            CompressService.DestroyCompressService(service);
         }
 
         private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength, out long offset) {
@@ -451,18 +450,18 @@ namespace vFrame.Core.Compress.BlockBasedCompression
                 return;
             }
 
-            var service = CompressService.CreateCompressService(_header.CompressType);
-            using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
-                using (var outStream = new MemoryStream(outBuffer)) {
-                    outStream.SetLength(0);
-                    service.Decompress(inStream, outStream);
-                    if (outStream.Length > int.MaxValue) {
-                        throw new BufferSizeTooLargeException(outStream.Length);
+            using (var compressor = CompressorPool.Instance().Rent(_header.CompressorType)) {
+                using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
+                    using (var outStream = new MemoryStream(outBuffer)) {
+                        outStream.SetLength(0);
+                        compressor.Decompress(inStream, outStream);
+                        if (outStream.Length > int.MaxValue) {
+                            throw new BufferSizeTooLargeException(outStream.Length);
+                        }
+                        outLength = (int)outStream.Length;
                     }
-                    outLength = (int)outStream.Length;
                 }
             }
-            CompressService.DestroyCompressService(service);
         }
 
 

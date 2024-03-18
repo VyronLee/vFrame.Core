@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.Compress.BlockBasedCompression
+﻿namespace vFrame.Core.Compress
 {
     public class BlockBasedCompressionConst
     {

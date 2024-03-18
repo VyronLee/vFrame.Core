@@ -20,16 +20,6 @@ namespace vFrame.Core.Singletons
         private static readonly object _lockObject = new object();
 
         /// <summary>
-        /// 构造函数
-        /// </summary>
-        protected Singleton() {
-            if (null != _instance) {
-                throw new SingletonDuplicatedException();
-            }
-            _instance = this as T;
-        }
-
-        /// <summary>
         /// 销毁函数
         /// </summary>
         protected override void OnDestroy() {

@@ -6,9 +6,9 @@ using System.Threading;
 using vFrame.Core.Exceptions;
 using vFrame.Core.MultiThreading;
 
-namespace vFrame.Core.Compress.BlockBasedCompression
+namespace vFrame.Core.Compress
 {
-    public class MultiThreadBlockBasedCompression : BlockBasedCompression
+    public class AsynchronousBlockBasedCompression : BlockBasedCompression
     {
         private enum CompressionState
         {
@@ -184,9 +184,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             public Exception Error => _compression?.LastError;
 
-            private readonly MultiThreadBlockBasedCompression _compression;
+            private readonly AsynchronousBlockBasedCompression _compression;
 
-            public BlockBasedCompressionRequest(MultiThreadBlockBasedCompression compression) {
+            public BlockBasedCompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
             }
@@ -221,9 +221,9 @@ namespace vFrame.Core.Compress.BlockBasedCompression
 
             public Exception Error => _compression?.LastError;
 
-            private readonly MultiThreadBlockBasedCompression _compression;
+            private readonly AsynchronousBlockBasedCompression _compression;
 
-            public BlockBasedDecompressionRequest(MultiThreadBlockBasedCompression compression) {
+            public BlockBasedDecompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
             }

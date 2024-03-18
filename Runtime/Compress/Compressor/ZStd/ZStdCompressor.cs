@@ -1,16 +1,19 @@
 ﻿using System;
 using System.IO;
-using vFrame.Core.ThirdParty.Zlib;
+using System.IO.Compression;
+using vFrame.Core.ThirdParty.ZStd;
 
-namespace vFrame.Core.Compress.Services.Zlib
+namespace vFrame.Core.Compress
 {
-    public class ZlibCompressService : CompressService
+    public class ZStdCompressor : Compressor
     {
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
-            var options = Options as ZlibCompressOptions ?? new ZlibCompressOptions();
-            using (var encoder = new DeflateStream(output, CompressionMode.Compress, options.Level, true)) {
+            var options = Options as ZStdCompressorOptions ?? new ZStdCompressorOptions();
+            using (var encoder = new ZstandardStream(output, CompressionMode.Compress, true)) {
+                encoder.CompressionLevel = options.Level;
+
                 int length;
-                var buffer = new byte[81920];
+                var buffer = new byte[options.BuffSize];
                 while ((length = input.Read(buffer, 0, buffer.Length)) > 0) {
                     encoder.Write(buffer, 0, length);
                 }
@@ -18,10 +21,9 @@ namespace vFrame.Core.Compress.Services.Zlib
         }
 
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
-            var options = Options as ZlibCompressOptions ?? new ZlibCompressOptions();
-            using (var decoder = new DeflateStream(input, CompressionMode.Decompress, options.Level, true)) {
+            using (var decoder = new ZstandardStream(input, CompressionMode.Decompress, true)) {
                 int length;
-                var buffer = new byte[81920];
+                var buffer = new byte[Options.BuffSize];
                 while ((length = decoder.Read(buffer, 0, buffer.Length)) > 0) {
                     output.Write(buffer, 0 ,length);
                 }
