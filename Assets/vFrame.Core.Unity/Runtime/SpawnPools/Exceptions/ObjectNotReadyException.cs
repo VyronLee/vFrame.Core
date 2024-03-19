@@ -1,6 +1,4 @@
 ﻿namespace vFrame.Core.Unity.SpawnPools
 {
-    public class ObjectNotReadyException : SpawnPoolException
-    {
-    }
+    public class ObjectNotReadyException : SpawnPoolException { }
 }

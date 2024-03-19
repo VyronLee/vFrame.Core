@@ -22,7 +22,7 @@ namespace vFrame.Core.Compression
                 int length;
                 var buffer = new byte[Options.BuffSize];
                 while ((length = decoder.Read(buffer, 0, buffer.Length)) > 0) {
-                    output.Write(buffer, 0 ,length);
+                    output.Write(buffer, 0, length);
                 }
             }
         }

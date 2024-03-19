@@ -12,9 +12,7 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Events
 {
-    internal class VotePool : ObjectPool<Vote, VoteAllocator>
-    {
-    }
+    internal class VotePool : ObjectPool<Vote, VoteAllocator> { }
 
     internal class VoteAllocator : IPoolObjectAllocator<Vote>
     {

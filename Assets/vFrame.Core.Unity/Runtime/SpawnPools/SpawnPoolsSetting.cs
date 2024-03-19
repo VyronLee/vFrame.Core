@@ -18,16 +18,16 @@ namespace vFrame.Core.Unity.SpawnPools
         public enum PoolObjectHiddenType
         {
             Deactive,
-            Position,
+            Position
         }
-
-        private static readonly SpawnPoolsSetting _default = new SpawnPoolsSetting();
 
         public const int DefaultCapacity = 40;
         public const int DefaultLifeTime = 30 * 60 * 5; // 5min by 30fps
         public const int DefaultGCInterval = 600; // 600 frames, 20s by 30fps
-        public static readonly Vector3 DefaultRootPosition = new Vector3(-1000, -1000, -1000);
         public const int DefaultAsyncLoadCount = int.MaxValue;
+
+        public static readonly Vector3 DefaultRootPosition = new Vector3(-1000, -1000, -1000);
+        public static LogTag LogTag = new LogTag("SpawnPools");
 
         public int Capacity { get; set; } = DefaultCapacity;
         public int LifeTime { get; set; } = DefaultLifeTime;
@@ -36,7 +36,6 @@ namespace vFrame.Core.Unity.SpawnPools
         public Vector3 RootPosition { get; set; } = DefaultRootPosition;
         public PoolObjectHiddenType HiddenType { get; set; } = PoolObjectHiddenType.Deactive;
 
-        public static SpawnPoolsSetting Default => _default;
-        public static LogTag LogTag = new LogTag("SpawnPools");
+        public static SpawnPoolsSetting Default { get; } = new SpawnPoolsSetting();
     }
 }

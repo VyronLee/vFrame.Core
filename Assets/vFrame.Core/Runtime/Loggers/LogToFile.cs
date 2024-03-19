@@ -9,14 +9,13 @@ namespace vFrame.Core.Loggers
 {
     public class LogToFile : BaseObject<string>
     {
-        private readonly ConcurrentQueue<string> _logQueue = new ConcurrentQueue<string>();
-        private Task _task;
-        private string _logPath;
-
         // 每10s写入一次日志
         private const int WaitForMilliseconds = 10000;
-        private CancellationTokenSource _cancellationTokenSource;
         private readonly object _lockObject = new object();
+        private readonly ConcurrentQueue<string> _logQueue = new ConcurrentQueue<string>();
+        private CancellationTokenSource _cancellationTokenSource;
+        private string _logPath;
+        private Task _task;
 
         public bool AppendTimestamp { get; set; }
         public string AppendTimestampFormat { get; set; } = "[yyyy-MM-dd HH:mm:ss.fff] ";

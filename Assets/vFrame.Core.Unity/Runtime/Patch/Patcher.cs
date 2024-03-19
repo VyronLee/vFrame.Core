@@ -61,6 +61,11 @@ namespace vFrame.Core.Unity.Patch
         private readonly string _tempManifestPath;
 
         /// <summary>
+        ///     CdnUrl to download files from.
+        /// </summary>
+        private string _cdnUrl;
+
+        /// <summary>
         ///     All assets unit to download
         /// </summary>
         private List<AssetInfo> _downloadUnits = new List<AssetInfo>();
@@ -74,6 +79,16 @@ namespace vFrame.Core.Unity.Patch
         ///     Hash checker
         /// </summary>
         private HashChecker _hashChecker;
+
+        /// <summary>
+        ///     Is patcher initialized?
+        /// </summary>
+        private bool _initialized;
+
+        /// <summary>
+        ///     Last update time of download progress.
+        /// </summary>
+        private float _lastUpdateTime;
 
         /// <summary>
         ///     Local manifest
@@ -96,29 +111,9 @@ namespace vFrame.Core.Unity.Patch
         private int _totalWaitToDownload;
 
         /// <summary>
-        ///     CdnUrl to download files from.
-        /// </summary>
-        private string _cdnUrl;
-
-        /// <summary>
-        ///     Last update time of download progress.
-        /// </summary>
-        private float _lastUpdateTime;
-
-        /// <summary>
-        ///     Is patcher initialized?
-        /// </summary>
-        private bool _initialized;
-
-        /// <summary>
         ///     Update confirm callback.
         /// </summary>
         public Action<ulong, Action> OnUpdateConfirm;
-
-        /// <summary>
-        ///     Update event callback.
-        /// </summary>
-        public event Action<UpdateEvent> OnUpdateEvent;
 
         public Patcher(PatchOptions options) {
             _options = options;
@@ -127,8 +122,9 @@ namespace vFrame.Core.Unity.Patch
                 _storagePath += "/";
             }
 
-            if (!Directory.Exists(_storagePath))
+            if (!Directory.Exists(_storagePath)) {
                 Directory.CreateDirectory(_storagePath);
+            }
 
             _cacheVersionPath = _storagePath + options.versionFilename;
             _cacheManifestPath = _storagePath + options.manifestFilename;
@@ -136,20 +132,10 @@ namespace vFrame.Core.Unity.Patch
 
             _downloadManager = DownloadManager.Create("Patcher Download Manager");
             _downloadManager.Timeout = _options.timeout;
-
         }
 
         /// <summary>
-        /// Initial patcher.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator Initialize() {
-            yield return InitManifest();
-            _initialized = true;
-        }
-
-        /// <summary>
-        /// Return cdnUrl, prefer value specified in remoteVersion manifest, then option's.
+        ///     Return cdnUrl, prefer value specified in remoteVersion manifest, then option's.
         /// </summary>
         /// <exception cref="WebException"></exception>
         public string CdnUrl {
@@ -169,63 +155,52 @@ namespace vFrame.Core.Unity.Patch
                 _cdnUrl = PathUtils.Combine(_cdnUrl, _options.cdnDir ?? string.Empty);
                 return _cdnUrl;
             }
-            set {
-                _cdnUrl = value;
-            }
+            set => _cdnUrl = value;
         }
 
         /// <summary>
-        /// Return downloadUrl specified in remoteVersion manifest.
+        ///     Return downloadUrl specified in remoteVersion manifest.
         /// </summary>
         public string DownloadUrl {
             get {
-                if (_remoteVersion.VersionLoaded && !string.IsNullOrEmpty(_remoteVersion.downloadUrl))
+                if (_remoteVersion.VersionLoaded && !string.IsNullOrEmpty(_remoteVersion.downloadUrl)) {
                     return _remoteVersion.downloadUrl;
+                }
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// Return current validated hash number.
+        ///     Return current validated hash number.
         /// </summary>
-        public int HashNum {
-            get { return _hashChecker ? _hashChecker.HashNum : 0; }
-        }
+        public int HashNum => _hashChecker ? _hashChecker.HashNum : 0;
 
         /// <summary>
-        /// Return total hash number.
+        ///     Return total hash number.
         /// </summary>
-        public int HashTotal {
-            get { return _hashChecker ? _hashChecker.HashTotal : 0; }
-        }
+        public int HashTotal => _hashChecker ? _hashChecker.HashTotal : 0;
 
         /// <summary>
-        /// Return local engine version.
+        ///     Return local engine version.
         /// </summary>
-        public string EngineVersion {
-            get { return null != _localManifest ? _localManifest.EngineVersion.ToString() : string.Empty; }
-        }
+        public string EngineVersion => null != _localManifest ? _localManifest.EngineVersion.ToString() : string.Empty;
 
         /// <summary>
-        /// Return local assets version.
+        ///     Return local assets version.
         /// </summary>
-        public string AssetsVersion {
-            get { return null != _localManifest ? _localManifest.AssetsVersion.ToString() : string.Empty; }
-        }
+        public string AssetsVersion => null != _localManifest ? _localManifest.AssetsVersion.ToString() : string.Empty;
 
         /// <summary>
-        /// Return remote engine version.
+        ///     Return remote engine version.
         /// </summary>
-        public string RemoteEngineVersion {
-            get { return null != _remoteVersion ? _remoteVersion.EngineVersion.ToString() : string.Empty; }
-        }
+        public string RemoteEngineVersion =>
+            null != _remoteVersion ? _remoteVersion.EngineVersion.ToString() : string.Empty;
 
         /// <summary>
-        /// Return remote assets version.
+        ///     Return remote assets version.
         /// </summary>
-        public string RemoteAssetsVersion {
-            get { return null != _remoteVersion ? _remoteVersion.AssetsVersion.ToString() : string.Empty; }
-        }
+        public string RemoteAssetsVersion =>
+            null != _remoteVersion ? _remoteVersion.AssetsVersion.ToString() : string.Empty;
 
         /// <summary>
         ///     Total size need to download
@@ -233,47 +208,57 @@ namespace vFrame.Core.Unity.Patch
         public ulong TotalSize { get; private set; }
 
         /// <summary>
-        /// Return current download speed
+        ///     Return current download speed
         /// </summary>
-        public float DownloadSpeed {
-            get { return _downloadManager.Speed; }
-        }
+        public float DownloadSpeed => _downloadManager.Speed;
 
         /// <summary>
-        /// Is Download paused?
+        ///     Is Download paused?
         /// </summary>
-        public bool IsPaused {
-            get { return _downloadManager.IsPaused; }
-        }
+        public bool IsPaused => _downloadManager.IsPaused;
 
         /// <summary>
-        /// Return current update state.
+        ///     Return current update state.
         /// </summary>
         public UpdateState UpdateState { get; private set; } = UpdateState.UNCHECKED;
 
         /// <summary>
-        /// Pause download.
+        ///     Update event callback.
+        /// </summary>
+        public event Action<UpdateEvent> OnUpdateEvent;
+
+        /// <summary>
+        ///     Initial patcher.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerator Initialize() {
+            yield return InitManifest();
+            _initialized = true;
+        }
+
+        /// <summary>
+        ///     Pause download.
         /// </summary>
         public void Pause() {
             _downloadManager.Pause();
         }
 
         /// <summary>
-        /// Resume download.
+        ///     Resume download.
         /// </summary>
         public void Resume() {
             _downloadManager.Resume();
         }
 
         /// <summary>
-        /// Stop download.
+        ///     Stop download.
         /// </summary>
         public void Stop() {
             _downloadManager.RemoveAllDownloads();
         }
 
         /// <summary>
-        /// Return local manifest
+        ///     Return local manifest
         /// </summary>
         /// <returns></returns>
         public Manifest GetLocalManifest() {
@@ -281,7 +266,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Return remote version manifest
+        ///     Return remote version manifest
         /// </summary>
         /// <returns></returns>
         public VersionManifest GetRemoteVersionManifest() {
@@ -289,14 +274,16 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Release patcher.
+        ///     Release patcher.
         /// </summary>
         public void Release() {
-            if (_hashChecker)
+            if (_hashChecker) {
                 Object.Destroy(_hashChecker.gameObject);
+            }
 
-            if (_downloadManager)
+            if (_downloadManager) {
                 Object.Destroy(_downloadManager.gameObject);
+            }
 
             _initialized = false;
         }
@@ -368,8 +355,9 @@ namespace vFrame.Core.Unity.Patch
             // temp
             if (File.Exists(_tempManifestPath)) {
                 _tempManifest.Parse(_tempManifestPath);
-                if (!_tempManifest.Loaded)
+                if (!_tempManifest.Loaded) {
                     File.Delete(_tempManifestPath);
+                }
             }
         }
 
@@ -565,10 +553,12 @@ namespace vFrame.Core.Unity.Patch
                 Logger.Info(PatchConst.LogTag, msg);
                 DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
 
-                if (OnUpdateConfirm != null)
+                if (OnUpdateConfirm != null) {
                     OnUpdateConfirm(TotalSize, BatchDownload);
-                else
+                }
+                else {
                     BatchDownload();
+                }
             }
             else {
                 // Temporary manifest not exists or out of date,
@@ -592,8 +582,9 @@ namespace vFrame.Core.Unity.Patch
                     foreach (var kv in diffDic) {
                         var diff = kv.Value;
                         if (diff.diffType == Manifest.DiffType.DELETED) {
-                            if (File.Exists(_storagePath + diff.asset.fileName))
+                            if (File.Exists(_storagePath + diff.asset.fileName)) {
                                 File.Delete(_storagePath + diff.asset.fileName);
+                            }
                         }
                         else {
                             _downloadUnits.Add(diff.asset);
@@ -607,25 +598,29 @@ namespace vFrame.Core.Unity.Patch
                     Logger.Info(PatchConst.LogTag, msg);
                     DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
 
-                    if (OnUpdateConfirm != null)
+                    if (OnUpdateConfirm != null) {
                         OnUpdateConfirm(TotalSize, BatchDownload);
-                    else
+                    }
+                    else {
                         BatchDownload();
+                    }
                 }
             }
         }
 
         private ulong CalculateTotalSize(List<AssetInfo> assets) {
             ulong size = 0;
-            foreach (var asset in assets)
+            foreach (var asset in assets) {
                 size += asset.size;
+            }
 
             return size > 0 ? size : 1;
         }
 
         private void DownloadFailedAssets() {
-            if (_failedUnits.Count == 0)
+            if (_failedUnits.Count == 0) {
                 return;
+            }
 
             _downloadedSize.Clear();
 
@@ -654,8 +649,9 @@ namespace vFrame.Core.Unity.Patch
                 var url = PathUtils.Combine(CdnUrl, asset.fileName);
 
                 var dir = Path.GetDirectoryName(storagePath);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) {
                     Directory.CreateDirectory(dir);
+                }
 
                 var task = _downloadManager.AddDownload(storagePath, url, asset);
                 task.DownloadSuccess += OnDownloadSuccess;
@@ -690,8 +686,9 @@ namespace vFrame.Core.Unity.Patch
             _remoteManifest = null;
 
             // rename temporary manifest to valid manifest
-            if (File.Exists(_cacheManifestPath))
+            if (File.Exists(_cacheManifestPath)) {
                 File.Delete(_cacheManifestPath);
+            }
 
             File.Move(_tempManifestPath, _cacheManifestPath);
 
@@ -700,7 +697,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         private void OnDownloadSuccess(DownloadEventArgs args) {
-            var asset = (AssetInfo) args.UserData;
+            var asset = (AssetInfo)args.UserData;
             var task = _downloadManager.GetDownload(args.SerialId);
 
             Logger.Info(PatchConst.LogTag, "Download file succeed: {0}, url: {1}, storage path: {2}",
@@ -716,30 +713,34 @@ namespace vFrame.Core.Unity.Patch
             DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
             DispatchUpdateEvent(UpdateEvent.EventCode.ASSET_UPDATED, asset.fileName);
 
-            if (_totalWaitToDownload <= 0)
+            if (_totalWaitToDownload <= 0) {
                 OnDownloadUnitsFinished();
+            }
         }
 
         private void OnDownloadProgress(DownloadEventArgs args) {
-            var asset = (AssetInfo) args.UserData;
+            var asset = (AssetInfo)args.UserData;
             RecordDownloadedSize(asset.fileName, args.DownloadedSize);
 
-            if (Time.realtimeSinceStartup - _lastUpdateTime < UpdateProgressInterval)
+            if (Time.realtimeSinceStartup - _lastUpdateTime < UpdateProgressInterval) {
                 return;
+            }
 
             DispatchUpdateEvent(UpdateEvent.EventCode.UPDATE_PROGRESSION);
             _lastUpdateTime = Time.realtimeSinceStartup;
         }
 
         private void RecordDownloadedSize(string assetName, ulong size) {
-            if (_downloadedSize.ContainsKey(assetName))
+            if (_downloadedSize.ContainsKey(assetName)) {
                 _downloadedSize[assetName] = size;
-            else
+            }
+            else {
                 _downloadedSize.Add(assetName, size);
+            }
         }
 
         private void OnDownloadError(DownloadEventArgs args) {
-            var asset = (AssetInfo) args.UserData;
+            var asset = (AssetInfo)args.UserData;
             var task = _downloadManager.GetDownload(args.SerialId);
             Logger.Warning(PatchConst.LogTag, "Download file failed: {0}, url: {1}, storage path: {2}, error: {3}",
                 asset.fileName,
@@ -751,31 +752,35 @@ namespace vFrame.Core.Unity.Patch
             _failedUnits.Add(asset);
             //DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_FAILED, asset.fileName);
 
-            if (_totalWaitToDownload <= 0)
+            if (_totalWaitToDownload <= 0) {
                 OnDownloadUnitsFinished();
+            }
         }
 
         private void DispatchUpdateEvent(UpdateEvent.EventCode code, string assetName = "") {
-            if (OnUpdateEvent == null)
+            if (OnUpdateEvent == null) {
                 return;
+            }
 
-            var evt = new UpdateEvent {Code = code, AssetName = assetName};
+            var evt = new UpdateEvent { Code = code, AssetName = assetName };
 
             if (code == UpdateEvent.EventCode.UPDATE_PROGRESSION) {
                 evt.DownloadedSize = CalculateDownloadedSize();
-                evt.Percent = (float) evt.DownloadedSize / TotalSize;
-                evt.PercentByFile = (float) (_totalToDownload - _totalWaitToDownload - _failedUnits.Count) /
+                evt.Percent = (float)evt.DownloadedSize / TotalSize;
+                evt.PercentByFile = (float)(_totalToDownload - _totalWaitToDownload - _failedUnits.Count) /
                                     _totalToDownload;
             }
 
-            if (OnUpdateEvent != null)
+            if (OnUpdateEvent != null) {
                 OnUpdateEvent(evt);
+            }
         }
 
         private ulong CalculateDownloadedSize() {
             ulong size = 0;
-            foreach (var kv in _downloadedSize)
+            foreach (var kv in _downloadedSize) {
                 size += kv.Value;
+            }
 
             return size;
         }
@@ -812,10 +817,12 @@ namespace vFrame.Core.Unity.Patch
         }
 
         private void OnCheckFinished() {
-            if (_hashChecker && _hashChecker.Valid)
+            if (_hashChecker && _hashChecker.Valid) {
                 UpdateSucceed();
-            else
+            }
+            else {
                 UpdateFailed(UpdateEvent.EventCode.ERROR_HASH_VALIDATION_FAILED);
+            }
         }
 
         #endregion

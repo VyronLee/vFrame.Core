@@ -5,7 +5,8 @@ namespace vFrame.Core.Compression
 {
     public class SynchronousBlockBasedCompression : BlockBasedCompression
     {
-        public void Compress(Stream input, Stream output, BlockBasedCompressionOptions options, Action<int, int> onProgress = null) {
+        public void Compress(Stream input, Stream output, BlockBasedCompressionOptions options,
+            Action<int, int> onProgress = null) {
             BeginCompress(input, output, options);
             for (var i = 0; i < BlockCount; i++) {
                 SafeCompress(input, output, options, i);

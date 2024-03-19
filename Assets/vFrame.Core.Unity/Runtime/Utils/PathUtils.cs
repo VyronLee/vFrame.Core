@@ -15,11 +15,44 @@ namespace vFrame.Core.Unity.Utils
 {
     public static class PathUtils
     {
+        private static string _dataPath;
+
+        private static string _streamingAssetsPath;
+
+        private static string _persistentDataPath;
+
+        private static string DataPath {
+            get {
+                if (string.IsNullOrEmpty(_dataPath)) {
+                    _dataPath = Application.dataPath;
+                }
+                return _dataPath;
+            }
+        }
+
+        private static string StreamingAssetsPath {
+            get {
+                if (string.IsNullOrEmpty(_streamingAssetsPath)) {
+                    _streamingAssetsPath = Application.streamingAssetsPath;
+                }
+                return _streamingAssetsPath;
+            }
+        }
+
+        private static string PersistentDataPath {
+            get {
+                if (string.IsNullOrEmpty(_persistentDataPath)) {
+                    _persistentDataPath = Application.persistentDataPath;
+                }
+                return _persistentDataPath;
+            }
+        }
+
         public static string NormalizePath(this string value) {
             value = value.Replace("\\", "/");
             return value;
         }
-        
+
         public static string NormalizeLocalFileURL(this string value) {
 #if UNITY_ANDROID || UNITY_WEBGL
             return NormalizePath(value);
@@ -73,8 +106,9 @@ namespace vFrame.Core.Unity.Utils
         }
 
         public static string NormalizeAssetBundlePath(this string value) {
-            if (Path.IsPathRooted(value))
+            if (Path.IsPathRooted(value)) {
                 value = AbsolutePathToRelativeDataPath(value);
+            }
 
             value = value.ToLower();
             return NormalizePath(value);
@@ -173,36 +207,6 @@ namespace vFrame.Core.Unity.Utils
         public static bool IsStreamingAssetsPath(this string path) {
             path = NormalizePath(path);
             return path.StartsWith(StreamingAssetsPath);
-        }
-
-        private static string _dataPath;
-        private static string DataPath {
-            get {
-                if (string.IsNullOrEmpty(_dataPath)) {
-                    _dataPath = Application.dataPath;
-                }
-                return _dataPath;
-            }
-        }
-
-        private static string _streamingAssetsPath;
-        private static string StreamingAssetsPath {
-            get {
-                if (string.IsNullOrEmpty(_streamingAssetsPath)) {
-                    _streamingAssetsPath = Application.streamingAssetsPath;
-                }
-                return _streamingAssetsPath;
-            }
-        }
-
-        private static string _persistentDataPath;
-        private static string PersistentDataPath {
-            get {
-                if (string.IsNullOrEmpty(_persistentDataPath)) {
-                    _persistentDataPath = Application.persistentDataPath;
-                }
-                return _persistentDataPath;
-            }
         }
 
         public static void Initialize() {

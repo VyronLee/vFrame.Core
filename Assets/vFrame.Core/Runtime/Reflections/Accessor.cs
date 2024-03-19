@@ -16,9 +16,7 @@ namespace vFrame.Core.Reflections
 
         private class GetterSetter<T> : Accessor<S, T>
         {
-            public GetterSetter(Expression<Func<S, T>> memberSelector) : base(memberSelector) {
-                
-            }
+            public GetterSetter(Expression<Func<S, T>> memberSelector) : base(memberSelector) { }
         }
     }
 
@@ -27,8 +25,17 @@ namespace vFrame.Core.Reflections
         public readonly Func<S, T> Getter;
         public readonly Action<S, T> Setter;
 
-        public bool IsReadable { get; private set; }
-        public bool IsWritable { get; private set; }
+        protected Accessor(Expression<Func<S, T>> memberSelector) //access not given to outside world
+        {
+            var prop = memberSelector.GetPropertyInfo();
+            IsReadable = prop.CanRead;
+            IsWritable = prop.CanWrite;
+            AssignDelegate(IsReadable, ref Getter, prop.GetGetMethod());
+            AssignDelegate(IsWritable, ref Setter, prop.GetSetMethod());
+        }
+
+        public bool IsReadable { get; }
+        public bool IsWritable { get; }
 
         public T this[S instance] {
             get {
@@ -43,15 +50,6 @@ namespace vFrame.Core.Reflections
                 }
                 Setter(instance, value);
             }
-        }
-
-        protected Accessor(Expression<Func<S, T>> memberSelector) //access not given to outside world
-        {
-            var prop = memberSelector.GetPropertyInfo();
-            IsReadable = prop.CanRead;
-            IsWritable = prop.CanWrite;
-            AssignDelegate(IsReadable, ref Getter, prop.GetGetMethod());
-            AssignDelegate(IsWritable, ref Setter, prop.GetSetMethod());
         }
 
         private void AssignDelegate<K>(bool assignable, ref K assignee, MethodInfo assignor) where K : class {

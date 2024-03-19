@@ -18,7 +18,7 @@ namespace vFrame.Core.Unity.Coroutine
     {
         public int Handle;
         public int RunnerId;
-        public IEnumerator Task;
         public string Stack;
+        public IEnumerator Task;
     }
 }

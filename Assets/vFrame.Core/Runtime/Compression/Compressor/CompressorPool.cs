@@ -64,20 +64,8 @@ namespace vFrame.Core.Compression
 
     public class CompressorWrap : BaseObject<CompressorPool, Compressor>, ICompressor
     {
-        private CompressorPool _pool;
         private Compressor _compressor;
-
-        protected override void OnCreate(CompressorPool pool, Compressor compressor) {
-            _pool = pool;
-            _compressor = compressor;
-        }
-
-        protected override void OnDestroy() {
-            _pool.Return(_compressor);
-            _pool.Return(this);
-            _pool = null;
-            _compressor = null;
-        }
+        private CompressorPool _pool;
 
         public void Compress(Stream input, Stream output) {
             _compressor.Compress(input, output);
@@ -93,6 +81,18 @@ namespace vFrame.Core.Compression
 
         public void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
             _compressor.Decompress(input, output, onProgress);
+        }
+
+        protected override void OnCreate(CompressorPool pool, Compressor compressor) {
+            _pool = pool;
+            _compressor = compressor;
+        }
+
+        protected override void OnDestroy() {
+            _pool.Return(_compressor);
+            _pool.Return(this);
+            _pool = null;
+            _compressor = null;
         }
     }
 }

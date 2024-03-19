@@ -9,13 +9,13 @@
     public interface IObjectPool<T> : IObjectPool
     {
         /// <summary>
-        /// Get instance from pool.
+        ///     Get instance from pool.
         /// </summary>
         /// <returns></returns>
         new T Get();
 
         /// <summary>
-        /// Return instance to pool.
+        ///     Return instance to pool.
         /// </summary>
         /// <param name="obj"></param>
         void Return(T obj);

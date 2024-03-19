@@ -12,20 +12,20 @@ namespace vFrame.Core.MultiThreading
     {
         private const int MaxThreadCount = 32;
         private const int DefaultThreadCount = 4;
-
-        private Action<T> _onHandle;
+        private readonly WaitCallback _taskHandler;
+        private readonly int _threadCount;
+        private bool _abortOnError;
+        private SpinLock _finishedListLock;
+        private Exception _lastError;
         private Action _onComplete;
         private Action<Exception> _onError;
-        private Exception _lastError;
-        private bool _abortOnError;
-        private SpinLock _waitingListLock;
-        private SpinLock _finishedListLock;
-        private CancellationTokenSource[] _tokenSources;
-        private List<T> _taskWaiting;
-        private int _taskTotalCount;
+
+        private Action<T> _onHandle;
         private int _taskFinishedCount;
-        private readonly int _threadCount;
-        private readonly WaitCallback _taskHandler;
+        private int _taskTotalCount;
+        private List<T> _taskWaiting;
+        private CancellationTokenSource[] _tokenSources;
+        private SpinLock _waitingListLock;
 
         private ParallelTaskRunner() {
             _abortOnError = true;
@@ -49,8 +49,7 @@ namespace vFrame.Core.MultiThreading
             return runner;
         }
 
-        protected override void OnCreate() {
-        }
+        protected override void OnCreate() { }
 
         protected override void OnDestroy() {
             CancelAllTask();
@@ -132,15 +131,17 @@ namespace vFrame.Core.MultiThreading
 
             _onError?.Invoke(e);
 
-            if (!_abortOnError)
+            if (!_abortOnError) {
                 return;
+            }
 
             CancelAllTask();
         }
 
         private void HandleTaskComplete(T task) {
-            if (Interlocked.Add(ref _taskFinishedCount, 1) < _taskTotalCount)
+            if (Interlocked.Add(ref _taskFinishedCount, 1) < _taskTotalCount) {
                 return;
+            }
 
             if (null == _lastError) {
                 _onComplete?.Invoke();

@@ -6,12 +6,6 @@ namespace vFrame.Core.Profiles
 {
     public static class PerfProfile
     {
-        private class ProfileData
-        {
-            public Stopwatch Stopwatch { get; } = new Stopwatch();
-            public string Tag { get; set; }
-        }
-
         private static readonly ConcurrentDictionary<int, ProfileData> ProfileDataDict
             = new ConcurrentDictionary<int, ProfileData>();
 
@@ -28,7 +22,7 @@ namespace vFrame.Core.Profiles
 
         [Conditional("PERF_PROFILE")]
         public static void Pin(string tag, int id) {
-            var data = new ProfileData {Tag = tag};
+            var data = new ProfileData { Tag = tag };
             data.Stopwatch.Start();
 
             ProfileDataDict[id] = data;
@@ -43,6 +37,12 @@ namespace vFrame.Core.Profiles
             data.Stopwatch.Stop();
 
             Logger.Info(LogTag, "{0}: {1:n}ms", data.Tag, data.Stopwatch.Elapsed.TotalMilliseconds);
+        }
+
+        private class ProfileData
+        {
+            public Stopwatch Stopwatch { get; } = new Stopwatch();
+            public string Tag { get; set; }
         }
     }
 }

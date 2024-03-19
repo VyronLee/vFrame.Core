@@ -12,13 +12,7 @@ using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Singletons
 {
-    public class SingletonException : vFrameException
-    {
+    public class SingletonException : vFrameException { }
 
-    }
-
-    public class SingletonDuplicatedException : SingletonException
-    {
-
-    }
+    public class SingletonDuplicatedException : SingletonException { }
 }

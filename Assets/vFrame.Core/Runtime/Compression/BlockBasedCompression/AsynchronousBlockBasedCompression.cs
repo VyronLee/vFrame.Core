@@ -10,26 +10,17 @@ namespace vFrame.Core.Compression
 {
     public class AsynchronousBlockBasedCompression : BlockBasedCompression
     {
-        private enum CompressionState
-        {
-            Idle,
-            Compressing,
-            Decompressing,
-            Error,
-        }
-
         private const int DefaultThreadCount = 3;
         private const int MaxThreadCount = 16;
-
-        private CompressionState _state = CompressionState.Idle;
-        private int _threadCount = DefaultThreadCount;
         private Stream _input;
         private Stream _output;
-        private Exception _lastError;
 
         private ParallelTaskRunner<CompressThreadState> _parallelTaskRunner;
 
-        public Exception LastError => _lastError;
+        private CompressionState _state = CompressionState.Idle;
+        private int _threadCount = DefaultThreadCount;
+
+        public Exception LastError { get; private set; }
 
         protected override void OnDestroy() {
             _parallelTaskRunner?.Destroy();
@@ -46,8 +37,7 @@ namespace vFrame.Core.Compression
         public BlockBasedCompressionRequest CompressAsync(
             Stream input,
             Stream output,
-            BlockBasedCompressionOptions options)
-        {
+            BlockBasedCompressionOptions options) {
             if (_state != CompressionState.Idle) {
                 throw new StateBusyException();
             }
@@ -58,7 +48,7 @@ namespace vFrame.Core.Compression
 
             BeginCompress(input, output, options);
 
-            var request = new BlockBasedCompressionRequest(this) {TotalCount = BlockCount};
+            var request = new BlockBasedCompressionRequest(this) { TotalCount = BlockCount };
 
             var contexts = new List<CompressThreadState>(BlockCount);
             for (var i = 0; i < BlockCount; i++) {
@@ -98,8 +88,7 @@ namespace vFrame.Core.Compression
 
         public BlockBasedDecompressionRequest DecompressAsync(
             Stream input,
-            Stream output)
-        {
+            Stream output) {
             if (_state != CompressionState.Idle) {
                 throw new StateBusyException();
             }
@@ -110,7 +99,7 @@ namespace vFrame.Core.Compression
 
             BeginDecompress(input, output);
 
-            var request = new BlockBasedDecompressionRequest(this) {TotalCount = BlockCount};
+            var request = new BlockBasedDecompressionRequest(this) { TotalCount = BlockCount };
 
             var contexts = new List<DecompressThreadState>(BlockCount);
             for (var i = 0; i < BlockCount; i++) {
@@ -148,8 +137,16 @@ namespace vFrame.Core.Compression
         }
 
         private void OnException(Exception e) {
-            _lastError = e;
+            LastError = e;
             _state = CompressionState.Error;
+        }
+
+        private enum CompressionState
+        {
+            Idle,
+            Compressing,
+            Decompressing,
+            Error
         }
 
         private class CompressThreadState
@@ -171,49 +168,20 @@ namespace vFrame.Core.Compression
 
         public class BlockBasedCompressionRequest : IEnumerator
         {
+            private readonly AsynchronousBlockBasedCompression _compression;
             private int _finishedCount;
-            public int FinishedCount => _finishedCount;
-
-            public int TotalCount { get; set; }
 
             private int _isDone;
-            public bool IsDone {
-                get => _isDone > 0;
-                set => Interlocked.Exchange(ref _isDone, value ? 1 : 0);
-            }
-
-            public Exception Error => _compression?.LastError;
-
-            private readonly AsynchronousBlockBasedCompression _compression;
 
             public BlockBasedCompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
             }
 
-            public void IncreaseFinishedCount() {
-                Interlocked.Add(ref _finishedCount, 1);
-            }
-
-            public bool MoveNext() {
-                return !IsDone;
-            }
-
-            public void Reset() {
-            }
-
-            public object Current => null;
-        }
-
-
-        public class BlockBasedDecompressionRequest : IEnumerator
-        {
-            private int _finishedCount;
             public int FinishedCount => _finishedCount;
 
             public int TotalCount { get; set; }
 
-            private int _isDone;
             public bool IsDone {
                 get => _isDone > 0;
                 set => Interlocked.Exchange(ref _isDone, value ? 1 : 0);
@@ -221,25 +189,54 @@ namespace vFrame.Core.Compression
 
             public Exception Error => _compression?.LastError;
 
+            public bool MoveNext() {
+                return !IsDone;
+            }
+
+            public void Reset() { }
+
+            public object Current => null;
+
+            public void IncreaseFinishedCount() {
+                Interlocked.Add(ref _finishedCount, 1);
+            }
+        }
+
+
+        public class BlockBasedDecompressionRequest : IEnumerator
+        {
             private readonly AsynchronousBlockBasedCompression _compression;
+            private int _finishedCount;
+
+            private int _isDone;
 
             public BlockBasedDecompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
             }
 
-            public void IncreaseFinishedCount() {
-                Interlocked.Add(ref _finishedCount, 1);
+            public int FinishedCount => _finishedCount;
+
+            public int TotalCount { get; set; }
+
+            public bool IsDone {
+                get => _isDone > 0;
+                set => Interlocked.Exchange(ref _isDone, value ? 1 : 0);
             }
+
+            public Exception Error => _compression?.LastError;
 
             public bool MoveNext() {
                 return !IsDone;
             }
 
-            public void Reset() {
-            }
+            public void Reset() { }
 
             public object Current => null;
+
+            public void IncreaseFinishedCount() {
+                Interlocked.Add(ref _finishedCount, 1);
+            }
         }
     }
 }

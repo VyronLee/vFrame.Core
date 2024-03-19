@@ -2,8 +2,5 @@
 
 namespace vFrame.Core.ObjectPools.Builtin
 {
-    public class BoxPool<T>: ObjectPool<Box<T>, BoxAllocator<T>>
-    {
-
-    }
+    public class BoxPool<T> : ObjectPool<Box<T>, BoxAllocator<T>> { }
 }

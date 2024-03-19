@@ -21,8 +21,9 @@ namespace vFrame.Core.Utils
         public static int EnumIndex(Type type, int value) {
             var i = 0;
             foreach (var v in Enum.GetValues(type)) {
-                if ((int) v == value)
+                if ((int)v == value) {
                     return i;
+                }
                 ++i;
             }
 
@@ -30,13 +31,14 @@ namespace vFrame.Core.Utils
         }
 
         public static T FromString<T>(string str) {
-            return (T) FromString(typeof(T), str);
+            return (T)FromString(typeof(T), str);
         }
 
         public static object FromString(Type type, string str) {
-            if (!Enum.IsDefined(type, str))
+            if (!Enum.IsDefined(type, str)) {
                 throw new InvalidOperationException(
                     string.Format("No enum value defined in type: {0}, {1}", type.Name, str));
+            }
             return Enum.Parse(type, str);
         }
     }

@@ -15,7 +15,7 @@ namespace vFrame.Core.Unity.Patch
     public class Manifest
     {
         /// <summary>
-        /// The type of difference
+        ///     The type of difference
         /// </summary>
         public enum DiffType
         {
@@ -25,62 +25,51 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// difference between 2 assets
+        ///     Full assets list
         /// </summary>
-        public class AssetDiff
-        {
-            public AssetInfo asset;
-            public DiffType diffType;
-        }
+        private readonly Dictionary<string, AssetInfo> _assets = new Dictionary<string, AssetInfo>();
 
         /// <summary>
-        /// Json Manifest format
+        ///     Json Manifest format
         /// </summary>
-        private ManifestJson _json = null;
+        private ManifestJson _json;
 
         /// <summary>
-        /// The asset version
+        ///     The asset version
         /// </summary>
         public Version AssetsVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
-        /// The game engine version
+        ///     The game engine version
         /// </summary>
         public Version EngineVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
-        /// The build number
+        ///     The build number
         /// </summary>
-        public string BuildNumber {
-            get { return _json != null ? _json.buildNumber : null; }
-        }
+        public string BuildNumber => _json != null ? _json.buildNumber : null;
 
         /// <summary>
-        /// Whether the manifest have been fully loaded
+        ///     Whether the manifest have been fully loaded
         /// </summary>
         public bool Loaded { get; private set; }
 
         /// <summary>
-        /// Whether the version information have been fully loaded
+        ///     Whether the version information have been fully loaded
         /// </summary>
         public bool VersionLoaded { get; private set; }
 
         /// <summary>
-        /// Full assets list
+        ///     Get default manifest
         /// </summary>
-        private readonly Dictionary<string, AssetInfo> _assets = new Dictionary<string, AssetInfo>();
+        public static Manifest Default => new Manifest { Loaded = true, VersionLoaded = true };
 
         public Dictionary<string, AssetInfo> GetAssets() {
             return _assets;
         }
 
         /// <summary>
-        /// Get default manifest
-        /// </summary>
-        public static Manifest Default => new Manifest {Loaded = true, VersionLoaded = true};
-
-        /// <summary>
-        /// Parse the whole file, caller should check where the file exist
+        ///     Parse the whole file, caller should check where the file exist
         /// </summary>
         public void Parse(string manifestUrl) {
             _json = LoadJson(manifestUrl);
@@ -94,7 +83,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Parse the whole file, caller should check where the file exist
+        ///     Parse the whole file, caller should check where the file exist
         /// </summary>
         public IEnumerator ParseAsync(string manifestUrl) {
             var result = new Box<(bool, ManifestJson)>();
@@ -112,12 +101,13 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Parse the version part, caller should check where the file exist
+        ///     Parse the version part, caller should check where the file exist
         /// </summary>
         public void ParseVersion(string versionUrl) {
             _json = LoadJson(versionUrl);
-            if (_json == null)
+            if (_json == null) {
                 return;
+            }
 
             LoadVersion();
 
@@ -125,7 +115,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Parse the version part, caller should check where the file exist
+        ///     Parse the version part, caller should check where the file exist
         /// </summary>
         public IEnumerator ParseVersionAsync(string versionUrl) {
             var result = new Box<(bool, ManifestJson)>();
@@ -143,21 +133,21 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// assets version compare
+        ///     assets version compare
         /// </summary>
         public int AssetsVersionCompareTo(Manifest other) {
             return AssetsVersion.CompareTo(other.AssetsVersion);
         }
 
         /// <summary>
-        /// game version compare
+        ///     game version compare
         /// </summary>
         public int GameVersionCompareTo(Manifest other) {
             return EngineVersion.CompareTo(other.EngineVersion);
         }
 
         /// <summary>
-        /// Set download state
+        ///     Set download state
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="state"></param>
@@ -169,7 +159,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Generate resuming download assets list
+        ///     Generate resuming download assets list
         /// </summary>
         public List<AssetInfo> GenResumeAssetsList() {
             var list = new List<AssetInfo>();
@@ -185,7 +175,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Get downloaded assets (not validated)
+        ///     Get downloaded assets (not validated)
         /// </summary>
         /// <returns></returns>
         public List<AssetInfo> GetDownloadedAssets() {
@@ -202,7 +192,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Get succeed downloaded assets (validated)
+        ///     Get succeed downloaded assets (validated)
         /// </summary>
         /// <returns></returns>
         public List<AssetInfo> GetSucceedDownloadedAssets() {
@@ -219,7 +209,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Generate difference between this Manifest and another
+        ///     Generate difference between this Manifest and another
         /// </summary>
         public Dictionary<string, AssetDiff> GenDiff(Manifest other) {
             var diffDic = new Dictionary<string, AssetDiff>();
@@ -268,7 +258,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Save manifest to file
+        ///     Save manifest to file
         /// </summary>
         /// <param name="path">File path to save</param>
         public void SaveToFile(string path) {
@@ -289,7 +279,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Load json data from url
+        ///     Load json data from url
         /// </summary>
         /// <param name="url"></param>
         /// <param name="result"></param>
@@ -318,7 +308,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Load json data from url
+        ///     Load json data from url
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
@@ -338,7 +328,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Load the version part
+        ///     Load the version part
         /// </summary>
         private void LoadVersion() {
             AssetsVersion = string.IsNullOrEmpty(_json.assetsVersion)
@@ -352,7 +342,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Load all
+        ///     Load all
         /// </summary>
         private void LoadManifest() {
             LoadVersion();
@@ -365,14 +355,12 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// On load json
+        ///     On load json
         /// </summary>
-        protected virtual void OnLoadJson(ManifestJson json) {
-
-        }
+        protected virtual void OnLoadJson(ManifestJson json) { }
 
         /// <summary>
-        /// Clear all data
+        ///     Clear all data
         /// </summary>
         private void Clear() {
             _assets.Clear();
@@ -386,7 +374,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        /// Load text from file async
+        ///     Load text from file async
         /// </summary>
         /// <param name="path"></param>
         /// <param name="result"></param>
@@ -408,6 +396,15 @@ namespace vFrame.Core.Unity.Patch
                 Logger.Info(PatchConst.LogTag,
                     "Load text from file succeed: {0}, text: {1}", path, text);
             }
+        }
+
+        /// <summary>
+        ///     difference between 2 assets
+        /// </summary>
+        public class AssetDiff
+        {
+            public AssetInfo asset;
+            public DiffType diffType;
         }
     }
 }

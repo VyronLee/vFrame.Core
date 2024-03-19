@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-07-28 11:00
+//     Created  2016-07-28 11:00
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using vFrame.Core.Loggers;
 
 namespace vFrame.Core.Components
 {
@@ -38,13 +39,14 @@ namespace vFrame.Core.Components
             Debug.Assert(type.IsSubclassOf(typeof(Component)));
 
             if (_components.TryGetValue(type, out var component)) {
-                Loggers.Logger.Error("Component '{0}' has already exist.", type.Name);
+                Logger.Error("Component '{0}' has already exist.", type.Name);
                 return component;
             }
 
             var comp = Activator.CreateInstance(type) as Component;
-            if (null == comp)
+            if (null == comp) {
                 return null;
+            }
 
             _components[type] = comp;
             comp.BindTo(this);
@@ -64,8 +66,9 @@ namespace vFrame.Core.Components
         /// </summary>
         public void RemoveComponent(Type type) {
             Component component;
-            if (!_components.TryGetValue(type, out component))
+            if (!_components.TryGetValue(type, out component)) {
                 return;
+            }
 
             component.UnBindFrom(this);
             component.Destroy();
@@ -77,8 +80,9 @@ namespace vFrame.Core.Components
         ///     解绑所有组件
         /// </summary>
         public void RemoveAllComponents() {
-            foreach (var item in _components)
+            foreach (var item in _components) {
                 item.Value.Destroy();
+            }
             _components.Clear();
         }
 
@@ -87,10 +91,9 @@ namespace vFrame.Core.Components
         /// </summary>
         public T GetComponent<T>() where T : Component {
             var type = typeof(T);
-            Component component;
-            if (_components.TryGetValue(type, out component))
+            if (_components.TryGetValue(type, out var component)) {
                 return component as T;
-
+            }
             return null;
         }
 
@@ -107,13 +110,14 @@ namespace vFrame.Core.Components
         public IComponent[] GetAllComponents() {
             var components = new IComponent[_components.Count];
             var index = 0;
-            foreach (var kv in _components)
+            foreach (var kv in _components) {
                 components[index++] = kv.Value;
+            }
             return components;
         }
 
         /// <summary>
-        ///     像所有组件广播消息
+        ///     广播调用
         /// </summary>
         /// <param name="method">函数名</param>
         /// <param name="args">参数列表</param>
@@ -122,9 +126,27 @@ namespace vFrame.Core.Components
                 var comp = kv.Value;
                 var methodInfo = comp.GetType().GetMethod(method,
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (null != methodInfo)
+                if (null != methodInfo) {
                     methodInfo.Invoke(comp, args);
+                }
             }
+        }
+
+        /// <summary>
+        ///     回送调用
+        /// </summary>
+        /// <param name="method">函数名</param>
+        /// <param name="args">参数列表</param>
+        public object Loopback(string method, params object[] args) {
+            foreach (var kv in _components) {
+                var comp = kv.Value;
+                var methodInfo = comp.GetType().GetMethod(method,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (null != methodInfo) {
+                    return methodInfo.Invoke(comp, args);
+                }
+            }
+            return null;
         }
 
         /// <summary>

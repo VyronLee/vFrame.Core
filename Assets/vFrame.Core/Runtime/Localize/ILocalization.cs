@@ -15,19 +15,19 @@ namespace vFrame.Core.Localize
     public interface ILocalization
     {
         /// <summary>
-        /// 获取/设置语言代码
+        ///     获取/设置语言代码
         /// </summary>
         string Language { get; set; }
 
         /// <summary>
-        /// 获取文本
+        ///     获取文本
         /// </summary>
         /// <param name="textId"></param>
         /// <returns>文本内容</returns>
         string GetText(string textId);
 
         /// <summary>
-        /// 语言设置变更回调
+        ///     语言设置变更回调
         /// </summary>
         event Action<string> OnLocalize;
     }

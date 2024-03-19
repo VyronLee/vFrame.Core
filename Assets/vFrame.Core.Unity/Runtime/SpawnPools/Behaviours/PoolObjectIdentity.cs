@@ -14,10 +14,6 @@ namespace vFrame.Core.Unity.SpawnPools
         [SerializeField]
         private int _uniqueId;
 
-        private void Awake() {
-            hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor | HideFlags.HideInInspector;
-        }
-
         public string AssetPath {
             get => _assetPath;
             internal set => _assetPath = value;
@@ -34,6 +30,10 @@ namespace vFrame.Core.Unity.SpawnPools
         }
 
         internal bool Destroyed { get; set; }
+
+        private void Awake() {
+            hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor | HideFlags.HideInInspector;
+        }
 
         private void OnDestroy() {
             if (IsPooling && !Destroyed) {

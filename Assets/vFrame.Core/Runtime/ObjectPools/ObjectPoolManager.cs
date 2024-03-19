@@ -6,15 +6,9 @@ namespace vFrame.Core.ObjectPools
 {
     public class ObjectPoolManager : Singleton<ObjectPoolManager>, IObjectPoolManager
     {
-        private Dictionary<Type, IObjectPool> _pools;
         private readonly object _lockObject_1 = new object();
         private readonly object _lockObject_2 = new object();
-
-        protected override void OnCreate() {
-            lock (_lockObject_1) {
-                _pools = new Dictionary<Type, IObjectPool>(256);
-            }
-        }
+        private Dictionary<Type, IObjectPool> _pools;
 
         public static ObjectPoolManager Shared => Instance();
 
@@ -23,7 +17,7 @@ namespace vFrame.Core.ObjectPools
                 return GetObjectPool<T>().Get();
             }
         }
-        
+
         public object Get(Type type) {
             lock (_lockObject_1) {
                 return GetObjectPool(type).Get();
@@ -75,7 +69,7 @@ namespace vFrame.Core.ObjectPools
         public IObjectPool<T> GetObjectPool<T>() where T : class, new() {
             lock (_lockObject_2) {
                 if (_pools.TryGetValue(typeof(T), out var pool)) {
-                    return (IObjectPool<T>) pool;
+                    return (IObjectPool<T>)pool;
                 }
 
                 var objPool = new ObjectPool<T>();
@@ -105,16 +99,21 @@ namespace vFrame.Core.ObjectPools
         public IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
             where TClass : class, new()
             where TAllocator : IPoolObjectAllocator<TClass>, new() {
-
             lock (_lockObject_2) {
                 if (_pools.TryGetValue(typeof(TClass), out var pool)) {
-                    return (IObjectPool<TClass>) pool;
+                    return (IObjectPool<TClass>)pool;
                 }
 
                 var objPool = new ObjectPool<TClass, TAllocator>();
                 objPool.Initialize();
                 _pools.Add(typeof(TClass), objPool);
                 return objPool;
+            }
+        }
+
+        protected override void OnCreate() {
+            lock (_lockObject_1) {
+                _pools = new Dictionary<Type, IObjectPool>(256);
             }
         }
     }

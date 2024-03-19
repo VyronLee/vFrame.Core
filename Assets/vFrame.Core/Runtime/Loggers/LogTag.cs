@@ -33,7 +33,7 @@ namespace vFrame.Core.Loggers
         }
 
         public override int GetHashCode() {
-            return (_name != null ? _name.GetHashCode() : 0);
+            return _name != null ? _name.GetHashCode() : 0;
         }
     }
 }

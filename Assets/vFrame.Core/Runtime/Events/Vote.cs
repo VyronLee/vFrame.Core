@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-08-03 18:03
+//     Created  2016-08-03 18:03
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -15,22 +15,9 @@ namespace vFrame.Core.Events
 {
     public class Vote : BaseObject, IVote
     {
-        public int VoteId;
-        public EventDispatcher Target;
         public object Context;
-
-        /// <summary>
-        /// 创建函数
-        /// </summary>
-        protected override void OnCreate() {
-        }
-
-        /// <summary>
-        /// 销毁函数
-        /// </summary>
-        protected override void OnDestroy() {
-            Target = null;
-        }
+        public EventDispatcher Target;
+        public int VoteId;
 
         /// <summary>
         ///     获取投票ID
@@ -51,6 +38,18 @@ namespace vFrame.Core.Events
         /// </summary>
         public object GetVoteTarget() {
             return Target;
+        }
+
+        /// <summary>
+        ///     创建函数
+        /// </summary>
+        protected override void OnCreate() { }
+
+        /// <summary>
+        ///     销毁函数
+        /// </summary>
+        protected override void OnDestroy() {
+            Target = null;
         }
     }
 }

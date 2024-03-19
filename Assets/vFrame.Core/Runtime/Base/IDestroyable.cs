@@ -14,8 +14,7 @@ namespace vFrame.Core.Base
 {
     public interface IDestroyable : IDisposable
     {
-        void Destroy();
-
         bool Destroyed { get; }
+        void Destroy();
     }
 }

@@ -3,10 +3,10 @@
     public class DownloadSpeedCounter
     {
         private const float UPDATE_INTERVAL = 1.0f;
-
-        private ulong m_LastDownloadSize;
         private ulong m_CurrentDownloadSize;
         private float m_ElapseSeconds;
+
+        private ulong m_LastDownloadSize;
 
         public float Speed { get; private set; }
 

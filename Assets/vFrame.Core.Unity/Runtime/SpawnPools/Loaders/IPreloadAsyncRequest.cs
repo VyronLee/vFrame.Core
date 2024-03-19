@@ -2,8 +2,5 @@
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    public interface IPreloadAsyncRequest : IAsyncRequest
-    {
-
-    }
+    public interface IPreloadAsyncRequest : IAsyncRequest { }
 }

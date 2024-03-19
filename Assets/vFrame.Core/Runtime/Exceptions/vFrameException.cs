@@ -16,22 +16,23 @@ namespace vFrame.Core.Exceptions
 {
     public class vFrameException : Exception
     {
-        public vFrameException() {}
-        public vFrameException(string message) : base(message) {}
+        public vFrameException() { }
+
+        public vFrameException(string message) : base(message) { }
     }
 
     public class vFrameArgumentException : vFrameException
     {
-        public vFrameArgumentException(string message) : base(message) {}
+        public vFrameArgumentException(string message) : base(message) { }
     }
 
     public class vFrameArgumentNullException : vFrameException
     {
-        public vFrameArgumentNullException(string name) : base(name) {}
+        public vFrameArgumentNullException(string name) : base(name) { }
     }
 
     public class vFrameUnsupportedEnumException : vFrameException
     {
-        public vFrameUnsupportedEnumException(string message) : base(message) {}
+        public vFrameUnsupportedEnumException(string message) : base(message) { }
     }
 }

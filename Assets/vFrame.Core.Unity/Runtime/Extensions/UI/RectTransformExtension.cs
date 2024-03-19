@@ -15,7 +15,7 @@ namespace vFrame.Core.Unity.Extensions
     public static class RectTransformExtension
     {
         /// <summary>
-        /// 判断两个RectTransform在世界座标下是否重叠
+        ///     判断两个RectTransform在世界座标下是否重叠
         /// </summary>
         /// <param name="rc1"></param>
         /// <param name="rc2"></param>
@@ -36,7 +36,7 @@ namespace vFrame.Core.Unity.Extensions
             return r1.Overlaps(r2);
         }
 
-#region Left, Right, Top, Bottom
+        #region Left, Right, Top, Bottom
 
         public static void SetLeft(this RectTransform transform, float left) {
             transform.offsetMin = new Vector2(left, transform.offsetMin.y);
@@ -70,14 +70,15 @@ namespace vFrame.Core.Unity.Extensions
             return transform.offsetMin.y;
         }
 
-        public static void SetLeftTopRightBottom(this RectTransform transform, float left, float top, float right, float bottom) {
+        public static void SetLeftTopRightBottom(this RectTransform transform, float left, float top, float right,
+            float bottom) {
             transform.offsetMin = new Vector2(left, bottom);
             transform.offsetMax = new Vector2(-right, -top);
         }
 
-#endregion
+        #endregion
 
-#region PosX, PosY, Width, Height
+        #region PosX, PosY, Width, Height
 
         public static void SetPosX(this RectTransform transform, float posX) {
             transform.anchoredPosition = new Vector2(posX, transform.anchoredPosition.y);
@@ -117,9 +118,9 @@ namespace vFrame.Core.Unity.Extensions
             transform.sizeDelta = new Vector2(width, height);
         }
 
-#endregion
+        #endregion
 
-#region Anchor Offset
+        #region Anchor Offset
 
         public static void SetLeftAnchorOffset(this RectTransform transform, float leftPercent) {
             transform.anchorMin = new Vector2(leftPercent, transform.anchorMin.y);
@@ -137,11 +138,12 @@ namespace vFrame.Core.Unity.Extensions
             transform.anchorMin = new Vector2(transform.anchorMin.x, bottomPercent);
         }
 
-        public static void SetAnchorOffset(this RectTransform transform, float left, float top, float right, float bottom) {
+        public static void SetAnchorOffset(this RectTransform transform, float left, float top, float right,
+            float bottom) {
             transform.anchorMin = new Vector2(left, bottom);
             transform.anchorMax = new Vector2(1f - right, 1f - top);
         }
 
-#endregion
+        #endregion
     }
 }

@@ -5,11 +5,9 @@ namespace vFrame.Core.Unity.Download
 {
     public abstract class DownloadAgentBase : IDownloadAgent
     {
-        private DownloadTask m_Task;
+        private ulong m_LastDownloadedSize;
 
-        public DownloadTask Task {
-            get { return m_Task; }
-        }
+        public DownloadTask Task { get; private set; }
 
         public bool TaskDone { get; private set; }
 
@@ -27,10 +25,8 @@ namespace vFrame.Core.Unity.Download
         public event Action<IDownloadAgent> DownloadAgentSuccess;
         public event Action<IDownloadAgent, string> DownloadAgentFailure;
 
-        private ulong m_LastDownloadedSize;
-
         public void Start(DownloadTask task) {
-            m_Task = task;
+            Task = task;
             m_LastDownloadedSize = 0;
             TaskDone = false;
 
@@ -40,20 +36,14 @@ namespace vFrame.Core.Unity.Download
             OnStart();
         }
 
-        protected virtual void OnStart() {
-        }
-
         public void Stop() {
-            m_Task = null;
+            Task = null;
 
             OnStop();
         }
 
-        protected virtual void OnStop() {
-        }
-
         public void Update(float elapseSeconds) {
-            if (m_Task == null) {
+            if (Task == null) {
                 return;
             }
 
@@ -63,15 +53,18 @@ namespace vFrame.Core.Unity.Download
             m_LastDownloadedSize = DownloadedSize;
         }
 
-        protected virtual void OnUpdate(float elapseSeconds) {
-        }
+        protected virtual void OnStart() { }
+
+        protected virtual void OnStop() { }
+
+        protected virtual void OnUpdate(float elapseSeconds) { }
 
         private void EnsureDownloadDirectory() {
-            if (string.IsNullOrEmpty(m_Task.DownloadPath)) {
+            if (string.IsNullOrEmpty(Task.DownloadPath)) {
                 return;
             }
 
-            var dir = Path.GetDirectoryName(m_Task.DownloadPath);
+            var dir = Path.GetDirectoryName(Task.DownloadPath);
             if (string.IsNullOrEmpty(dir)) {
                 return;
             }

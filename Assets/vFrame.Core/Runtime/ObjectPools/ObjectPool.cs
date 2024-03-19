@@ -18,14 +18,6 @@ namespace vFrame.Core.ObjectPools
     {
         protected readonly LogTag LogTag = new LogTag("ObjectPool");
 
-        internal void Initialize() {
-            OnInitialize();
-        }
-
-        protected abstract void OnInitialize();
-        protected abstract object OnGetInternal();
-        protected abstract void OnReturnInternal(object obj);
-        
         public object Get() {
             return OnGetInternal();
         }
@@ -33,21 +25,29 @@ namespace vFrame.Core.ObjectPools
         public void Return(object obj) {
             OnReturnInternal(obj);
         }
+
+        internal void Initialize() {
+            OnInitialize();
+        }
+
+        protected abstract void OnInitialize();
+        protected abstract object OnGetInternal();
+        protected abstract void OnReturnInternal(object obj);
     }
 
     public class ObjectPool<TClass> : ObjectPool, IObjectPool<TClass> where TClass : class, new()
     {
         private const int InitSize = 128;
-        private Stack<TClass> _objects;
-
-        private readonly object _lockObject = new object();
         private static readonly object _instanceLockObject = new object();
 
         private static ObjectPool<TClass> _shared;
 
+        private readonly object _lockObject = new object();
+        private Stack<TClass> _objects;
+
         public static ObjectPool<TClass> Shared {
             get {
-                if (null == _shared)
+                if (null == _shared) {
                     lock (_instanceLockObject) {
                         if (null == _shared) {
                             var instance = new ObjectPool<TClass>();
@@ -55,8 +55,32 @@ namespace vFrame.Core.ObjectPools
                             _shared = instance;
                         }
                     }
+                }
 
                 return _shared;
+            }
+        }
+
+        public void Return(TClass obj) {
+            if (null == obj) {
+                Logger.Error(LogTag, "Return object cannot be null.");
+                return;
+            }
+
+            lock (_lockObject) {
+                if (_objects.Contains(obj)) {
+                    return;
+                }
+                if (obj is IPoolObjectResetable resetable) {
+                    resetable.Reset();
+                }
+                _objects.Push(obj);
+            }
+        }
+
+        public new TClass Get() {
+            lock (_lockObject) {
+                return _objects.Count > 0 ? _objects.Pop() : new TClass();
             }
         }
 
@@ -78,31 +102,10 @@ namespace vFrame.Core.ObjectPools
                 throw new ArgumentNullException(nameof(obj));
             }
             if (obj.GetType() != typeof(TClass)) {
-                throw new ArgumentException($"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
+                throw new ArgumentException(
+                    $"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
             }
             Return(obj as TClass);
-        }
-
-        public void Return(TClass obj) {
-            if (null == obj) {
-                Logger.Error(LogTag, "Return object cannot be null.");
-                return;
-            }
-
-            lock (_lockObject) {
-                if (_objects.Contains(obj))
-                    return;
-                if (obj is IPoolObjectResetable resetable) {
-                    resetable.Reset();
-                }
-                _objects.Push(obj);
-            }
-        }
-
-        public new TClass Get() {
-            lock (_lockObject) {
-                return _objects.Count > 0 ? _objects.Pop() : new TClass();
-            }
         }
     }
 
@@ -111,17 +114,17 @@ namespace vFrame.Core.ObjectPools
         where TAllocator : IPoolObjectAllocator<TClass>, new()
     {
         private const int InitSize = 128;
-        private Stack<TClass> _objects;
-        private TAllocator _allocator;
-
-        private readonly object _lockObject = new object();
         private static readonly object _instanceLockObject = new object();
 
         private static ObjectPool<TClass, TAllocator> _shared;
 
+        private readonly object _lockObject = new object();
+        private TAllocator _allocator;
+        private Stack<TClass> _objects;
+
         public static ObjectPool<TClass, TAllocator> Shared {
             get {
-                if (null == _shared)
+                if (null == _shared) {
                     lock (_instanceLockObject) {
                         if (null == _shared) {
                             var instance = new ObjectPool<TClass, TAllocator>();
@@ -129,8 +132,31 @@ namespace vFrame.Core.ObjectPools
                             _shared = instance;
                         }
                     }
+                }
 
                 return _shared;
+            }
+        }
+
+        public new TClass Get() {
+            lock (_lockObject) {
+                return _objects.Count > 0 ? _objects.Pop() : _allocator.Alloc();
+            }
+        }
+
+        public void Return(TClass obj) {
+            if (null == obj) {
+                Logger.Error(LogTag, "Return object cannot be null.");
+                return;
+            }
+
+            _allocator.Reset(obj);
+
+            lock (_lockObject) {
+                if (_objects.Contains(obj)) {
+                    return;
+                }
+                _objects.Push(obj);
             }
         }
 
@@ -153,30 +179,10 @@ namespace vFrame.Core.ObjectPools
                 throw new ArgumentNullException(nameof(obj));
             }
             if (obj.GetType() != typeof(TClass)) {
-                throw new ArgumentException($"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
+                throw new ArgumentException(
+                    $"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
             }
             Return(obj as TClass);
-        }
-
-        public new TClass Get() {
-            lock (_lockObject) {
-                return _objects.Count > 0 ? _objects.Pop() : _allocator.Alloc();
-            }
-        }
-
-        public void Return(TClass obj) {
-            if (null == obj) {
-                Logger.Error(LogTag, "Return object cannot be null.");
-                return;
-            }
-
-            _allocator.Reset(obj);
-
-            lock (_lockObject) {
-                if (_objects.Contains(obj))
-                    return;
-                _objects.Push(obj);
-            }
         }
     }
 }

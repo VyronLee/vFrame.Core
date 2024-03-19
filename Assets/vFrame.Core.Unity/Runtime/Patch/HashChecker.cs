@@ -11,8 +11,18 @@ namespace vFrame.Core.Unity.Patch
 {
     public class HashChecker : MonoBehaviour
     {
+        private const int MaxThread = 3;
+        private List<AssetInfo> _assets;
+
+        private string _storagePath;
+
+        public bool Valid { get; private set; }
+        public int HashNum { get; private set; }
+        public int HashTotal { get; private set; }
+        public int HashFailedNum { get; private set; }
+
         public static HashChecker Create(string storagePath) {
-            var go = new GameObject("HashChecker") {hideFlags = HideFlags.HideAndDontSave};
+            var go = new GameObject("HashChecker") { hideFlags = HideFlags.HideAndDontSave };
             var instance = go.AddComponent<HashChecker>();
             instance._storagePath = storagePath;
 
@@ -20,19 +30,9 @@ namespace vFrame.Core.Unity.Patch
             return instance;
         }
 
-        private const int MaxThread = 3;
-
-        private string _storagePath;
-        private List<AssetInfo> _assets;
-
         public event Action OnCheckStarted;
         public event Action<AssetInfo, bool> OnCheckProgress;
         public event Action OnCheckFinished;
-
-        public bool Valid { get; private set; }
-        public int HashNum { get; private set; }
-        public int HashTotal { get; private set; }
-        public int HashFailedNum { get; private set; }
 
         public void Check(List<AssetInfo> assets) {
             Valid = true;
@@ -97,18 +97,26 @@ namespace vFrame.Core.Unity.Patch
 
         private class HashProcess : CustomYieldInstruction
         {
-            private readonly string _path;
             private readonly object _lockObject = new object();
+            private readonly string _path;
             private bool _hashFinished;
-
-            public Exception Error { get; private set; }
-            public string HashValue { get; private set; }
 
             public HashProcess(string path) {
                 _path = path;
                 _hashFinished = false;
 
                 ThreadPool.QueueUserWorkItem(HashStream);
+            }
+
+            public Exception Error { get; private set; }
+            public string HashValue { get; private set; }
+
+            public override bool keepWaiting {
+                get {
+                    lock (_lockObject) {
+                        return !_hashFinished;
+                    }
+                }
             }
 
             private void HashStream(object obj) {
@@ -138,14 +146,6 @@ namespace vFrame.Core.Unity.Patch
                 using (var md5 = MD5.Create()) {
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "");
-                }
-            }
-
-            public override bool keepWaiting {
-                get {
-                    lock (_lockObject) {
-                        return !_hashFinished;
-                    }
                 }
             }
         }

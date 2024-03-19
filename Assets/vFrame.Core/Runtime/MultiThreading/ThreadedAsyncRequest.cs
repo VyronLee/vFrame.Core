@@ -22,7 +22,7 @@ namespace vFrame.Core.MultiThreading
             }
 
             try {
-                OnThreadedHandle((TArg) state);
+                OnThreadedHandle((TArg)state);
             }
             catch (Exception e) {
                 ErrorHandler(e);
@@ -60,7 +60,7 @@ namespace vFrame.Core.MultiThreading
             }
 
             try {
-                Value = OnThreadedHandle((TArg) state);
+                Value = OnThreadedHandle((TArg)state);
             }
             catch (Exception e) {
                 ErrorHandler(e);

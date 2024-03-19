@@ -12,8 +12,6 @@ namespace vFrame.Core.Unity.SpawnPools
 {
     public class AssetLoadFailedException : SpawnPoolException
     {
-        public AssetLoadFailedException(string path) : base(path) {
-
-        }
+        public AssetLoadFailedException(string path) : base(path) { }
     }
 }

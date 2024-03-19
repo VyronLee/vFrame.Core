@@ -7,15 +7,15 @@ namespace vFrame.Core.Unity.Download
     public class DownloadAgentWebClient : DownloadAgentBase
     {
         private readonly object m_LockObj = new object();
+        private bool m_Done;
+        private ulong m_DownloadedSize;
+        private Exception m_Error;
 
         private ulong m_LastDownloadedSize;
-        private ulong m_DownloadedSize;
-        private ulong m_TotalSize;
         private float m_Progress;
-        private float m_WaitTime;
         private float m_ProgressCheckTime;
-        private bool m_Done;
-        private Exception m_Error;
+        private ulong m_TotalSize;
+        private float m_WaitTime;
         private WebClient m_WebClient;
 
         public override ulong DownloadedSize {
@@ -112,9 +112,9 @@ namespace vFrame.Core.Unity.Download
 
         private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) {
             lock (m_LockObj) {
-                m_DownloadedSize = (ulong) e.BytesReceived;
-                m_TotalSize = (ulong) e.TotalBytesToReceive;
-                m_Progress = (float) e.ProgressPercentage / 100;
+                m_DownloadedSize = (ulong)e.BytesReceived;
+                m_TotalSize = (ulong)e.TotalBytesToReceive;
+                m_Progress = (float)e.ProgressPercentage / 100;
             }
         }
 

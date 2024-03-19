@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-07-29 11:01
+//     Created  2016-07-29 11:01
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -29,11 +29,11 @@ namespace vFrame.Core.Base
             }
         }
 
-        protected abstract void OnDestroy();
-
         public void Dispose() {
             Destroy();
         }
+
+        protected abstract void OnDestroy();
 
         protected void ThrowIfDestroyed() {
             if (Destroyed) {
