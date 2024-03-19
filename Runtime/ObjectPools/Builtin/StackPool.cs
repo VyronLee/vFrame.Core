@@ -12,7 +12,5 @@ using System.Collections.Generic;
 
 namespace vFrame.Core.ObjectPools.Builtin
 {
-    public class StackPool<T> : ObjectPool<Stack<T>, StackAllocator<T>>
-    {
-    }
+    public class StackPool<T> : ObjectPool<Stack<T>, StackAllocator<T>> { }
 }

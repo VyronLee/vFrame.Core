@@ -12,9 +12,7 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Events
 {
-    internal class EventExecutorPool : ObjectPool<EventExecutor, EventExecutorAllocator>
-    {
-    }
+    internal class EventExecutorPool : ObjectPool<EventExecutor, EventExecutorAllocator> { }
 
     internal class EventExecutorAllocator : IPoolObjectAllocator<EventExecutor>
     {

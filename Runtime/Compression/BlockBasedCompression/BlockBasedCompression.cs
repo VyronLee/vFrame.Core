@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,9 +27,8 @@ namespace vFrame.Core.Compression
 
     public class BlockBasedCompressionBlockTable
     {
-        public BlockBasedCompressionBlockInfo[] BlockInfos;
-
         private int _blockIterator;
+        public BlockBasedCompressionBlockInfo[] BlockInfos;
 
         public BlockBasedCompressionBlockInfo FindBlock(int blockIndex) {
             if (null == BlockInfos) {
@@ -62,30 +62,30 @@ namespace vFrame.Core.Compression
     {
         public int BlockIndex;
         public long BlockOffset;
-        public int OriginSize;
-        public int CompressedSize;
         public bool Compressed;
+        public int CompressedSize;
+        public int OriginSize;
     }
 
     /// <summary>
-    /// Block Based Compression
+    ///     Block Based Compression
     ///     File format:
-    ///         |- header
-    ///         |- block data 1
-    ///         |- block data 2
-    ///         |- block data 3
-    ///         |- ...
-    ///         |- block table
+    ///     |- header
+    ///     |- block data 1
+    ///     |- block data 2
+    ///     |- block data 3
+    ///     |- ...
+    ///     |- block table
     /// </summary>
     public class BlockBasedCompression : BaseObject
     {
         private readonly object _inputLock = new object();
         private readonly object _outputLock = new object();
+        private BlockBasedCompressionBlockTable _blockTable;
 
-        private System.Buffers.ArrayPool<byte> _buffers;
+        private ArrayPool<byte> _buffers;
 
         private BlockBasedCompressionHeader _header;
-        private BlockBasedCompressionBlockTable _blockTable;
         private long _inputStart;
         private long _outputStart;
 
@@ -94,7 +94,7 @@ namespace vFrame.Core.Compression
         public bool SkipValidation { get; set; } = false;
 
         protected override void OnCreate() {
-            _buffers = System.Buffers.ArrayPool<byte>.Create();
+            _buffers = ArrayPool<byte>.Create();
         }
 
         protected override void OnDestroy() {
@@ -108,7 +108,7 @@ namespace vFrame.Core.Compression
                     using (var reader = new BinaryReader(input, Encoding.UTF8, true)) {
                         header.Id = reader.ReadInt64();
                         header.Version = reader.ReadInt64();
-                        header.CompressorType = (CompressorType) reader.ReadInt32();
+                        header.CompressorType = (CompressorType)reader.ReadInt32();
                         header.BlockSize = reader.ReadInt32();
                         header.BlockCount = reader.ReadInt32();
                         header.BlockTableOffset = reader.ReadInt64();
@@ -205,7 +205,7 @@ namespace vFrame.Core.Compression
 
         private static BlockBasedCompressionBlockTable CreateBlockTable(BlockBasedCompressionHeader header) {
             var blockTable = new BlockBasedCompressionBlockTable {
-                BlockInfos = new BlockBasedCompressionBlockInfo[header.BlockCount],
+                BlockInfos = new BlockBasedCompressionBlockInfo[header.BlockCount]
             };
             return blockTable;
         }
@@ -228,8 +228,7 @@ namespace vFrame.Core.Compression
         protected void SafeCompress(Stream input,
             Stream output,
             BlockBasedCompressionOptions options,
-            int blockIndex)
-        {
+            int blockIndex) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("SafeCompress, blockIndex: " + blockIndex, id);
 
@@ -251,8 +250,7 @@ namespace vFrame.Core.Compression
             BlockBasedCompressionOptions options,
             int blockIndex,
             ref byte[] dataBuffer,
-            out int dataLength)
-        {
+            out int dataLength) {
             lock (_inputLock) {
                 var blockOffset = _inputStart + blockIndex * (long)options.BlockSize;
                 input.Seek(blockOffset, SeekOrigin.Begin);
@@ -271,8 +269,7 @@ namespace vFrame.Core.Compression
             BlockBasedCompressionOptions options,
             ref byte[] outBuffer,
             out int outLength,
-            out bool compressed)
-        {
+            out bool compressed) {
             using (var compressor = CompressorPool.Instance().Rent(options.CompressorType, options.CompressOptions)) {
                 using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
                     //using (var outStream = new MemoryStream(outBuffer)) {  //System.NotSupportedException: Memory stream is not expandable.
@@ -295,14 +292,16 @@ namespace vFrame.Core.Compression
             }
         }
 
-        private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength, out long offset) {
+        private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength,
+            out long offset) {
             lock (_outputLock) {
                 offset = output.Position;
                 output.Write(dataBuffer, 0, dataLength);
             }
         }
 
-        private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize, bool compressed) {
+        private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize,
+            bool compressed) {
             lock (_blockTable) {
                 if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
                     throw new IndexOutOfRangeException();
@@ -313,7 +312,7 @@ namespace vFrame.Core.Compression
                     BlockOffset = offset,
                     OriginSize = originSize,
                     CompressedSize = compressedSize,
-                    Compressed = compressed,
+                    Compressed = compressed
                 };
                 _blockTable.AddBlock(blockInfo);
             }
@@ -374,7 +373,7 @@ namespace vFrame.Core.Compression
                             BlockOffset = reader.ReadInt64(),
                             OriginSize = reader.ReadInt32(),
                             CompressedSize = reader.ReadInt32(),
-                            Compressed = reader.ReadBoolean(),
+                            Compressed = reader.ReadBoolean()
                         };
                     }
                 }
@@ -404,8 +403,7 @@ namespace vFrame.Core.Compression
             int blockIndex,
             ref byte[] dataBuffer,
             out int dataLength,
-            out bool compressed)
-        {
+            out bool compressed) {
             var blockInfo = _blockTable.FindBlock(blockIndex);
             if (null == blockInfo) {
                 throw new BlockTableDataErrorException();
@@ -443,8 +441,7 @@ namespace vFrame.Core.Compression
             int dataLength,
             bool compressed,
             ref byte[] outBuffer,
-            out int outLength)
-        {
+            out int outLength) {
             if (!compressed) {
                 Array.Copy(dataBuffer, 0, outBuffer, 0, outLength = dataLength);
                 return;
@@ -464,8 +461,6 @@ namespace vFrame.Core.Compression
             }
         }
 
-
         #endregion
-
     }
 }

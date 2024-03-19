@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-09-20 20:35
+//     Created  2016-09-20 20:35
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -17,19 +17,20 @@ namespace vFrame.Core.Events
     public class DelegateEventListener : BaseObject, IEventListener
     {
         /// <summary>
-        /// 代理接口
+        ///     代理接口
         /// </summary>
         public Action<IEvent> Action;
 
         /// <summary>
-        /// 事件响应接口
+        ///     事件响应接口
         /// </summary>
         public void OnEvent(IEvent e) {
-            if (null != Action) Action(e);
+            if (null != Action) {
+                Action(e);
+            }
         }
 
-        protected override void OnCreate() {
-        }
+        protected override void OnCreate() { }
 
         protected override void OnDestroy() {
             Action = null;

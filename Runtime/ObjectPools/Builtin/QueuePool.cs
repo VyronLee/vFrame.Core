@@ -12,7 +12,5 @@ using System.Collections.Generic;
 
 namespace vFrame.Core.ObjectPools.Builtin
 {
-    public class QueuePool<T> : ObjectPool<Queue<T>, QueueAllocator<T>>
-    {
-    }
+    public class QueuePool<T> : ObjectPool<Queue<T>, QueueAllocator<T>> { }
 }

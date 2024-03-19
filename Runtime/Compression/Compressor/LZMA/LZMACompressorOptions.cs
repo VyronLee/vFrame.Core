@@ -2,16 +2,6 @@
 {
     public class LZMACompressorOptions : CompressorOptions
     {
-        public enum LZMASpeed
-        {
-            Fastest = 5,
-            VeryFast = 8,
-            Fast = 16,
-            Medium = 32,
-            Slow = 64,
-            VerySlow = 128,
-        }
-
         public enum LZMADictionarySize
         {
             ///<summary>64 KiB</summary>
@@ -30,7 +20,17 @@
             Larger = 1 << 24,
 
             ///<summary>64 MiB</summary>
-            VeryLarge = 1 << 26,
+            VeryLarge = 1 << 26
+        }
+
+        public enum LZMASpeed
+        {
+            Fastest = 5,
+            VeryFast = 8,
+            Fast = 16,
+            Medium = 32,
+            Slow = 64,
+            VerySlow = 128
         }
 
         public LZMASpeed Speed { get; set; }

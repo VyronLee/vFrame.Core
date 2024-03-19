@@ -2,7 +2,5 @@
 
 namespace vFrame.Core.ObjectPools.Builtin
 {
-    public class HashSetPool<T> : ObjectPool<HashSet<T>, HashSetAllocator<T>>
-    {
-    }
+    public class HashSetPool<T> : ObjectPool<HashSet<T>, HashSetAllocator<T>> { }
 }

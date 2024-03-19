@@ -16,6 +16,6 @@ namespace vFrame.Core.Loggers
         Info = 2,
         Warning = 4,
         Error = 8,
-        Fatal = 16,
+        Fatal = 16
     }
 }

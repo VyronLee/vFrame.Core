@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-08-01 15:56
+//     Created  2016-08-01 15:56
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -15,18 +15,16 @@ namespace vFrame.Core.Events
 {
     public class VoteExecutor : BaseObject
     {
-        public bool Activated { get; set; }
-        public bool Stopped { get; set; }
-
         public uint Handle;
         public IVoteListener Listener;
         public int VoteId;
+        public bool Activated { get; set; }
+        public bool Stopped { get; set; }
 
         /// <summary>
         ///     创建函数
         /// </summary>
-        protected override void OnCreate() {
-        }
+        protected override void OnCreate() { }
 
         /// <summary>
         ///     创建函数
@@ -53,8 +51,9 @@ namespace vFrame.Core.Events
         ///     执行
         /// </summary>
         public bool Execute(IVote e) {
-            if (null != Listener)
+            if (null != Listener) {
                 return Listener.OnVote(e);
+            }
             return false;
         }
     }

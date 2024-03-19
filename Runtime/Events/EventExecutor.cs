@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-08-01 15:56
+//     Created  2016-08-01 15:56
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -15,21 +15,19 @@ namespace vFrame.Core.Events
 {
     public class EventExecutor : BaseObject
     {
-        public bool Activated { get; set; }
-        public bool Stopped { get; set; }
-
         public int EventId;
         public uint Handle;
         public IEventListener Listener;
+        public bool Activated { get; set; }
+        public bool Stopped { get; set; }
 
         /// <summary>
         ///     创建函数
         /// </summary>
-        protected override void OnCreate() {
-        }
+        protected override void OnCreate() { }
 
         /// <summary>
-        /// 销毁函数
+        ///     销毁函数
         /// </summary>
         protected override void OnDestroy() {
             Listener = null;
@@ -53,8 +51,9 @@ namespace vFrame.Core.Events
         ///     执行
         /// </summary>
         public void Execute(IEvent e) {
-            if (null != Listener)
+            if (null != Listener) {
                 Listener.OnEvent(e);
+            }
         }
     }
 }

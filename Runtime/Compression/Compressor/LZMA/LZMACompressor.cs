@@ -11,30 +11,32 @@ namespace vFrame.Core.Compression
 {
     public class LZMACompressor : Compressor
     {
-        private static readonly LZMACompressorOptions DefaultOptions = new LZMACompressorOptions() {
+        private static readonly LZMACompressorOptions DefaultOptions = new LZMACompressorOptions {
             DictionarySize = LZMACompressorOptions.LZMADictionarySize.Small,
-            Speed = LZMACompressorOptions.LZMASpeed.Medium,
+            Speed = LZMACompressorOptions.LZMASpeed.Medium
         };
 
-        private static readonly Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Encoder>> EncoderCache
-            = new Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Encoder>> {
-                {LZMACompressorOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Encoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Small, new ConcurrentQueue<Encoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Encoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Large, new ConcurrentQueue<Encoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Encoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Encoder>()},
-            };
+        private static readonly Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Encoder>>
+            EncoderCache
+                = new Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Encoder>> {
+                    { LZMACompressorOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Encoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Small, new ConcurrentQueue<Encoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Encoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Large, new ConcurrentQueue<Encoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Encoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Encoder>() }
+                };
 
-        private static readonly Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Decoder>> DecoderCache
-            = new Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Decoder>> {
-                {LZMACompressorOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Decoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Small, new ConcurrentQueue<Decoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Decoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Large, new ConcurrentQueue<Decoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Decoder>()},
-                {LZMACompressorOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Decoder>()},
-            };
+        private static readonly Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Decoder>>
+            DecoderCache
+                = new Dictionary<LZMACompressorOptions.LZMADictionarySize, ConcurrentQueue<Decoder>> {
+                    { LZMACompressorOptions.LZMADictionarySize.VerySmall, new ConcurrentQueue<Decoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Small, new ConcurrentQueue<Decoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Medium, new ConcurrentQueue<Decoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Large, new ConcurrentQueue<Decoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.Larger, new ConcurrentQueue<Decoder>() },
+                    { LZMACompressorOptions.LZMADictionarySize.VeryLarge, new ConcurrentQueue<Decoder>() }
+                };
 
         private static readonly ConcurrentQueue<object[]> ObjectArrayCache = new ConcurrentQueue<object[]>();
         private static readonly ConcurrentQueue<byte[]> ByteArrayCache = new ConcurrentQueue<byte[]>();
@@ -54,7 +56,7 @@ namespace vFrame.Core.Compression
         }
 
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
-            var options = (LZMACompressorOptions) Options;
+            var options = (LZMACompressorOptions)Options;
 
             const int posStateBits = 2; // default: 2
             const int litContextBits = 3; // 3 for normal files, 0; for 32-bit data
@@ -66,11 +68,11 @@ namespace vFrame.Core.Compression
                 properties = new object[7];
             }
 
-            properties[0] = (int) options.DictionarySize;
+            properties[0] = (int)options.DictionarySize;
             properties[1] = posStateBits;
             properties[2] = litContextBits;
             properties[3] = litPosBits;
-            properties[4] = (int) options.Speed;
+            properties[4] = (int)options.Speed;
             properties[5] = matchFinder;
             properties[6] = endMarker;
 
@@ -84,7 +86,7 @@ namespace vFrame.Core.Compression
             lzmaEncoder.WriteCoderProperties(output);
             var fileSize = input.Length;
             for (var i = 0; i < 8; i++) {
-                output.WriteByte((byte) (fileSize >> (8 * i)));
+                output.WriteByte((byte)(fileSize >> (8 * i)));
             }
 
             var progress = ObjectPool<ActionCodeProgress>.Shared.Get();
@@ -102,15 +104,16 @@ namespace vFrame.Core.Compression
             if (!ByteArrayCache.TryDequeue(out var properties)) {
                 properties = new byte[5];
             }
-            if (input.Read(properties, 0, 5) != 5)
+            if (input.Read(properties, 0, 5) != 5) {
                 throw new Exception("input .lzma is too short");
+            }
 
             uint dictionarySize = 0;
             for (var i = 0; i < 4; i++) {
-                dictionarySize += (uint) properties[1 + i] << (i * 8);
+                dictionarySize += (uint)properties[1 + i] << (i * 8);
             }
 
-            if (!DecoderCache.TryGetValue((LZMACompressorOptions.LZMADictionarySize) dictionarySize, out var cache)) {
+            if (!DecoderCache.TryGetValue((LZMACompressorOptions.LZMADictionarySize)dictionarySize, out var cache)) {
                 throw new NotSupportedException("Dictionary size not support: " + dictionarySize);
             }
 
@@ -122,8 +125,10 @@ namespace vFrame.Core.Compression
             long fileLength = 0;
             for (var i = 0; i < 8; i++) {
                 var v = input.ReadByte();
-                if (v < 0) throw new Exception("Can't Read 1");
-                fileLength |= (long) (byte) v << (8 * i);
+                if (v < 0) {
+                    throw new Exception("Can't Read 1");
+                }
+                fileLength |= (long)(byte)v << (8 * i);
             }
 
             var progress = ObjectPool<ActionCodeProgress>.Shared.Get();
@@ -140,16 +145,20 @@ namespace vFrame.Core.Compression
 
         private class ActionCodeProgress : BaseObject<Action<long, long>>, ICodeProgress
         {
-            private static Action<long, long> DefaultHandler => (inSize, outSize) => {};
             private Action<long, long> _handler;
+            private static Action<long, long> DefaultHandler => (inSize, outSize) => { };
+
+            public void SetProgress(long inSize, long outSize) {
+                _handler(inSize, outSize);
+            }
 
             protected override void OnCreate(Action<long, long> handler) {
                 _handler = handler ?? DefaultHandler;
             }
+
             protected override void OnDestroy() {
                 _handler = null;
             }
-            public void SetProgress(long inSize, long outSize) => _handler(inSize, outSize);
         }
     }
 }

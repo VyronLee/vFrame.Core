@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-07-28 10:54
+//     Created  2016-07-28 10:54
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -20,6 +20,13 @@ namespace vFrame.Core.Components
         ///     绑定对象
         /// </summary>
         private IContainer _container;
+
+        /// <summary>
+        ///     获取绑定目标
+        /// </summary>
+        public IContainer GetContainer() {
+            return _container;
+        }
 
         /// <summary>
         ///     绑定处理
@@ -40,22 +47,32 @@ namespace vFrame.Core.Components
         }
 
         /// <summary>
-        ///     获取绑定目标
+        ///     发送事件
         /// </summary>
-        public IContainer GetContainer() {
-            return _container;
+        /// <param name="methodName"></param>
+        /// <param name="args"></param>
+        public void SendEvent(string methodName, params object[] args) {
+            _container?.Broadcast(methodName, args);
+        }
+
+        /// <summary>
+        ///     发送命令
+        /// </summary>
+        /// <param name="methodName"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public object SendCommand(string methodName, params object[] args) {
+            return _container?.Loopback(methodName, args);
         }
 
         /// <summary>
         ///     绑定处理
         /// </summary>
-        protected virtual void OnBind(IContainer target) {
-        }
+        protected virtual void OnBind(IContainer target) { }
 
         /// <summary>
         ///     解绑处理
         /// </summary>
-        protected virtual void OnUnbind(IContainer target) {
-        }
+        protected virtual void OnUnbind(IContainer target) { }
     }
 }

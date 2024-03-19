@@ -11,8 +11,7 @@ namespace vFrame.Core.Extensions
             var walker = new ArrayTraverse(array);
             do {
                 action(array, walker.Position);
-            }
-            while (walker.Step());
+            } while (walker.Step());
         }
     }
 

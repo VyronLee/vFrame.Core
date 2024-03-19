@@ -60,20 +60,8 @@ namespace vFrame.Core.Encryption
 
     public class EncryptorWrap : BaseObject<EncryptorPool, Encryptor>, IEncryptor
     {
-        private EncryptorPool _pool;
         private Encryptor _encryptor;
-
-        protected override void OnCreate(EncryptorPool pool, Encryptor compressor) {
-            _pool = pool;
-            _encryptor = compressor;
-        }
-
-        protected override void OnDestroy() {
-            _pool.Return(_encryptor);
-            _pool.Return(this);
-            _pool = null;
-            _encryptor = null;
-        }
+        private EncryptorPool _pool;
 
         public void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             _encryptor.Encrypt(input, output, key, keyLength);
@@ -89,6 +77,18 @@ namespace vFrame.Core.Encryption
 
         public void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
             _encryptor.Decrypt(input, output, key, keyLength);
+        }
+
+        protected override void OnCreate(EncryptorPool pool, Encryptor compressor) {
+            _pool = pool;
+            _encryptor = compressor;
+        }
+
+        protected override void OnDestroy() {
+            _pool.Return(_encryptor);
+            _pool.Return(this);
+            _pool = null;
+            _encryptor = null;
         }
     }
 }

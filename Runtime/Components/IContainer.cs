@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-09-21 19:19
+//     Created  2016-09-21 19:19
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -61,5 +61,13 @@ namespace vFrame.Core.Components
         /// <param name="method">函数名</param>
         /// <param name="args">参数列表</param>
         void Broadcast(string method, params object[] args);
+
+        /// <summary>
+        ///     回送调用
+        /// </summary>
+        /// <param name="method">函数名</param>
+        /// <param name="args">参数列表</param>
+        /// <returns></returns>
+        object Loopback(string method, params object[] args);
     }
 }

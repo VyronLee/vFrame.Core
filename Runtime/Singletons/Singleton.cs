@@ -5,7 +5,7 @@
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//    Modified  2016-07-28 15:19
+//     Created  2016-07-28 15:19
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
@@ -20,7 +20,7 @@ namespace vFrame.Core.Singletons
         private static readonly object _lockObject = new object();
 
         /// <summary>
-        /// 销毁函数
+        ///     销毁函数
         /// </summary>
         protected override void OnDestroy() {
             if (_instance == this) {

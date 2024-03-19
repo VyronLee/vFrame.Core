@@ -13,7 +13,7 @@ namespace vFrame.Core.Localize
     public interface ILocalizationReader
     {
         /// <summary>
-        /// 读取数据
+        ///     读取数据
         /// </summary>
         /// <param name="langCode">语言代码</param>
         /// <returns>数据文本</returns>

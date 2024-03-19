@@ -12,7 +12,5 @@ using System.Text;
 
 namespace vFrame.Core.ObjectPools.Builtin
 {
-    public class StringBuilderPool : ObjectPool<StringBuilder, StringBuilderAllocator>
-    {
-    }
+    public class StringBuilderPool : ObjectPool<StringBuilder, StringBuilderAllocator> { }
 }

@@ -21,8 +21,8 @@ namespace vFrame.Core.Encryption
         public abstract void Encrypt(Stream input, Stream output, byte[] key, int keyLength);
         public abstract void Decrypt(Stream input, Stream output, byte[] key, int keyLength);
 
-        protected override void OnCreate() {}
+        protected override void OnCreate() { }
 
-        protected override void OnDestroy() {}
+        protected override void OnDestroy() { }
     }
 }

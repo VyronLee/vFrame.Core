@@ -1,9 +1,6 @@
 ﻿namespace vFrame.Core.MultiThreading
 {
-    public interface IAsyncRequest : IAsync
-    {
-
-    }
+    public interface IAsyncRequest : IAsync { }
 
     public interface IAsyncRequest<out TRet> : IAsyncRequest
     {
