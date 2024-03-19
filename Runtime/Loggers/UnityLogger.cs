@@ -13,7 +13,6 @@ namespace vFrame.Core.Unity.Loggers
             string logFile = null,
             string logTagFormat = Logger.DefaultTagFormatter,
             int logFormatMask = Logger.DefaultLogFormatMask) {
-
             if (_opened) {
                 return;
             }
@@ -58,6 +57,5 @@ namespace vFrame.Core.Unity.Loggers
                     throw new ArgumentOutOfRangeException();
             }
         }
-
     }
 }

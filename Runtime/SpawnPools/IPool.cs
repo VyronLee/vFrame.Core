@@ -15,10 +15,10 @@ namespace vFrame.Core.Unity.SpawnPools
 {
     public interface IPool
     {
+        int Count { get; }
         GameObject Spawn();
         ILoaderAsyncRequest SpawnAsync();
         void Recycle(GameObject obj);
-        int Count { get; }
     }
 
     public interface ILoaderAsyncRequest : IAsyncRequest

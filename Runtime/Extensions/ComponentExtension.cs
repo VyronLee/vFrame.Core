@@ -23,7 +23,7 @@ namespace vFrame.Core.Unity.Extensions
 
         public static T GetCopyOf<T>(this Component comp, T other) where T : Component {
             var type = comp.GetType();
-            if (type != other.GetType()){
+            if (type != other.GetType()) {
                 return null; // type mis-match
             }
             var propertiesInfo = type.GetProperties(Flags);

@@ -22,25 +22,14 @@ namespace vFrame.Core.Unity.Coroutine
         private static int _index;
 
         private static GameObject _parent;
+        private static readonly LogTag LogTag = new LogTag("CoroutinePool");
 
-        private static GameObject PoolParent {
-            get {
-                if (_parent)
-                    return _parent;
-
-                _parent = new GameObject("CoroutinePools");
-                Object.DontDestroyOnLoad(_parent);
-                return _parent;
-            }
-        }
+        private readonly GameObject _holder;
 
         internal readonly int Capacity;
         internal readonly List<CoroutineRunnerBehaviour> RunnerList;
         internal readonly List<CoroutineTask> TasksWaiting;
-
-        private readonly GameObject _holder;
         private int _taskHandle;
-        private static readonly LogTag LogTag = new LogTag("CoroutinePool");
 
         public CoroutinePool(string name = null, int capacity = int.MaxValue) {
             Capacity = capacity;
@@ -51,6 +40,18 @@ namespace vFrame.Core.Unity.Coroutine
             _holder = new GameObject(string.Format("Pool_{0}({1})", ++_index, name ?? "Unnamed"));
             _holder.AddComponent<CoroutinePoolBehaviour>().Pool = this;
             _holder.transform.SetParent(PoolParent.transform);
+        }
+
+        private static GameObject PoolParent {
+            get {
+                if (_parent) {
+                    return _parent;
+                }
+
+                _parent = new GameObject("CoroutinePools");
+                Object.DontDestroyOnLoad(_parent);
+                return _parent;
+            }
         }
 
         public void Destroy() {
@@ -76,7 +77,7 @@ namespace vFrame.Core.Unity.Coroutine
            Logger.Info(LogTag, "CoroutinePool:StartCoroutine - handle: " + handle);
 #endif
 
-            var context = new CoroutineTask {Handle = handle, Task = task};
+            var context = new CoroutineTask { Handle = handle, Task = task };
 #if DEBUG_COROUTINE_POOL
             context.Stack = StackTraceUtility.ExtractStackTrace();
 #endif
@@ -104,8 +105,9 @@ namespace vFrame.Core.Unity.Coroutine
 #endif
             // Remove from waiting list
             foreach (var context in TasksWaiting) {
-                if (context.Handle != handle)
+                if (context.Handle != handle) {
                     continue;
+                }
                 TasksWaiting.Remove(context);
 #if DEBUG_COROUTINE_POOL
                 Logger.Info(LogTag, "CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
@@ -195,7 +197,7 @@ namespace vFrame.Core.Unity.Coroutine
 
         private int FindIdleRunner() {
             foreach (var runner in RunnerList) {
-                if(runner.IsStopped()) {
+                if (runner.IsStopped()) {
                     return runner.RunnerId;
                 }
             }
@@ -206,8 +208,9 @@ namespace vFrame.Core.Unity.Coroutine
         }
 
         private bool TryPopupAndRunNext() {
-            if (TasksWaiting.Count <= 0)
+            if (TasksWaiting.Count <= 0) {
                 return false;
+            }
 
             var runnerId = FindIdleRunner();
             if (runnerId < 0) {
@@ -230,6 +233,5 @@ namespace vFrame.Core.Unity.Coroutine
                 // nothing to do
             }
         }
-
     }
 }

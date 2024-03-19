@@ -18,7 +18,8 @@ namespace vFrame.Core.Unity.Extensions
 {
     public static class TransformExtension
     {
-        public static void TraverseSelfAndChildren<T>(this Transform transform, Action<T> traveller) where T : Component {
+        public static void TraverseSelfAndChildren<T>(this Transform transform, Action<T> traveller)
+            where T : Component {
             var buffer = ListPool<T>.Shared.Get();
             transform.GetComponentsInChildren(true, buffer);
             try {
@@ -74,9 +75,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         public static void ClearAllParticleSystems(this Transform transform) {
-            TraverseSelfAndChildren<ParticleSystem>(transform, v => {
-                v.Clear(true);
-            });
+            TraverseSelfAndChildren<ParticleSystem>(transform, v => { v.Clear(true); });
         }
 
         public static void EnableAllAnimations(this Transform transform) {
@@ -151,8 +150,7 @@ namespace vFrame.Core.Unity.Extensions
             do {
                 names.Add(transform.name);
                 transform = transform.parent;
-            }
-            while (transform);
+            } while (transform);
 
             names.Reverse();
             var path = string.Join("/", names);

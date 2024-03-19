@@ -9,21 +9,18 @@ namespace vFrame.Core.Unity.Download
     {
         private const int DOWNLOAD_AGENT_COUNT = 3;
 
-        [SerializeField] private int m_Timeout = 300;
+        [SerializeField]
+        private int m_Timeout = 300;
 
-        [SerializeField] private float m_ProgressUpdateInterval = 0.1f;
+        [SerializeField]
+        private float m_ProgressUpdateInterval = 0.1f;
 
         private readonly List<IDownloadAgent> m_Agents = new List<IDownloadAgent>();
-        private readonly LinkedList<DownloadTask> m_WaitingTasks = new LinkedList<DownloadTask>();
         private readonly DownloadSpeedCounter m_SpeedCounter = new DownloadSpeedCounter();
-
-        public event Action<DownloadEventArgs> DownloadStart;
-        public event Action<DownloadEventArgs> DownloadUpdate;
-        public event Action<DownloadEventArgs> DownloadSuccess;
-        public event Action<DownloadEventArgs> DownloadFailure;
+        private readonly LinkedList<DownloadTask> m_WaitingTasks = new LinkedList<DownloadTask>();
 
         public int Timeout {
-            get { return m_Timeout; }
+            get => m_Timeout;
             set {
                 if (value <= 0) {
                     return;
@@ -36,7 +33,7 @@ namespace vFrame.Core.Unity.Download
         }
 
         public float ProgressUpdateInterval {
-            get { return m_ProgressUpdateInterval; }
+            get => m_ProgressUpdateInterval;
             set {
                 m_ProgressUpdateInterval = value;
                 foreach (var agent in m_Agents) {
@@ -54,16 +51,9 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
-        public string FormattedSpeed {
-            get { return FormatSpeed(Speed); }
-        }
+        public string FormattedSpeed => FormatSpeed(Speed);
 
-        public static DownloadManager Create(string name = "DownloadManager") {
-            var go = new GameObject(name) {hideFlags = HideFlags.HideAndDontSave};
-            var inst = go.AddComponent<DownloadManager>();
-            DontDestroyOnLoad(go);
-            return inst;
-        }
+        public bool IsPaused { get; set; }
 
         private void Awake() {
             for (var i = 0; i < DOWNLOAD_AGENT_COUNT; i++) {
@@ -71,6 +61,23 @@ namespace vFrame.Core.Unity.Download
             }
 
             ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+        }
+
+        private void Update() {
+            UpdateDownloadSpeed();
+            UpdateDownloadAgent();
+        }
+
+        public event Action<DownloadEventArgs> DownloadStart;
+        public event Action<DownloadEventArgs> DownloadUpdate;
+        public event Action<DownloadEventArgs> DownloadSuccess;
+        public event Action<DownloadEventArgs> DownloadFailure;
+
+        public static DownloadManager Create(string name = "DownloadManager") {
+            var go = new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+            var inst = go.AddComponent<DownloadManager>();
+            DontDestroyOnLoad(go);
+            return inst;
         }
 
         private void AddDownloadAgent(IDownloadAgent agent) {
@@ -135,8 +142,6 @@ namespace vFrame.Core.Unity.Download
             return null;
         }
 
-        public bool IsPaused { get; set; }
-
         public void Pause() {
             if (IsPaused) {
                 return;
@@ -151,11 +156,6 @@ namespace vFrame.Core.Unity.Download
             }
             IsPaused = false;
             enabled = true;
-        }
-
-        private void Update() {
-            UpdateDownloadSpeed();
-            UpdateDownloadAgent();
         }
 
         private void UpdateDownloadSpeed() {

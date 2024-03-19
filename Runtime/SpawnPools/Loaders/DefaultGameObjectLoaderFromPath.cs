@@ -8,6 +8,7 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
+using System;
 using System.Collections;
 using UnityEngine;
 using vFrame.Core.Base;
@@ -20,18 +21,11 @@ namespace vFrame.Core.Unity.SpawnPools
     {
         private string _path;
 
-        protected override void OnCreate(string arg1) {
-            _path = arg1;
-        }
-
-        protected override void OnDestroy() {
-            _path = null;
-        }
-
         public GameObject Load() {
             var prefab = Resources.Load<GameObject>(_path);
-            if (!prefab)
+            if (!prefab) {
                 throw new AssetLoadFailedException(_path);
+            }
             var obj = Object.Instantiate(prefab);
             Object.DontDestroyOnLoad(obj);
             return obj;
@@ -39,6 +33,18 @@ namespace vFrame.Core.Unity.SpawnPools
 
         public LoadAsyncRequest LoadAsync() {
             return DefaultLoadAsyncRequest.Create(_path);
+        }
+
+        public void Create() {
+            throw new NotImplementedException();
+        }
+
+        protected override void OnCreate(string arg1) {
+            _path = arg1;
+        }
+
+        protected override void OnDestroy() {
+            _path = null;
         }
 
         private class DefaultLoadAsyncRequest : LoadAsyncRequest
@@ -65,15 +71,12 @@ namespace vFrame.Core.Unity.SpawnPools
                 _request = Resources.LoadAsync<GameObject>(_path);
                 yield return _request;
                 var prefab = _request.asset as GameObject;
-                if (!prefab)
+                if (!prefab) {
                     throw new AssetLoadFailedException(_path);
+                }
                 GameObject = Object.Instantiate(prefab);
                 Object.DontDestroyOnLoad(GameObject);
             }
-        }
-
-        public void Create() {
-            throw new System.NotImplementedException();
         }
     }
 }

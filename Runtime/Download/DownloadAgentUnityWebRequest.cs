@@ -7,43 +7,21 @@ namespace vFrame.Core.Unity.Download
 {
     public class DownloadAgentUnityWebRequest : DownloadAgentBase
     {
-        private ulong m_DownloadedSize;
-        private ulong m_TotalSize;
-        private float m_ProgressCheckTime;
-        private float m_Progress;
-        private DownloadProcessState m_State;
-        private UnityWebRequest m_HeadRequest;
         private UnityWebRequest m_ContentRequest;
+        private ulong m_DownloadedSize;
         private DownloadHandlerFile m_DownloadHandler;
         private string m_Error;
+        private UnityWebRequest m_HeadRequest;
+        private float m_Progress;
+        private float m_ProgressCheckTime;
+        private DownloadProcessState m_State;
+        private ulong m_TotalSize;
 
-        private enum DownloadProcessState
-        {
-            NotStart,
-            HeadRequesting,
-            HeadRequested,
-            ContentDownloading,
-            ContentDownloaded,
-            Error,
-        }
+        public override ulong DownloadedSize => m_DownloadedSize;
 
-        public override ulong DownloadedSize {
-            get {
-                return m_DownloadedSize;
-            }
-        }
+        public override ulong TotalSize => m_TotalSize;
 
-        public override ulong TotalSize {
-            get {
-                return m_TotalSize;
-            }
-        }
-
-        public override float Progress {
-            get {
-                return m_Progress;
-            }
-        }
+        public override float Progress => m_Progress;
 
         protected override void OnStart() {
             StopTask(true);
@@ -199,6 +177,16 @@ namespace vFrame.Core.Unity.Download
 #else
             return request.isHttpError || request.isNetworkError;
 #endif
+        }
+
+        private enum DownloadProcessState
+        {
+            NotStart,
+            HeadRequesting,
+            HeadRequested,
+            ContentDownloading,
+            ContentDownloaded,
+            Error
         }
     }
 }

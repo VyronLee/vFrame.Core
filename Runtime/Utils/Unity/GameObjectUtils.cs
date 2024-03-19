@@ -32,6 +32,5 @@ namespace vFrame.Core.Unity.Utils
 
             return null != last ? last.gameObject : null;
         }
-
     }
 }

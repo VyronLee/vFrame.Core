@@ -21,23 +21,67 @@ namespace vFrame.Core.Unity.SpawnPools
     public class Pool : BaseObject<string, SpawnPools, IGameObjectLoader>, IPool
     {
         private readonly Queue<GameObject> _objects = new Queue<GameObject>();
-        private int _lastTime;
-        private GameObject _poolGo;
-
-        private SpawnPools _spawnPools;
-        private string _poolName;
         private IGameObjectLoader _builder;
 
-        private int _uniqueId;
-        private int NewUniqueId => ++_uniqueId;
+        private CoroutinePool _coroutinePool;
+        private int _lastTime;
 
         private Action<GameObject> _onGetGameObject;
         private Action<GameObject> _onLoadCallbackImmediately;
+        private GameObject _poolGo;
+        private string _poolName;
 
-        private CoroutinePool _coroutinePool;
+        private SpawnPools _spawnPools;
 
-        private int _spawnedTimes;
-        internal int SpawnedTimes => _spawnedTimes;
+        private int _uniqueId;
+        private int NewUniqueId => ++_uniqueId;
+        internal int SpawnedTimes { get; private set; }
+
+        public GameObject Spawn() {
+            var obj = TryGetFromPool();
+            if (!obj) {
+                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
+                obj = _builder.Load();
+                OnLoadCallback(obj);
+            }
+
+            OnGetGameObject(obj);
+            return obj;
+        }
+
+        public ILoaderAsyncRequest SpawnAsync() {
+            var obj = TryGetFromPool();
+            if (!obj) {
+                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
+            }
+
+            var request = null != obj ? LoadAsyncRequestOnLoaded.Create(obj) : _builder.LoadAsync();
+            request.OnLoadCallback = _onLoadCallbackImmediately;
+            request.OnGetGameObject = _onGetGameObject;
+            request.Setup(_coroutinePool);
+            return request;
+        }
+
+        public void Recycle(GameObject obj) {
+            if (null == obj) {
+                Debug.Error("Object to recycle cannot be null!");
+                return;
+            }
+
+            Debug.Log("Recycling object into pool({0})", obj.name);
+
+            if (!ObjectPreprocessBeforeRecycle(obj)) {
+                // Cannot recycle, destroy it directly.
+                Object.Destroy(obj);
+                return;
+            }
+
+            _objects.Enqueue(obj);
+
+            ObjectPostprocessAfterRecycle(obj);
+        }
+
+        public int Count => _objects.Count;
 
         protected override void OnCreate(string poolName, SpawnPools spawnPools, IGameObjectLoader builder) {
             _spawnPools = spawnPools;
@@ -89,31 +133,6 @@ namespace vFrame.Core.Unity.SpawnPools
             return obj;
         }
 
-        public GameObject Spawn() {
-            var obj = TryGetFromPool();
-            if (!obj) {
-                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
-                obj = _builder.Load();
-                OnLoadCallback(obj);
-            }
-
-            OnGetGameObject(obj);
-            return obj;
-        }
-
-        public ILoaderAsyncRequest SpawnAsync() {
-            var obj = TryGetFromPool();
-            if (!obj) {
-                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
-            }
-
-            var request = null != obj ? LoadAsyncRequestOnLoaded.Create(obj) : _builder.LoadAsync();
-            request.OnLoadCallback = _onLoadCallbackImmediately;
-            request.OnGetGameObject = _onGetGameObject;
-            request.Setup(_coroutinePool);
-            return request;
-        }
-
         private void OnLoadCallback(GameObject obj) {
             if (!obj) {
                 Debug.Warning("Load gameObject callback, but target == null, pool name: " + _poolName);
@@ -123,7 +142,7 @@ namespace vFrame.Core.Unity.SpawnPools
         }
 
         private void OnGetGameObject(GameObject obj) {
-            _spawnedTimes += 1;
+            SpawnedTimes += 1;
             _lastTime = Time.frameCount;
 
             if (!obj) {
@@ -132,27 +151,6 @@ namespace vFrame.Core.Unity.SpawnPools
             }
             ObjectPreprocessBeforeReturn(obj);
         }
-
-        public void Recycle(GameObject obj) {
-            if (null == obj) {
-                Debug.Error("Object to recycle cannot be null!");
-                return;
-            }
-
-            Debug.Log("Recycling object into pool({0})", obj.name);
-
-            if (!ObjectPreprocessBeforeRecycle(obj)) {
-                // Cannot recycle, destroy it directly.
-                Object.Destroy(obj);
-                return;
-            }
-
-            _objects.Enqueue(obj);
-
-            ObjectPostprocessAfterRecycle(obj);
-        }
-
-        public int Count => _objects.Count;
 
         public bool IsTimeout() {
             return Time.frameCount - _lastTime > _spawnPools.PoolsSetting.LifeTime;
@@ -229,8 +227,9 @@ namespace vFrame.Core.Unity.SpawnPools
             }
 
             var identity = go.GetComponent<PoolObjectIdentity>();
-            if (!identity)
+            if (!identity) {
                 return;
+            }
 
             Debug.Log("Pool object(id: {0}, path: {1}) destroyed.", identity.UniqueId, identity.AssetPath);
 

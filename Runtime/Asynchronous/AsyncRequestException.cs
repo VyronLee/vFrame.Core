@@ -2,13 +2,7 @@
 
 namespace vFrame.Core.Unity.Asynchronous
 {
-    public class AsyncRequestException : Exception
-    {
+    public class AsyncRequestException : Exception { }
 
-    }
-
-    public class AsyncRequestAlreadySetupException : AsyncRequestException
-    {
-
-    }
+    public class AsyncRequestAlreadySetupException : AsyncRequestException { }
 }

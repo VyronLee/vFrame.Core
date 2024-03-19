@@ -15,7 +15,7 @@ namespace vFrame.Core.Unity.Extensions
     public static class GameObjectExtension
     {
         /// <summary>
-        /// 设置物件以及子物件的Layer
+        ///     设置物件以及子物件的Layer
         /// </summary>
         /// <param name="go"></param>
         /// <param name="layer"></param>
@@ -27,7 +27,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 设置物件以及子物件的Tag
+        ///     设置物件以及子物件的Tag
         /// </summary>
         /// <param name="go"></param>
         /// <param name="tag"></param>
@@ -39,12 +39,12 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 获取或者添加组件
+        ///     获取或者添加组件
         /// </summary>
         /// <param name="go"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetOrAddComponent<T>(this GameObject go) where T: MonoBehaviour {
+        public static T GetOrAddComponent<T>(this GameObject go) where T : MonoBehaviour {
             var comp = go.GetComponent<T>();
             if (null == comp) {
                 comp = go.AddComponent<T>();
@@ -53,7 +53,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 扩展销毁方法
+        ///     扩展销毁方法
         /// </summary>
         /// <param name="go"></param>
         public static void DestroyEx(this Object go) {

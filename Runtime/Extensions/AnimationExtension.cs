@@ -16,7 +16,7 @@ namespace vFrame.Core.Unity.Extensions
     public static class AnimationExtension
     {
         /// <summary>
-        /// 重置到动画开头
+        ///     重置到动画开头
         /// </summary>
         /// <param name="animation"></param>
         public static void Reset(this Animation animation) {
@@ -27,7 +27,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 播放动画到最后一帧
+        ///     播放动画到最后一帧
         /// </summary>
         /// <param name="animation"></param>
         /// <returns></returns>
@@ -50,7 +50,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 播放动画，并一直等待到动画播放完成
+        ///     播放动画，并一直等待到动画播放完成
         /// </summary>
         /// <param name="animation"></param>
         /// <param name="name"></param>
@@ -67,7 +67,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 播放动画，并一直等待到动画播放完成
+        ///     播放动画，并一直等待到动画播放完成
         /// </summary>
         /// <param name="animation"></param>
         /// <param name="name"></param>
@@ -80,7 +80,7 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        /// 等待动画播放完成
+        ///     等待动画播放完成
         /// </summary>
         /// <param name="animation"></param>
         /// <returns></returns>

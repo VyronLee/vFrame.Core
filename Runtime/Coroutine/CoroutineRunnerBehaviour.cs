@@ -32,8 +32,10 @@ namespace vFrame.Core.Unity.Coroutine
             set => _runnerId = value;
         }
 
-        public int TaskHandle {
-            get => _task.Handle;
+        public int TaskHandle => _task.Handle;
+
+        private void Reset() {
+            _state = 0;
         }
 
         public void Pause() {
@@ -78,10 +80,6 @@ namespace vFrame.Core.Unity.Coroutine
 
         public bool IsStopped() {
             return (_state & CoroutineState.Stopped) > 0;
-        }
-
-        private void Reset() {
-            _state = 0;
         }
 
         private IEnumerator RunTask() {
