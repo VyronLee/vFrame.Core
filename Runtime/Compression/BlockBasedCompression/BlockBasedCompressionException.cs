@@ -1,6 +1,6 @@
 ﻿using vFrame.Core.Exceptions;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class BlockBasedCompressionException : vFrameException
     {

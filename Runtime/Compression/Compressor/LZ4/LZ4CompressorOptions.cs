@@ -1,6 +1,6 @@
 ﻿using K4os.Compression.LZ4;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class LZ4CompressorOptions : CompressorOptions
     {

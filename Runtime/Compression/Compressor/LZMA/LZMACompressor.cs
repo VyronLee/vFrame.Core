@@ -7,7 +7,7 @@ using vFrame.Core.ObjectPools;
 using vFrame.Core.ThirdParty.SevenZip;
 using vFrame.Core.ThirdParty.SevenZip.Compression.LZMA;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class LZMACompressor : Compressor
     {

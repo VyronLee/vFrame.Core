@@ -7,7 +7,7 @@ using vFrame.Core.Extensions;
 using vFrame.Core.Profiles;
 using vFrame.Core.Utils;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class BlockBasedCompressionHeader
     {

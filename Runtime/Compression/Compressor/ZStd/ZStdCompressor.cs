@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using vFrame.Core.ThirdParty.ZStd;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class ZStdCompressor : Compressor
     {

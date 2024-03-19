@@ -1,6 +1,6 @@
 ﻿using vFrame.Core.ThirdParty.Zlib;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class ZlibCompressorOptions : CompressorOptions
     {

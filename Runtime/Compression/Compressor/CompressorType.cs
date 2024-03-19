@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.Compress
+﻿namespace vFrame.Core.Compression
 {
     public enum CompressorType
     {

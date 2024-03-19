@@ -6,7 +6,7 @@ using System.Threading;
 using vFrame.Core.Exceptions;
 using vFrame.Core.MultiThreading;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class AsynchronousBlockBasedCompression : BlockBasedCompression
     {
