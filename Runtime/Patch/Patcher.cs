@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using UnityEngine;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Unity.Download;
 using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
@@ -149,9 +150,7 @@ namespace vFrame.Core.Unity.Patch
                     _cdnUrl = _remoteVersion.cdnUrl;
                 }
 
-                if (string.IsNullOrEmpty(_cdnUrl)) {
-                    throw new WebException("Option.cdnUrl or remoteVersion.cdnUrl must be specified.");
-                }
+                ThrowHelper.ThrowIfNullOrEmpty(_cdnUrl, "Option.cdnUrl");
                 _cdnUrl = PathUtils.Combine(_cdnUrl, _options.cdnDir ?? string.Empty);
                 return _cdnUrl;
             }

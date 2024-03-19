@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using UnityEngine.Networking;
+using vFrame.Core.Exceptions;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Unity.Download
@@ -82,7 +83,8 @@ namespace vFrame.Core.Unity.Download
                     NotifyError(m_Error);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowUnsupportedEnum(m_State);
+                    break;
             }
         }
 

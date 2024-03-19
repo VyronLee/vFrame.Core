@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Unity.Coroutine;
 using Object = UnityEngine.Object;
 using Debug = vFrame.Core.Unity.SpawnPools.SpawnPoolDebug;
@@ -200,8 +201,8 @@ namespace vFrame.Core.Unity.SpawnPools
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + _spawnPools.PoolsSetting.HiddenType);
+                    ThrowHelper.ThrowUnsupportedEnum(_spawnPools.PoolsSetting.HiddenType);
+                    break;
             }
         }
 
@@ -216,8 +217,8 @@ namespace vFrame.Core.Unity.SpawnPools
                 case SpawnPoolsSetting.PoolObjectHiddenType.Position:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(
-                        "Unknown hidden type: " + _spawnPools.PoolsSetting.HiddenType);
+                    ThrowHelper.ThrowUnsupportedEnum(_spawnPools.PoolsSetting.HiddenType);
+                    break;
             }
         }
 

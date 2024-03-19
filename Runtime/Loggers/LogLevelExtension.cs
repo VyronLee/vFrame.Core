@@ -1,5 +1,5 @@
-using System;
 using UnityEngine;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 using Logger = vFrame.Core.Loggers.Logger;
 
@@ -19,7 +19,8 @@ namespace vFrame.Core.Unity.Loggers
                 case LogLevelDef.Fatal:
                     return LogType.Exception;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(level));
+                    ThrowHelper.ThrowUnsupportedEnum(level);
+                    return LogType.Log;
             }
         }
     }
