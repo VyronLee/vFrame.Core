@@ -1,6 +1,6 @@
 //------------------------------------------------------------
-//        File:  XORCryptoService.cs
-//       Brief:  XORCryptoService
+//        File:  XOREncryptor.cs
+//       Brief:  XOREncryptor
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -11,9 +11,9 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace vFrame.Core.Crypto
+namespace vFrame.Core.Encryption
 {
-    public sealed class XorCryptoService : CryptoService
+    public sealed class XOREncryptor : Encryptor
     {
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             XORBuffer(input, output, key, keyLength);
@@ -33,13 +33,15 @@ namespace vFrame.Core.Crypto
 
         private static void XORBuffer(IReadOnlyList<byte> input, IList<byte> output, IReadOnlyList<byte> key,
             int keyLength) {
-            for (var i = 0; i < input.Count; i++)
-                output[i] = (byte) (input[i] ^ key[i % keyLength]);
+            for (var i = 0; i < input.Count; i++) {
+                output[i] = (byte)(input[i] ^ key[i % keyLength]);
+            }
         }
 
         private static void XORStream(Stream input, Stream output, IReadOnlyList<byte> key, int keyLength) {
-            for (var i = 0; i < input.Length; i++)
-                output.WriteByte((byte) (input.ReadByte() ^ key[i % keyLength]));
+            for (var i = 0; i < input.Length; i++) {
+                output.WriteByte((byte)(input.ReadByte() ^ key[i % keyLength]));
+            }
         }
     }
 }

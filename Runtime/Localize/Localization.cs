@@ -21,43 +21,27 @@ namespace vFrame.Core.Localize
         private static readonly LogTag LogTag = new LogTag("Localization");
 
         /// <summary>
-        /// 当前语言代码
+        ///     当前语言代码
         /// </summary>
         private string _langCode = "zh_CN";
 
         /// <summary>
-        /// 各语言TextID映射
+        ///     各语言TextID映射
         /// </summary>
         private Dictionary<string, JsonData> _langTextIdMap;
 
         /// <summary>
-        /// 多语言设置变更通知
-        /// </summary>
-        public event Action<string> OnLocalize;
-
-        /// <summary>
-        /// 数据读取器
+        ///     数据读取器
         /// </summary>
         private ILocalizationReader _reader;
 
         /// <summary>
-        /// 创建
+        ///     多语言设置变更通知
         /// </summary>
-        protected override void OnCreate(ILocalizationReader arg1) {
-            _langTextIdMap = new Dictionary<string, JsonData>();
-            _reader = arg1;
-        }
+        public event Action<string> OnLocalize;
 
         /// <summary>
-        /// 销毁
-        /// </summary>
-        protected override void OnDestroy() {
-            _reader = null;
-            _langTextIdMap = null;
-        }
-
-        /// <summary>
-        /// 获取/设置语言代码
+        ///     获取/设置语言代码
         /// </summary>
         public string Language {
             get => _langCode;
@@ -65,13 +49,14 @@ namespace vFrame.Core.Localize
                 var changed = _langCode != value;
                 _langCode = value;
 
-                if (changed && null != OnLocalize)
+                if (changed && null != OnLocalize) {
                     OnLocalize.Invoke(_langCode);
+                }
             }
         }
 
         /// <summary>
-        /// 获取文本
+        ///     获取文本
         /// </summary>
         /// <param name="textId"></param>
         /// <returns>文本内容</returns>
@@ -79,8 +64,9 @@ namespace vFrame.Core.Localize
             LazyLoad();
 
             JsonData lang;
-            if (!_langTextIdMap.TryGetValue(Language, out lang))
+            if (!_langTextIdMap.TryGetValue(Language, out lang)) {
                 return string.Empty;
+            }
 
             if (!lang.ContainsKey(textId)) {
                 Logger.Error(LogTag, "No text Id defined in dict: {0}", textId);
@@ -91,17 +77,34 @@ namespace vFrame.Core.Localize
         }
 
         /// <summary>
-        /// 懒加载
+        ///     创建
+        /// </summary>
+        protected override void OnCreate(ILocalizationReader arg1) {
+            _langTextIdMap = new Dictionary<string, JsonData>();
+            _reader = arg1;
+        }
+
+        /// <summary>
+        ///     销毁
+        /// </summary>
+        protected override void OnDestroy() {
+            _reader = null;
+            _langTextIdMap = null;
+        }
+
+        /// <summary>
+        ///     懒加载
         /// </summary>
         private void LazyLoad() {
-            if (_langTextIdMap.ContainsKey(Language))
+            if (_langTextIdMap.ContainsKey(Language)) {
                 return;
+            }
 
             LoadLanguage(Language);
         }
 
         /// <summary>
-        /// 加载语言数据
+        ///     加载语言数据
         /// </summary>
         /// <param name="lang"></param>
         private void LoadLanguage(string lang) {

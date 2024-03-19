@@ -33,9 +33,10 @@ namespace vFrame.Core.Extensions
         }
 
         public static byte[] HexToBytes(this string hexString) {
-            if (hexString.Length % 2 != 0)
+            if (hexString.Length % 2 != 0) {
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "The binary key cannot have an odd number of digits: {0}", hexString));
+            }
 
             var hexAsBytes = new byte[hexString.Length / 2];
             for (var index = 0; index < hexAsBytes.Length; index++) {
