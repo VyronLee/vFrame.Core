@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public interface ICompressor : IDisposable
     {

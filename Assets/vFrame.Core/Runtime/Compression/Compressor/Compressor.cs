@@ -2,7 +2,7 @@
 using System.IO;
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public abstract class Compressor : BaseObject<CompressorOptions>, ICompressor
     {

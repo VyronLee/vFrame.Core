@@ -15,7 +15,7 @@ using vFrame.Core.Exceptions;
 using vFrame.Core.ObjectPools;
 using vFrame.Core.Singletons;
 
-namespace vFrame.Core.Compress
+namespace vFrame.Core.Compression
 {
     public class CompressorPool : Singleton<CompressorPool>
     {
