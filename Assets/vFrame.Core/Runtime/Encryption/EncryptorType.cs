@@ -1,6 +1,6 @@
 //------------------------------------------------------------
-//        File:  CryptoType.cs
-//       Brief:  CryptoType
+//        File:  EncryptorType.cs
+//       Brief:  EncryptorType
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -8,9 +8,9 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-namespace vFrame.Core.Crypto
+namespace vFrame.Core.Encryption
 {
-    public enum CryptoType
+    public enum EncryptorType
     {
         Plain = 0,
         Xor = 1,

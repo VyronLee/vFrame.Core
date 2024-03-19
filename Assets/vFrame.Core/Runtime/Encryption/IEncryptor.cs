@@ -8,12 +8,12 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
+using System;
 using System.IO;
-using vFrame.Core.Base;
 
-namespace vFrame.Core.Crypto
+namespace vFrame.Core.Encryption
 {
-    public interface ICryptoService : IBaseObject
+    public interface IEncryptor : IDisposable
     {
         void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength);
         void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength);

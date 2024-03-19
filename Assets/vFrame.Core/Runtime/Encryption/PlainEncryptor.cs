@@ -11,9 +11,9 @@
 using System;
 using System.IO;
 
-namespace vFrame.Core.Crypto
+namespace vFrame.Core.Encryption
 {
-    public sealed class PlainCryptoService : CryptoService
+    public sealed class PlainEncryptor : Encryptor
     {
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             Array.Copy(input, output, input.Length);
