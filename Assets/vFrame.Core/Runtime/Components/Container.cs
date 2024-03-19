@@ -65,11 +65,9 @@ namespace vFrame.Core.Components
         ///     解绑组件
         /// </summary>
         public void RemoveComponent(Type type) {
-            Component component;
-            if (!_components.TryGetValue(type, out component)) {
+            if (!_components.TryGetValue(type, out var component)) {
                 return;
             }
-
             component.UnBindFrom(this);
             component.Destroy();
 

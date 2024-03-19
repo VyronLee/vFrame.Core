@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 using Logger = vFrame.Core.Loggers.Logger;
 
@@ -54,7 +55,8 @@ namespace vFrame.Core.Unity.Loggers
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowUnsupportedEnum(context.Level);
+                    break;
             }
         }
     }

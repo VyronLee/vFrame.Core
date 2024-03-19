@@ -21,18 +21,36 @@ namespace vFrame.Core.Exceptions
         public vFrameException(string message) : base(message) { }
     }
 
-    public class vFrameArgumentException : vFrameException
+    public class ArgumentException : vFrameException
     {
-        public vFrameArgumentException(string message) : base(message) { }
+        public ArgumentException(string message) : base(message) { }
     }
 
-    public class vFrameArgumentNullException : vFrameException
+    public class ArgumentNullException : vFrameException
     {
-        public vFrameArgumentNullException(string name) : base(name) { }
+        public ArgumentNullException(string name) : base(name) { }
     }
 
-    public class vFrameUnsupportedEnumException : vFrameException
+    public class TypeMismatchException : vFrameException
     {
-        public vFrameUnsupportedEnumException(string message) : base(message) { }
+        public TypeMismatchException(Type inputType, Type desiredType)
+            : base($"Type mismatch, desired: {desiredType.FullName}, got: {inputType.FullName}") { }
     }
+
+    public class UnsupportedEnumException : vFrameException
+    {
+        public UnsupportedEnumException(string message) : base(message) { }
+    }
+
+    public class InvalidDataException : vFrameException
+    {
+        public InvalidDataException(string message) : base(message) { }
+    }
+
+    public class IndexOutOfRangeException : vFrameException
+    {
+        public IndexOutOfRangeException(int start, int end, int input)
+            : base($"Range: [{start}, {end}], got: {input}") { }
+    }
+
 }

@@ -12,6 +12,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 using Object = UnityEngine.Object;
 
@@ -169,7 +170,7 @@ namespace vFrame.Core.Unity.Coroutine
 
         private CoroutineRunnerBehaviour GetOrSpawnRunner(int runnerId) {
             if (runnerId < 0 || runnerId >= Capacity) {
-                throw new IndexOutOfRangeException(string.Format("Runner id must between [0, {0})", Capacity));
+                ThrowHelper.ThrowIndexOutOfRangeException(0, Capacity - 1, runnerId);
             }
             if (runnerId < RunnerList.Count) {
 #if DEBUG_COROUTINE_POOL
