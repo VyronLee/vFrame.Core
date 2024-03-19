@@ -8,10 +8,10 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Extensions
 {
@@ -34,7 +34,7 @@ namespace vFrame.Core.Extensions
 
         public static byte[] HexToBytes(this string hexString) {
             if (hexString.Length % 2 != 0) {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+                ThrowHelper.ThrowArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "The binary key cannot have an odd number of digits: {0}", hexString));
             }
 

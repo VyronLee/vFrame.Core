@@ -9,6 +9,7 @@
 //============================================================
 
 using System;
+using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Utils
 {
@@ -36,8 +37,7 @@ namespace vFrame.Core.Utils
 
         public static object FromString(Type type, string str) {
             if (!Enum.IsDefined(type, str)) {
-                throw new InvalidOperationException(
-                    string.Format("No enum value defined in type: {0}, {1}", type.Name, str));
+                ThrowHelper.ThrowUndesiredException($"No enum value defined in type: {type.Name}, {str}");
             }
             return Enum.Parse(type, str);
         }

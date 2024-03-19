@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Singletons;
 
 namespace vFrame.Core.ObjectPools
@@ -25,27 +26,21 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void Return<T>(T obj) where T : class, new() {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
             lock (_lockObject_1) {
                 GetObjectPool(obj.GetType()).Return(obj);
             }
         }
 
         public void Return(object obj) {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
             lock (_lockObject_1) {
                 GetObjectPool(obj.GetType()).Return(obj);
             }
         }
 
         public void TryReturn<T>(T obj) where T : class {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
             lock (_lockObject_1) {
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
@@ -55,9 +50,7 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void TryReturn(object obj) {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
             lock (_lockObject_1) {
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
@@ -88,7 +81,8 @@ namespace vFrame.Core.ObjectPools
                 var objectPoolType = typeof(ObjectPool<>).MakeGenericType(type);
                 var objPool = Activator.CreateInstance(objectPoolType) as ObjectPool;
                 if (null == objPool) {
-                    throw new ApplicationException("Create object pool failed, type: " + type.FullName);
+                    ThrowHelper.ThrowUndesiredException("Create object pool failed, type: " + type.FullName);
+                    return null;
                 }
                 objPool.Initialize();
                 _pools.Add(type, objPool);

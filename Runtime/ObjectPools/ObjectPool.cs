@@ -8,8 +8,8 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-using System;
 using System.Collections.Generic;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 
 namespace vFrame.Core.ObjectPools
@@ -62,11 +62,7 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void Return(TClass obj) {
-            if (null == obj) {
-                Logger.Error(LogTag, "Return object cannot be null.");
-                return;
-            }
-
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
             lock (_lockObject) {
                 if (_objects.Contains(obj)) {
                     return;
@@ -98,13 +94,8 @@ namespace vFrame.Core.ObjectPools
         }
 
         protected override void OnReturnInternal(object obj) {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
-            if (obj.GetType() != typeof(TClass)) {
-                throw new ArgumentException(
-                    $"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
+            ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
             Return(obj as TClass);
         }
     }
@@ -175,13 +166,8 @@ namespace vFrame.Core.ObjectPools
         }
 
         protected override void OnReturnInternal(object obj) {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
-            if (obj.GetType() != typeof(TClass)) {
-                throw new ArgumentException(
-                    $"object type mismatch, required: {typeof(TClass).FullName}, got: {obj.GetType().FullName}");
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
+            ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
             Return(obj as TClass);
         }
     }

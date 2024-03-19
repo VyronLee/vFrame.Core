@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 
 namespace vFrame.Core.MultiThreading
@@ -12,7 +13,7 @@ namespace vFrame.Core.MultiThreading
             base.OnCreate(arg);
 
             if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
-                throw new Exception("Queue work item to thread pool failed.");
+                ThrowHelper.ThrowUndesiredException("Queue work item to thread pool failed.");
             }
         }
 
@@ -50,7 +51,7 @@ namespace vFrame.Core.MultiThreading
             base.OnCreate(arg);
 
             if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
-                throw new Exception("Queue work item to thread pool failed.");
+                ThrowHelper.ThrowUndesiredException("Queue work item to thread pool failed.");
             }
         }
 
@@ -60,7 +61,7 @@ namespace vFrame.Core.MultiThreading
             }
 
             try {
-                Value = OnThreadedHandle((TArg)state);
+                Value = OnHandleTask((TArg)state);
             }
             catch (Exception e) {
                 ErrorHandler(e);
@@ -77,6 +78,6 @@ namespace vFrame.Core.MultiThreading
             Logger.Error(e.ToString());
         }
 
-        protected abstract TRet OnThreadedHandle(TArg arg);
+        protected abstract TRet OnHandleTask(TArg arg);
     }
 }

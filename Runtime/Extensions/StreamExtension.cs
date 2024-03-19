@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using vFrame.Core.Exceptions;
 using ByteArrayPool = System.Buffers.ArrayPool<byte>;
 
 namespace vFrame.Core.Extensions
@@ -11,7 +12,7 @@ namespace vFrame.Core.Extensions
 
             var count = fromStream.Read(buffer, 0, size);
             if (count != size) {
-                throw new InvalidDataException($"size expected: {size}, got: {count}");
+                ThrowHelper.ThrowInvalidDataException($"size expected: {size}, got: {count}");
             }
             toStream.Write(buffer, 0, size);
             byteArrayPool.Return(buffer);
