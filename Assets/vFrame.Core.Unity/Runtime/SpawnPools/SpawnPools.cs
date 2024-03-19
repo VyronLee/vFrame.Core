@@ -10,73 +10,49 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using vFrame.Core.Base;
 using vFrame.Core.ObjectPools.Builtin;
-using vFrame.Core.Unity.Coroutine;
+using vFrame.Core.Unity.Asynchronous;
+using vFrame.Core.Unity.Extensions;
 using Debug = vFrame.Core.Unity.SpawnPools.SpawnPoolDebug;
-using Object = UnityEngine.Object;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    public class SpawnPools : BaseObject<IGameObjectLoaderFactory, SpawnPoolsSetting>, ISpawnPools
+    public class SpawnPools : BaseObject<IGameObjectLoaderFactory, SpawnPoolsSettings>, ISpawnPools
     {
         private const string PoolName = nameof(SpawnPools);
-        private readonly Dictionary<string, Pool> _pools = new Dictionary<string, Pool>();
-        private IGameObjectLoaderFactory _builderFromPathFactory;
-
+        private AsyncRequestCtrl _asyncRequestCtrl;
         private Comparison<string> _comparison;
+        private SpawnPoolContext _context;
         private int _lastGC;
+        private IGameObjectLoaderFactory _loaderFactory;
+        private GameObject _parent;
 
-        private GameObject _poolsParent;
+        private Dictionary<string, Pool> _pools;
+        private SpawnPoolsSettings _settings;
 
-        internal GameObject PoolsParent {
-            get {
-                if (_poolsParent) {
-                    return _poolsParent;
-                }
-
-                _poolsParent = new GameObject(PoolName);
-                _poolsParent.transform.position = PoolsSetting.RootPosition;
-                Object.DontDestroyOnLoad(PoolsParent);
-                return _poolsParent;
+        public void Recycle(GameObject obj) {
+            var identity = obj.GetComponent<PoolObjectIdentity>();
+            if (null == identity) {
+                Debug.Warning("Not a valid pool object: " + obj.name);
+                return;
             }
-        }
-
-        internal SpawnPoolsSetting PoolsSetting { get; private set; }
-
-        internal CoroutinePool CoroutinePool { get; private set; }
-
-        public IPool this[string assetName] {
-            get {
-                if (_pools.TryGetValue(assetName, out var pool)) {
-                    return pool;
-                }
-
-                if (!(_builderFromPathFactory.CreateLoader() is IGameObjectLoaderFromPath builder)) {
-                    return null;
-                }
-                builder.Create(assetName);
-
-                pool = new Pool();
-                pool.Create(assetName, this, builder);
-
-                _pools.Add(assetName, pool);
-                PoolsParent.name = $"{PoolName}({PoolsParent.transform.childCount})";
-
-                return pool;
-            }
+            GetPool(identity.AssetPath).Recycle(obj);
         }
 
         public IPreloadAsyncRequest PreloadAsync(string[] assetPaths) {
-            var request = new PreloadAsyncRequest();
-            request.Create(this, assetPaths);
-            request.Setup(CoroutinePool);
+            var request = _asyncRequestCtrl.CreateRequest<PreloadAsyncRequest>();
+            request.AssetPaths = assetPaths.ToList();
+            request.SpawnPools = this;
             return request;
         }
 
         public void Update() {
-            if (++_lastGC < PoolsSetting.GCInterval) {
+            _asyncRequestCtrl.Update();
+
+            if (++_lastGC < _settings.GCInterval) {
                 return;
             }
             _lastGC = 0;
@@ -96,7 +72,7 @@ namespace vFrame.Core.Unity.SpawnPools
             pools.Clear();
 
             // Clear pools by frequency
-            if (_pools.Count < PoolsSetting.Capacity) {
+            if (_pools.Count < _settings.Capacity) {
                 ListPool<string>.Shared.Return(pools);
                 return;
             }
@@ -106,37 +82,78 @@ namespace vFrame.Core.Unity.SpawnPools
             }
             pools.Sort(_comparison);
 
-            for (var i = PoolsSetting.Capacity; i < pools.Count; i++) {
+            for (var i = _settings.Capacity; i < pools.Count; i++) {
                 Debug.Log("Pool({0}) over capacity, destroying..", pools[i]);
                 _pools[pools[i]].Clear();
             }
             ListPool<string>.Shared.Return(pools);
         }
 
-        protected override void OnCreate(IGameObjectLoaderFactory factory, SpawnPoolsSetting poolsSetting) {
-            _builderFromPathFactory = factory ?? new DefaultGameObjectLoaderFromPathFactory();
-            PoolsSetting = poolsSetting;
-            CoroutinePool = new CoroutinePool(nameof(SpawnPools), PoolsSetting.AsyncLoadCount);
+        public GameObject Spawn(string assetPath, Transform parent = null) {
+            return GetPool(assetPath).Spawn(parent);
+        }
+
+        public ILoadAsyncRequest SpawnAsync(string assetPath, Transform parent = null) {
+            var request = GetPool(assetPath).SpawnAsync(parent);
+            _asyncRequestCtrl.AddRequest(request);
+            return request;
+        }
+
+        private IPool GetPool(string assetPath) {
+            if (_pools.TryGetValue(assetPath, out var pool)) {
+                return pool;
+            }
+            pool = CreatePool(assetPath);
+            _pools[assetPath] = pool;
+            _parent.name = $"{PoolName}({_parent.transform.childCount + 1})";
+            return pool;
+        }
+
+        private Pool CreatePool(string assetPath) {
+            if (!(_loaderFactory.CreateLoader(assetPath) is IGameObjectLoader builder)) {
+                return null;
+            }
+            var pool = new Pool();
+            pool.Create(assetPath, _context, builder);
+            return pool;
+        }
+
+        protected override void OnCreate(IGameObjectLoaderFactory factory, SpawnPoolsSettings settings) {
+            _loaderFactory = factory ?? new DefaultGameObjectLoaderFactory();
             _comparison = CompareBySpawnedTimes;
+            _pools = new Dictionary<string, Pool>();
+            _asyncRequestCtrl = AsyncRequestCtrl.Create();
+            _settings = settings;
+            _parent = new GameObject(PoolName).DontDestroyEx();
+            _parent.transform.position = _settings.RootPosition;
+
+            _context = new SpawnPoolContext {
+                Settings = _settings,
+                Parent = _parent.transform
+            };
         }
 
         protected override void OnDestroy() {
             Clear();
 
-            CoroutinePool?.Destroy();
-            CoroutinePool = null;
+            _asyncRequestCtrl?.Destroy();
+            _asyncRequestCtrl = null;
 
-            if (_poolsParent) {
-                Object.Destroy(_poolsParent);
+            if (_parent) {
+                _parent.DestroyEx();
             }
-            _poolsParent = null;
+            _parent = null;
+
+            _settings = null;
+            _pools = null;
+            _loaderFactory = null;
+            _context = null;
 
             Debug.Log("Spawn pools destroyed.");
         }
 
         public void Clear() {
             foreach (var kv in _pools) {
-                kv.Value.Clear();
                 kv.Value.Destroy();
             }
             _pools.Clear();

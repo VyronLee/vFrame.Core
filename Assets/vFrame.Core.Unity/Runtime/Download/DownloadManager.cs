@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
+using vFrame.Core.Unity.Extensions;
 
 namespace vFrame.Core.Unity.Download
 {
@@ -74,9 +75,8 @@ namespace vFrame.Core.Unity.Download
         public event Action<DownloadEventArgs> DownloadFailure;
 
         public static DownloadManager Create(string name = "DownloadManager") {
-            var go = new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+            var go = new GameObject(name).DontDestroyEx().DontSaveAndHideEx();
             var inst = go.AddComponent<DownloadManager>();
-            DontDestroyOnLoad(go);
             return inst;
         }
 

@@ -8,12 +8,16 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
+using UnityEngine;
+
 namespace vFrame.Core.Unity.SpawnPools
 {
     public interface ISpawnPools
     {
-        IPool this[string assetName] { get; }
         void Update();
+        GameObject Spawn(string assetPath, Transform parent = null);
+        ILoadAsyncRequest SpawnAsync(string assetPath, Transform parent = null);
+        void Recycle(GameObject obj);
         IPreloadAsyncRequest PreloadAsync(string[] assetPaths);
     }
 }

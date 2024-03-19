@@ -63,5 +63,32 @@ namespace vFrame.Core.Unity.Extensions
             }
             Object.DestroyImmediate(go);
         }
+
+        /// <summary>
+        /// 设置为不销毁
+        /// </summary>
+        /// <param name="obj"></param>
+        public static T DontDestroyEx<T>(this T obj) where T: Object {
+            if (obj) {
+                Object.DontDestroyOnLoad(obj);
+            }
+            return obj;
+        }
+
+        /// <summary>
+        /// 设置为隐藏并且不保存，与HideFlags.DontSave的区别是少了DontUnloadUnusedAsset
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T DontSaveAndHideEx<T>(this T obj) where T : Object {
+            if (obj) {
+                obj.hideFlags = HideFlags.HideInHierarchy
+                                | HideFlags.HideInInspector
+                                | HideFlags.DontSaveInBuild
+                                | HideFlags.DontSaveInEditor;
+            }
+            return obj;
+        }
     }
 }

@@ -8,16 +8,13 @@
 //   Copyright:  Copyright (c) 2024, VyronLee
 //============================================================
 
-using System;
-using System.Collections;
 using UnityEngine;
 using vFrame.Core.Base;
-using vFrame.Core.ObjectPools;
 using Object = UnityEngine.Object;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    internal class DefaultGameObjectLoaderFromPath : BaseObject<string>, IGameObjectLoaderFromPath
+    internal class DefaultGameObjectLoader : CreateAbility<DefaultGameObjectLoader, string>, IGameObjectLoader
     {
         private string _path;
 
@@ -26,17 +23,13 @@ namespace vFrame.Core.Unity.SpawnPools
             if (!prefab) {
                 throw new AssetLoadFailedException(_path);
             }
-            var obj = Object.Instantiate(prefab);
-            Object.DontDestroyOnLoad(obj);
-            return obj;
+            return Object.Instantiate(prefab);
         }
 
         public LoadAsyncRequest LoadAsync() {
-            return DefaultLoadAsyncRequest.Create(_path);
-        }
-
-        public void Create() {
-            throw new NotImplementedException();
+            var request = new DefaultLoadAsyncRequest();
+            request.Path = _path;
+            return request;
         }
 
         protected override void OnCreate(string arg1) {
@@ -49,33 +42,31 @@ namespace vFrame.Core.Unity.SpawnPools
 
         private class DefaultLoadAsyncRequest : LoadAsyncRequest
         {
-            private string _path;
             private ResourceRequest _request;
-
-            public static DefaultLoadAsyncRequest Create(string path) {
-                var request = ObjectPool<DefaultLoadAsyncRequest>.Shared.Get();
-                request.Create();
-                request._path = path;
-                return request;
-            }
+            internal string Path { get; set; }
+            public override float Progress => _request?.progress ?? 0;
 
             protected override void OnDestroy() {
-                base.OnDestroy();
-
                 _request = null;
-                _path = null;
-                ObjectPool<DefaultLoadAsyncRequest>.Shared.Return(this);
+                Path = null;
+                base.OnDestroy();
             }
 
-            protected override IEnumerator OnProcessLoad() {
-                _request = Resources.LoadAsync<GameObject>(_path);
-                yield return _request;
+            protected override bool Validate(out GameObject obj) {
+                if (null == _request) {
+                    _request = Resources.LoadAsync<GameObject>(Path);
+                }
+                if (!_request.isDone) {
+                    obj = null;
+                    return false;
+                }
+
                 var prefab = _request.asset as GameObject;
                 if (!prefab) {
-                    throw new AssetLoadFailedException(_path);
+                    throw new AssetLoadFailedException(Path);
                 }
-                GameObject = Object.Instantiate(prefab);
-                Object.DontDestroyOnLoad(GameObject);
+                obj = Object.Instantiate(prefab);
+                return true;
             }
         }
     }

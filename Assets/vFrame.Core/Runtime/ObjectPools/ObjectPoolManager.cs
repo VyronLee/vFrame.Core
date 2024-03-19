@@ -66,7 +66,7 @@ namespace vFrame.Core.ObjectPools
                 }
 
                 var objPool = new ObjectPool<T>();
-                objPool.Initialize();
+                objPool.Create();
                 _pools.Add(typeof(T), objPool);
                 return objPool;
             }
@@ -84,7 +84,7 @@ namespace vFrame.Core.ObjectPools
                     ThrowHelper.ThrowUndesiredException("Create object pool failed, type: " + type.FullName);
                     return null;
                 }
-                objPool.Initialize();
+                objPool.Create();
                 _pools.Add(type, objPool);
                 return objPool;
             }
@@ -99,7 +99,7 @@ namespace vFrame.Core.ObjectPools
                 }
 
                 var objPool = new ObjectPool<TClass, TAllocator>();
-                objPool.Initialize();
+                objPool.Create();
                 _pools.Add(typeof(TClass), objPool);
                 return objPool;
             }

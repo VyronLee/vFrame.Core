@@ -9,12 +9,13 @@
 //============================================================
 
 using System.Collections.Generic;
+using vFrame.Core.Base;
 using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 
 namespace vFrame.Core.ObjectPools
 {
-    public abstract class ObjectPool : IObjectPool
+    public abstract class ObjectPool : BaseObject, IObjectPool
     {
         protected readonly LogTag LogTag = new LogTag("ObjectPool");
 
@@ -26,11 +27,6 @@ namespace vFrame.Core.ObjectPools
             OnReturnInternal(obj);
         }
 
-        internal void Initialize() {
-            OnInitialize();
-        }
-
-        protected abstract void OnInitialize();
         protected abstract object OnGetInternal();
         protected abstract void OnReturnInternal(object obj);
     }
@@ -51,24 +47,26 @@ namespace vFrame.Core.ObjectPools
                     lock (_instanceLockObject) {
                         if (null == _shared) {
                             var instance = new ObjectPool<TClass>();
-                            instance.Initialize();
+                            instance.Create();
                             _shared = instance;
                         }
                     }
                 }
-
                 return _shared;
             }
         }
 
         public void Return(TClass obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
+            if (obj is IPoolObjectResetable resetable) {
+                resetable.Reset();
+            }
+            if (obj is IDestroyable destroyable) {
+                destroyable.Destroy();
+            }
             lock (_lockObject) {
                 if (_objects.Contains(obj)) {
                     return;
-                }
-                if (obj is IPoolObjectResetable resetable) {
-                    resetable.Reset();
                 }
                 _objects.Push(obj);
             }
@@ -80,12 +78,19 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
-        protected override void OnInitialize() {
+        protected override void OnCreate() {
             lock (_lockObject) {
                 _objects = new Stack<TClass>(InitSize);
                 for (var i = 0; i < InitSize; i++) {
                     _objects.Push(new TClass());
                 }
+            }
+        }
+
+        protected override void OnDestroy() {
+            lock (_lockObject) {
+                _objects?.Clear();
+                _objects = null;
             }
         }
 
@@ -119,12 +124,11 @@ namespace vFrame.Core.ObjectPools
                     lock (_instanceLockObject) {
                         if (null == _shared) {
                             var instance = new ObjectPool<TClass, TAllocator>();
-                            instance.Initialize();
+                            instance.Create();
                             _shared = instance;
                         }
                     }
                 }
-
                 return _shared;
             }
         }
@@ -136,12 +140,16 @@ namespace vFrame.Core.ObjectPools
         }
 
         public void Return(TClass obj) {
-            if (null == obj) {
-                Logger.Error(LogTag, "Return object cannot be null.");
-                return;
-            }
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
 
             _allocator.Reset(obj);
+
+            if (obj is IPoolObjectResetable resetable) {
+                resetable.Reset();
+            }
+            if (obj is IDestroyable destroyable) {
+                destroyable.Destroy();
+            }
 
             lock (_lockObject) {
                 if (_objects.Contains(obj)) {
@@ -151,13 +159,20 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
-        protected override void OnInitialize() {
+        protected override void OnCreate() {
             _allocator = new TAllocator();
             lock (_lockObject) {
                 _objects = new Stack<TClass>(InitSize);
                 for (var i = 0; i < InitSize; i++) {
                     _objects.Push(_allocator.Alloc());
                 }
+            }
+        }
+
+        protected override void OnDestroy() {
+            lock (_lockObject) {
+                _objects?.Clear();
+                _objects = null;
             }
         }
 

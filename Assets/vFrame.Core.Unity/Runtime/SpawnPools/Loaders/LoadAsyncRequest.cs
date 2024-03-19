@@ -1,58 +1,33 @@
-﻿using System;
-using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using vFrame.Core.Unity.Asynchronous;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    public abstract class LoadAsyncRequest : AsyncRequest, ILoaderAsyncRequest
+    public abstract class LoadAsyncRequest : AsyncRequest, ILoadAsyncRequest
     {
-        private bool _preprocessBeforeGet;
-        internal Action<GameObject> OnGetGameObject;
-        protected GameObject GameObject { get; set; }
-        internal Action<GameObject> OnLoadCallback { get; set; }
-
-        public GameObject GetGameObject() {
-            ThrowIfDestroyed();
-
-            if (!IsFinished) {
-                throw new ObjectNotReadyException();
-            }
-            if (!_preprocessBeforeGet) {
-                OnGetGameObject?.Invoke(GameObject);
-            }
-            _preprocessBeforeGet = true;
-
-            return GameObject;
-        }
-
-        protected override void OnCreate() {
-            Clear();
-        }
+        public GameObject GameObject { get; set; }
 
         protected override void OnDestroy() {
-            base.OnDestroy();
-            Clear();
-        }
-
-        protected void Clear() {
-            OnLoadCallback = null;
-            OnGetGameObject = null;
             GameObject = null;
-
-            _preprocessBeforeGet = false;
+            base.OnDestroy();
         }
 
-        protected override IEnumerator OnProcess() {
-            yield return OnProcessLoad();
+        protected override void OnStart() { }
 
-            if (!GameObject) {
-                throw new ObjectNotLoadedException();
+        protected override void OnStop() { }
+
+        protected override void OnUpdate() {
+            if (!Validate(out var obj)) {
+                return;
             }
-            OnLoadCallback?.Invoke(GameObject);
-            IsFinished = true;
+            if (!obj) {
+                Abort();
+                return;
+            }
+            GameObject = obj;
+            Finish();
         }
 
-        protected abstract IEnumerator OnProcessLoad();
+        protected abstract bool Validate(out GameObject obj);
     }
 }
