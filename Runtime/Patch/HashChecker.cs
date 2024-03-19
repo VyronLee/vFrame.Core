@@ -5,6 +5,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using UnityEngine;
+using vFrame.Core.Unity.Extensions;
 using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Unity.Patch
@@ -22,11 +23,9 @@ namespace vFrame.Core.Unity.Patch
         public int HashFailedNum { get; private set; }
 
         public static HashChecker Create(string storagePath) {
-            var go = new GameObject("HashChecker") { hideFlags = HideFlags.HideAndDontSave };
+            var go = new GameObject("HashChecker").DontDestroyEx().DontSaveAndHideEx();
             var instance = go.AddComponent<HashChecker>();
             instance._storagePath = storagePath;
-
-            DontDestroyOnLoad(go);
             return instance;
         }
 

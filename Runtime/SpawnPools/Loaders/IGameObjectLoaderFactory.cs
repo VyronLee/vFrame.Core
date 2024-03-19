@@ -2,6 +2,6 @@
 {
     public interface IGameObjectLoaderFactory
     {
-        IGameObjectLoader CreateLoader();
+        IGameObjectLoader CreateLoader(string assetPath);
     }
 }

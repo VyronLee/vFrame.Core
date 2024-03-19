@@ -9,11 +9,10 @@
 //============================================================
 
 using UnityEngine;
-using vFrame.Core.Base;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    public interface IGameObjectLoader : IBaseObject
+    public interface IGameObjectLoader
     {
         GameObject Load();
         LoadAsyncRequest LoadAsync();

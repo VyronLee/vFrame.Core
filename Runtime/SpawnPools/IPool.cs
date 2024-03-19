@@ -9,20 +9,14 @@
 //============================================================
 
 using UnityEngine;
-using vFrame.Core.Unity.Asynchronous;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    public interface IPool
+    internal interface IPool
     {
         int Count { get; }
-        GameObject Spawn();
-        ILoaderAsyncRequest SpawnAsync();
+        GameObject Spawn(Transform parent = null);
+        ILoadAsyncRequest SpawnAsync(Transform parent = null);
         void Recycle(GameObject obj);
-    }
-
-    public interface ILoaderAsyncRequest : IAsyncRequest
-    {
-        GameObject GetGameObject();
     }
 }
