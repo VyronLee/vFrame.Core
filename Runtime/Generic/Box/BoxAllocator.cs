@@ -1,6 +1,6 @@
-﻿using vFrame.Core.Base;
+﻿using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.ObjectPools.Builtin
+namespace vFrame.Core.Generic
 {
     public class BoxAllocator<T> : IPoolObjectAllocator<Box<T>>
     {

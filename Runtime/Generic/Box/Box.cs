@@ -1,4 +1,6 @@
-﻿namespace vFrame.Core.Base
+﻿using vFrame.Core.Base;
+
+namespace vFrame.Core.Generic
 {
     public class Box<T> : BaseObject<T>
     {
