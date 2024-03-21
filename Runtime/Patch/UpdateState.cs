@@ -5,41 +5,41 @@ namespace vFrame.Core.Unity.Patch
         /// <summary>
         ///     未检测
         /// </summary>
-        UNCHECKED,
+        Unchecked,
 
         /// <summary>
         ///     正在下载版本号
         /// </summary>
-        DOWNLOADING_VERSION,
+        DownloadingVersion,
 
         /// <summary>
         ///     正在下载manifest
         /// </summary>
-        DOWNLOADING_MANIFEST,
+        DownloadingManifest,
 
         /// <summary>
         ///     需要更新
         /// </summary>
-        NEED_UPDATE,
+        NeedUpdate,
 
         /// <summary>
         ///     正在更新
         /// </summary>
-        UPDATING,
+        Updating,
 
         /// <summary>
         ///     已经更新
         /// </summary>
-        UP_TO_DATE,
+        UpToDate,
 
         /// <summary>
         ///     更新失败
         /// </summary>
-        FAIL_TO_UPDATE,
+        FailToUpdate,
 
         /// <summary>
         ///     需要强更
         /// </summary>
-        NEED_FORCE_UPDATE
+        NeedForceUpdate
     }
 }

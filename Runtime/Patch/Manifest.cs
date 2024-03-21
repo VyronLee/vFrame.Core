@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
-using vFrame.Core.Base;
 using vFrame.Core.Generic;
 using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
@@ -20,9 +19,9 @@ namespace vFrame.Core.Unity.Patch
         /// </summary>
         public enum DiffType
         {
-            ADDED,
-            DELETED,
-            MODIFIED
+            Added,
+            Deleted,
+            Modified
         }
 
         /// <summary>
@@ -167,7 +166,7 @@ namespace vFrame.Core.Unity.Patch
 
             foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
-                if (asset.downloadState < DownloadState.DOWNLOADED) {
+                if (asset.downloadState < DownloadState.Downloaded) {
                     list.Add(asset);
                 }
             }
@@ -184,7 +183,7 @@ namespace vFrame.Core.Unity.Patch
 
             foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
-                if (asset.downloadState == DownloadState.DOWNLOADED) {
+                if (asset.downloadState == DownloadState.Downloaded) {
                     list.Add(asset);
                 }
             }
@@ -201,7 +200,7 @@ namespace vFrame.Core.Unity.Patch
 
             foreach (var assetKV in _assets) {
                 var asset = assetKV.Value;
-                if (asset.downloadState == DownloadState.SUCCEED) {
+                if (asset.downloadState == DownloadState.Succeed) {
                     list.Add(asset);
                 }
             }
@@ -224,7 +223,7 @@ namespace vFrame.Core.Unity.Patch
                 if (!otherAssets.ContainsKey(key)) {
                     var diff = new AssetDiff {
                         asset = valueA,
-                        diffType = DiffType.DELETED
+                        diffType = DiffType.Deleted
                     };
                     diffDic.Add(key, diff);
                     continue;
@@ -235,7 +234,7 @@ namespace vFrame.Core.Unity.Patch
                 if (valueA.md5 != valueB.md5) {
                     var diff = new AssetDiff {
                         asset = valueB,
-                        diffType = DiffType.MODIFIED
+                        diffType = DiffType.Modified
                     };
                     diffDic.Add(key, diff);
                 }
@@ -249,7 +248,7 @@ namespace vFrame.Core.Unity.Patch
                 if (!_assets.ContainsKey(key)) {
                     var diff = new AssetDiff {
                         asset = valueB,
-                        diffType = DiffType.ADDED
+                        diffType = DiffType.Added
                     };
                     diffDic.Add(key, diff);
                 }
