@@ -77,6 +77,10 @@ namespace vFrame.Core.Loggers
             Log(LogLevelDef.Error, tag, text, args);
         }
 
+        public static void Fatal(LogTag tag, string text, params object[] args) {
+            Log(LogLevelDef.Fatal, tag, text, args);
+        }
+
         public static void Fatal(LogTag tag, Exception exception) {
             Log(LogLevelDef.Fatal, tag, exception);
         }

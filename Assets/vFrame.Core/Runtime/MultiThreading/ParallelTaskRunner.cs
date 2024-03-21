@@ -88,7 +88,7 @@ namespace vFrame.Core.MultiThreading
             return this;
         }
 
-        public async Task<Exception> Wait() {
+        public async System.Threading.Tasks.Task<Exception> Wait() {
             var delay = Task.Delay(1);
             while (!IsComplete()) {
                 if (_abortOnError && null != _lastError) {

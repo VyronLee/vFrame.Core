@@ -2,7 +2,7 @@
 
 namespace vFrame.Core.MultiThreading
 {
-    public class AsyncRequest<TArg> : BaseObject<TArg>, IAsyncRequest
+    public abstract class Task<TArg> : BaseObject<TArg>, ITask
     {
         protected TArg Arg { get; private set; }
 
@@ -24,9 +24,11 @@ namespace vFrame.Core.MultiThreading
         protected override void OnDestroy() {
             Arg = default;
         }
+
+        public abstract void RunTask();
     }
 
-    public class AsyncRequest<TRet, TArg> : BaseObject<TArg>, IAsyncRequest<TRet>
+    public abstract class Task<TRet, TArg> : BaseObject<TArg>, ITask<TRet>
     {
         protected TArg Arg { get; private set; }
         public TRet Value { get; protected set; }
@@ -52,5 +54,7 @@ namespace vFrame.Core.MultiThreading
             Arg = default;
             Value = default;
         }
+
+        public abstract void RunTask();
     }
 }

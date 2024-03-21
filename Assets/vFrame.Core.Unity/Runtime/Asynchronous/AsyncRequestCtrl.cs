@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using vFrame.Core.Base;
+using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Unity.Asynchronous
 {
@@ -28,8 +29,14 @@ namespace vFrame.Core.Unity.Asynchronous
         }
 
         public void Update() {
+            ThrowIfDestroyed();
+
             for (var i = _requests.Count - 1; i >= 0; i--) {
                 var request = _requests[i];
+                if (request.Destroyed) {
+                    _requests.RemoveAt(i);
+                    continue;
+                }
                 switch (request.State) {
                     case AsyncState.NotStarted:
                         request.Start();
@@ -50,10 +57,12 @@ namespace vFrame.Core.Unity.Asynchronous
         }
 
         public T CreateRequest<T>() where T : IAsyncRequest {
+            ThrowIfDestroyed();
             return (T) CreateRequest(typeof(T));
         }
 
         public IAsyncRequest CreateRequest(Type type) {
+            ThrowIfDestroyed();
             if (!(Activator.CreateInstance(type) is AsyncRequest request)) {
                 throw new AsyncRequestTypeErrorException();
             }
@@ -63,7 +72,15 @@ namespace vFrame.Core.Unity.Asynchronous
         }
 
         public void AddRequest(IAsyncRequest request) {
+            ThrowIfDestroyed();
+            ThrowHelper.ThrowIfNull(request, nameof(request));
             _requests.Add(request);
+        }
+
+        public void RemoveRequest(IAsyncRequest request) {
+            ThrowIfDestroyed();
+            ThrowHelper.ThrowIfNull(request, nameof(request));
+            _requests.Remove(request);
         }
 
         public event Action<IAsyncRequest> OnRequestFinish;

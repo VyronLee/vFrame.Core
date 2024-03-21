@@ -16,14 +16,18 @@ namespace vFrame.Core.Base
         public bool Created { get; protected set; }
         public bool Destroyed { get; protected set; }
 
+        private bool Destroying { get; set; }
+
         public void Destroy() {
-            if (Destroyed) {
+            if (Destroyed || Destroying) {
                 return;
             }
             try {
+                Destroying = true;
                 OnDestroy();
             }
             finally {
+                Destroying = false;
                 Destroyed = true;
                 Created = false;
             }

@@ -31,7 +31,7 @@ namespace vFrame.Core.Unity.Extensions
         /// </summary>
         /// <param name="animation"></param>
         /// <returns></returns>
-        public static bool PlayToEnd(this Animation animation) {
+        public static bool ForwardToEnd(this Animation animation) {
             if (!animation.clip) {
                 return false;
             }
@@ -63,7 +63,8 @@ namespace vFrame.Core.Unity.Extensions
             var clip = animation.GetClip(name);
             animation.clip = clip;
             animation.Play(name);
-            yield return WaitUntilFinished(animation);
+            yield return new WaitWhile(() => animation.isPlaying);
+            //yield return WaitUntilFinished(animation); // Not working, why?
         }
 
         /// <summary>
@@ -76,7 +77,8 @@ namespace vFrame.Core.Unity.Extensions
             var clip = animation.GetClip(name);
             animation.clip = clip;
             animation.CrossFade(name);
-            yield return WaitUntilFinished(animation);
+            yield return new WaitWhile(() => animation.isPlaying);
+            //yield return WaitUntilFinished(animation); // Not working, why?
         }
 
         /// <summary>

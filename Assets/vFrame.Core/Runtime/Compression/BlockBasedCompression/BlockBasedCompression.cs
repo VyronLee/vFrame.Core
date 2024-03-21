@@ -7,6 +7,7 @@ using vFrame.Core.Base;
 using vFrame.Core.Extensions;
 using vFrame.Core.Profiles;
 using vFrame.Core.Utils;
+using ByteArrayPool = System.Buffers.ArrayPool<byte>;
 
 namespace vFrame.Core.Compression
 {
@@ -83,7 +84,7 @@ namespace vFrame.Core.Compression
         private readonly object _outputLock = new object();
         private BlockBasedCompressionBlockTable _blockTable;
 
-        private ArrayPool<byte> _buffers;
+        private ByteArrayPool _buffers;
 
         private BlockBasedCompressionHeader _header;
         private long _inputStart;
@@ -94,7 +95,7 @@ namespace vFrame.Core.Compression
         public bool SkipValidation { get; set; } = false;
 
         protected override void OnCreate() {
-            _buffers = ArrayPool<byte>.Create();
+            _buffers = ByteArrayPool.Create();
         }
 
         protected override void OnDestroy() {

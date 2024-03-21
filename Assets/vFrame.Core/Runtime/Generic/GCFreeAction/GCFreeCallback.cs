@@ -14,15 +14,11 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Generic
 {
-    public abstract class GCFreeCallback<T, TCallback> : RecycleOnDestroy<T>
-        where T : BaseObject<IObjectPoolManager>
+    public abstract class GCFreeCallback<TC, TCallback> : RecycleOnDestroy<TC>
+        where TC : BaseObject<IObjectPoolManager>
         where TCallback : Delegate
     {
-        public static T CreateWithSharedPools() {
-            var ret = Activator.CreateInstance<T>();
-            ret.Create(ObjectPoolManager.Shared);
-            return ret;
-        }
+        protected bool AutoDestroyOnCallback { get; set; } = true;
 
         public TCallback Callback { get; private set; }
 
@@ -36,6 +32,10 @@ namespace vFrame.Core.Generic
         protected override void OnDestroy() {
             Callback = null;
             base.OnDestroy();
+        }
+
+        public static implicit operator TCallback(GCFreeCallback<TC, TCallback> callback) {
+            return callback.Callback;
         }
     }
 }

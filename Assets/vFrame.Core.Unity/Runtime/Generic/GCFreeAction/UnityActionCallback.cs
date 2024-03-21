@@ -1,6 +1,6 @@
 ﻿// ------------------------------------------------------------
-//         File: ActionCallback.cs
-//        Brief: ActionCallback.cs
+//         File: UnityActionCallback.cs
+//        Brief: UnityActionCallback.cs
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
@@ -8,15 +8,16 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
+using UnityEngine.Events;
 using vFrame.Core.Base;
+using vFrame.Core.Generic;
 using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.Generic
+namespace vFrame.Core.Unity.Generic
 {
-    public abstract class ActionCallback<TC> : GCFreeCallback<TC, Action> where TC : BaseObject<IObjectPoolManager>
+    public abstract class UnityActionCallback<TC> : GCFreeCallback<TC, UnityAction> where TC : BaseObject<IObjectPoolManager>
     {
-        protected override Action InitialCallback() {
+        protected override UnityAction InitialCallback() {
             return OnCallbackInternal;
         }
 
@@ -34,9 +35,9 @@ namespace vFrame.Core.Generic
         protected abstract void OnCallback();
     }
 
-    public abstract class ActionCallback<TC, TArg1> : GCFreeCallback<TC, Action<TArg1>> where TC : BaseObject<IObjectPoolManager>
+    public abstract class UnityActionCallback<TC, TArg1> : GCFreeCallback<TC, UnityAction<TArg1>> where TC : BaseObject<IObjectPoolManager>
     {
-        protected override Action<TArg1> InitialCallback() {
+        protected override UnityAction<TArg1> InitialCallback() {
             return OnCallbackInternal;
         }
 
@@ -54,9 +55,9 @@ namespace vFrame.Core.Generic
         protected abstract void OnCallback(TArg1 arg1);
     }
 
-    public abstract class ActionCallback<TC, TArg1, TArg2> : GCFreeCallback<TC, Action<TArg1, TArg2>> where TC : BaseObject<IObjectPoolManager>
+    public abstract class UnityActionCallback<TC, TArg1, TArg2> : GCFreeCallback<TC, UnityAction<TArg1, TArg2>> where TC : BaseObject<IObjectPoolManager>
     {
-        protected override Action<TArg1, TArg2> InitialCallback() {
+        protected override UnityAction<TArg1, TArg2> InitialCallback() {
             return OnCallbackInternal;
         }
 

@@ -56,11 +56,17 @@ namespace vFrame.Core.Unity.Asynchronous
         }
 
         protected void Abort() {
+            if (State == AsyncState.Error) {
+                return;
+            }
             State = AsyncState.Error;
             OnError?.Invoke();
         }
 
         protected void Finish() {
+            if (State == AsyncState.Finished) {
+                return;
+            }
             State = AsyncState.Finished;
             OnFinish?.Invoke();
         }

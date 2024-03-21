@@ -23,7 +23,7 @@ using UnityEngine;
 //
 // Now you can use it in exactly the same way as a normal Dictionary. Everything just works.
 
-namespace vFrame.Core.Unity._3rd
+namespace vFrame.Core.Unity
 {
     [System.Serializable]
     public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver

@@ -5,25 +5,30 @@ using vFrame.Core.Loggers;
 
 namespace vFrame.Core.MultiThreading
 {
-    public abstract class ThreadedAsyncRequest<TArg> : AsyncRequest<TArg>
+    public abstract class ThreadedTask<TArg> : Task<TArg>
     {
         private readonly object _lockObject = new object();
+        private readonly WaitCallback _runTask;
+
+        protected ThreadedTask() {
+            _runTask = state => RunTask();
+        }
 
         protected override void OnCreate(TArg arg) {
             base.OnCreate(arg);
 
-            if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
+            if (!ThreadPool.QueueUserWorkItem(_runTask)) {
                 ThrowHelper.ThrowUndesiredException("Queue work item to thread pool failed.");
             }
         }
 
-        private void RunTask(object state) {
+        public override void RunTask() {
             if (Destroyed) {
                 return;
             }
 
             try {
-                OnThreadedHandle((TArg)state);
+                OnHandleTask(Arg);
             }
             catch (Exception e) {
                 ErrorHandler(e);
@@ -40,28 +45,33 @@ namespace vFrame.Core.MultiThreading
             Logger.Error(e.ToString());
         }
 
-        protected abstract void OnThreadedHandle(TArg arg);
+        protected abstract void OnHandleTask(TArg arg);
     }
 
-    public abstract class ThreadedAsyncRequest<TRet, TArg> : AsyncRequest<TRet, TArg>
+    public abstract class ThreadedTask<TRet, TArg> : Task<TRet, TArg>
     {
         private readonly object _lockObject = new object();
+        private readonly WaitCallback _runTask;
+
+        protected ThreadedTask() {
+            _runTask = state => RunTask();
+        }
 
         protected override void OnCreate(TArg arg) {
             base.OnCreate(arg);
 
-            if (!ThreadPool.QueueUserWorkItem(RunTask, Arg)) {
+            if (!ThreadPool.QueueUserWorkItem(_runTask)) {
                 ThrowHelper.ThrowUndesiredException("Queue work item to thread pool failed.");
             }
         }
 
-        private void RunTask(object state) {
+        public override void RunTask() {
             if (Destroyed) {
                 return;
             }
 
             try {
-                Value = OnHandleTask((TArg)state);
+                Value = OnHandleTask(Arg);
             }
             catch (Exception e) {
                 ErrorHandler(e);
