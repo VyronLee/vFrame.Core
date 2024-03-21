@@ -7,82 +7,82 @@
             /// <summary>
             ///     找不到本地配置
             /// </summary>
-            ERROR_NO_LOCAL_MANIFEST,
+            ErrorNoLocalManifest,
 
             /// <summary>
             ///     下载版本号失败
             /// </summary>
-            ERROR_DOWNLOAD_VERSION,
+            ErrorDownloadVersion,
 
             /// <summary>
             ///     解析版本号失败
             /// </summary>
-            ERROR_PARSE_VERSION,
+            ErrorParseVersion,
 
             /// <summary>
             ///     下载manifest失败
             /// </summary>
-            ERROR_DOWNLOAD_MANIFEST,
+            ErrorDownloadManifest,
 
             /// <summary>
             ///     解析manifest失败
             /// </summary>
-            ERROR_PARSE_MANIFEST,
+            ErrorParseManifest,
 
             /// <summary>
             ///     发现新版本
             /// </summary>
-            NEW_ASSETS_VERSION_FOUND,
+            NewAssetsVersionFound,
 
             /// <summary>
             ///     发现新版本
             /// </summary>
-            NEW_GAME_VERSION_FOUND,
+            NewGameVersionFound,
 
             /// <summary>
             ///     已最新
             /// </summary>
-            ALREADY_UP_TO_DATE,
+            AlreadyUpToDate,
 
             /// <summary>
             ///     更新进度
             /// </summary>
-            UPDATE_PROGRESSION,
+            UpdateProgression,
 
             /// <summary>
             ///     单个资源下载成功
             /// </summary>
-            ASSET_UPDATED,
+            AssetUpdated,
 
             /// <summary>
             ///     单个资源下载失败
             /// </summary>
-            ERROR_DOWNLOAD_FAILED,
+            ErrorDownloadFailed,
 
             /// <summary>
             ///     更新成功
             /// </summary>
-            UPDATE_FINISHED,
+            UpdateFinished,
 
             /// <summary>
             ///     更新失败
             /// </summary>
-            UPDATE_FAILED,
+            UpdateFailed,
 
             /// <summary>
             ///     哈希检测
             /// </summary>
-            HASH_START,
+            HashStart,
 
             /// <summary>
             ///     哈希进度
             /// </summary>
-            HASH_PROGRESSION,
+            HashProgression,
 
             /// <summary>
             ///     校验失败
             /// </summary>
-            ERROR_HASH_VALIDATION_FAILED
+            HashValidationFailed
         }
 
         public string AssetName;

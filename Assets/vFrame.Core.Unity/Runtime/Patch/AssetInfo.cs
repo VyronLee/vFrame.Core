@@ -8,6 +8,6 @@ namespace vFrame.Core.Unity.Patch
         public string md5;
         public string fileName;
         public ulong size;
-        public DownloadState downloadState = DownloadState.UNSTARTED;
+        public DownloadState downloadState = DownloadState.NotStarted;
     }
 }

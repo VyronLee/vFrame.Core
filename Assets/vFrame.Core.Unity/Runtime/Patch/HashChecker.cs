@@ -41,10 +41,10 @@ namespace vFrame.Core.Unity.Patch
             HashFailedNum = 0;
 
             StopAllCoroutines();
-            StartCoroutine(CO_Check());
+            StartCoroutine(CheckInternal());
         }
 
-        private IEnumerator CO_Check() {
+        private IEnumerator CheckInternal() {
             yield return new WaitForSeconds(0.2f);
 
             if (OnCheckStarted != null) {
