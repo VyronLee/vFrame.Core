@@ -9,42 +9,68 @@
 // ============================================================
 
 using System;
+using vFrame.Core.Base;
+using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Generic
 {
-    public abstract class ActionCallback : GCFreeCallback<ActionCallback, Action>
+    public abstract class ActionCallback<TC> : GCFreeCallback<TC, Action> where TC : BaseObject<IObjectPoolManager>
     {
         protected override Action InitialCallback() {
-            return Callback;
+            return OnCallbackInternal;
+        }
+
+        private void OnCallbackInternal() {
+            try {
+                OnCallback();
+            }
+            finally {
+                if (AutoDestroyOnCallback) {
+                    Destroy();
+                }
+            }
         }
 
         protected abstract void OnCallback();
     }
 
-    public abstract class ActionCallback<T> : GCFreeCallback<ActionCallback<T>, Action<T>>
+    public abstract class ActionCallback<TC, TArg1> : GCFreeCallback<TC, Action<TArg1>> where TC : BaseObject<IObjectPoolManager>
     {
-        protected override Action<T> InitialCallback() {
-            return OnCallback;
+        protected override Action<TArg1> InitialCallback() {
+            return OnCallbackInternal;
         }
 
-        protected abstract void OnCallback(T arg);
+        private void OnCallbackInternal(TArg1 arg1) {
+            try {
+                OnCallback(arg1);
+            }
+            finally {
+                if (AutoDestroyOnCallback) {
+                    Destroy();
+                }
+            }
+        }
+
+        protected abstract void OnCallback(TArg1 arg1);
     }
 
-    public abstract class ActionCallback<T1, T2> : GCFreeCallback<ActionCallback<T1, T2>, Action<T1, T2>>
+    public abstract class ActionCallback<TC, TArg1, TArg2> : GCFreeCallback<TC, Action<TArg1, TArg2>> where TC : BaseObject<IObjectPoolManager>
     {
-        protected override Action<T1, T2> InitialCallback() {
-            return OnCallback;
+        protected override Action<TArg1, TArg2> InitialCallback() {
+            return OnCallbackInternal;
         }
 
-        protected abstract void OnCallback(T1 arg1, T2 arg2);
-    }
-
-    public abstract class ActionCallback<T1, T2, T3> : GCFreeCallback<ActionCallback<T1, T2, T3>, Action<T1, T2, T3>>
-    {
-        protected override Action<T1, T2, T3> InitialCallback() {
-            return OnCallback;
+        private void OnCallbackInternal(TArg1 arg1, TArg2 arg2) {
+            try {
+                OnCallback(arg1, arg2);
+            }
+            finally {
+                if (AutoDestroyOnCallback) {
+                    Destroy();
+                }
+            }
         }
 
-        protected abstract void OnCallback(T1 arg, T2 arg2, T3 arg3);
+        protected abstract void OnCallback(TArg1 arg1, TArg2 arg2);
     }
 }

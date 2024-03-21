@@ -8,15 +8,22 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
+using System;
 using vFrame.Core.Base;
 using vFrame.Core.Exceptions;
 using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Generic
 {
-    public abstract class RecycleOnDestroy<T> : CreateAbility<T, IObjectPoolManager> where T : BaseObject<IObjectPoolManager>
+    public abstract class RecycleOnDestroy<TC> : CreateAbility<TC, IObjectPoolManager> where TC : BaseObject<IObjectPoolManager>
     {
         protected IObjectPoolManager PoolManager { get; set; }
+
+        public static TC CreateWithSharedPools() {
+            var ret = Activator.CreateInstance<TC>();
+            ret.Create(ObjectPoolManager.Shared);
+            return ret;
+        }
 
         protected override void OnCreate(IObjectPoolManager manager) {
             ThrowHelper.ThrowIfNull(manager, nameof(manager));
