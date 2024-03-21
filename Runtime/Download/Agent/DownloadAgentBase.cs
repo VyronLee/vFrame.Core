@@ -5,8 +5,6 @@ namespace vFrame.Core.Unity.Download
 {
     public abstract class DownloadAgentBase : IDownloadAgent
     {
-        private ulong m_LastDownloadedSize;
-
         public DownloadTask Task { get; private set; }
 
         public bool TaskDone { get; private set; }
@@ -25,10 +23,12 @@ namespace vFrame.Core.Unity.Download
         public event Action<IDownloadAgent> DownloadAgentSuccess;
         public event Action<IDownloadAgent, string> DownloadAgentFailure;
 
+        private ulong LastDownloadedSize { get; set; }
+
         public void Start(DownloadTask task) {
             Task = task;
-            m_LastDownloadedSize = 0;
             TaskDone = false;
+            LastDownloadedSize = 0;
 
             EnsureDownloadDirectory();
             NotifyStart();
@@ -38,7 +38,6 @@ namespace vFrame.Core.Unity.Download
 
         public void Stop() {
             Task = null;
-
             OnStop();
         }
 
@@ -49,8 +48,8 @@ namespace vFrame.Core.Unity.Download
 
             OnUpdate(elapseSeconds);
 
-            DownloadedSizeDelta = Math.Max(DownloadedSize - m_LastDownloadedSize, 0);
-            m_LastDownloadedSize = DownloadedSize;
+            DownloadedSizeDelta = Math.Max(DownloadedSize - LastDownloadedSize, 0);
+            LastDownloadedSize = DownloadedSize;
         }
 
         protected virtual void OnStart() { }
@@ -68,7 +67,6 @@ namespace vFrame.Core.Unity.Download
             if (string.IsNullOrEmpty(dir)) {
                 return;
             }
-
             Directory.CreateDirectory(dir);
         }
 
@@ -88,7 +86,6 @@ namespace vFrame.Core.Unity.Download
             if (DownloadAgentSuccess != null) {
                 DownloadAgentSuccess(this);
             }
-
             TaskDone = true;
         }
 
@@ -96,7 +93,6 @@ namespace vFrame.Core.Unity.Download
             if (DownloadAgentFailure != null) {
                 DownloadAgentFailure(this, errorMsg);
             }
-
             TaskDone = true;
         }
     }

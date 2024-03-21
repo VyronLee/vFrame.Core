@@ -4,16 +4,16 @@ namespace vFrame.Core.Unity.Download
 {
     public sealed class DownloadTask
     {
-        private static int s_Serial;
+        private static int _taskId;
 
         public DownloadTask(string downloadPath, string downloadUrl, object userData) {
-            SerialId = s_Serial++;
+            TaskId = _taskId++;
             DownloadPath = downloadPath;
             DownloadUrl = downloadUrl;
             UserData = userData;
         }
 
-        public int SerialId { get; }
+        public int TaskId { get; }
 
         public string DownloadPath { get; }
 

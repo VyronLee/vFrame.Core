@@ -34,7 +34,7 @@ namespace vFrame.Core.Unity.Patch
         /// <summary>
         ///     Download manager
         /// </summary>
-        private readonly DownloadManager _downloadManager;
+        private readonly Downloader _downloader;
 
         /// <summary>
         ///     Options
@@ -131,8 +131,8 @@ namespace vFrame.Core.Unity.Patch
             _cacheManifestPath = _storagePath + options.manifestFilename;
             _tempManifestPath = _storagePath + options.manifestFilename + ".tmp";
 
-            _downloadManager = DownloadManager.Create("Patcher Download Manager");
-            _downloadManager.Timeout = _options.timeout;
+            _downloader = Downloader.Create("Patcher Download Manager");
+            _downloader.Timeout = _options.timeout;
         }
 
         /// <summary>
@@ -209,12 +209,12 @@ namespace vFrame.Core.Unity.Patch
         /// <summary>
         ///     Return current download speed
         /// </summary>
-        public float DownloadSpeed => _downloadManager.Speed;
+        public float DownloadSpeed => _downloader.Speed;
 
         /// <summary>
         ///     Is Download paused?
         /// </summary>
-        public bool IsPaused => _downloadManager.IsPaused;
+        public bool IsPaused => _downloader.IsPaused;
 
         /// <summary>
         ///     Return current update state.
@@ -239,21 +239,21 @@ namespace vFrame.Core.Unity.Patch
         ///     Pause download.
         /// </summary>
         public void Pause() {
-            _downloadManager.Pause();
+            _downloader.Pause();
         }
 
         /// <summary>
         ///     Resume download.
         /// </summary>
         public void Resume() {
-            _downloadManager.Resume();
+            _downloader.Resume();
         }
 
         /// <summary>
         ///     Stop download.
         /// </summary>
         public void Stop() {
-            _downloadManager.RemoveAllDownloads();
+            _downloader.RemoveAllDownloads();
         }
 
         /// <summary>
@@ -280,8 +280,8 @@ namespace vFrame.Core.Unity.Patch
                 Object.Destroy(_hashChecker.gameObject);
             }
 
-            if (_downloadManager) {
-                Object.Destroy(_downloadManager.gameObject);
+            if (_downloader) {
+                Object.Destroy(_downloader.gameObject);
             }
 
             _initialized = false;
@@ -437,7 +437,7 @@ namespace vFrame.Core.Unity.Patch
             Logger.Info(PatchConst.LogTag, "Start to download version file: {0}, to path: {1}", versionUrl,
                 _cacheVersionPath);
 
-            var task = _downloadManager.AddDownload(_cacheVersionPath, versionUrl);
+            var task = _downloader.AddDownload(_cacheVersionPath, versionUrl);
             task.DownloadSuccess += args => {
                 Logger.Info(PatchConst.LogTag, "Download version file succeed, parsing remote version..");
                 ParseVersion();
@@ -492,7 +492,7 @@ namespace vFrame.Core.Unity.Patch
             Logger.Info(PatchConst.LogTag, "Start to download manifest file: {0}, to path: {1}", url,
                 _tempManifestPath);
 
-            var task = _downloadManager.AddDownload(_tempManifestPath, url);
+            var task = _downloader.AddDownload(_tempManifestPath, url);
             task.DownloadSuccess += args => {
                 Logger.Info(PatchConst.LogTag, "Download manifest file succeed, parsing remote manifest..");
                 ParseManifest();
@@ -530,7 +530,7 @@ namespace vFrame.Core.Unity.Patch
             TotalSize = 0;
             _downloadedSize.Clear();
 
-            _downloadManager.RemoveAllDownloads();
+            _downloader.RemoveAllDownloads();
 
             // Temporary manifest exists, resuming previous download
             if (_tempManifest.Loaded &&
@@ -652,7 +652,7 @@ namespace vFrame.Core.Unity.Patch
                     Directory.CreateDirectory(dir);
                 }
 
-                var task = _downloadManager.AddDownload(storagePath, url, asset);
+                var task = _downloader.AddDownload(storagePath, url, asset);
                 task.DownloadSuccess += OnDownloadSuccess;
                 task.DownloadFailure += OnDownloadError;
                 task.DownloadUpdate += OnDownloadProgress;
@@ -663,7 +663,7 @@ namespace vFrame.Core.Unity.Patch
             Logger.Info(PatchConst.LogTag, "Download Finish - {0} download failed.", _failedUnits.Count);
 
             // Release file locks.
-            _downloadManager.RemoveAllDownloads();
+            _downloader.RemoveAllDownloads();
 
             if (_failedUnits.Count > 0) {
                 UpdateFailed(UpdateEvent.EventCode.ERROR_DOWNLOAD_FAILED);
@@ -697,7 +697,7 @@ namespace vFrame.Core.Unity.Patch
 
         private void OnDownloadSuccess(DownloadEventArgs args) {
             var asset = (AssetInfo)args.UserData;
-            var task = _downloadManager.GetDownload(args.SerialId);
+            var task = _downloader.GetDownload(args.SerialId);
 
             Logger.Info(PatchConst.LogTag, "Download file succeed: {0}, url: {1}, storage path: {2}",
                 asset.fileName,
@@ -740,7 +740,7 @@ namespace vFrame.Core.Unity.Patch
 
         private void OnDownloadError(DownloadEventArgs args) {
             var asset = (AssetInfo)args.UserData;
-            var task = _downloadManager.GetDownload(args.SerialId);
+            var task = _downloader.GetDownload(args.SerialId);
             Logger.Warning(PatchConst.LogTag, "Download file failed: {0}, url: {1}, storage path: {2}, error: {3}",
                 asset.fileName,
                 task?.DownloadUrl ?? string.Empty,

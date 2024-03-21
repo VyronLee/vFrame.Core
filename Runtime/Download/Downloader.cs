@@ -1,43 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using UnityEngine;
 using vFrame.Core.Unity.Extensions;
 
 namespace vFrame.Core.Unity.Download
 {
-    public class DownloadManager : MonoBehaviour
+    public class Downloader : MonoBehaviour
     {
-        private const int DOWNLOAD_AGENT_COUNT = 3;
+        private const int DownloadAgentCount = 3;
 
         [SerializeField]
-        private int m_Timeout = 300;
+        private int _timeout = 300;
 
         [SerializeField]
-        private float m_ProgressUpdateInterval = 0.1f;
+        private float _progressUpdateInterval = 0.1f;
 
-        private readonly List<IDownloadAgent> m_Agents = new List<IDownloadAgent>();
-        private readonly DownloadSpeedCounter m_SpeedCounter = new DownloadSpeedCounter();
-        private readonly LinkedList<DownloadTask> m_WaitingTasks = new LinkedList<DownloadTask>();
+        private readonly List<IDownloadAgent> _agents = new List<IDownloadAgent>();
+        private readonly DownloadSpeedCounter _speedCounter = new DownloadSpeedCounter();
+        private readonly LinkedList<DownloadTask> _waitingTasks = new LinkedList<DownloadTask>();
 
         public int Timeout {
-            get => m_Timeout;
+            get => _timeout;
             set {
                 if (value <= 0) {
                     return;
                 }
-                m_Timeout = value;
-                foreach (var agent in m_Agents) {
+                _timeout = value;
+                foreach (var agent in _agents) {
                     agent.Timeout = value;
                 }
             }
         }
 
         public float ProgressUpdateInterval {
-            get => m_ProgressUpdateInterval;
+            get => _progressUpdateInterval;
             set {
-                m_ProgressUpdateInterval = value;
-                foreach (var agent in m_Agents) {
+                _progressUpdateInterval = value;
+                foreach (var agent in _agents) {
                     agent.ProgressUpdateInterval = value;
                 }
             }
@@ -48,7 +47,7 @@ namespace vFrame.Core.Unity.Download
                 if (!enabled) {
                     return 0f;
                 }
-                return m_SpeedCounter.Speed;
+                return _speedCounter.Speed;
             }
         }
 
@@ -57,11 +56,9 @@ namespace vFrame.Core.Unity.Download
         public bool IsPaused { get; set; }
 
         private void Awake() {
-            for (var i = 0; i < DOWNLOAD_AGENT_COUNT; i++) {
+            for (var i = 0; i < DownloadAgentCount; i++) {
                 AddDownloadAgent(new DownloadAgentUnityWebRequest());
             }
-
-            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
         }
 
         private void Update() {
@@ -74,42 +71,42 @@ namespace vFrame.Core.Unity.Download
         public event Action<DownloadEventArgs> DownloadSuccess;
         public event Action<DownloadEventArgs> DownloadFailure;
 
-        public static DownloadManager Create(string name = "DownloadManager") {
+        public static Downloader Create(string name = "DownloadManager") {
             var go = new GameObject(name).DontDestroyEx().DontSaveAndHideEx();
-            var inst = go.AddComponent<DownloadManager>();
+            var inst = go.AddComponent<Downloader>();
             return inst;
         }
 
         private void AddDownloadAgent(IDownloadAgent agent) {
-            agent.Timeout = m_Timeout;
-            agent.ProgressUpdateInterval = m_ProgressUpdateInterval;
+            agent.Timeout = _timeout;
+            agent.ProgressUpdateInterval = _progressUpdateInterval;
             agent.DownloadAgentStart += OnDownloadAgentStart;
             agent.DownloadAgentUpdate += OnDownloadAgentUpdate;
             agent.DownloadAgentSuccess += OnDownloadAgentSuccess;
             agent.DownloadAgentFailure += OnDownloadAgentFailure;
 
-            m_Agents.Add(agent);
+            _agents.Add(agent);
         }
 
         public DownloadTask AddDownload(string downloadPath, string downloadUrl, object userData = null) {
             enabled = true;
 
             var downloadTask = new DownloadTask(downloadPath, downloadUrl, userData);
-            m_WaitingTasks.AddLast(downloadTask);
+            _waitingTasks.AddLast(downloadTask);
 
             return downloadTask;
         }
 
-        public void RemoveDownload(int serialId) {
-            foreach (var task in m_WaitingTasks) {
-                if (task.SerialId == serialId) {
-                    m_WaitingTasks.Remove(task);
+        public void RemoveDownload(int taskId) {
+            foreach (var task in _waitingTasks) {
+                if (task.TaskId == taskId) {
+                    _waitingTasks.Remove(task);
                     return;
                 }
             }
 
-            foreach (var agent in m_Agents) {
-                if (agent.Task != null && agent.Task.SerialId == serialId) {
+            foreach (var agent in _agents) {
+                if (agent.Task != null && agent.Task.TaskId == taskId) {
                     agent.Stop();
                     return;
                 }
@@ -117,9 +114,9 @@ namespace vFrame.Core.Unity.Download
         }
 
         public void RemoveAllDownloads() {
-            m_WaitingTasks.Clear();
+            _waitingTasks.Clear();
 
-            foreach (var agent in m_Agents) {
+            foreach (var agent in _agents) {
                 agent.Stop();
             }
 
@@ -127,14 +124,14 @@ namespace vFrame.Core.Unity.Download
         }
 
         public DownloadTask GetDownload(int serialId) {
-            foreach (var task in m_WaitingTasks) {
-                if (task.SerialId == serialId) {
+            foreach (var task in _waitingTasks) {
+                if (task.TaskId == serialId) {
                     return task;
                 }
             }
 
-            foreach (var agent in m_Agents) {
-                if (agent.Task != null && agent.Task.SerialId == serialId) {
+            foreach (var agent in _agents) {
+                if (agent.Task != null && agent.Task.TaskId == serialId) {
                     return agent.Task;
                 }
             }
@@ -159,16 +156,16 @@ namespace vFrame.Core.Unity.Download
         }
 
         private void UpdateDownloadSpeed() {
-            for (var i = 0; i < m_Agents.Count; i++) {
-                m_SpeedCounter.AddDownloadSize(m_Agents[i].DownloadedSizeDelta);
+            for (var i = 0; i < _agents.Count; i++) {
+                _speedCounter.AddDownloadSize(_agents[i].DownloadedSizeDelta);
             }
-            m_SpeedCounter.Update(Time.unscaledDeltaTime);
+            _speedCounter.Update(Time.unscaledDeltaTime);
         }
 
         private void UpdateDownloadAgent() {
             var hasRunningTask = false;
-            for (var i = 0; i < m_Agents.Count; i++) {
-                var agent = m_Agents[i];
+            for (var i = 0; i < _agents.Count; i++) {
+                var agent = _agents[i];
                 if (agent.Task != null) {
                     if (agent.TaskDone) {
                         agent.Stop();
@@ -190,18 +187,17 @@ namespace vFrame.Core.Unity.Download
         }
 
         private bool StartAnotherTask(IDownloadAgent agent) {
-            if (m_WaitingTasks.Count > 0) {
-                agent.Start(m_WaitingTasks.First.Value);
-                m_WaitingTasks.RemoveFirst();
+            if (_waitingTasks.Count > 0) {
+                agent.Start(_waitingTasks.First.Value);
+                _waitingTasks.RemoveFirst();
                 return true;
             }
-
             return false;
         }
 
         private void OnDownloadAgentStart(IDownloadAgent sender) {
             var args = new DownloadEventArgs {
-                SerialId = sender.Task.SerialId,
+                SerialId = sender.Task.TaskId,
                 UserData = sender.Task.UserData
             };
 
@@ -214,7 +210,7 @@ namespace vFrame.Core.Unity.Download
 
         private void OnDownloadAgentUpdate(IDownloadAgent sender) {
             var args = new DownloadEventArgs {
-                SerialId = sender.Task.SerialId,
+                SerialId = sender.Task.TaskId,
                 UserData = sender.Task.UserData,
                 DownloadedSize = sender.DownloadedSize,
                 TotalSize = sender.TotalSize,
@@ -230,7 +226,7 @@ namespace vFrame.Core.Unity.Download
 
         private void OnDownloadAgentSuccess(IDownloadAgent sender) {
             var args = new DownloadEventArgs {
-                SerialId = sender.Task.SerialId,
+                SerialId = sender.Task.TaskId,
                 UserData = sender.Task.UserData,
                 DownloadedSize = sender.DownloadedSize,
                 TotalSize = sender.TotalSize,
@@ -246,7 +242,7 @@ namespace vFrame.Core.Unity.Download
 
         private void OnDownloadAgentFailure(IDownloadAgent sender, string errorMessage) {
             var args = new DownloadEventArgs {
-                SerialId = sender.Task.SerialId,
+                SerialId = sender.Task.TaskId,
                 UserData = sender.Task.UserData,
                 Error = errorMessage
             };
