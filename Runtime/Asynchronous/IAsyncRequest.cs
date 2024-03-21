@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.Unity.Asynchronous
 {
@@ -11,7 +12,7 @@ namespace vFrame.Core.Unity.Asynchronous
         Error,
     }
 
-    public interface IAsyncRequest : IEnumerator
+    public interface IAsyncRequest : IEnumerator, IBaseObject
     {
         void Start();
         void Stop();

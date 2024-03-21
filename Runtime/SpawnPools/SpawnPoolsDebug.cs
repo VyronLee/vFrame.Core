@@ -3,7 +3,7 @@ using Logger = vFrame.Core.Loggers.Logger;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    internal static class SpawnPoolDebug
+    internal static class SpawnPoolsDebug
     {
         [Conditional("DEBUG_SPAWNPOOLS")]
         public static void Log(string message, params object[] args) {

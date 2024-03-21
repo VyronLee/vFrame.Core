@@ -11,16 +11,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using vFrame.Core.Base;
+using vFrame.Core.Generic;
 using vFrame.Core.Unity.Extensions;
-using Debug = vFrame.Core.Unity.SpawnPools.SpawnPoolDebug;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    internal class Pool : BaseObject<string, SpawnPoolContext, IGameObjectLoader>, IPool
+    internal class Pool : BaseObject<string, SpawnPoolsContext, IGameObjectLoader>, IPool
     {
         private readonly Queue<GameObject> _objects = new Queue<GameObject>();
         private IGameObjectLoader _builder;
-        private SpawnPoolContext _context;
+        private SpawnPoolsContext _context;
         private int _lastTime;
         private GameObject _poolGo;
         private string _poolName;
@@ -30,20 +30,26 @@ namespace vFrame.Core.Unity.SpawnPools
         internal int SpawnedTimes { get; private set; }
 
         public GameObject Spawn(Transform parent) {
+            if (!parent) {
+                parent = _context.Parent;
+            }
             var obj = TryGetFromPool();
             if (!obj) {
-                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
+                SpawnPoolsDebug.Log("No objects in pool({0}), spawning new one..", _poolName);
                 obj = _builder.Load();
             }
-            obj.transform.SetParent(parent);
+            obj.transform.SetParent(parent, false);
             OnSpawned(obj);
             return obj;
         }
 
         public ILoadAsyncRequest SpawnAsync(Transform parent) {
+            if (!parent) {
+                parent = _context.Parent;
+            }
             var obj = TryGetFromPool();
             if (!obj) {
-                Debug.Log("No objects in pool({0}), spawning new one..", _poolName);
+                SpawnPoolsDebug.Log("No objects in pool({0}), spawning new one..", _poolName);
             }
 
             LoadAsyncRequest request;
@@ -56,20 +62,22 @@ namespace vFrame.Core.Unity.SpawnPools
                 request = _builder.LoadAsync();
                 request.Create();
             }
-            request.OnFinish += () => {
-                request.GameObject.transform.SetParent(parent);
-                OnSpawned(request.GameObject);
-            };
+
+            var callback = AsyncRequestFinishedCallback.CreateWithSharedPools();
+            callback.Pool = this;
+            callback.Parent = parent;
+            callback.Register(request);
+
             return request;
         }
 
         public void Recycle(GameObject obj) {
             if (null == obj) {
-                Debug.Error("Object to recycle cannot be null!");
+                SpawnPoolsDebug.Error("Object to recycle cannot be null!");
                 return;
             }
 
-            Debug.Log("Recycling object into pool({0})", obj.name);
+            SpawnPoolsDebug.Log("Recycling object into pool({0})", obj.name);
 
             if (!OnReturn(obj)) {
                 obj.DestroyEx();
@@ -80,7 +88,7 @@ namespace vFrame.Core.Unity.SpawnPools
 
         public int Count => _objects.Count;
 
-        protected override void OnCreate(string poolName, SpawnPoolContext context, IGameObjectLoader builder) {
+        protected override void OnCreate(string poolName, SpawnPoolsContext context, IGameObjectLoader builder) {
             _context = context;
             _lastTime = Time.frameCount;
             _poolName = poolName;
@@ -101,12 +109,12 @@ namespace vFrame.Core.Unity.SpawnPools
 
         private GameObject TryGetFromPool() {
             while (_objects.Count > 0) {
-                Debug.Log("Spawning object from pool({0}) ", _poolName);
+                SpawnPoolsDebug.Log("Spawning object from pool({0}) ", _poolName);
                 var obj = _objects.Dequeue();
                 if (null != obj) {
                     return obj;
                 }
-                Debug.Warning("Spawned object is NULL , DON'T destroy managed object outside the pool!");
+                SpawnPoolsDebug.Warning("Spawned object is NULL , DON'T destroy managed object outside the pool!");
             }
             return null;
         }
@@ -116,7 +124,7 @@ namespace vFrame.Core.Unity.SpawnPools
             _lastTime = Time.frameCount;
 
             if (!obj) {
-                Debug.Warning("Get gameObject callback, but target == null, pool name: " + _poolName);
+                SpawnPoolsDebug.Warning("Get gameObject callback, but target == null, pool name: " + _poolName);
                 return;
             }
 
@@ -125,7 +133,7 @@ namespace vFrame.Core.Unity.SpawnPools
                 identity = obj.AddComponent<PoolObjectIdentity>();
                 identity.AssetPath = _poolName;
                 identity.UniqueId = NewUniqueId;
-                Debug.Log("Pool object(id: {0}, path: {1}) created.", identity.UniqueId, identity.AssetPath);
+                SpawnPoolsDebug.Log("Pool object(id: {0}, path: {1}) created.", identity.UniqueId, identity.AssetPath);
             }
             identity.IsPooling = false;
         }
@@ -133,11 +141,11 @@ namespace vFrame.Core.Unity.SpawnPools
         private bool OnReturn(GameObject go) {
             var identity = go.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
-                Debug.Warning("Not a valid pool object: " + go);
+                SpawnPoolsDebug.Warning("Not a valid pool object: " + go);
                 return false;
             }
             if (identity.AssetPath != _poolName) {
-                Debug.Warning("Object to recycle does not match the pool name, require: {0}, get: {1}",
+                SpawnPoolsDebug.Warning("Object to recycle does not match the pool name, require: {0}, get: {1}",
                     _poolName, identity.AssetPath);
                 return false;
             }
@@ -158,7 +166,33 @@ namespace vFrame.Core.Unity.SpawnPools
             }
             _objects.Clear();
 
-            Debug.Log("Spawn pool cleared: {0}", _poolName);
+            SpawnPoolsDebug.Log("Spawn pool cleared: {0}", _poolName);
+        }
+
+        private class AsyncRequestFinishedCallback : ActionCallback<AsyncRequestFinishedCallback>
+        {
+            public Transform Parent { get; set; }
+            public Pool Pool { get; set; }
+            private LoadAsyncRequest Request { get; set; }
+
+            public void Register(LoadAsyncRequest request) {
+                Request = request;
+                Request.OnFinish += Callback;
+            }
+
+            protected override void OnCallback() {
+                var go = Request.GameObject;
+                go.transform.SetParent(Parent);
+                Pool.OnSpawned(go);
+            }
+
+            protected override void OnDestroy() {
+                Request.OnFinish -= Callback;
+                Request = null;
+                Parent = null;
+                Pool = null;
+                base.OnDestroy();
+            }
         }
     }
 }

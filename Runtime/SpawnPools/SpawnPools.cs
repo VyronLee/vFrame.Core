@@ -16,7 +16,6 @@ using vFrame.Core.Base;
 using vFrame.Core.ObjectPools.Builtin;
 using vFrame.Core.Unity.Asynchronous;
 using vFrame.Core.Unity.Extensions;
-using Debug = vFrame.Core.Unity.SpawnPools.SpawnPoolDebug;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
@@ -25,7 +24,7 @@ namespace vFrame.Core.Unity.SpawnPools
         private const string PoolName = nameof(SpawnPools);
         private AsyncRequestCtrl _asyncRequestCtrl;
         private Comparison<string> _comparison;
-        private SpawnPoolContext _context;
+        private SpawnPoolsContext _context;
         private int _lastGC;
         private IGameObjectLoaderFactory _loaderFactory;
         private GameObject _parent;
@@ -34,15 +33,19 @@ namespace vFrame.Core.Unity.SpawnPools
         private SpawnPoolsSettings _settings;
 
         public void Recycle(GameObject obj) {
+            ThrowIfDestroyed();
+
             var identity = obj.GetComponent<PoolObjectIdentity>();
             if (null == identity) {
-                Debug.Warning("Not a valid pool object: " + obj.name);
+                SpawnPoolsDebug.Warning("Not a valid pool object: " + obj.name);
                 return;
             }
             GetPool(identity.AssetPath).Recycle(obj);
         }
 
         public IPreloadAsyncRequest PreloadAsync(string[] assetPaths) {
+            ThrowIfDestroyed();
+
             var request = _asyncRequestCtrl.CreateRequest<PreloadAsyncRequest>();
             request.AssetPaths = assetPaths.ToList();
             request.SpawnPools = this;
@@ -50,6 +53,8 @@ namespace vFrame.Core.Unity.SpawnPools
         }
 
         public void Update() {
+            ThrowIfDestroyed();
+
             _asyncRequestCtrl.Update();
 
             if (++_lastGC < _settings.GCInterval) {
@@ -65,7 +70,7 @@ namespace vFrame.Core.Unity.SpawnPools
                 if (!pool.IsTimeout()) {
                     continue;
                 }
-                Debug.Log("Pool({0}) timeout, destroying..", kv.Key);
+                SpawnPoolsDebug.Log("Pool({0}) timeout, destroying..", kv.Key);
                 pool.Clear();
                 pools.Add(kv.Key);
             }
@@ -83,17 +88,20 @@ namespace vFrame.Core.Unity.SpawnPools
             pools.Sort(_comparison);
 
             for (var i = _settings.Capacity; i < pools.Count; i++) {
-                Debug.Log("Pool({0}) over capacity, destroying..", pools[i]);
+                SpawnPoolsDebug.Log("Pool({0}) over capacity, destroying..", pools[i]);
                 _pools[pools[i]].Clear();
             }
             ListPool<string>.Shared.Return(pools);
         }
 
         public GameObject Spawn(string assetPath, Transform parent = null) {
+            ThrowIfDestroyed();
             return GetPool(assetPath).Spawn(parent);
         }
 
         public ILoadAsyncRequest SpawnAsync(string assetPath, Transform parent = null) {
+            ThrowIfDestroyed();
+
             var request = GetPool(assetPath).SpawnAsync(parent);
             _asyncRequestCtrl.AddRequest(request);
             return request;
@@ -127,7 +135,7 @@ namespace vFrame.Core.Unity.SpawnPools
             _parent = new GameObject(PoolName).DontDestroyEx();
             _parent.transform.position = _settings.RootPosition;
 
-            _context = new SpawnPoolContext {
+            _context = new SpawnPoolsContext {
                 Settings = _settings,
                 Parent = _parent.transform
             };
@@ -149,10 +157,11 @@ namespace vFrame.Core.Unity.SpawnPools
             _loaderFactory = null;
             _context = null;
 
-            Debug.Log("Spawn pools destroyed.");
+            SpawnPoolsDebug.Log("Spawn pools destroyed.");
         }
 
         public void Clear() {
+            ThrowIfDestroyed();
             foreach (var kv in _pools) {
                 kv.Value.Destroy();
             }

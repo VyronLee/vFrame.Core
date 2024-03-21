@@ -6,6 +6,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using vFrame.Core.Base;
+using vFrame.Core.Generic;
 using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;
 using Version = System.Version;

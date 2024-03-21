@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    internal class SpawnPoolContext
+    internal class SpawnPoolsContext
     {
         public Transform Parent { get; set; }
         public SpawnPoolsSettings Settings { get; set; }
