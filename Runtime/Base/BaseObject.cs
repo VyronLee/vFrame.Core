@@ -50,6 +50,11 @@ namespace vFrame.Core.Base
                 throw new BaseObjectNotCreatedException();
             }
         }
+
+        protected void ThrowIfNotCreatedOrDestroyed() {
+            ThrowIfNotCreated();
+            ThrowIfDestroyed();
+        }
     }
 
     public abstract class BaseObject : Object, IBaseObject
