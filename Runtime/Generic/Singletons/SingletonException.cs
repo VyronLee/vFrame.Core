@@ -10,7 +10,7 @@
 
 using vFrame.Core.Exceptions;
 
-namespace vFrame.Core.Singletons
+namespace vFrame.Core.Generic
 {
     public class SingletonException : vFrameException { }
 

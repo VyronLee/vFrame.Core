@@ -10,7 +10,7 @@
 
 using System;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
     public interface IEventDispatcher
     {

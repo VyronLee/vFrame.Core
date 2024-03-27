@@ -1,6 +1,6 @@
 ﻿//------------------------------------------------------------
-//       @file  EventExecutor.cs
-//      @brief  事件执行者
+//       @file  VoteExecutor.cs
+//      @brief  投票执行者
 //
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
@@ -11,13 +11,13 @@
 
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
-    public class EventExecutor : BaseObject
+    public class VoteExecutor : BaseObject
     {
-        public int EventId;
         public uint Handle;
-        public IEventListener Listener;
+        public IVoteListener Listener;
+        public int VoteId;
         public bool Activated { get; set; }
         public bool Stopped { get; set; }
 
@@ -27,7 +27,7 @@ namespace vFrame.Core.Events
         protected override void OnCreate() { }
 
         /// <summary>
-        ///     销毁函数
+        ///     创建函数
         /// </summary>
         protected override void OnDestroy() {
             Listener = null;
@@ -50,10 +50,11 @@ namespace vFrame.Core.Events
         /// <summary>
         ///     执行
         /// </summary>
-        public void Execute(IEvent e) {
+        public bool Execute(IVote e) {
             if (null != Listener) {
-                Listener.OnEvent(e);
+                return Listener.OnVote(e);
             }
+            return false;
         }
     }
 }

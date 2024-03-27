@@ -1,31 +1,31 @@
 ﻿//------------------------------------------------------------
-//       @file  IVote.cs
-//      @brief  投票接口
+//       @file  IEvent.cs
+//      @brief  事件接口
 //
 //     @author  VyronLee, lwz_jz@hotmail.com
 //
 //   @internal
-//     Created  2016-07-31 22:24
+//     Created  2016-07-31 22:18
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
-    public interface IVote
+    public interface IEvent
     {
         /// <summary>
-        ///     获取投票ID
+        ///     获取事件ID
         /// </summary>
-        int GetVoteID();
+        int GetEventID();
 
         /// <summary>
-        ///     获取投票现场
+        ///     获取事件现场
         /// </summary>
         object GetContext();
 
         /// <summary>
-        ///     获取投票发送者
+        ///     获取事件发送者
         /// </summary>
-        object GetVoteTarget();
+        object GetEventTarget();
     }
 }

@@ -10,12 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using vFrame.Core.Components;
+using vFrame.Core.Containers;
 using vFrame.Core.Exceptions;
 using vFrame.Core.Loggers;
 using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
     public class EventDispatcher : Component, IEventDispatcher
     {

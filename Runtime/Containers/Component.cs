@@ -12,7 +12,7 @@
 using System.Diagnostics;
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Components
+namespace vFrame.Core.Containers
 {
     public abstract class Component : BaseObject, IComponent
     {

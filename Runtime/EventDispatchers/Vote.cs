@@ -11,7 +11,7 @@
 
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
     public class Vote : BaseObject, IVote
     {

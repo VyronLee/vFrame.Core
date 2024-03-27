@@ -1,5 +1,5 @@
 ﻿//------------------------------------------------------------
-//       @file  DelegateEventListener.cs
+//       @file  DelegateVoteListener.cs
 //      @brief  代理事件侦听器
 //
 //     @author  VyronLee, lwz_jz@hotmail.com
@@ -12,28 +12,32 @@
 using System;
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
-    public class DelegateEventListener : BaseObject, IEventListener
+    public class DelegateVoteListener : BaseObject, IVoteListener
     {
         /// <summary>
         ///     代理接口
         /// </summary>
-        public Action<IEvent> Action;
+        public Func<IVote, bool> VoteAction;
 
         /// <summary>
-        ///     事件响应接口
+        ///     投票响应接口
         /// </summary>
-        public void OnEvent(IEvent e) {
-            if (null != Action) {
-                Action(e);
-            }
+        public bool OnVote(IVote e) {
+            return null != VoteAction && VoteAction(e);
         }
 
+        /// <summary>
+        ///     创建函数
+        /// </summary>
         protected override void OnCreate() { }
 
+        /// <summary>
+        ///     销毁函数
+        /// </summary>
         protected override void OnDestroy() {
-            Action = null;
+            VoteAction = null;
         }
     }
 }

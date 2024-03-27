@@ -10,7 +10,7 @@
 
 using vFrame.Core.ObjectPools;
 
-namespace vFrame.Core.Events
+namespace vFrame.Core.EventDispatchers
 {
     internal class EventExecutorPool : ObjectPool<EventExecutor, EventExecutorAllocator> { }
 

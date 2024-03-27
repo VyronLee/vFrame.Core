@@ -15,7 +15,7 @@ using System.Diagnostics;
 using System.Reflection;
 using vFrame.Core.Loggers;
 
-namespace vFrame.Core.Components
+namespace vFrame.Core.Containers
 {
     public abstract class Container : Component, IContainer
     {
