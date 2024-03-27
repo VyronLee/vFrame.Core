@@ -15,7 +15,7 @@ using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.Generic
 {
-    public abstract class RecycleOnDestroy<TC> : CreateAbility<TC, IObjectPoolManager> where TC : BaseObject<IObjectPoolManager>
+    public abstract class RecycleOnDestroy<TC> : BaseObject<IObjectPoolManager> where TC : BaseObject<IObjectPoolManager>
     {
         protected IObjectPoolManager PoolManager { get; set; }
 

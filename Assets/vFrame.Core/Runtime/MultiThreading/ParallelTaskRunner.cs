@@ -8,11 +8,11 @@ using vFrame.Core.Loggers;
 
 namespace vFrame.Core.MultiThreading
 {
-    public class ParallelTaskRunner<T> : CreateAbility<ParallelTaskRunner<T>, int>
+    public class ParallelTaskRunner<T> : BaseObject<int>
     {
         private const int MaxThreadCount = 32;
         private const int DefaultThreadCount = 4;
-        private readonly WaitCallback _taskHandler;
+        private WaitCallback _taskHandler;
         private int _threadCount;
         private bool _abortOnError;
         private SpinLock _finishedListLock;
@@ -27,21 +27,22 @@ namespace vFrame.Core.MultiThreading
         private CancellationTokenSource[] _tokenSources;
         private SpinLock _waitingListLock;
 
-        private ParallelTaskRunner() {
-            _abortOnError = true;
-            _waitingListLock = new SpinLock();
-            _taskHandler = HandleTask;
-        }
-
         public static ParallelTaskRunner<T> Spawn() {
-            return Create(DefaultThreadCount);
+            var ret = new ParallelTaskRunner<T>();
+            ret.Create(DefaultThreadCount);
+            return ret;
         }
 
         public static ParallelTaskRunner<T> Spawn(int threadCount) {
-            return Create(threadCount);
+            var ret = new ParallelTaskRunner<T>();
+            ret.Create(threadCount);
+            return ret;
         }
 
         protected override void OnCreate(int threadCount) {
+            _abortOnError = true;
+            _waitingListLock = new SpinLock();
+            _taskHandler = HandleTask;
             _threadCount = Math.Min(threadCount, MaxThreadCount);
         }
 

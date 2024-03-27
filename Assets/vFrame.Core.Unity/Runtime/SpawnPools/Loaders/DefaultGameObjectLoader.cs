@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
-    internal class DefaultGameObjectLoader : CreateAbility<DefaultGameObjectLoader, string>, IGameObjectLoader
+    internal class DefaultGameObjectLoader : BaseObject<string>, IGameObjectLoader
     {
         private string _path;
 

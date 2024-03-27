@@ -15,7 +15,7 @@ using vFrame.Core.Exceptions;
 
 namespace vFrame.Core.Unity.Asynchronous
 {
-    public class AsyncRequestCtrl : CreateAbility<AsyncRequestCtrl>, IAsyncRequestCtrl
+    public class AsyncRequestCtrl : BaseObject, IAsyncRequestCtrl
     {
         private List<IAsyncRequest> _requests;
 

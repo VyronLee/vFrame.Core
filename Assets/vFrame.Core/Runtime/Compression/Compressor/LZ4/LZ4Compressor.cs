@@ -18,9 +18,10 @@ namespace vFrame.Core.Compression
         }
 
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
+            var options = Options as LZ4CompressorOptions ?? new LZ4CompressorOptions();
             using (var decoder = LZ4Stream.Decode(input, null, true)) {
                 int length;
-                var buffer = new byte[Options.BuffSize];
+                var buffer = new byte[options.BuffSize];
                 while ((length = decoder.Read(buffer, 0, buffer.Length)) > 0) {
                     output.Write(buffer, 0, length);
                 }
