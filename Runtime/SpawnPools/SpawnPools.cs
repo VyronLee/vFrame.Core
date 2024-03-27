@@ -130,7 +130,8 @@ namespace vFrame.Core.Unity.SpawnPools
             _loaderFactory = factory ?? new DefaultGameObjectLoaderFactory();
             _comparison = CompareBySpawnedTimes;
             _pools = new Dictionary<string, Pool>();
-            _asyncRequestCtrl = AsyncRequestCtrl.Create();
+            _asyncRequestCtrl = new AsyncRequestCtrl();
+            _asyncRequestCtrl.Create();
             _settings = settings;
             _parent = new GameObject(PoolName).DontDestroyEx();
             _parent.transform.position = _settings.RootPosition;
