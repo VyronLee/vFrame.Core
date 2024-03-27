@@ -7,6 +7,10 @@ namespace vFrame.Core.Unity.Asynchronous
     {
         public AsyncState State { get; private set; }
 
+        public void WithSharedCtrl() {
+            AsyncRequestCtrl.Shared.AddRequest(this);
+        }
+
         public void Start() {
             if (State != AsyncState.NotStarted) {
                 return;

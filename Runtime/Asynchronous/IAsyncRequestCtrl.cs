@@ -16,6 +16,7 @@ namespace vFrame.Core.Unity.Asynchronous
     public interface IAsyncRequestCtrl : IBaseObject
     {
         void Update();
+        void SelfDrive();
         T CreateRequest<T>() where T : IAsyncRequest;
         IAsyncRequest CreateRequest(Type type);
         void AddRequest(IAsyncRequest request);
