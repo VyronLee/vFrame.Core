@@ -4,8 +4,10 @@
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cdownload_005Cagent/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cextensions_005Cui/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cgeneric_005Cgcfreeaction/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cgeneric_005Csingletons/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cloggers_005Cunity/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cspawnpools_005Cbehaviours/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cspawnpools_005Cexceptions/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cspawnpools_005Cloaders/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cspawnpools_005Cpreload/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=assets_005Cvframe_002Ecore_002Eunity_005Cruntime_005Cutils_005Cunity/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using vFrame.Core.Exceptions;
-using vFrame.Core.Singletons;
+using vFrame.Core.Generic;
 
 namespace vFrame.Core.ObjectPools
 {

@@ -11,7 +11,7 @@
 
 using vFrame.Core.Base;
 
-namespace vFrame.Core.Singletons
+namespace vFrame.Core.Generic
 {
     public abstract class Singleton<T> : BaseObject where T : BaseObject, new()
     {

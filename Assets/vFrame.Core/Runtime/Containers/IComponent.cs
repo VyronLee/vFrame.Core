@@ -9,7 +9,7 @@
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-namespace vFrame.Core.Components
+namespace vFrame.Core.Containers
 {
     public interface IComponent
     {

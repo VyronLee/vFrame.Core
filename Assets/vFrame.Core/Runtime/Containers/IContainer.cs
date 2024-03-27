@@ -11,7 +11,7 @@
 
 using System;
 
-namespace vFrame.Core.Components
+namespace vFrame.Core.Containers
 {
     public interface IContainer
     {

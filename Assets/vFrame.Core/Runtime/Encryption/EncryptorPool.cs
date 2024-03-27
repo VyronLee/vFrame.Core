@@ -11,8 +11,8 @@
 using System.IO;
 using vFrame.Core.Base;
 using vFrame.Core.Exceptions;
+using vFrame.Core.Generic;
 using vFrame.Core.ObjectPools;
-using vFrame.Core.Singletons;
 
 namespace vFrame.Core.Encryption
 {

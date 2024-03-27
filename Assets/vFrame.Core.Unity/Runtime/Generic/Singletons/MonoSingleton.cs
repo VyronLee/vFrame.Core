@@ -10,7 +10,7 @@
 
 using UnityEngine;
 
-namespace vFrame.Core.Unity.Singletons
+namespace vFrame.Core.Unity.Generic
 {
     public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
@@ -22,10 +22,8 @@ namespace vFrame.Core.Unity.Singletons
                 if (_instanceCreated) {
                     return _instance;
                 }
-
                 _instance = new GameObject(typeof(T).Name).AddComponent<T>();
                 _instanceCreated = true;
-
                 return _instance;
             }
         }
@@ -35,7 +33,6 @@ namespace vFrame.Core.Unity.Singletons
                 Destroy(this);
                 return;
             }
-
             _instance = this as T;
             _instanceCreated = true;
         }
@@ -44,7 +41,6 @@ namespace vFrame.Core.Unity.Singletons
             if (_instance != this as T) {
                 return;
             }
-
             _instance = null;
             _instanceCreated = false;
         }
