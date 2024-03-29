@@ -22,6 +22,7 @@ jobs:
         uses: hecomi/create-upm-branch-action@main
         with:
           git-tag: ${{ steps.tag.outputs.name }}
+          main-branch: master
           upm-branch: upm-core-unity
           root-files: "README.md README_en.md LICENSE"
           pkg-root-dir-path: Assets/vFrame.Core.Unity
