@@ -1,4 +1,4 @@
-name: Update-UPM-Branch
+name: Update-UPM-Core-Unity-Branch
 
 on:
   push:
