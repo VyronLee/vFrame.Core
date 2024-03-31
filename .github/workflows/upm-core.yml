@@ -1,4 +1,4 @@
-name: Update-UPM-Branch
+name: Update-UPM-Core-Branch
 
 on:
   push:
@@ -22,14 +22,7 @@ jobs:
         uses: hecomi/create-upm-branch-action@main
         with:
           git-tag: ${{ steps.tag.outputs.name }}
+          main-branch: master
           upm-branch: upm-core
           root-files: "README.md README_en.md LICENSE"
           pkg-root-dir-path: Assets/vFrame.Core
-          
-      - name: Create UPM Core Unity Branches
-        uses: hecomi/create-upm-branch-action@main
-        with:
-          git-tag: ${{ steps.tag.outputs.name }}
-          upm-branch: upm-core-unity
-          root-files: "README.md README_en.md LICENSE"
-          pkg-root-dir-path: Assets/vFrame.Core.Unity
