@@ -4,7 +4,9 @@
 
 This repository is mainly divided into two parts: `vFrame.Core` and `vFrame.Core.Unity`, each of which is an independent Unity Package, mainly providing some commonly used components for development use, to speed up research and development speed and quality.
 
-## TOC
+## Table Of Content
+
+* [Installation](#Installation)
 
 * [vFrame Core](#vframe-core)
     + [Base Types](#-base-)
@@ -20,6 +22,17 @@ This repository is mainly divided into two parts: `vFrame.Core` and `vFrame.Core
     + [Downloader](#-downloader-)
     + [Patcher](#-patcher-)
 * [License](#license)
+
+## Installation
+
+It is recommended to install using the Unity Package Manager by adding the following paths:
+
+- `vFrame.Core` https://github.com/VyronLee/vFrame.Core.git#upm-core
+- `vFrame.Core.Unity` https://github.com/VyronLee/vFrame.Core.git#upm-core-unity
+
+If you need to specify a version, just add the version number after the link.
+
+Moreover, this Package relies on certain external libraries that have been compiled into a unitypackage file. You can download and import this file from the [release](https://github.com/VyronLee/vFrame.Core/releases) page on GitHub.
 
 ## vFrame Core
 
@@ -205,9 +218,9 @@ Different from the multi-threading tasks `Task` in `.NET`, the `Task` type provi
       bool IsDone { get; }
       float Progress { get; }
   }
-
+  
   public interface ITask : IAsync { }
-
+  
   public abstract class Task<TArg> : BaseObject<TArg>, ITask
   {
       public abstract void RunTask();
@@ -233,7 +246,7 @@ Different from the multi-threading tasks `Task` in `.NET`, the `Task` type provi
     .OnComplete(HandleComplete)
     .OnError(HandleException)
     .Run(contexts);
-   ```
+  ```
 
 ### Object Pool
 

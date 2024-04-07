@@ -9,6 +9,8 @@
 
 ## 目录
 
+* [安装](#安装)
+
 * [vFrame Core](#vframe-core)
     + [基础类型（ Base ）](#-base-)
     + [压缩（ Compression ）](#-compression-)
@@ -23,6 +25,16 @@
     + [下载器（ Downloader ）](#-downloader-)
     + [补丁程序（ Patcher ）](#-patcher-)
 * [License](#license)
+
+## 安装
+
+建议使用 Unity Package Manager 安装，添加以下路径：
+* `vFrame.Core` https://github.com/VyronLee/vFrame.Core.git#upm-core
+* `vFrame.Core.Unity` https://github.com/VyronLee/vFrame.Core.git#upm-core-unity
+
+如需指定版本，链接后面带上版本号即可。
+
+另外，该 Package 还依赖一些第三方的链接库，已经打包成 unitypackage 文件，可在 [release](https://github.com/VyronLee/vFrame.Core/releases) 中下载导入。 
 
 ## vFrame Core
 
@@ -199,9 +211,9 @@ public interface IEventDispatcher
       bool IsDone { get; }
       float Progress { get; }
   }
-
+  
   public interface ITask : IAsync { }
-
+  
   public abstract class Task<TArg> : BaseObject<TArg>, ITask
   {
       public abstract void RunTask();
@@ -227,7 +239,7 @@ public interface IEventDispatcher
     .OnComplete(HandleComplete)
     .OnError(HandleException)
     .Run(contexts);
-   ```
+  ```
 
 ### 对象池（ ObjectPool ）
 
