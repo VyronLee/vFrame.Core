@@ -32,7 +32,6 @@ namespace vFrame.Core.MultiThreading
             }
             catch (Exception e) {
                 ErrorHandler(e);
-                return;
             }
 
             lock (_lockObject) {
@@ -75,7 +74,6 @@ namespace vFrame.Core.MultiThreading
             }
             catch (Exception e) {
                 ErrorHandler(e);
-                return;
             }
 
             lock (_lockObject) {

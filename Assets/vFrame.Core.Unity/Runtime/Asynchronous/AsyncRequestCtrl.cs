@@ -79,11 +79,11 @@ namespace vFrame.Core.Unity.Asynchronous
                         break;
                     case AsyncState.Finished:
                         _requests.RemoveAt(i);
-                        OnRequestError?.Invoke(request);
+                        OnRequestFinish?.Invoke(request);
                         break;
                     case AsyncState.Error:
                         _requests.RemoveAt(i);
-                        OnRequestFinish?.Invoke(request);
+                        OnRequestError?.Invoke(request);
                         break;
                 }
             }

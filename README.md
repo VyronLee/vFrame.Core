@@ -46,6 +46,8 @@ Package 内包含的组件有：
 
 核心组件基本对象类型：`BaseObject`，限定统一的对象**创建**以及**销毁**流程。组件库内绝大部分组件均派生于该基础类型。
 
+`Create(...)` 只有在对应的 `OnCreate(...)` 成功执行完成后，实例才会进入已创建状态；如果初始化过程中抛出异常，则对象会保持未创建状态。
+
 `IBaseObject` 继承于接口 `ICreatable` 以及 `IDestroyable`，提供了多种泛型用于指定不同参数个数或类型的创建流程
 ```csharp
 public interface IBaseObject : ICreatable, IDestroyable { }
@@ -223,7 +225,7 @@ public interface IEventDispatcher
   使用者可继承`Task<TArg>`模板类型，实现`RunTask`接口
 
 
-* `ThreadedTask` 为在子线程中执行任务的模板类，使用时继承并实现`OnHandleTask`方法即可
+* `ThreadedTask` 为在子线程中执行任务的模板类，使用时继承并实现`OnHandleTask`方法即可。任务执行过程中如果发生异常，任务仍会进入终止状态，避免等待方无限阻塞。
   ```csharp
   public abstract class ThreadedTask<TArg> : Task<TArg>
   {
@@ -320,7 +322,7 @@ public class CoroutinePool
 }
 ```
 
-在协程池的构造函数中，提供一个参数`capacity`用于控制同时执行的协程上限，超过上限的任务会进入排队状态，直到有空闲的协程才会从队列中取出并执行
+在协程池的构造函数中，提供一个参数`capacity`用于控制同时执行的协程上限，超过上限的任务会进入排队状态，直到有空闲的协程才会从队列中取出并执行。对于仍处于排队状态的任务，可安全调用`StopCoroutine(handle)`取消等待中的任务。
 
 ### 游戏物件池（ SpawnPools ）
 
