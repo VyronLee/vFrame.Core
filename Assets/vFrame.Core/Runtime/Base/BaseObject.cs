@@ -63,13 +63,10 @@ namespace vFrame.Core.Base
             if (Created) {
                 return;
             }
-            try {
-                OnCreate();
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+
+            OnCreate();
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate();
@@ -78,13 +75,9 @@ namespace vFrame.Core.Base
     public abstract class BaseObject<T1> : Object, IBaseObject<T1>
     {
         public void Create(T1 arg1) {
-            try {
-                OnCreate(arg1);
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+            OnCreate(arg1);
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1);
@@ -93,13 +86,9 @@ namespace vFrame.Core.Base
     public abstract class BaseObject<T1, T2> : Object, IBaseObject<T1, T2>
     {
         public void Create(T1 arg1, T2 arg2) {
-            try {
-                OnCreate(arg1, arg2);
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+            OnCreate(arg1, arg2);
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2);
@@ -108,13 +97,9 @@ namespace vFrame.Core.Base
     public abstract class BaseObject<T1, T2, T3> : Object, IBaseObject<T1, T2, T3>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3) {
-            try {
-                OnCreate(arg1, arg2, arg3);
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+            OnCreate(arg1, arg2, arg3);
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3);
@@ -123,13 +108,9 @@ namespace vFrame.Core.Base
     public abstract class BaseObject<T1, T2, T3, T4> : Object, IBaseObject<T1, T2, T3, T4>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-            try {
-                OnCreate(arg1, arg2, arg3, arg4);
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+            OnCreate(arg1, arg2, arg3, arg4);
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
@@ -138,13 +119,9 @@ namespace vFrame.Core.Base
     public abstract class BaseObject<T1, T2, T3, T4, T5> : Object, IBaseObject<T1, T2, T3, T4, T5>
     {
         public void Create(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
-            try {
-                OnCreate(arg1, arg2, arg3, arg4, arg5);
-            }
-            finally {
-                Created = true;
-                Destroyed = false;
-            }
+            OnCreate(arg1, arg2, arg3, arg4, arg5);
+            Created = true;
+            Destroyed = false;
         }
 
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);

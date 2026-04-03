@@ -1,0 +1,19 @@
+{
+    "name": "vFrame.Core.Tests.PlayMode",
+    "references": [
+        "vFrame.Core",
+        "vFrame.Core.Unity"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

@@ -95,11 +95,11 @@ namespace vFrame.Core.Unity.Coroutine
         public void StopCoroutine(int handle) {
             Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine: " + handle);
             // Remove from waiting list
-            foreach (var context in TasksWaiting) {
-                if (context.Handle != handle) {
+            for (var i = 0; i < TasksWaiting.Count; ++i) {
+                if (TasksWaiting[i].Handle != handle) {
                     continue;
                 }
-                TasksWaiting.Remove(context);
+                TasksWaiting.RemoveAt(i);
                 Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
                 break;
             }
