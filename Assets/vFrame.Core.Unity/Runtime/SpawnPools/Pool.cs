@@ -16,6 +16,10 @@ using vFrame.Core.Unity.Extensions;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
+    /// <summary>
+    /// Retained Unity instance pool for one asset path. This class only manages instantiated
+    /// object reuse and does not own resource discovery, download, or patch semantics.
+    /// </summary>
     internal class Pool : BaseObject<string, SpawnPoolsContext, IGameObjectLoader>, IPool
     {
         private readonly Queue<GameObject> _objects = new Queue<GameObject>();
@@ -29,6 +33,9 @@ namespace vFrame.Core.Unity.SpawnPools
 
         internal int SpawnedTimes { get; private set; }
 
+        /// <summary>
+        /// Starts or resumes an instance use cycle for this asset path.
+        /// </summary>
         public GameObject Spawn(Transform parent) {
             if (!parent) {
                 parent = _context.Parent;
@@ -43,6 +50,10 @@ namespace vFrame.Core.Unity.SpawnPools
             return obj;
         }
 
+        /// <summary>
+        /// Starts an async instance acquire flow that still resolves through the same pooled
+        /// identity and spawn bookkeeping as the synchronous path.
+        /// </summary>
         public ILoadAsyncRequest SpawnAsync(Transform parent) {
             if (!parent) {
                 parent = _context.Parent;
@@ -71,6 +82,10 @@ namespace vFrame.Core.Unity.SpawnPools
             return request;
         }
 
+        /// <summary>
+        /// Ends the current use cycle for an instance and returns it to this pool when valid.
+        /// Invalid or mismatched objects are destroyed instead of being retained.
+        /// </summary>
         public void Recycle(GameObject obj) {
             if (null == obj) {
                 SpawnPoolsDebug.Error("Object to recycle cannot be null!");
@@ -157,6 +172,9 @@ namespace vFrame.Core.Unity.SpawnPools
             return Time.frameCount - _lastTime > _context.Settings.LifeTime;
         }
 
+        /// <summary>
+        /// Destroys all retained inactive instances for this asset path.
+        /// </summary>
         internal void Clear() {
             foreach (var obj in _objects) {
                 if (!obj) {

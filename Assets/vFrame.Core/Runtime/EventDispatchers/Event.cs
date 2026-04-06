@@ -9,11 +9,9 @@
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-using vFrame.Core.Base;
-
 namespace vFrame.Core.EventDispatchers
 {
-    public class Event : BaseObject, IEvent
+    public class Event : IEvent
     {
         public object Context;
         public int EventId;
@@ -40,16 +38,5 @@ namespace vFrame.Core.EventDispatchers
             return Target;
         }
 
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        protected override void OnCreate() { }
-
-        /// <summary>
-        ///     销毁函数
-        /// </summary>
-        protected override void OnDestroy() {
-            Target = null;
-        }
     }
 }

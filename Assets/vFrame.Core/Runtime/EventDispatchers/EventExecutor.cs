@@ -9,29 +9,15 @@
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-using vFrame.Core.Base;
-
 namespace vFrame.Core.EventDispatchers
 {
-    public class EventExecutor : BaseObject
+    public class EventExecutor
     {
         public int EventId;
         public uint Handle;
         public IEventListener Listener;
         public bool Activated { get; set; }
         public bool Stopped { get; set; }
-
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        protected override void OnCreate() { }
-
-        /// <summary>
-        ///     销毁函数
-        /// </summary>
-        protected override void OnDestroy() {
-            Listener = null;
-        }
 
         /// <summary>
         ///     激活

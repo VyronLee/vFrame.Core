@@ -10,11 +10,11 @@
 //============================================================
 
 using System;
-using vFrame.Core.Base;
+using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.EventDispatchers
 {
-    public class DelegateVoteListener : BaseObject, IVoteListener
+    public class DelegateVoteListener : IVoteListener, IPoolObjectResetable
     {
         /// <summary>
         ///     代理接口
@@ -28,15 +28,7 @@ namespace vFrame.Core.EventDispatchers
             return null != VoteAction && VoteAction(e);
         }
 
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        protected override void OnCreate() { }
-
-        /// <summary>
-        ///     销毁函数
-        /// </summary>
-        protected override void OnDestroy() {
+        public void Reset() {
             VoteAction = null;
         }
     }

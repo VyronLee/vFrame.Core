@@ -10,11 +10,11 @@
 //============================================================
 
 using System;
-using vFrame.Core.Base;
+using vFrame.Core.ObjectPools;
 
 namespace vFrame.Core.EventDispatchers
 {
-    public class DelegateEventListener : BaseObject, IEventListener
+    public class DelegateEventListener : IEventListener, IPoolObjectResetable
     {
         /// <summary>
         ///     代理接口
@@ -30,9 +30,7 @@ namespace vFrame.Core.EventDispatchers
             }
         }
 
-        protected override void OnCreate() { }
-
-        protected override void OnDestroy() {
+        public void Reset() {
             Action = null;
         }
     }

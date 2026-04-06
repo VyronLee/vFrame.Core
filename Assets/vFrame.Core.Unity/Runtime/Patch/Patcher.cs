@@ -5,6 +5,8 @@ using System.IO;
 using System.Net;
 using UnityEngine;
 using vFrame.Core.Exceptions;
+// Compatibility-only dependency: Patch currently still bridges through the legacy Downloader,
+// which remains an exit-line subsystem rather than a retained Unity runtime direction.
 using vFrame.Core.Unity.Download;
 using vFrame.Core.Unity.Utils;
 using Logger = vFrame.Core.Loggers.Logger;

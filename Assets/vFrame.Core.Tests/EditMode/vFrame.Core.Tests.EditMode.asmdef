@@ -1,8 +1,7 @@
 {
     "name": "vFrame.Core.Tests.EditMode",
     "references": [
-        "vFrame.Core",
-        "vFrame.Core.Unity"
+        "vFrame.Core"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

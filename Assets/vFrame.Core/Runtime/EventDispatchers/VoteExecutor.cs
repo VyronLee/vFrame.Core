@@ -9,29 +9,15 @@
 //   Copyright  Copyright (c) 2024, VyronLee
 //============================================================
 
-using vFrame.Core.Base;
-
 namespace vFrame.Core.EventDispatchers
 {
-    public class VoteExecutor : BaseObject
+    public class VoteExecutor
     {
         public uint Handle;
         public IVoteListener Listener;
         public int VoteId;
         public bool Activated { get; set; }
         public bool Stopped { get; set; }
-
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        protected override void OnCreate() { }
-
-        /// <summary>
-        ///     创建函数
-        /// </summary>
-        protected override void OnDestroy() {
-            Listener = null;
-        }
 
         /// <summary>
         ///     激活
