@@ -1,13 +1,3 @@
-﻿//------------------------------------------------------------
-//       @file  EventDispatcher.cs
-//      @brief  事件派发器
-//
-//     @author  VyronLee, lwz_jz@hotmail.com
-//
-//     Created  2016-07-31 22:34
-//   Copyright  Copyright (c) 2024, VyronLee
-//============================================================
-
 using System;
 using System.Collections.Generic;
 using vFrame.Core.Containers;
@@ -19,12 +9,33 @@ namespace vFrame.Core.EventDispatchers
 {
     public class EventDispatcher : Component, IEventDispatcher
     {
+<<<<<<< Updated upstream
         private static readonly LogTag EventLogTag = new LogTag("EventDispatcher");
 
         private Dictionary<int, List<EventExecutor>> _eventExecutorLists;
-        private uint _index = 1;
-        private Dictionary<int, List<VoteExecutor>> _voteExecutorLists;
+=======
+        public readonly struct DiagnosticsSnapshot
+        {
+            public DiagnosticsSnapshot(int interactionSubscriptionCount, int decisionSubscriptionCount) {
+                InteractionSubscriptionCount = interactionSubscriptionCount;
+                DecisionSubscriptionCount = decisionSubscriptionCount;
+            }
 
+            public int InteractionSubscriptionCount { get; }
+
+            public int DecisionSubscriptionCount { get; }
+        }
+
+        private static readonly LogTag EventLogTag = new LogTag("EventDispatcher");
+
+>>>>>>> Stashed changes
+        private uint _index = 1;
+        private Dictionary<Type, List<InteractionSubscription>> _subscriptions;
+        private Dictionary<Type, List<DecisionSubscription>> _decisionSubscriptions;
+        private InteractionSubscriptionPool _subscriptionPool;
+        private DecisionSubscriptionPool _decisionPool;
+
+<<<<<<< Updated upstream
         public uint AddEventListener(IEventListener listener, int eventId) {
             ThrowHelper.ThrowIfNull(listener, nameof(listener));
 
@@ -102,10 +113,56 @@ namespace vFrame.Core.EventDispatchers
             for (var i = 0; i < executorList.Count; i++) {
                 var executor = executorList[i];
                 if (!executor.Activated || executor.Stopped) {
+=======
+        public IInteractionSubscription Subscribe<TMessage>(Action<TMessage> action)
+            where TMessage : class, IInteractionMessage {
+            return SubscribeInternal(action, null);
+        }
+
+        public IInteractionSubscription Subscribe<TMessage>(Action<TMessage> action, BaseObject owner)
+            where TMessage : class, IInteractionMessage {
+            ThrowHelper.ThrowIfNull(owner, nameof(owner));
+
+            var subscription = SubscribeInternal(action, null);
+            return BindSubscriptionToOwner(subscription, owner);
+        }
+
+        public IInteractionSubscription Subscribe<TMessage>(Action<TMessage> action, ILifetime lifetime)
+            where TMessage : class, IInteractionMessage {
+            ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
+
+            var subscription = SubscribeInternal(action, lifetime);
+            return subscription;
+        }
+
+        public void Unsubscribe(ISubscription subscription) {
+            if (subscription == null || subscription.Destroyed) {
+                return;
+            }
+
+            subscription.Destroy();
+        }
+
+        public void Publish<TMessage>(TMessage message)
+            where TMessage : class, IInteractionMessage {
+            ThrowIfNotCreatedOrDestroyed();
+            ThrowHelper.ThrowIfNull(message, nameof(message));
+
+            if (!_subscriptions.TryGetValue(typeof(TMessage), out var subscriptions)) {
+                return;
+            }
+
+            CleanupDestroyedSubscriptions(subscriptions);
+
+            for (var i = 0; i < subscriptions.Count; i++) {
+                var subscription = subscriptions[i];
+                if (subscription.Destroyed) {
+>>>>>>> Stashed changes
                     continue;
                 }
 
                 try {
+<<<<<<< Updated upstream
                     executor.Execute(e);
                 }
                 catch (Exception exception) {
@@ -196,10 +253,59 @@ namespace vFrame.Core.EventDispatchers
             for (var i = 0; i < executorList.Count; i++) {
                 var executor = executorList[i];
                 if (!executor.Activated || executor.Stopped) {
+=======
+                    ((Action<TMessage>)subscription.Action)?.Invoke(message);
+                }
+                catch (Exception exception) {
+                    Logger.Error(EventLogTag,
+                        "Exception occurred, interaction type: {0}, exception: {1}",
+                        typeof(TMessage).FullName, exception);
+                }
+            }
+        }
+
+        public IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler)
+            where TDecision : class, IDecisionMessage {
+            return ListenInternal(handler, null);
+        }
+
+        public IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler, BaseObject owner)
+            where TDecision : class, IDecisionMessage {
+            ThrowHelper.ThrowIfNull(owner, nameof(owner));
+
+            var subscription = ListenInternal(handler, null);
+            return BindDecisionToOwner(subscription, owner);
+        }
+
+        public IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
+            where TDecision : class, IDecisionMessage {
+            ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
+
+            var subscription = ListenInternal(handler, lifetime);
+            return subscription;
+        }
+
+        public bool Decide<TDecision>(TDecision decision)
+            where TDecision : class, IDecisionMessage {
+            ThrowIfNotCreatedOrDestroyed();
+            ThrowHelper.ThrowIfNull(decision, nameof(decision));
+
+            if (!_decisionSubscriptions.TryGetValue(typeof(TDecision), out var subscriptions)) {
+                return true;
+            }
+
+            CleanupDestroyedDecisionSubscriptions(subscriptions);
+
+            var pass = true;
+            for (var i = 0; i < subscriptions.Count; i++) {
+                var subscription = subscriptions[i];
+                if (subscription.Destroyed) {
+>>>>>>> Stashed changes
                     continue;
                 }
 
                 try {
+<<<<<<< Updated upstream
                     if (executor.Execute(e)) {
                         continue;
                     }
@@ -222,13 +328,48 @@ namespace vFrame.Core.EventDispatchers
         }
 
         public int GetEventExecutorCount() {
+=======
+                    if (!((Func<TDecision, bool>)subscription.Handler).Invoke(decision)) {
+                        pass = false;
+                        break;
+                    }
+                }
+                catch (Exception exception) {
+                    Logger.Error(EventLogTag,
+                        "Exception occurred, decision type: {0}, exception: {1}",
+                        typeof(TDecision).FullName, exception);
+                }
+            }
+
+            return pass;
+        }
+
+        public void RemoveAllSubscriptions() {
+            ThrowIfNotCreatedOrDestroyed();
+            ClearSubscriptions();
+            ClearDecisionSubscriptions();
+        }
+
+        public int GetInteractionSubscriptionCount() {
+            ThrowIfNotCreatedOrDestroyed();
             var count = 0;
-            foreach (var kv in _eventExecutorLists) {
+            foreach (var item in _subscriptions) {
+                count += item.Value.Count;
+            }
+            return count;
+        }
+
+        public int GetDecisionSubscriptionCount() {
+            ThrowIfNotCreatedOrDestroyed();
+>>>>>>> Stashed changes
+            var count = 0;
+            foreach (var kv in _decisionSubscriptions) {
                 count += kv.Value.Count;
             }
             return count;
         }
 
+<<<<<<< Updated upstream
         public int GetVoteExecutorCount() {
             var count = 0;
             foreach (var kv in _voteExecutorLists) {
@@ -246,5 +387,164 @@ namespace vFrame.Core.EventDispatchers
             _eventExecutorLists = null;
             _voteExecutorLists = null;
         }
+=======
+        public int GetTotalSubscriptionCount() {
+            ThrowIfNotCreatedOrDestroyed();
+            return GetInteractionSubscriptionCount() + GetDecisionSubscriptionCount();
+        }
+
+        public DiagnosticsSnapshot GetDiagnostics() {
+            ThrowIfNotCreatedOrDestroyed();
+            return new DiagnosticsSnapshot(
+                GetInteractionSubscriptionCount(),
+                GetDecisionSubscriptionCount());
+        }
+
+        protected override void OnCreate() {
+            _subscriptions = new Dictionary<Type, List<InteractionSubscription>>();
+            _decisionSubscriptions = new Dictionary<Type, List<DecisionSubscription>>();
+
+            _subscriptionPool = new InteractionSubscriptionPool();
+            _subscriptionPool.Create();
+
+            _decisionPool = new DecisionSubscriptionPool();
+            _decisionPool.Create();
+        }
+
+        protected override void OnDestroy() {
+            ClearSubscriptions();
+            ClearDecisionSubscriptions();
+
+            _subscriptionPool?.Destroy();
+            _decisionPool?.Destroy();
+
+            _subscriptions = null;
+            _decisionSubscriptions = null;
+            _subscriptionPool = null;
+            _decisionPool = null;
+        }
+
+        private InteractionSubscription SubscribeInternal<TMessage>(Action<TMessage> action, ILifetime lifetime)
+            where TMessage : class, IInteractionMessage {
+            ThrowHelper.ThrowIfNull(action, nameof(action));
+
+            var subscription = _subscriptionPool.Get();
+            subscription.Handle = _index++;
+            subscription.MessageType = typeof(TMessage);
+            subscription.Action = action;
+
+            if (!_subscriptions.TryGetValue(typeof(TMessage), out var subscriptions)) {
+                subscriptions = _subscriptions[typeof(TMessage)] = new List<InteractionSubscription>();
+            }
+
+            subscriptions.Add(subscription);
+            lifetime?.Add(subscription);
+            return subscription;
+        }
+
+        private DecisionSubscription ListenInternal<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
+            where TDecision : class, IDecisionMessage {
+            ThrowHelper.ThrowIfNull(handler, nameof(handler));
+
+            var subscription = _decisionPool.Get();
+            subscription.Handle = _index++;
+            subscription.DecisionType = typeof(TDecision);
+            subscription.Handler = handler;
+
+            if (!_decisionSubscriptions.TryGetValue(typeof(TDecision), out var subscriptions)) {
+                subscriptions = _decisionSubscriptions[typeof(TDecision)] = new List<DecisionSubscription>();
+            }
+
+            subscriptions.Add(subscription);
+            lifetime?.Add(subscription);
+            return subscription;
+        }
+
+        private IInteractionSubscription BindSubscriptionToOwner(IInteractionSubscription subscription, BaseObject owner) {
+            owner.OwnLifetime(subscription);
+            return subscription;
+        }
+
+        private IDecisionSubscription BindDecisionToOwner(IDecisionSubscription subscription, BaseObject owner) {
+            owner.OwnLifetime(subscription);
+            return subscription;
+        }
+
+        private void CleanupDestroyedSubscriptions(List<InteractionSubscription> subscriptions) {
+            for (var i = subscriptions.Count - 1; i >= 0; i--) {
+                if (subscriptions[i].Destroyed) {
+                    _subscriptionPool.Return(subscriptions[i]);
+                    subscriptions.RemoveAt(i);
+                }
+            }
+        }
+
+        private void CleanupDestroyedDecisionSubscriptions(List<DecisionSubscription> subscriptions) {
+            for (var i = subscriptions.Count - 1; i >= 0; i--) {
+                if (subscriptions[i].Destroyed) {
+                    _decisionPool.Return(subscriptions[i]);
+                    subscriptions.RemoveAt(i);
+                }
+            }
+        }
+
+        private void ClearSubscriptions() {
+            if (_subscriptions == null) {
+                return;
+            }
+
+            foreach (var pair in _subscriptions) {
+                var subscriptions = pair.Value;
+                if (subscriptions == null) {
+                    continue;
+                }
+
+                for (var i = subscriptions.Count - 1; i >= 0; i--) {
+                    var subscription = subscriptions[i];
+                    if (subscription == null) {
+                        continue;
+                    }
+
+                    if (!subscription.Destroyed) {
+                        subscription.Destroy();
+                    }
+                    _subscriptionPool.Return(subscription);
+                }
+
+                subscriptions.Clear();
+            }
+
+            _subscriptions.Clear();
+        }
+
+        private void ClearDecisionSubscriptions() {
+            if (_decisionSubscriptions == null) {
+                return;
+            }
+
+            foreach (var pair in _decisionSubscriptions) {
+                var subscriptions = pair.Value;
+                if (subscriptions == null) {
+                    continue;
+                }
+
+                for (var i = subscriptions.Count - 1; i >= 0; i--) {
+                    var subscription = subscriptions[i];
+                    if (subscription == null) {
+                        continue;
+                    }
+
+                    if (!subscription.Destroyed) {
+                        subscription.Destroy();
+                    }
+                    _decisionPool.Return(subscription);
+                }
+
+                subscriptions.Clear();
+            }
+
+            _decisionSubscriptions.Clear();
+        }
+>>>>>>> Stashed changes
     }
 }

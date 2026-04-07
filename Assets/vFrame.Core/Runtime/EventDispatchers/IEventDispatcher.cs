@@ -1,17 +1,9 @@
-//------------------------------------------------------------
-//        File:  IEventDispatcher.cs
-//       Brief:  事件派发器
-//
-//      Author:  VyronLee, lwz_jz@hotmail.com
-//
-//     Created:  2018-12-14 21:58
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
-
 using System;
+using vFrame.Core.Base;
 
 namespace vFrame.Core.EventDispatchers
 {
+<<<<<<< Updated upstream
     public interface IEventDispatcher
     {
         /// <summary>
@@ -97,5 +89,26 @@ namespace vFrame.Core.EventDispatchers
         /// </summary>
         /// <returns>个数</returns>
         int GetVoteExecutorCount();
+=======
+    public interface IEventDispatcher : IInteractionDispatcher
+    {
+        IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler)
+            where TDecision : class, IDecisionMessage;
+
+        IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler, BaseObject owner)
+            where TDecision : class, IDecisionMessage;
+
+        IDecisionSubscription Listen<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
+            where TDecision : class, IDecisionMessage;
+
+        bool Decide<TDecision>(TDecision decision)
+            where TDecision : class, IDecisionMessage;
+
+        void RemoveAllSubscriptions();
+
+        int GetDecisionSubscriptionCount();
+
+        int GetTotalSubscriptionCount();
+>>>>>>> Stashed changes
     }
 }
