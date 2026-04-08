@@ -34,6 +34,106 @@ If you need to specify a version, just add the version number after the link.
 
 Moreover, this Package relies on certain external libraries that have been compiled into a unitypackage file. You can download and import this file from the [release](https://github.com/VyronLee/vFrame.Core/releases) page on GitHub.
 
+## First-Wave Validation Baseline
+
+- The effective project version is taken from `ProjectSettings/ProjectVersion.txt`, which is currently `2022.3.62f3`.
+- Core-layer automated tests and Unity-side test entry paths are intentionally split: `Assets/vFrame.Core.Tests/EditMode/vFrame.Core.Tests.EditMode.asmdef` now references only `vFrame.Core`, while Unity-dependent coverage lives in a narrower Unity-scoped test assembly.
+- The initial performance baseline entry points live under `Assets/vFrame.Core/Editor/Benchmarks/` and cover interaction dispatch, generic object-pool, and `SpawnPools` hot paths.
+- The minimum CI guardrail lives in `.github/workflows/validation-baseline.yml` and protects the first-wave EditMode and PlayMode validation paths.
+- `Debug/Development` mode may spend more on assertions, misuse detection, and diagnostics to improve issue discovery.
+- `Release` mode should keep default runtime behavior lightweight and avoid diagnostics-heavy overhead on hot paths unless explicitly enabled by policy.
+
+### Baseline Entry Points
+
+- EditMode: `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform EditMode -testFilter "vFrame.Core.Tests.EditMode" -logFile - -testResults "TestResults/editmode-results.xml"`
+- PlayMode: `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform PlayMode -testFilter "vFrame.Core.Tests.PlayMode" -logFile - -testResults "TestResults/playmode-results.xml"`
+- Benchmarks: Unity Editor menu `Tools/vFrame/Benchmarks/Run Core Benchmarks`, with source under `Assets/vFrame.Core/Editor/Benchmarks/`.
+
+### Diagnostics Symbols
+
+- `DEBUG_SPAWNPOOLS`: enables `SpawnPools` diagnostics logging.
+- `DEBUG_COROUTINE_POOL`: enables `CoroutinePool` diagnostics logging.
+- `PERF_PROFILE`: enables performance profiling helper paths.
+
+These symbols should primarily be enabled in `Debug/Development` flows; `Release` keeps them off by default to avoid extra hot-path overhead.
+
+## First-Wave Core Contracts
+
+- Lifecycle intent now uses three explicit terms: `owned` means the object is responsible for teardown, `borrowed` means the dependency is used without taking over its lifecycle, and `lifetime-bound` means the resource ends with a specific `ILifetime` boundary.
+- In `BaseObject`, `Own(...)` registers `owned` cleanup, `OwnLifetime(...)` expresses `lifetime-bound` resources, and dependencies not registered to a lifecycle boundary should be treated as `borrowed`.
+- In `EventDispatcher`, bare subscriptions are the explicit `borrowed` / caller-managed mode, owner subscriptions are `lifetime-bound` to a `BaseObject`, and `ILifetime` subscriptions are explicitly `lifetime-bound` to the supplied lifetime.
+- Interaction paths are now intentionally split: typed messages are the default path for new work, `int eventId` remains a retained compatibility migration path, and `Vote` / `Decision` remain explicit rule and decision semantics rather than ordinary event or typed-message dispatch.
+- `BaseObject` now acts as a terminal lifecycle primitive: once destroyed, an instance cannot be `Create(...)`-ed again, and lifecycle-dependent access reports the destroyed state first.
+- Lightweight ownership and grouped cleanup are exposed through `ILifetime` / `Lifetime`, which provide parent-child and shared cleanup boundaries without introducing a full scope framework.
+- Generic object pools now support capacity limits, overflow destruction policy, statistics queries, and duplicate-return detection; terminal lifecycle objects such as `BaseObject` instances are ended on return and are not reused as the same live instance.
+- The core interaction system now has a typed-message primary path through `Subscribe<TMessage>(...)` / `Publish<TMessage>(...)`; the old `int eventId` path remains as a compatibility layer.
+- Owner-bound typed subscriptions are intentionally narrowed to `BaseObject` owners; unmanaged cases should use `ILifetime`, while bare subscriptions remain explicitly caller-managed.
+- Vote semantics are retained and clarified through `Decision` aliases to emphasize their rule/approval-flow role rather than treating them as ordinary dispatch.
+
+## Deferred Systems
+
+- `SpawnPools` modernization remains deferred until the lifecycle, pooling, and interaction foundations stabilize.
+- Logging modernization, unified diagnostics tooling, and broad historical module cleanup are not part of the first implementation wave.
+- `Container / Component`, `Localization`, `MultiThreading / Task`, `Patch`, and `Download` are only documented for later migration or exit-path work in this wave.
+
+## Retirement Map For Historical Modules
+
+- `Container / Component`: `retiring`. It is no longer a strategic direction for new semantics; any remaining usage is compatibility-oriented, while new lifecycle and ownership work is centered on `BaseObject` / `Lifetime`.
+- `Profiles`: `retiring`. It is no longer a retained core investment area; if older compression or configuration paths still reference it, treat that as a compatibility boundary rather than future direction.
+- `Localization`: `retired for new investment`. This repository no longer treats localization as a long-term core capability, and new work should not build on it.
+- `MultiThreading / Task`: `retiring`. Historical compatibility remains possible, but it is no longer the modernization path; retained runtime work should prefer the clarified lifecycle, typed interaction, and pooling directions instead of expanding the custom task line.
+- `Patch`: `compatibility-only`. It remains in `vFrame.Core.Unity` only to support historical update pipelines and is no longer a retained Unity runtime investment area.
+- `Download`: `compatibility-only`. It remains only as a temporary dependency for historical flows such as `Patch`, not as a strategic capability for new work.
+
+### Exit Direction
+
+- Lifecycle and ownership: move toward `BaseObject` / `Lifetime` and organize relationships with `owned`, `borrowed`, and `lifetime-bound` intent.
+- Interaction: migrate new work toward the typed-message primary path through `Subscribe<TMessage>(...)` / `Publish<TMessage>(...)`; keep `int eventId` only as a compatibility layer.
+- Pooling: move toward the clarified generic `ObjectPool` semantics and Unity-side `SpawnPools`, where `SpawnPools` is strictly for instance reuse rather than resource ownership.
+- Logging and diagnostics: move toward the Core/Core.Unity logging split and lightweight diagnostics hooks instead of expanding observability inside retiring modules.
+
+### Remaining Compatibility Boundaries
+
+- `EventDispatcher -> Component`: this historical compatibility boundary has been removed; `EventDispatcher` now runs directly on `BaseObject` / `Lifetime`, so retained interaction hosting no longer depends on `Component` inheritance.
+- `BlockBasedCompression -> Profiles`: the block-based compression path still carries a historical `Profiles` dependency for older metadata/configuration behavior; it is now explicitly marked as compatibility-only.
+- `AsynchronousBlockBasedCompression -> MultiThreading / Task`: async block-based compression still reuses the historical task runner; if this area evolves further, it should move toward retained runtime boundaries instead of expanding the legacy task line.
+- `Patch -> Download`: `Patch` still works through `Download`; this chain is now explicitly treated as a historical compatibility boundary rather than a retained Unity runtime direction.
+
+## Migration Guide
+
+### Recommended Adoption Order
+
+- Step 1: normalize lifecycle semantics first. Move new objects onto `BaseObject` / `Lifetime` and make `owned`, `borrowed`, and `lifetime-bound` intent explicit.
+- Step 2: move new interaction work onto the typed-message primary path. Prefer `Subscribe<TMessage>(...)` / `Publish<TMessage>(...)`, and keep `int eventId` only for legacy compatibility.
+- Step 3: move reusable instances onto the clarified `ObjectPool` / `SpawnPools` semantics. `SpawnPools` is only for Unity instance reuse and should not absorb resource location, download, patching, or version ownership.
+- Step 4: move logging and runtime inspection onto the Core/Core.Unity logging split and lightweight diagnostics hooks instead of adding new observability behavior inside retiring modules.
+
+### Best Practices For New Work
+
+- Do not use `Container / Component`, `Profiles`, `Localization`, `MultiThreading / Task`, `Patch`, or `Download` as the starting point for new design work.
+- If a historical path must remain temporarily, mark it explicitly as a compatibility-only boundary in code or docs.
+- Establish lifecycle ownership boundaries first, then layer interaction, pooling, and Unity adaptation on top of them.
+- Prefer generic `ObjectPool` for core reuse and `SpawnPools` for Unity-side instance reuse.
+- Prefer typed messages for new interaction semantics, keep `Vote` / `Decision` for rule or approval flows, and avoid expanding the legacy `eventId` surface.
+- `EventDispatcher` now follows the same explicit `Create()` / `Destroy()` lifecycle as other retained runtime objects; bind subscriptions to a `BaseObject` owner or `ILifetime` when they should end with an external host.
+
+### Historical Module To Retained-System Direction
+
+- `Container / Component` -> `BaseObject` / `Lifetime` / explicit ownership boundaries
+- `Profiles` -> narrower explicit configuration and runtime semantics rather than continuing `Profiles` as a core extension point
+- `Localization` -> out-of-repo or upper-layer product capability; this repository is no longer investing in it
+- `MultiThreading / Task` -> retained runtime flows with clear lifecycle ownership instead of continued expansion of the historical task line
+- `Patch / Download` -> historical compatibility chain only; new work should favor retained Unity runtime boundaries and upstream ecosystem responsibilities instead of deepening this path
+
+## Current Validation Result
+
+- Unity `2022.3.62f3` is available on this machine.
+- Batch-mode EditMode and PlayMode test runs were attempted.
+- Final batch validation is currently blocked because another Unity instance already has this project open, and Unity refuses concurrent access to the same project.
+- After closing the other Unity instance, rerun:
+  - `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform EditMode -testFilter "vFrame.Core.Tests.EditMode" -logFile - -testResults "TestResults/editmode-results.xml"`
+  - `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform PlayMode -testFilter "vFrame.Core.Tests.PlayMode" -logFile - -testResults "TestResults/playmode-results.xml"`
+
 ## vFrame Core
 
 All components within this Package do not depend on Unity-related DLLs, meaning they can be used for non-Unity related projects, or integrated into applications as a Server Side Only project dependency library (e.g., shared CS for combat logic).
@@ -280,7 +380,7 @@ var inst = ObjectPool<YourClass>.Shared.Get();
 ObjectPool<YourClass>.Shared.Return(inst);
 ```
 
-If the object inherits `IPoolObjectResetable` or `IBaseObject`, the `Reset` or `Destroy` method will also be called automatically when the object is returned to the pool (for such cases, the object can be reset without implementing `IPoolObjectAllocator<T>`).
+If an object implements `IPoolObjectResetable`, `Reset` is called automatically when the object is returned to the pool. If an object is an `IBaseObject` / `BaseObject` retained lifecycle object, returning it to the pool will call `Destroy` to end that lifecycle instead of treating `BaseObject` as a lightweight reset helper.
 
 In addition, this repository also provides some commonly used built-in object pools, including:
 
