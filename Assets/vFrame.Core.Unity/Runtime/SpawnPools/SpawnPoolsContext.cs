@@ -12,6 +12,10 @@ using UnityEngine;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
+    /// <summary>
+    /// Lightweight Unity-side context shared by retained instance pools.
+    /// Keeps pool parenting and settings local to the SpawnPools runtime layer.
+    /// </summary>
     internal class SpawnPoolsContext
     {
         public Transform Parent { get; set; }

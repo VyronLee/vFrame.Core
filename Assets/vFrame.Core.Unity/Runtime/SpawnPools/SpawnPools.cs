@@ -19,6 +19,11 @@ using vFrame.Core.Unity.Extensions;
 
 namespace vFrame.Core.Unity.SpawnPools
 {
+    /// <summary>
+    /// Retained Unity-side instance reuse layer for prefab and <see cref="GameObject"/> pooling.
+    /// It aligns spawn, recycle, preload, and async/update flows with the core lifecycle and
+    /// pooling model without taking on resource-runtime responsibilities.
+    /// </summary>
     public class SpawnPools : BaseObject<IGameObjectLoaderFactory, SpawnPoolsSettings>, ISpawnPools
     {
         private const string PoolName = nameof(SpawnPools);
@@ -32,6 +37,9 @@ namespace vFrame.Core.Unity.SpawnPools
         private Dictionary<string, Pool> _pools;
         private SpawnPoolsSettings _settings;
 
+        /// <summary>
+        /// Ends the current usage cycle for a pooled object and returns it to its matching pool.
+        /// </summary>
         public void Recycle(GameObject obj) {
             ThrowIfDestroyed();
 
@@ -43,6 +51,10 @@ namespace vFrame.Core.Unity.SpawnPools
             GetPool(identity.AssetPath).Recycle(obj);
         }
 
+        /// <summary>
+        /// Starts pool warm-up for the requested asset paths. This prepares retained instance reuse
+        /// behavior only and does not shift SpawnPools into resource ownership.
+        /// </summary>
         public IPreloadAsyncRequest PreloadAsync(string[] assetPaths) {
             ThrowIfDestroyed();
 
@@ -52,6 +64,10 @@ namespace vFrame.Core.Unity.SpawnPools
             return request;
         }
 
+        /// <summary>
+        /// Advances async request completion and performs lightweight pool cleanup based on the
+        /// configured retained-capacity and lifetime policy.
+        /// </summary>
         public void Update() {
             ThrowIfDestroyed();
 
@@ -64,7 +80,7 @@ namespace vFrame.Core.Unity.SpawnPools
 
             var pools = ListPool<string>.Shared.Get();
 
-            // Clear timeout pools
+            // Expire inactive pools that have exceeded the retained lifetime window.
             foreach (var kv in _pools) {
                 var pool = kv.Value;
                 if (!pool.IsTimeout()) {
@@ -76,7 +92,7 @@ namespace vFrame.Core.Unity.SpawnPools
             }
             pools.Clear();
 
-            // Clear pools by frequency
+            // Trim least-used pools when retained pool count exceeds configured capacity.
             if (_pools.Count < _settings.Capacity) {
                 ListPool<string>.Shared.Return(pools);
                 return;
@@ -94,11 +110,18 @@ namespace vFrame.Core.Unity.SpawnPools
             ListPool<string>.Shared.Return(pools);
         }
 
+        /// <summary>
+        /// Gets a pooled or newly loaded instance for immediate use.
+        /// </summary>
         public GameObject Spawn(string assetPath, Transform parent = null) {
             ThrowIfDestroyed();
             return GetPool(assetPath).Spawn(parent);
         }
 
+        /// <summary>
+        /// Starts an async instance acquire flow. Completion is driven by <see cref="Update"/>
+        /// and still resolves through the retained pooling model.
+        /// </summary>
         public ILoadAsyncRequest SpawnAsync(string assetPath, Transform parent = null) {
             ThrowIfDestroyed();
 
@@ -133,6 +156,7 @@ namespace vFrame.Core.Unity.SpawnPools
             _asyncRequestCtrl = new AsyncRequestCtrl();
             _asyncRequestCtrl.Create();
             _settings = settings;
+            SpawnPoolsDebug.Configure(_settings);
             _parent = new GameObject(PoolName).DontDestroyEx();
             _parent.transform.position = _settings.RootPosition;
 
@@ -159,8 +183,12 @@ namespace vFrame.Core.Unity.SpawnPools
             _context = null;
 
             SpawnPoolsDebug.Log("Spawn pools destroyed.");
+            SpawnPoolsDebug.Reset();
         }
 
+        /// <summary>
+        /// Destroys all tracked pools and retained inactive instances owned by this runtime.
+        /// </summary>
         public void Clear() {
             ThrowIfDestroyed();
             foreach (var kv in _pools) {

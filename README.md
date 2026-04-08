@@ -36,6 +36,106 @@
 
 另外，该 Package 还依赖一些第三方的链接库，已经打包成 unitypackage 文件，可在 [release](https://github.com/VyronLee/vFrame.Core/releases) 中下载导入。 
 
+## 首批验证基线
+
+- 当前项目版本以 `ProjectSettings/ProjectVersion.txt` 为准，现行为 `2022.3.62f3`。
+- 核心层自动化测试与 Unity 侧测试入口分离：`Assets/vFrame.Core.Tests/EditMode/vFrame.Core.Tests.EditMode.asmdef` 仅引用 `vFrame.Core`，Unity 依赖测试通过局部 Unity 测试程序集承载。
+- 首批性能基线入口放在 `Assets/vFrame.Core/Editor/Benchmarks/`，覆盖交互派发、通用对象池以及 `SpawnPools` 热点路径。
+- CI 最低基线位于 `.github/workflows/validation-baseline.yml`，用于守护 EditMode 与 PlayMode 的最小验证路径。
+- `Debug/Development` 模式允许更强的断言、误用检测与诊断信息，以优先暴露问题。
+- `Release` 模式默认应保持轻量运行路径，避免在热点路径上启用高成本诊断，除非显式按策略开启。
+
+### 基线入口
+
+- EditMode：`& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform EditMode -testFilter "vFrame.Core.Tests.EditMode" -logFile - -testResults "TestResults/editmode-results.xml"`
+- PlayMode：`& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform PlayMode -testFilter "vFrame.Core.Tests.PlayMode" -logFile - -testResults "TestResults/playmode-results.xml"`
+- 基准入口：Unity Editor 菜单 `Tools/vFrame/Benchmarks/Run Core Benchmarks`，代码位于 `Assets/vFrame.Core/Editor/Benchmarks/`。
+
+### 诊断符号
+
+- `DEBUG_SPAWNPOOLS`：启用 `SpawnPools` 相关诊断日志。
+- `DEBUG_COROUTINE_POOL`：启用 `CoroutinePool` 相关诊断日志。
+- `PERF_PROFILE`：启用性能采样辅助路径。
+
+这些符号应优先用于 `Debug/Development` 流程；`Release` 默认保持关闭，以控制热点路径开销。
+
+## 首批核心契约
+
+- 生命周期语义现统一使用三种意图词汇：`owned` 表示对象负责销毁和清理；`borrowed` 表示仅借用外部依赖或上下文，不接管其生命周期；`lifetime-bound` 表示资源跟随某个 `ILifetime` 边界结束。
+- 对 `BaseObject` 而言，`Own(...)` 用于注册 `owned` 清理项；`OwnLifetime(...)` 用于表达 `lifetime-bound` 资源；未注册到生命周期边界的外部依赖应视为 `borrowed`。
+- 对 `EventDispatcher` 而言，裸订阅是显式的 `borrowed`/调用方自管模式；owner 订阅是跟随 `BaseObject` 销毁的 `lifetime-bound` 模式；传入 `ILifetime` 的订阅是显式的 `lifetime-bound` 模式。
+- 交互路径现明确分层：typed message 是新功能的默认路径；`int eventId` 是保留的 compatibility 迁移路径；`Vote` / `Decision` 是显式保留的规则与裁决语义，不应被当作普通事件或 typed message 替代。
+- `BaseObject` 现已明确为终止型生命周期：对象销毁后不可再次 `Create(...)`，依赖生命周期的访问会优先暴露已销毁状态。
+- 轻量生命周期分组通过 `ILifetime` / `Lifetime` 提供，用于表达父子所有权与共享清理边界，而不是引入完整 scope 容器框架。
+- 通用对象池现支持容量上限、溢出销毁策略、统计查询与重复回收检测；对 `BaseObject` 这类终止型对象，回池会结束生命周期并阻止原实例再次复用。
+- 核心交互系统新增 typed message 主路径：`Subscribe<TMessage>(...)` / `Publish<TMessage>(...)` 用于新交互语义；`int eventId` 路径保留为兼容层。
+- owner 绑定订阅当前明确收敛为 `BaseObject` owner；非 owner 托管场景应使用 `ILifetime`，裸订阅仍允许并由调用方自行管理。
+- `Vote` 语义被保留，并通过 `Decision` 别名强调其“规则决策流”定位，而不是普通消息派发。
+
+## 延后事项
+
+- `SpawnPools` 现代化仍延后，等待核心生命周期、对象池与交互契约稳定后再继续。
+- 日志现代化、统一诊断工具、历史模块清理不在首批实施波次中。
+- `Container / Component`、`Localization`、`MultiThreading / Task`、`Patch`、`Download` 的彻底迁移或退出，仅记录边界与后续说明，不在本轮集中改造。
+
+## 历史模块退役地图
+
+- `Container / Component`：`retiring`。不再作为新语义设计的投资方向；保留仅用于兼容历史结构，新的生命周期与所有权语义以 `BaseObject` / `Lifetime` 为准。
+- `Profiles`：`retiring`。不再作为 retained 核心能力继续演进；如仍有历史压缩/配置路径引用，应视为兼容边界而非未来方向。
+- `Localization`：`retired for new investment`。本仓库不再把本地化作为长期核心能力推进；新工作不应建立在该模块之上。
+- `MultiThreading / Task`：`retiring`。保留历史兼容用途，但不再作为现代化主路径；新的 retained 核心路径优先使用已明确的生命周期、typed interaction 与对象池语义，而不是继续扩散自定义任务系统。
+- `Patch`：`compatibility-only`。继续留在 `vFrame.Core.Unity` 仅用于历史资源更新链路兼容，不再作为 retained Unity 运行时核心方向。
+- `Download`：`compatibility-only`。仅作为 `Patch` 等历史链路的暂存依赖保留，不再作为新的战略能力建设方向。
+
+### 退出方向
+
+- 生命周期与所有权：迁移到 `BaseObject` / `Lifetime`，使用 `owned`、`borrowed`、`lifetime-bound` 语义组织对象关系。
+- 交互：新功能优先迁移到 typed message 主路径，使用 `Subscribe<TMessage>(...)` / `Publish<TMessage>(...)`；`int eventId` 仅保留为兼容层。
+- 池化：统一迁移到已明确语义的通用 `ObjectPool` 与 Unity 侧 `SpawnPools`；其中 `SpawnPools` 仅负责实例复用，不承担资源管理。
+- 日志与诊断：迁移到 Core/Core.Unity 分层日志与轻量 diagnostics hooks，而不是继续在历史模块中扩散新的观测实现。
+
+### 当前仍保留的兼容边界
+
+- `EventDispatcher -> Component`：该历史兼容边界已移除；`EventDispatcher` 现直接基于 `BaseObject` / `Lifetime` 运行，交互宿主不再依赖 `Component` 继承。
+- `BlockBasedCompression -> Profiles`：当前仍保留对 `Profiles` 的历史配置/元数据依赖；该依赖已标注为 compatibility-only。
+- `AsynchronousBlockBasedCompression -> MultiThreading / Task`：当前异步分块压缩仍复用历史任务运行器；后续如继续收敛，应优先朝 retained 运行时边界演进，而不是继续扩展该任务线。
+- `Patch -> Download`：`Patch` 仍通过 `Download` 工作，这条链路被明确保留为历史兼容边界，而不是 retained Unity runtime 的长期方向。
+
+## 迁移指南
+
+### 推荐迁移顺序
+
+- 第一步：先统一生命周期语义。新对象统一收敛到 `BaseObject` / `Lifetime`，并明确 `owned`、`borrowed`、`lifetime-bound`。
+- 第二步：把新交互迁移到 typed message 主路径。优先使用 `Subscribe<TMessage>(...)` / `Publish<TMessage>(...)`，仅在历史兼容场景继续保留 `int eventId`。
+- 第三步：把可复用实例迁移到已明确语义的 `ObjectPool` / `SpawnPools`。其中 `SpawnPools` 只负责 Unity 实例复用，不承担资源定位、下载、补丁或版本管理。
+- 第四步：把日志和运行时诊断迁移到 Core/Core.Unity 分层日志与轻量 diagnostics hooks，不要在退役模块中继续增加新的监控实现。
+
+### 新工作最佳实践
+
+- 不要再把 `Container / Component`、`Profiles`、`Localization`、`MultiThreading / Task`、`Patch`、`Download` 作为新功能设计起点。
+- 若历史链路必须暂时保留这些模块，应在代码或文档中显式标注为 compatibility-only boundary。
+- 对运行时对象关系优先表达生命周期边界，再决定交互、池化和 Unity 适配层的组织方式。
+- 对 Unity 侧复用优先使用 `SpawnPools`；对 Core 层复用优先使用通用 `ObjectPool`。
+- 对交互优先使用 typed messages；对规则裁决保留 `Vote` / `Decision` 语义；不要继续扩大 legacy `eventId` 设计面。
+- `EventDispatcher` 现需要像其他 retained runtime 对象一样显式 `Create()` / `Destroy()`；若需要把订阅跟随外部宿主结束，应绑定到 `BaseObject` owner 或 `ILifetime`，而不是依赖 `Component` 继承关系。
+
+### 历史模块到 retained 系统的迁移方向
+
+- `Container / Component` -> `BaseObject` / `Lifetime` / 明确所有权边界
+- `Profiles` -> 更局部的显式配置与运行时语义，不再把 `Profiles` 作为核心扩展方向
+- `Localization` -> 仓库外或上层产品能力；本仓库不再继续投资
+- `MultiThreading / Task` -> 生命周期清晰的 retained runtime 流程；避免继续把自定义任务系统扩展成核心依赖
+- `Patch / Download` -> 历史兼容链路；新工作应优先投资 retained Unity runtime 与上游生态模块边界，而不是继续加深该链路
+
+## 当前验证结果
+
+- 已确认本机存在 Unity `2022.3.62f3` 编辑器。
+- 已尝试通过 Unity batch mode 运行 EditMode 与 PlayMode 测试。
+- 当前批处理验证被阻塞：项目已被另一 Unity 实例占用，Unity 拒绝同时打开同一工程。
+- 完成最终验收前，可在关闭占用该工程的 Unity 实例后重新运行：
+  - `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform EditMode -testFilter "vFrame.Core.Tests.EditMode" -logFile - -testResults "TestResults/editmode-results.xml"`
+  - `& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath "D:\Workspace\vFrame\vFrame.Core" -runTests -testPlatform PlayMode -testFilter "vFrame.Core.Tests.PlayMode" -logFile - -testResults "TestResults/playmode-results.xml"`
+
 ## vFrame Core
 
 该 Package 内所有组件均不依赖 Unity 相关 DLL，也就是说可用于非 Unity 相关项目使用，或者是作为 Server Side Only 的项目依赖库集成到应用中（如：战斗逻辑CS共用）
@@ -275,7 +375,7 @@ var inst = ObjectPool<YourClass>.Shared.Get();
 ObjectPool<YourClass>.Shared.Return(inst);
 ```
 
-如果对象是继承了`IPoolObjectResetable`或者`IBaseObject`，放回对象池时也会自动调用`Reset`或者`Destroy`方法（对于这类情况，可在不实现`IPoolObjectAllocator<T>`的情况下也有对象重置的功能）
+如果对象实现了`IPoolObjectResetable`，放回对象池时会自动调用`Reset`；如果对象属于 `IBaseObject` / `BaseObject` 这类 retained lifecycle 对象，放回对象池时会触发 `Destroy` 以结束当前生命周期，而不是把 `BaseObject` 当作轻量重置基类使用。
 
 
 此外，该仓库中也提供了一些常用的内置对象池，包括有：

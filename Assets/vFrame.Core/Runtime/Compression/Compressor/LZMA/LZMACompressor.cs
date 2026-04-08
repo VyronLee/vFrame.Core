@@ -90,7 +90,7 @@ namespace vFrame.Core.Compression
             }
 
             var progress = ObjectPool<ActionCodeProgress>.Shared.Get();
-            progress.Create(onProgress);
+            progress.Initialize(onProgress);
 
             lzmaEncoder.Code(input, output, -1, -1, progress);
 
@@ -132,7 +132,7 @@ namespace vFrame.Core.Compression
             }
 
             var progress = ObjectPool<ActionCodeProgress>.Shared.Get();
-            progress.Create(onProgress);
+            progress.Initialize(onProgress);
 
             var compressedSize = input.Length - input.Position;
             decoder.Code(input, output, compressedSize, fileLength, progress);
@@ -143,21 +143,21 @@ namespace vFrame.Core.Compression
             ByteArrayCache.Enqueue(properties);
         }
 
-        private class ActionCodeProgress : BaseObject<Action<long, long>>, ICodeProgress
+        private class ActionCodeProgress : ICodeProgress, IPoolObjectResetable
         {
-            private Action<long, long> _handler;
-            private static Action<long, long> DefaultHandler => (inSize, outSize) => { };
+            private static readonly Action<long, long> DefaultHandler = (inSize, outSize) => { };
+            private Action<long, long> _handler = DefaultHandler;
 
-            public void SetProgress(long inSize, long outSize) {
-                _handler(inSize, outSize);
-            }
-
-            protected override void OnCreate(Action<long, long> handler) {
+            public void Initialize(Action<long, long> handler) {
                 _handler = handler ?? DefaultHandler;
             }
 
-            protected override void OnDestroy() {
-                _handler = null;
+            public void Reset() {
+                _handler = DefaultHandler;
+            }
+
+            public void SetProgress(long inSize, long outSize) {
+                _handler(inSize, outSize);
             }
         }
     }

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using vFrame.Core.Exceptions;
+// Compatibility-only dependency: the historical MultiThreading / Task runner remains here for
+// legacy async compression flow, but it is not the preferred direction for new retained systems.
 using vFrame.Core.MultiThreading;
 
 namespace vFrame.Core.Compression

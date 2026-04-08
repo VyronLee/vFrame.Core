@@ -1,0 +1,62 @@
+name: Validation-Baseline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  core-editmode-tests:
+    name: Core Compile And EditMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run core EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 2022.3.62f3
+          testMode: editmode
+          testFilter: vFrame.Core.Tests.EditMode
+          artifactsPath: test-results/editmode
+
+      - name: Upload EditMode results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editmode-test-results
+          path: test-results/editmode
+
+  unity-playmode-tests:
+    name: Unity PlayMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Unity PlayMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 2022.3.62f3
+          testMode: playmode
+          testFilter: vFrame.Core.Tests.PlayMode
+          artifactsPath: test-results/playmode
+
+      - name: Upload PlayMode results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playmode-test-results
+          path: test-results/playmode

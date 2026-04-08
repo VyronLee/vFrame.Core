@@ -17,6 +17,11 @@ namespace vFrame.Core.Loggers
 {
     public static class Logger
     {
+        public interface ILogSink
+        {
+            void OnLogReceived(LogContext context);
+        }
+
         public const int DefaultCapacity = 1000;
         public const string DefaultTagFormatter = "{0}";
 
@@ -24,6 +29,7 @@ namespace vFrame.Core.Loggers
             LogFormatType.Tag | LogFormatType.Time | LogFormatType.Class | LogFormatType.Function;
 
         private static readonly Queue<LogContext> _logQueue;
+        private static readonly List<ILogSink> _sinks = new List<ILogSink>();
         private static readonly object _queueLock;
         private static string _logFilePath;
         private static LogToFile _logFile;
@@ -43,6 +49,46 @@ namespace vFrame.Core.Loggers
         }
 
         public static event Action<LogContext> OnLogReceived;
+
+        /// <summary>
+        /// Registers a lightweight log sink. Core logging can fan out to multiple sinks while
+        /// remaining Unity-free.
+        /// </summary>
+        public static void AddSink(ILogSink sink) {
+            if (sink == null) {
+                throw new ArgumentNullException(nameof(sink));
+            }
+
+            lock (_queueLock) {
+                if (_sinks.Contains(sink)) {
+                    return;
+                }
+
+                _sinks.Add(sink);
+            }
+        }
+
+        /// <summary>
+        /// Removes a previously registered lightweight sink.
+        /// </summary>
+        public static void RemoveSink(ILogSink sink) {
+            if (sink == null) {
+                throw new ArgumentNullException(nameof(sink));
+            }
+
+            lock (_queueLock) {
+                _sinks.Remove(sink);
+            }
+        }
+
+        /// <summary>
+        /// Returns the current number of registered lightweight sinks.
+        /// </summary>
+        public static int GetSinkCount() {
+            lock (_queueLock) {
+                return _sinks.Count;
+            }
+        }
 
         private static void RecreateLogFile() {
             Close();
@@ -125,6 +171,7 @@ namespace vFrame.Core.Loggers
             _logFile?.AppendText(content);
 
             OnLogReceived?.Invoke(context);
+            EmitToSinks(context);
         }
 
         private static void Log(LogLevelDef level, LogTag tag, Exception exception) {
@@ -143,6 +190,23 @@ namespace vFrame.Core.Loggers
             _logFile?.AppendText(exception.ToString());
 
             OnLogReceived?.Invoke(context);
+            EmitToSinks(context);
+        }
+
+        private static void EmitToSinks(LogContext context) {
+            ILogSink[] sinks;
+
+            lock (_queueLock) {
+                if (_sinks.Count == 0) {
+                    return;
+                }
+
+                sinks = _sinks.ToArray();
+            }
+
+            foreach (var sink in sinks) {
+                sink.OnLogReceived(context);
+            }
         }
 
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
@@ -240,6 +304,12 @@ namespace vFrame.Core.Loggers
             }
 
             return logs;
+        }
+
+        public static int GetBufferedLogCount() {
+            lock (_queueLock) {
+                return _logQueue.Count;
+            }
         }
 
         public struct LogContext

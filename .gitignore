@@ -157,10 +157,16 @@ sysinfo.txt
 # Custom
 .idea
 Assets/Plugins.meta
-
 Assets/Plugins/Editor.meta
 
-TestResults/
-*.DotSettings
-openspec/
+# IDE / Editor
 .vscode/
+*.DotSettings
+
+# AI tools
+.opencode/
+.planning/
+openspec/
+
+# Test output
+TestResults/

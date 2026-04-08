@@ -19,6 +19,7 @@ namespace vFrame.Core.Unity.SpawnPools
         public int Capacity { get; set; } = 40;
         public int LifeTime { get; set; } = 30 * 60 * 5; // 5min by 30fps
         public int GCInterval { get; set; } = 600; // 600 frames, 20s by 30fps
+        public bool EnableDiagnostics { get; set; }
         public Vector3 RootPosition { get; set; } = new Vector3(-1000, -1000, -1000);
 
         public static SpawnPoolsSettings Default { get; } = new SpawnPoolsSettings();
