@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using vFrame.Core.Base;
 using vFrame.Core.Extensions;
+// Compatibility-only dependency: Profiles remains available for legacy metadata/config paths,
+// but it is no longer a retained modernization investment area.
 using vFrame.Core.Profiles;
 using vFrame.Core.Utils;
 using ByteArrayPool = System.Buffers.ArrayPool<byte>;

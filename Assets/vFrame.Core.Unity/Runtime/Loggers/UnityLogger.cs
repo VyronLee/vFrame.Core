@@ -8,6 +8,10 @@ namespace vFrame.Core.Unity.Loggers
 {
     public static class UnityLogger
     {
+        /// <summary>
+        /// Opens the Unity logging bridge over the core logging surface.
+        /// Unity remains one consumer of core log emission rather than the whole logging system.
+        /// </summary>
         private static bool _opened;
 
         public static void Open(LogLevelDef level,
@@ -28,6 +32,9 @@ namespace vFrame.Core.Unity.Loggers
             Debug.unityLogger.filterLogType = level.ToUnityLogLevel();
         }
 
+        /// <summary>
+        /// Closes the Unity logging bridge without affecting other registered core sinks.
+        /// </summary>
         public static void Close() {
             Logger.Close();
             Logger.OnLogReceived -= OnLogReceived;
