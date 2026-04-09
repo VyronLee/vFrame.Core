@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal class EnumerablesComparer<T> : AbstractComparer
     {
@@ -49,7 +48,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
             {
                 if (!type.GetTypeInfo().IsArray)
                 {
-                    yield return new Difference("", list1.Count.ToString(), list2.Count.ToString(), 
+                    yield return new Difference("", list1.Count.ToString(), list2.Count.ToString(),
                         DifferenceTypes.NumberOfElementsMismatch);
                 }
 

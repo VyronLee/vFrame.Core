@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Compares objects.
@@ -18,7 +17,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Comparer" /> class. 
+        /// Initializes a new instance of the <see cref="Comparer" /> class.
         /// </summary>
         /// <param name="settings">Comparison Settings.</param>
         /// <param name="parentComparer">Parent Comparer. Is used to copy DefaultValueComparer and Overrides. Null by default.</param>

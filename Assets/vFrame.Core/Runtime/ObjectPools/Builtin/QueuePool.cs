@@ -1,6 +1,6 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 //        File:  QueuePool.cs
-//       Brief:  Queue pool.
+//       Brief:  Object pool for Queue instances.
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -10,7 +10,7 @@
 
 using System.Collections.Generic;
 
-namespace vFrame.Core.ObjectPools.Builtin
+namespace vFrame.Core
 {
     public class QueuePool<T> : ObjectPool<Queue<T>, QueueAllocator<T>> { }
 }

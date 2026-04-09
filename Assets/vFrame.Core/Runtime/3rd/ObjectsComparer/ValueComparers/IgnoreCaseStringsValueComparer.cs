@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+namespace vFrame.Core
 {
     /// <summary>
     /// Allows to compare string ignoring case.

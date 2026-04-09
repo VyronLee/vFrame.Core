@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Utils
+namespace vFrame.Core
 {
     internal static class TypeExtensions
     {

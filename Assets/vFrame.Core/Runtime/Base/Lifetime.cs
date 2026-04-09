@@ -1,8 +1,17 @@
+// ------------------------------------------------------------
+//         File: Lifetime.cs
+//        Brief: Concrete lifetime for grouped cleanup of resources
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-18 16:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
 using System;
 using System.Collections.Generic;
-using vFrame.Core.Exceptions;
 
-namespace vFrame.Core.Base
+namespace vFrame.Core
 {
     /// <summary>
     /// Lightweight grouped-cleanup implementation used for child ownership and
@@ -13,6 +22,9 @@ namespace vFrame.Core.Base
         private List<IDestroyable> _destroyables;
         private List<Action> _actions;
 
+        /// <summary>
+        /// Gets whether the lifetime has been destroyed.
+        /// </summary>
         public bool Destroyed { get; private set; }
 
         /// <summary>
@@ -87,6 +99,9 @@ namespace vFrame.Core.Base
             }
         }
 
+        /// <summary>
+        /// Releases all resources by invoking <see cref="Destroy"/>.
+        /// </summary>
         public void Dispose() {
             Destroy();
         }

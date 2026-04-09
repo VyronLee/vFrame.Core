@@ -1,22 +1,24 @@
-﻿// ------------------------------------------------------------
-//         File: AsyncRequestCtrl.cs
-//        Brief: AsyncRequestCtrl.cs
+//------------------------------------------------------------
+//        File:  AsyncRequestCtrl.cs
+//       Brief:  Controller that drives async request lifecycle and frame updates.
 //
-//       Author: VyronLee, lwz_jz@hotmail.com
+//      Author:  VyronLee, lwz_jz@hotmail.com
 //
-//      Created: 2024-3-19 20:42
-//    Copyright: Copyright (c) 2024, VyronLee
-// ============================================================
+//     Created:  2024-3-19 20:42
+//   Copyright:  Copyright (c) 2024, VyronLee
+//============================================================
 
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using vFrame.Core.Base;
-using vFrame.Core.Exceptions;
-using vFrame.Core.Unity.Extensions;
+using vFrame.Core;
+using vFrame.Core.Unity;
 
-namespace vFrame.Core.Unity.Asynchronous
+namespace vFrame.Core.Unity
 {
+    /// <summary>
+    /// Manages the lifecycle and per-frame updates of registered async requests.
+    /// </summary>
     public class AsyncRequestCtrl : BaseObject, IAsyncRequestCtrl
     {
         private List<IAsyncRequest> _requests;
@@ -24,6 +26,9 @@ namespace vFrame.Core.Unity.Asynchronous
 
         private static AsyncRequestCtrl _shared;
 
+        /// <summary>
+        /// Gets the shared singleton instance, creating and self-driving it on first access.
+        /// </summary>
         public static AsyncRequestCtrl Shared {
             get {
                 if (_shared != null) {
@@ -50,6 +55,9 @@ namespace vFrame.Core.Unity.Asynchronous
             }
         }
 
+        /// <summary>
+        /// Attaches a Unity MonoBehaviour update driver so requests are ticked automatically.
+        /// </summary>
         public void SelfDrive() {
             if (null != _driver) {
                 return;
@@ -61,6 +69,9 @@ namespace vFrame.Core.Unity.Asynchronous
             _driver.Ctrl = this;
         }
 
+        /// <summary>
+        /// Advances all registered requests by one frame, handling state transitions.
+        /// </summary>
         public void Update() {
             ThrowIfNotCreatedOrDestroyed();
 
@@ -89,11 +100,17 @@ namespace vFrame.Core.Unity.Asynchronous
             }
         }
 
+        /// <summary>
+        /// Creates a new async request of the specified generic type.
+        /// </summary>
         public T CreateRequest<T>() where T : IAsyncRequest {
             ThrowIfNotCreatedOrDestroyed();
             return (T) CreateRequest(typeof(T));
         }
 
+        /// <summary>
+        /// Creates a new async request of the specified runtime type.
+        /// </summary>
         public IAsyncRequest CreateRequest(Type type) {
             ThrowIfNotCreatedOrDestroyed();
             if (!(Activator.CreateInstance(type) is AsyncRequest request)) {
@@ -104,19 +121,32 @@ namespace vFrame.Core.Unity.Asynchronous
             return request;
         }
 
+        /// <summary>
+        /// Registers an async request for lifecycle management.
+        /// </summary>
         public void AddRequest(IAsyncRequest request) {
             ThrowIfNotCreatedOrDestroyed();
             ThrowHelper.ThrowIfNull(request, nameof(request));
             _requests.Add(request);
         }
 
+        /// <summary>
+        /// Removes a previously registered async request.
+        /// </summary>
         public void RemoveRequest(IAsyncRequest request) {
             ThrowIfNotCreatedOrDestroyed();
             ThrowHelper.ThrowIfNull(request, nameof(request));
             _requests.Remove(request);
         }
 
+        /// <summary>
+        /// Raised when a request completes successfully.
+        /// </summary>
         public event Action<IAsyncRequest> OnRequestFinish;
+
+        /// <summary>
+        /// Raised when a request encounters an error.
+        /// </summary>
         public event Action<IAsyncRequest> OnRequestError;
 
         private class UpdateDriver : MonoBehaviour

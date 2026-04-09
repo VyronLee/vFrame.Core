@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Exceptions;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
-using vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     internal class ComparerOverridesCollection
     {

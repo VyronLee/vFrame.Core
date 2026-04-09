@@ -1,9 +1,26 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: DownloadAgentWebClient.cs
+//        Brief: Download agent implementation that uses
+//                System.Net.WebClient for asynchronous file
+//                downloads with progress tracking and timeout.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-01-01 00:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.ComponentModel;
 using System.Net;
 
-namespace vFrame.Core.Unity.Download
+namespace vFrame.Core.Unity
 {
+    /// <summary>
+    ///     <see cref="DownloadAgentBase" /> implementation backed by
+    ///     <see cref="WebClient" /> for asynchronous file downloads.
+    ///     Tracks download progress and enforces a configurable timeout.
+    /// </summary>
     public class DownloadAgentWebClient : DownloadAgentBase
     {
         private readonly object _lockObj = new object();
@@ -18,6 +35,7 @@ namespace vFrame.Core.Unity.Download
         private float _waitTime;
         private WebClient _webClient;
 
+        /// <inheritdoc />
         public override ulong DownloadedSize {
             get {
                 lock (_lockObj) {
@@ -26,6 +44,7 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <inheritdoc />
         public override ulong TotalSize {
             get {
                 lock (_lockObj) {
@@ -34,6 +53,7 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <inheritdoc />
         public override float Progress {
             get {
                 lock (_lockObj) {
@@ -42,6 +62,10 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <summary>
+        ///     Resets state, creates a <see cref="WebClient" />, and begins
+        ///     an asynchronous file download from the configured task URL.
+        /// </summary>
         protected override void OnStart() {
             _downloadedSize = 0;
             _totalSize = 0;
@@ -65,6 +89,9 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <summary>
+        ///     Cancels any in-progress download and disposes the <see cref="WebClient" />.
+        /// </summary>
         protected override void OnStop() {
             if (_webClient != null) {
                 _webClient.CancelAsync();
@@ -74,6 +101,11 @@ namespace vFrame.Core.Unity.Download
             _error = null;
         }
 
+        /// <summary>
+        ///     Checks for timeout, reports progress updates at the configured
+        ///     interval, and notifies completion or error once the download finishes.
+        /// </summary>
+        /// <param name="elapseSeconds">Seconds elapsed since the last frame.</param>
         protected override void OnUpdate(float elapseSeconds) {
             if (_webClient == null) {
                 return;
@@ -110,6 +142,12 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <summary>
+        ///     Handles the <see cref="WebClient.DownloadProgressChanged" /> event,
+        ///     updating byte counts and progress under the synchronization lock.
+        /// </summary>
+        /// <param name="sender">The event source.</param>
+        /// <param name="e">Progress information provided by the WebClient.</param>
         private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) {
             lock (_lockObj) {
                 _downloadedSize = (ulong)e.BytesReceived;
@@ -118,6 +156,12 @@ namespace vFrame.Core.Unity.Download
             }
         }
 
+        /// <summary>
+        ///     Handles the <see cref="WebClient.DownloadFileCompleted" /> event,
+        ///     capturing any error and signaling completion under the lock.
+        /// </summary>
+        /// <param name="sender">The event source.</param>
+        /// <param name="e">Completion information provided by the WebClient.</param>
         private void OnDownloadFileCompleted(object sender, AsyncCompletedEventArgs e) {
             lock (_lockObj) {
                 if (e.Error != null) {

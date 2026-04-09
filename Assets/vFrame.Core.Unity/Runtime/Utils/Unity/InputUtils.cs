@@ -1,26 +1,26 @@
-﻿//------------------------------------------------------------
-//        File:  InputUtility.cs
-//       Brief:  Input工具类
+// ------------------------------------------------------------
+//         File: InputUtils.cs
+//        Brief: Utility class for input-related queries.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2018-12-24 11:52
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2018-12-24 11:52:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace vFrame.Core.Unity.Utils
+namespace vFrame.Core.Unity
 {
     public static class InputUtils
     {
         /// <summary>
-        ///     是否点击在UI物件之上
+        ///     Determines whether the given screen position is over a UI object.
         /// </summary>
-        /// <param name="screenPosition">屏幕坐标</param>
-        /// <returns></returns>
+        /// <param name="screenPosition">Screen-space position to test.</param>
+        /// <returns><c>true</c> if a UI object is hit at the specified position; otherwise, <c>false</c>.</returns>
         public static bool IsPointOverUIObject(Vector2 screenPosition) {
             var eventData = new PointerEventData(EventSystem.current) {
                 position = new Vector2(screenPosition.x, screenPosition.y)

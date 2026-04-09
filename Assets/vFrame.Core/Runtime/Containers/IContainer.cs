@@ -1,73 +1,84 @@
-﻿//------------------------------------------------------------
-//       @file  IBindable.cs
-//      @brief  可绑定类型接口
+// ------------------------------------------------------------
+//         File: IContainer.cs
+//        Brief: Interface for a container that manages components
 //
-//     @author  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//   @internal
-//     Created  2016-09-21 19:19
-//   Copyright  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2016-09-21 19:19:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 
-namespace vFrame.Core.Containers
+namespace vFrame.Core
 {
     public interface IContainer
     {
         /// <summary>
-        ///     绑定组件
+        /// Adds a component of the specified type to this container.
         /// </summary>
+        /// <typeparam name="T">The component type to add.</typeparam>
+        /// <returns>The added component instance.</returns>
         T AddComponent<T>() where T : Component;
 
         /// <summary>
-        ///     绑定组件
+        /// Adds a component of the specified type to this container.
         /// </summary>
+        /// <param name="type">The component type to add.</param>
+        /// <returns>The added component instance.</returns>
         IComponent AddComponent(Type type);
 
         /// <summary>
-        ///     解绑组件
+        /// Removes the component of the specified type from this container.
         /// </summary>
+        /// <typeparam name="T">The component type to remove.</typeparam>
         void RemoveComponent<T>() where T : Component;
 
         /// <summary>
-        ///     解绑组件
+        /// Removes the component of the specified type from this container.
         /// </summary>
+        /// <param name="type">The component type to remove.</param>
         void RemoveComponent(Type type);
 
         /// <summary>
-        ///     解绑所有组件
+        /// Removes all components from this container.
         /// </summary>
         void RemoveAllComponents();
 
         /// <summary>
-        ///     获取组件
+        /// Gets the component of the specified type from this container.
         /// </summary>
+        /// <typeparam name="T">The component type to retrieve.</typeparam>
+        /// <returns>The component instance, or null if not found.</returns>
         T GetComponent<T>() where T : Component;
 
         /// <summary>
-        ///     获取组件
+        /// Gets the component of the specified type from this container.
         /// </summary>
+        /// <param name="type">The component type to retrieve.</param>
+        /// <returns>The component instance.</returns>
         IComponent GetComponent(Type type);
 
         /// <summary>
-        ///     获取所有组件
+        /// Gets all components registered in this container.
         /// </summary>
+        /// <returns>An array of all registered components.</returns>
         IComponent[] GetAllComponents();
 
         /// <summary>
-        ///     像所有组件广播消息
+        /// Broadcasts a message to all components by invoking a named method on each.
         /// </summary>
-        /// <param name="method">函数名</param>
-        /// <param name="args">参数列表</param>
+        /// <param name="method">The name of the method to invoke on each component.</param>
+        /// <param name="args">The arguments to pass to the invoked method.</param>
         void Broadcast(string method, params object[] args);
 
         /// <summary>
-        ///     回送调用
+        /// Sends a loopback call that returns the result from the first component
+        /// that has a method matching the given name.
         /// </summary>
-        /// <param name="method">函数名</param>
-        /// <param name="args">参数列表</param>
-        /// <returns></returns>
+        /// <param name="method">The name of the method to invoke.</param>
+        /// <param name="args">The arguments to pass to the invoked method.</param>
+        /// <returns>The return value from the first matching component, or null if none found.</returns>
         object Loopback(string method, params object[] args);
     }
 }

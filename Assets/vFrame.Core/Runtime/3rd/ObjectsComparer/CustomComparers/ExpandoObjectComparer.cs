@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal class ExpandoObjectComparer : AbstractDynamicObjectsComprer<ExpandoObject>
     {
@@ -16,7 +15,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
 
         public override bool IsMatch(Type type, object obj1, object obj2)
         {
-            return type.InheritsFrom(typeof(ExpandoObject)) || 
+            return type.InheritsFrom(typeof(ExpandoObject)) ||
                    (obj1 != null && obj2 != null && type == typeof(object) && obj1.GetType().InheritsFrom(typeof(ExpandoObject)) && obj2.GetType().InheritsFrom(typeof(ExpandoObject)));
         }
 

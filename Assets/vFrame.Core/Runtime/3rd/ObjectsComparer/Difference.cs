@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Represents difference in one member between objects.
@@ -26,7 +26,7 @@
         public DifferenceTypes DifferenceType { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Difference" /> class. 
+        /// Initializes a new instance of the <see cref="Difference" /> class.
         /// </summary>
         /// <param name="memberPath">Member Path.</param>
         /// <param name="value1">Value of the first object, converted to string.</param>

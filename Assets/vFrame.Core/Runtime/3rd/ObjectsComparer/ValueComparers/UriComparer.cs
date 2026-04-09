@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+namespace vFrame.Core
 {
     public class UriComparer: DynamicValueComparer<Uri>
     {
@@ -31,7 +31,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
 
         private static readonly object SyncRoot = new object();
 
-        public UriComparer() : 
+        public UriComparer() :
             base((uri1, uri2, settings) => uri1.OriginalString == uri2.OriginalString, (uri) => uri.OriginalString)
         {
         }

@@ -1,20 +1,39 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using vFrame.Core.Loggers;
-using vFrame.Core.Unity.Asynchronous;
+// ------------------------------------------------------------
+//         File: PreloadAsyncRequest.cs
+//        Brief: Async request that preloads multiple assets through the spawn pool system.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-01-01 00:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Unity.SpawnPools
+using System.Collections.Generic;
+using System.Diagnostics;
+using vFrame.Core;
+using vFrame.Core.Unity;
+
+namespace vFrame.Core.Unity
 {
     public class PreloadAsyncRequest : AsyncRequest, IPreloadAsyncRequest
     {
         private List<ILoadAsyncRequest> _requests;
         private Stopwatch _stopWatch;
         private int _total;
+
         internal List<string> AssetPaths { get; set; }
+
         internal ISpawnPools SpawnPools { get; set; }
 
+        /// <summary>
+        /// Gets the overall preload progress as a normalized value between 0 and 1.
+        /// </summary>
         public override float Progress => IsDone ? 1f : (AssetPaths?.Count ?? 0f) / _total;
 
+        /// <summary>
+        /// Starts the preload operation by spawning async requests for every asset path.
+        /// Finishes immediately when the asset path list is empty or null.
+        /// </summary>
         protected override void OnStart() {
             if (null == AssetPaths || AssetPaths.Count <= 0) {
                 Finish();
@@ -29,11 +48,18 @@ namespace vFrame.Core.Unity.SpawnPools
             }
         }
 
+        /// <summary>
+        /// Clears pending requests and resets the stopwatch when the operation is stopped.
+        /// </summary>
         protected override void OnStop() {
             _requests.Clear();
             _stopWatch.Reset();
         }
 
+        /// <summary>
+        /// Polls pending load requests each frame, removes completed ones,
+        /// recycles successfully loaded GameObjects, and finishes when all requests are done.
+        /// </summary>
         protected override void OnUpdate() {
             if (_requests.Count <= 0) {
                 Finish();

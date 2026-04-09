@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal abstract class AbstractEnumerablesComparer: AbstractComparer, IComparerWithCondition
     {

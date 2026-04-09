@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Utils
+namespace vFrame.Core
 {
     internal class PropertyHelper
     {
@@ -21,7 +21,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.Utils
                     }
                     else
                     {
-                        throw new ArgumentException();
+                        throw new System.ArgumentException();
                     }
 
                     break;
@@ -29,7 +29,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.Utils
                     exp = (MemberExpression)memberLambda.Body;
                     break;
                 default:
-                    throw new ArgumentException();
+                    throw new System.ArgumentException();
             }
 
             return exp.Member;

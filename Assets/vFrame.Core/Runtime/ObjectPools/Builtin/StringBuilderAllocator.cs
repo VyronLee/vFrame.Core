@@ -1,6 +1,6 @@
 //------------------------------------------------------------
 //        File:  StringBuilderAllocator.cs
-//       Brief:  StringBuilderAllocator
+//       Brief:  Pool allocator for StringBuilder instances.
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -10,16 +10,22 @@
 
 using System.Text;
 
-namespace vFrame.Core.ObjectPools.Builtin
+namespace vFrame.Core
 {
     public class StringBuilderAllocator : IPoolObjectAllocator<StringBuilder>
     {
         public static int PresetLength = 1024;
 
+        /// <summary>
+        /// Allocates a new StringBuilder with the preset capacity.
+        /// </summary>
         public StringBuilder Alloc() {
             return new StringBuilder(PresetLength);
         }
 
+        /// <summary>
+        /// Resets the StringBuilder by clearing its content.
+        /// </summary>
         public void Reset(StringBuilder obj) {
             obj.Length = 0;
         }

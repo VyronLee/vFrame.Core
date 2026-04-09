@@ -1,6 +1,6 @@
 using System.IO;
 using NUnit.Framework;
-using vFrame.Core.Compression;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode.Compression
 {

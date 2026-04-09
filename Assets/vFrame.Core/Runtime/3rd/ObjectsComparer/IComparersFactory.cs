@@ -1,6 +1,6 @@
 using System;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Defines methods to create type specific comparers.

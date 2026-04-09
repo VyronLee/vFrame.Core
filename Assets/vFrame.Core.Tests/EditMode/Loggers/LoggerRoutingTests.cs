@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
-using vFrame.Core.Loggers;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode.Loggers
 {

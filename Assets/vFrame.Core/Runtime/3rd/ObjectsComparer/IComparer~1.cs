@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Defines methods to compare complex objects of particular type.

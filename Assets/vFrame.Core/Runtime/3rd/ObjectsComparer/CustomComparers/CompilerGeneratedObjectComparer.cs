@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal class CompilerGeneratedObjectComparer : AbstractDynamicObjectsComprer<object>
     {

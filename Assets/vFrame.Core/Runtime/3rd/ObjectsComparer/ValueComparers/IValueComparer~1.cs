@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Defines a generalized type-specific comparison method to compare 2 objects.

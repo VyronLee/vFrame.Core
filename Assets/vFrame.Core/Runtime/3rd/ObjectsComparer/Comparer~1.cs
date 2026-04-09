@@ -3,12 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using vFrame.Core.ThirdParty.ObjectsComparer.Attributes;
-using vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
-using vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Compares objects of type <see cref="T"/>.
@@ -19,7 +15,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         private readonly List<IComparerWithCondition> _conditionalComparers;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Comparer{T}" /> class. 
+        /// Initializes a new instance of the <see cref="Comparer{T}" /> class.
         /// </summary>
         /// <param name="settings">Comparison Settings.</param>
         /// <param name="parentComparer">Parent Comparer. Is used to copy DefaultValueComparer and Overrides. Null by default.</param>
@@ -29,8 +25,8 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         {
             var properties = GetProperties(typeof(T), new List<Type>());
             var fields = typeof(T).GetTypeInfo().GetFields().Where(f =>
-                f.IsPublic 
-                && !f.IsStatic 
+                f.IsPublic
+                && !f.IsStatic
                 && !f.GetCustomAttributes(true).Any(c=> c is IgnoreInComparisonAttribute)).ToList();
             _members = properties.Union(fields.Cast<MemberInfo>()).ToList();
             _conditionalComparers = new List<IComparerWithCondition>

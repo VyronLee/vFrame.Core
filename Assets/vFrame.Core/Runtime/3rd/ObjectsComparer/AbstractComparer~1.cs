@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Implementation of <see cref="IComparer{T}"/> which provides implementation of Compare methods.

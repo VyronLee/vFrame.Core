@@ -1,25 +1,33 @@
-//------------------------------------------------------------
-//        File:  TransformExtension.cs
-//       Brief:  Transform扩展
+// ------------------------------------------------------------
+//         File: TransformExtension.cs
+//        Brief: Extension methods for Transform providing bulk
+//               enable/disable, particle system control,
+//               bounds calculation, and hierarchy queries.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-05-09 15:47
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-05-09 15:47:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using vFrame.Core.ObjectPools.Builtin;
 
-namespace vFrame.Core.Unity.Extensions
+namespace vFrame.Core.Unity
 {
     public static class TransformExtension
     {
+        /// <summary>
+        ///     Traverses the transform itself and all its children, invoking the
+        ///     specified action on every component of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <param name="transform">The root transform to traverse.</param>
+        /// <param name="traveller">The action applied to each found component.</param>
+        /// <typeparam name="T">The component type to search for.</typeparam>
         public static void TraverseSelfAndChildren<T>(this Transform transform, Action<T> traveller)
-            where T : Component {
+            where T : UnityEngine.Component {
             var buffer = ListPool<T>.Shared.Get();
             transform.GetComponentsInChildren(true, buffer);
             try {
@@ -32,18 +40,41 @@ namespace vFrame.Core.Unity.Extensions
             }
         }
 
+        /// <summary>
+        ///     Enables all components of type <typeparamref name="T"/> on the
+        ///     transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
+        /// <typeparam name="T">The behaviour type to enable.</typeparam>
         public static void EnableComponents<T>(this Transform transform) where T : Behaviour {
             TraverseSelfAndChildren<T>(transform, v => v.enabled = true);
         }
 
+        /// <summary>
+        ///     Disables all components of type <typeparamref name="T"/> on the
+        ///     transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
+        /// <typeparam name="T">The behaviour type to disable.</typeparam>
         public static void DisableComponents<T>(this Transform transform) where T : Behaviour {
             TraverseSelfAndChildren<T>(transform, v => v.enabled = false);
         }
 
+        /// <summary>
+        ///     Enables all <see cref="Renderer"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAllRenderer(this Transform transform) {
             TraverseSelfAndChildren<Renderer>(transform, v => v.enabled = true);
         }
 
+        /// <summary>
+        ///     Enables all <see cref="Renderer"/> components except those
+        ///     matching the specified type.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
+        /// <param name="exceptType">Renderer subclass type to skip.</param>
         public static void EnableAllRenderer(this Transform transform, Type exceptType) {
             TraverseSelfAndChildren<Renderer>(transform, v => {
                 if (exceptType == v.GetType()) {
@@ -53,63 +84,137 @@ namespace vFrame.Core.Unity.Extensions
             });
         }
 
+        /// <summary>
+        ///     Disables all <see cref="Renderer"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAllRenderer(this Transform transform) {
             TraverseSelfAndChildren<Renderer>(transform, v => v.enabled = false);
         }
 
+        /// <summary>
+        ///     Enables all <see cref="Graphic"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAllGraphic(this Transform transform) {
             TraverseSelfAndChildren<Graphic>(transform, v => v.enabled = true);
         }
 
+        /// <summary>
+        ///     Disables all <see cref="Graphic"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAllGraphic(this Transform transform) {
             TraverseSelfAndChildren<Graphic>(transform, v => v.enabled = false);
         }
 
+        /// <summary>
+        ///     Starts playing all <see cref="ParticleSystem"/> components on
+        ///     the transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void StartAllParticleSystems(this Transform transform) {
             TraverseSelfAndChildren<ParticleSystem>(transform, v => v.Play());
         }
 
+        /// <summary>
+        ///     Stops all <see cref="ParticleSystem"/> components on the
+        ///     transform and its children, clearing emitted particles.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void StopAllParticleSystems(this Transform transform) {
             TraverseSelfAndChildren<ParticleSystem>(transform,
                 v => v.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear));
         }
 
+        /// <summary>
+        ///     Clears all particles from every <see cref="ParticleSystem"/>
+        ///     on the transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void ClearAllParticleSystems(this Transform transform) {
             TraverseSelfAndChildren<ParticleSystem>(transform, v => { v.Clear(true); });
         }
 
+        /// <summary>
+        ///     Enables all <see cref="Animation"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAllAnimations(this Transform transform) {
             EnableComponents<Animation>(transform);
         }
 
+        /// <summary>
+        ///     Disables all <see cref="Animation"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAllAnimations(this Transform transform) {
             DisableComponents<Animation>(transform);
         }
 
+        /// <summary>
+        ///     Enables all <see cref="Animator"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAllAnimators(this Transform transform) {
             EnableComponents<Animator>(transform);
         }
 
+        /// <summary>
+        ///     Disables all <see cref="Animator"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAllAnimators(this Transform transform) {
             DisableComponents<Animator>(transform);
         }
 
+        /// <summary>
+        ///     Stops all <see cref="Animation"/> components on the transform
+        ///     and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void StopAllAnimations(this Transform transform) {
             TraverseSelfAndChildren<Animation>(transform, v => v.Stop());
         }
 
+        /// <summary>
+        ///     Stops all <see cref="Animator"/> components by disabling them.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void StopAllAnimators(this Transform transform) {
             TraverseSelfAndChildren<Animator>(transform, v => v.enabled = false);
         }
 
+        /// <summary>
+        ///     Enables all <see cref="TrailRenderer"/> components on the
+        ///     transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAllTrailRenderers(this Transform transform) {
             TraverseSelfAndChildren<TrailRenderer>(transform, v => v.enabled = true);
         }
 
+        /// <summary>
+        ///     Disables all <see cref="TrailRenderer"/> components on the
+        ///     transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAllTrailRenderers(this Transform transform) {
             TraverseSelfAndChildren<TrailRenderer>(transform, v => v.enabled = false);
         }
 
+        /// <summary>
+        ///     Enables and clears all <see cref="TrailRenderer"/> components
+        ///     on the transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void EnableAndClearAllTrailRenderers(this Transform transform) {
             TraverseSelfAndChildren<TrailRenderer>(transform, v => {
                 v.enabled = true;
@@ -117,6 +222,11 @@ namespace vFrame.Core.Unity.Extensions
             });
         }
 
+        /// <summary>
+        ///     Disables and clears all <see cref="TrailRenderer"/> components
+        ///     on the transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void DisableAndClearAllTrailRenderers(this Transform transform) {
             TraverseSelfAndChildren<TrailRenderer>(transform, v => {
                 v.enabled = false;
@@ -124,10 +234,21 @@ namespace vFrame.Core.Unity.Extensions
             });
         }
 
+        /// <summary>
+        ///     Clears all <see cref="TrailRenderer"/> components on the
+        ///     transform and its children without changing their enabled state.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
         public static void ClearAllTrailRenderers(this Transform transform) {
             TraverseSelfAndChildren<TrailRenderer>(transform, v => v.Clear());
         }
 
+        /// <summary>
+        ///     Calculates the bounding box that encloses all <see cref="Renderer"/>
+        ///     components on the transform and its children.
+        /// </summary>
+        /// <param name="transform">The root transform.</param>
+        /// <returns>A <see cref="Bounds"/> struct enclosing all renderers.</returns>
         public static Bounds CalculateBounds(this Transform transform) {
             var bounds = new Bounds();
             transform.TraverseSelfAndChildren<Transform>(v => {
@@ -144,6 +265,12 @@ namespace vFrame.Core.Unity.Extensions
             return bounds;
         }
 
+        /// <summary>
+        ///     Returns the full hierarchy path of the transform, from root to
+        ///     itself, separated by '/'.
+        /// </summary>
+        /// <param name="transform">The target transform.</param>
+        /// <returns>A slash-separated path string.</returns>
         public static string GetHierarchyPath(this Transform transform) {
             var names = new List<string>();
 
@@ -157,6 +284,12 @@ namespace vFrame.Core.Unity.Extensions
             return path;
         }
 
+        /// <summary>
+        ///     Recursively counts all child transforms, including indirect
+        ///     descendants.
+        /// </summary>
+        /// <param name="transform">The parent transform.</param>
+        /// <returns>The total number of child transforms.</returns>
         public static int GetAllChildrenCount(this Transform transform) {
             var ret = 0;
             ret += transform.childCount;

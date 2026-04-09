@@ -1,24 +1,24 @@
-//------------------------------------------------------------
-//        File:  AnimationExtension.cs
-//       Brief:  动画组件扩展
+// ------------------------------------------------------------
+//         File: AnimationExtension.cs
+//        Brief: Extension methods for Unity Animation component playback control.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-02-11 09:57
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-02-11 09:57:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System.Collections;
 using UnityEngine;
 
-namespace vFrame.Core.Unity.Extensions
+namespace vFrame.Core.Unity
 {
     public static class AnimationExtension
     {
         /// <summary>
-        ///     重置到动画开头
+        ///     Rewinds the animation to the first frame, samples it, and stops playback.
         /// </summary>
-        /// <param name="animation"></param>
+        /// <param name="animation">The Animation component to reset.</param>
         public static void Reset(this Animation animation) {
             animation.Rewind();
             animation.Play();
@@ -27,10 +27,11 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        ///     播放动画到最后一帧
+        ///     Advances the current clip to its last frame by setting normalized time to 1,
+        ///     samples, and stops playback.
         /// </summary>
-        /// <param name="animation"></param>
-        /// <returns></returns>
+        /// <param name="animation">The Animation component to forward.</param>
+        /// <returns><c>true</c> if the clip was successfully forwarded; <c>false</c> if no clip or state is available.</returns>
         public static bool ForwardToEnd(this Animation animation) {
             if (!animation.clip) {
                 return false;
@@ -50,12 +51,12 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        ///     播放动画，并一直等待到动画播放完成
+        ///     Plays the named animation clip and yields until playback finishes.
         /// </summary>
-        /// <param name="animation"></param>
-        /// <param name="name"></param>
-        /// <param name="reset"></param>
-        /// <returns></returns>
+        /// <param name="animation">The Animation component to play.</param>
+        /// <param name="name">The name of the clip to play.</param>
+        /// <param name="reset">If <c>true</c>, resets the animation before playing.</param>
+        /// <returns>An enumerator that completes when the animation stops playing.</returns>
         public static IEnumerator PlayUntilFinished(this Animation animation, string name, bool reset = true) {
             if (reset) {
                 animation.Reset();
@@ -64,28 +65,26 @@ namespace vFrame.Core.Unity.Extensions
             animation.clip = clip;
             animation.Play(name);
             yield return new WaitWhile(() => animation.isPlaying);
-            //yield return WaitUntilFinished(animation); // Not working, why?
         }
 
         /// <summary>
-        ///     播放动画，并一直等待到动画播放完成
+        ///     Cross-fades to the named animation clip and yields until playback finishes.
         /// </summary>
-        /// <param name="animation"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
+        /// <param name="animation">The Animation component to cross-fade.</param>
+        /// <param name="name">The name of the clip to cross-fade into.</param>
+        /// <returns>An enumerator that completes when the animation stops playing.</returns>
         public static IEnumerator CrossFadeUntilFinished(this Animation animation, string name) {
             var clip = animation.GetClip(name);
             animation.clip = clip;
             animation.CrossFade(name);
             yield return new WaitWhile(() => animation.isPlaying);
-            //yield return WaitUntilFinished(animation); // Not working, why?
         }
 
         /// <summary>
-        ///     等待动画播放完成
+        ///     Waits until the current clip has finished playing by polling normalized time each frame.
         /// </summary>
-        /// <param name="animation"></param>
-        /// <returns></returns>
+        /// <param name="animation">The Animation component to monitor.</param>
+        /// <returns>An enumerator that completes when the clip reaches normalized time >= 1.</returns>
         private static IEnumerator WaitUntilFinished(Animation animation) {
             while (true) {
                 if (!animation.clip) {

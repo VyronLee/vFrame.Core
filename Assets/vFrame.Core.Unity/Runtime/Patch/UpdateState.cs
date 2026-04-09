@@ -1,44 +1,54 @@
-namespace vFrame.Core.Unity.Patch
+// ------------------------------------------------------------
+//         File: UpdateState.cs
+//        Brief: Enum representing the current state of the patch update process.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-16 22:32:14
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+namespace vFrame.Core.Unity
 {
     public enum UpdateState
     {
         /// <summary>
-        ///     未检测
+        ///     Update has not been checked yet.
         /// </summary>
         Unchecked,
 
         /// <summary>
-        ///     正在下载版本号
+        ///     Version file is being downloaded.
         /// </summary>
         DownloadingVersion,
 
         /// <summary>
-        ///     正在下载manifest
+        ///     Manifest file is being downloaded.
         /// </summary>
         DownloadingManifest,
 
         /// <summary>
-        ///     需要更新
+        ///     An asset update is available.
         /// </summary>
         NeedUpdate,
 
         /// <summary>
-        ///     正在更新
+        ///     Asset download is in progress.
         /// </summary>
         Updating,
 
         /// <summary>
-        ///     已经更新
+        ///     All assets are already up to date.
         /// </summary>
         UpToDate,
 
         /// <summary>
-        ///     更新失败
+        ///     The update process has failed.
         /// </summary>
         FailToUpdate,
 
         /// <summary>
-        ///     需要强更
+        ///     A full game update (force update) is required.
         /// </summary>
         NeedForceUpdate
     }

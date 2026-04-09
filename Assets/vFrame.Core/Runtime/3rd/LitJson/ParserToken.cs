@@ -11,7 +11,7 @@
 #endregion
 
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     internal enum ParserToken
     {

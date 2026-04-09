@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     public enum JsonToken
     {

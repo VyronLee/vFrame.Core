@@ -1,27 +1,47 @@
-// Decompiled with JetBrains decompiler
-// Type: UnityEngine.StackTraceUtility
-// Assembly: UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// ------------------------------------------------------------
+//         File: StackTraceUtility.cs
+//        Brief: Utility for extracting and formatting stack
+//               traces, adapted from Unity's stack trace API.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2018-10-20 18:09:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 using System.Diagnostics;
 using System.Security;
 using System.Text;
 
-namespace vFrame.Core.Loggers
+namespace vFrame.Core
 {
     public static class StackTraceUtility
     {
         private static string projectFolder = string.Empty;
 
+        /// <summary>
+        /// Sets the project root folder used to strip absolute paths from stack traces.
+        /// </summary>
+        /// <param name="folder">The absolute path of the project root folder.</param>
         internal static void SetProjectFolder(string folder) {
             projectFolder = folder;
         }
 
+        /// <summary>
+        /// Extracts a formatted stack trace from the current call site.
+        /// </summary>
+        /// <returns>A formatted string representation of the stack trace.</returns>
         [SecuritySafeCritical]
         public static string ExtractStackTrace() {
             return ExtractFormattedStackTrace(new StackTrace(1, true));
         }
 
+        /// <summary>
+        /// Determines whether the given type name belongs to a system or engine namespace.
+        /// </summary>
+        /// <param name="name">The type name to check.</param>
+        /// <returns><c>true</c> if the name is a system stack trace type; otherwise, <c>false</c>.</returns>
         private static bool IsSystemStacktraceType(object name) {
             var str = (string)name;
             if (!str.StartsWith("UnityEditor.") && !str.StartsWith("UnityEngine.") && !str.StartsWith("System.") &&
@@ -31,6 +51,11 @@ namespace vFrame.Core.Loggers
             return true;
         }
 
+        /// <summary>
+        /// Extracts the exception message and stack trace from an exception object.
+        /// </summary>
+        /// <param name="exception">The exception to extract from.</param>
+        /// <returns>A combined string of the message and stack trace separated by a newline.</returns>
         public static string ExtractStringFromException(object exception) {
             var message = string.Empty;
             var stackTrace = string.Empty;
@@ -38,6 +63,14 @@ namespace vFrame.Core.Loggers
             return message + "\n" + stackTrace;
         }
 
+        /// <summary>
+        /// Internal method that extracts message and stack trace from an exception,
+        /// walking the inner exception chain.
+        /// </summary>
+        /// <param name="exceptiono">The exception object to extract from.</param>
+        /// <param name="message">The combined exception message.</param>
+        /// <param name="stackTrace">The combined stack trace string.</param>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="exceptiono"/> is null or not an <see cref="Exception"/>.</exception>
         [SecuritySafeCritical]
         internal static void ExtractStringFromExceptionInternal(object exceptiono, out string message,
             out string stackTrace) {
@@ -74,6 +107,13 @@ namespace vFrame.Core.Loggers
             stackTrace = stringBuilder.ToString();
         }
 
+        /// <summary>
+        /// Post-processes a raw stack trace string, stripping engine-internal frames
+        /// and normalizing path separators.
+        /// </summary>
+        /// <param name="oldString">The raw stack trace string.</param>
+        /// <param name="stripEngineInternalInformation">Whether to remove engine-internal frames.</param>
+        /// <returns>The post-processed stack trace string.</returns>
         internal static string PostprocessStacktrace(string oldString, bool stripEngineInternalInformation) {
             if (oldString == null) {
                 return string.Empty;
@@ -136,6 +176,12 @@ namespace vFrame.Core.Loggers
             return stringBuilder.ToString();
         }
 
+        /// <summary>
+        /// Formats a <see cref="StackTrace"/> into a human-readable string with
+        /// namespace, class, method, parameters, and file location.
+        /// </summary>
+        /// <param name="stackTrace">The stack trace to format.</param>
+        /// <returns>A formatted string representation of the stack trace.</returns>
         [SecuritySafeCritical]
         internal static string ExtractFormattedStackTrace(StackTrace stackTrace) {
             var stringBuilder = new StringBuilder(byte.MaxValue);

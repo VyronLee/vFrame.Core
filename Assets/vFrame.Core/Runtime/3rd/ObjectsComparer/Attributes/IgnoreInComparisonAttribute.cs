@@ -6,7 +6,7 @@
 
 using System;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Attributes
+namespace vFrame.Core
 {
   /// <summary>
   /// Class is used to specify whether the element on which it is applied will have comparison effect

@@ -18,7 +18,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     internal struct PropertyMetadata
     {

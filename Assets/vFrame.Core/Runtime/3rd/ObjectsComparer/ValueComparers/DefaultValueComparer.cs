@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Default implementation of <see cref="IValueComparer"/>

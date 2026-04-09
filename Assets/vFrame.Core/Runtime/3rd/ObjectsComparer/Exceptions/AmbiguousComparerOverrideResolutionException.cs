@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Exceptions
+namespace vFrame.Core
 {
     /// <summary>
     /// Represents errors that occur when Objects Comparer has more than one comparer override which could be used to compare member.
@@ -23,7 +23,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.Exceptions
         /// </summary>
         public Type Type { get; }
 
-        internal AmbiguousComparerOverrideResolutionException(MemberInfo memberInfo) 
+        internal AmbiguousComparerOverrideResolutionException(MemberInfo memberInfo)
             : base($"Unable to resolve comparer for member {memberInfo.MemberType}. More than one value comparer meet criteria for this member.")
         {
             MemberInfo = memberInfo;

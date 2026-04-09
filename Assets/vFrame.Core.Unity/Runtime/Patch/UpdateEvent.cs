@@ -1,98 +1,123 @@
-﻿namespace vFrame.Core.Unity.Patch
+// ------------------------------------------------------------
+//         File: UpdateEvent.cs
+//        Brief: Event payload dispatched by the Patcher during the update lifecycle.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-16 22:32:14
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+namespace vFrame.Core.Unity
 {
     public class UpdateEvent
     {
         public enum EventCode
         {
             /// <summary>
-            ///     找不到本地配置
+            ///     Local manifest file could not be found.
             /// </summary>
             ErrorNoLocalManifest,
 
             /// <summary>
-            ///     下载版本号失败
+            ///     Failed to download the version file.
             /// </summary>
             ErrorDownloadVersion,
 
             /// <summary>
-            ///     解析版本号失败
+            ///     Failed to parse the version file.
             /// </summary>
             ErrorParseVersion,
 
             /// <summary>
-            ///     下载manifest失败
+            ///     Failed to download the manifest file.
             /// </summary>
             ErrorDownloadManifest,
 
             /// <summary>
-            ///     解析manifest失败
+            ///     Failed to parse the manifest file.
             /// </summary>
             ErrorParseManifest,
 
             /// <summary>
-            ///     发现新版本
+            ///     A new asset version has been found on the server.
             /// </summary>
             NewAssetsVersionFound,
 
             /// <summary>
-            ///     发现新版本
+            ///     A new game (engine) version has been found; force update required.
             /// </summary>
             NewGameVersionFound,
 
             /// <summary>
-            ///     已最新
+            ///     Local assets are already up to date.
             /// </summary>
             AlreadyUpToDate,
 
             /// <summary>
-            ///     更新进度
+            ///     Overall download progress has changed.
             /// </summary>
             UpdateProgression,
 
             /// <summary>
-            ///     单个资源下载成功
+            ///     A single asset has been downloaded successfully.
             /// </summary>
             AssetUpdated,
 
             /// <summary>
-            ///     单个资源下载失败
+            ///     One or more assets failed to download.
             /// </summary>
             ErrorDownloadFailed,
 
             /// <summary>
-            ///     更新成功
+            ///     The update process has finished successfully.
             /// </summary>
             UpdateFinished,
 
             /// <summary>
-            ///     更新失败
+            ///     The update process has failed.
             /// </summary>
             UpdateFailed,
 
             /// <summary>
-            ///     哈希检测
+            ///     Hash validation has started.
             /// </summary>
             HashStart,
 
             /// <summary>
-            ///     哈希进度
+            ///     Hash validation progress update.
             /// </summary>
             HashProgression,
 
             /// <summary>
-            ///     校验失败
+            ///     Hash validation has detected mismatched files.
             /// </summary>
             HashValidationFailed
         }
 
+        /// <summary>
+        ///     Name of the asset related to this event.
+        /// </summary>
         public string AssetName;
 
+        /// <summary>
+        ///     The event code describing what happened.
+        /// </summary>
         public EventCode Code;
 
+        /// <summary>
+        ///     Total bytes downloaded so far.
+        /// </summary>
         public ulong DownloadedSize;
 
+        /// <summary>
+        ///     Download progress as a ratio of downloaded bytes to total size.
+        /// </summary>
         public float Percent;
 
+        /// <summary>
+        ///     Download progress as a ratio of completed files to total files.
+        /// </summary>
         public float PercentByFile;
     }
 }

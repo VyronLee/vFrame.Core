@@ -1,13 +1,22 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: LZMACompressor.cs
+//        Brief: LZMA algorithm-based compressor implementation
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-18 22:55:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using vFrame.Core.Base;
-using vFrame.Core.ObjectPools;
+using vFrame.Core;
 using vFrame.Core.ThirdParty.SevenZip;
 using vFrame.Core.ThirdParty.SevenZip.Compression.LZMA;
 
-namespace vFrame.Core.Compression
+namespace vFrame.Core
 {
     public class LZMACompressor : Compressor
     {
@@ -51,10 +60,21 @@ namespace vFrame.Core.Compression
             CoderPropID.EndMarker
         };
 
+        /// <summary>
+        /// Called when the compressor is created. Falls back to default options if none are provided.
+        /// </summary>
+        /// <param name="options">The compressor options, or null to use defaults.</param>
         protected override void OnCreate(CompressorOptions options) {
             base.OnCreate(options ?? DefaultOptions);
         }
 
+        /// <summary>
+        /// Compresses the input stream using the LZMA algorithm.
+        /// </summary>
+        /// <param name="input">The stream containing data to compress.</param>
+        /// <param name="output">The stream to write compressed data to.</param>
+        /// <param name="onProgress">Progress callback invoked with in-size and out-size.</param>
+        /// <exception cref="NotSupportedException">Thrown when the configured dictionary size is not supported.</exception>
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = (LZMACompressorOptions)Options;
 
@@ -100,6 +120,14 @@ namespace vFrame.Core.Compression
             ObjectArrayCache.Enqueue(properties);
         }
 
+        /// <summary>
+        /// Decompresses the LZMA-compressed input stream.
+        /// </summary>
+        /// <param name="input">The stream containing LZMA-compressed data.</param>
+        /// <param name="output">The stream to write decompressed data to.</param>
+        /// <param name="onProgress">Progress callback invoked with in-size and out-size.</param>
+        /// <exception cref="NotSupportedException">Thrown when the dictionary size in the compressed header is not supported.</exception>
+        /// <exception cref="Exception">Thrown when the input stream is too short or cannot be read.</exception>
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
             if (!ByteArrayCache.TryDequeue(out var properties)) {
                 properties = new byte[5];
@@ -148,14 +176,26 @@ namespace vFrame.Core.Compression
             private static readonly Action<long, long> DefaultHandler = (inSize, outSize) => { };
             private Action<long, long> _handler = DefaultHandler;
 
+            /// <summary>
+            /// Initializes the progress handler with the given callback.
+            /// </summary>
+            /// <param name="handler">The progress callback, or null to use a no-op handler.</param>
             public void Initialize(Action<long, long> handler) {
                 _handler = handler ?? DefaultHandler;
             }
 
+            /// <summary>
+            /// Resets the progress handler to the default no-op.
+            /// </summary>
             public void Reset() {
                 _handler = DefaultHandler;
             }
 
+            /// <summary>
+            /// Reports compression progress by invoking the registered handler.
+            /// </summary>
+            /// <param name="inSize">Number of bytes processed from the input.</param>
+            /// <param name="outSize">Number of bytes written to the output.</param>
             public void SetProgress(long inSize, long outSize) {
                 _handler(inSize, outSize);
             }

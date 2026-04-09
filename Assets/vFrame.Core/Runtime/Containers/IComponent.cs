@@ -1,21 +1,21 @@
-﻿//------------------------------------------------------------
-//       @file  IComponent.cs
-//      @brief  组件接口
+// ------------------------------------------------------------
+//         File: IComponent.cs
+//        Brief: Interface for a component that can be bound to a container
 //
-//     @author  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//   @internal
-//     Created  2016-09-21 19:18
-//   Copyright  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2016-09-21 19:18:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Containers
+namespace vFrame.Core
 {
     public interface IComponent
     {
         /// <summary>
-        ///     获取绑定目标
+        /// Gets the container to which this component is bound.
         /// </summary>
+        /// <returns>The owning container instance.</returns>
         IContainer GetContainer();
     }
 }

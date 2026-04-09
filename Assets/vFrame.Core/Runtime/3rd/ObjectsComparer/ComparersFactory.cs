@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Implements Comparers Factory.

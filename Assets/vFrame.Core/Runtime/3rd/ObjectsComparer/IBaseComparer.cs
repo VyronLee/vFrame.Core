@@ -1,9 +1,8 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Defines properties and methods to configure comparer.
@@ -65,8 +64,8 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         /// <param name="compareFunction">Function to compare objects.</param>
         /// <param name="toStringFunction">Function to convert objects to string.</param>
         void AddComparerOverride<TProp>(
-            Expression<Func<TProp>> memberLambda, 
-            Func<TProp, TProp, ComparisonSettings, bool> compareFunction, 
+            Expression<Func<TProp>> memberLambda,
+            Func<TProp, TProp, ComparisonSettings, bool> compareFunction,
             Func<TProp, string> toStringFunction);
 
         /// <summary>

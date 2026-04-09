@@ -1,37 +1,57 @@
-﻿//------------------------------------------------------------
-//        File:  StringExtension.cs
-//       Brief:  String type extension.
+// ------------------------------------------------------------
+//         File: StringExtension.cs
+//        Brief: String extension methods for byte array conversion and hex parsing
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-09-09 16:59
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-09-09 16:59
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using vFrame.Core.Exceptions;
 
-namespace vFrame.Core.Extensions
+namespace vFrame.Core
 {
     public static class StringExtension
     {
+        /// <summary>
+        /// Converts the string to a byte sequence using the default encoding.
+        /// </summary>
+        /// <param name="str">The source string.</param>
+        /// <returns>A byte sequence.</returns>
         public static IEnumerable<byte> ToBytes(this string str) {
             var byteArray = Encoding.Default.GetBytes(str);
             return byteArray;
         }
 
+        /// <summary>
+        /// Converts the string to a byte array using the default encoding.
+        /// </summary>
+        /// <param name="str">The source string.</param>
+        /// <returns>A byte array.</returns>
         public static byte[] ToByteArray(this string str) {
             var byteArray = Encoding.Default.GetBytes(str);
             return byteArray;
         }
 
+        /// <summary>
+        /// Converts the string to a byte array using UTF-8 encoding.
+        /// </summary>
+        /// <param name="str">The source string.</param>
+        /// <returns>A UTF-8 encoded byte array.</returns>
         public static byte[] ToUtf8ByteArray(this string str) {
             var byteArray = Encoding.UTF8.GetBytes(str);
             return byteArray;
         }
 
+        /// <summary>
+        /// Converts a hexadecimal string to a byte array.
+        /// </summary>
+        /// <param name="hexString">The hexadecimal string, whose length must be even.</param>
+        /// <returns>A byte array.</returns>
+        /// <exception cref="System.ArgumentException">Thrown when the hexadecimal string has an odd length.</exception>
         public static byte[] HexToBytes(this string hexString) {
             if (hexString.Length % 2 != 0) {
                 ThrowHelper.ThrowArgumentException(string.Format(CultureInfo.InvariantCulture,

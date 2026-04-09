@@ -1,12 +1,20 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: ParallelTaskRunner.cs
+//        Brief: Parallel task runner that distributes work items across a thread pool.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2019-02-15 20:05
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using vFrame.Core.Base;
-using vFrame.Core.Loggers;
 
-namespace vFrame.Core.MultiThreading
+namespace vFrame.Core
 {
     public class ParallelTaskRunner<T> : BaseObject<int>
     {
@@ -27,18 +35,28 @@ namespace vFrame.Core.MultiThreading
         private CancellationTokenSource[] _tokenSources;
         private SpinLock _waitingListLock;
 
+        /// <summary>
+        /// Creates and initializes a new <see cref="ParallelTaskRunner{T}"/> with the default thread count.
+        /// </summary>
+        /// <returns>A new parallel task runner instance.</returns>
         public static ParallelTaskRunner<T> Spawn() {
             var ret = new ParallelTaskRunner<T>();
             ret.Create(DefaultThreadCount);
             return ret;
         }
 
+        /// <summary>
+        /// Creates and initializes a new <see cref="ParallelTaskRunner{T}"/> with the specified thread count.
+        /// </summary>
+        /// <param name="threadCount">The number of threads to use, capped at <see cref="MaxThreadCount"/>.</param>
+        /// <returns>A new parallel task runner instance.</returns>
         public static ParallelTaskRunner<T> Spawn(int threadCount) {
             var ret = new ParallelTaskRunner<T>();
             ret.Create(threadCount);
             return ret;
         }
 
+        /// <inheritdoc/>
         protected override void OnCreate(int threadCount) {
             _abortOnError = true;
             _waitingListLock = new SpinLock();
@@ -46,6 +64,7 @@ namespace vFrame.Core.MultiThreading
             _threadCount = Math.Min(threadCount, MaxThreadCount);
         }
 
+        /// <inheritdoc/>
         protected override void OnDestroy() {
             CancelAllTask();
 
@@ -53,6 +72,11 @@ namespace vFrame.Core.MultiThreading
             _taskWaiting = null;
         }
 
+        /// <summary>
+        /// Submits a collection of items for parallel processing.
+        /// </summary>
+        /// <param name="contexts">The items to process.</param>
+        /// <returns>This instance for fluent chaining.</returns>
         public ParallelTaskRunner<T> Run(IEnumerable<T> contexts) {
             _taskWaiting = contexts.ToList();
             _taskTotalCount = _taskWaiting.Count;
@@ -69,26 +93,50 @@ namespace vFrame.Core.MultiThreading
             return this;
         }
 
+        /// <summary>
+        /// Sets the handler invoked for each work item.
+        /// </summary>
+        /// <param name="handler">The action to execute per item.</param>
+        /// <returns>This instance for fluent chaining.</returns>
         public ParallelTaskRunner<T> OnHandle(Action<T> handler) {
             _onHandle = handler;
             return this;
         }
 
+        /// <summary>
+        /// Sets the handler invoked when all tasks complete successfully.
+        /// </summary>
+        /// <param name="handler">The completion callback.</param>
+        /// <returns>This instance for fluent chaining.</returns>
         public ParallelTaskRunner<T> OnComplete(Action handler) {
             _onComplete = handler;
             return this;
         }
 
+        /// <summary>
+        /// Sets the handler invoked when a task encounters an error.
+        /// </summary>
+        /// <param name="handler">The error callback receiving the exception.</param>
+        /// <returns>This instance for fluent chaining.</returns>
         public ParallelTaskRunner<T> OnError(Action<Exception> handler) {
             _onError = handler;
             return this;
         }
 
+        /// <summary>
+        /// Sets whether the runner should abort all remaining tasks on the first error.
+        /// </summary>
+        /// <param name="value"><c>true</c> to abort on error; otherwise, <c>false</c>.</param>
+        /// <returns>This instance for fluent chaining.</returns>
         public ParallelTaskRunner<T> AbortOnError(bool value) {
             _abortOnError = value;
             return this;
         }
 
+        /// <summary>
+        /// Asynchronously waits for all tasks to complete or for an error to occur.
+        /// </summary>
+        /// <returns>The last exception encountered, or <c>null</c> if all tasks succeeded.</returns>
         public async System.Threading.Tasks.Task<Exception> Wait() {
             var delay = Task.Delay(1);
             while (!IsComplete()) {
@@ -100,6 +148,10 @@ namespace vFrame.Core.MultiThreading
             return _lastError;
         }
 
+        /// <summary>
+        /// Gets whether all tasks have finished processing.
+        /// </summary>
+        /// <returns><c>true</c> if all tasks are complete; otherwise, <c>false</c>.</returns>
         public bool IsComplete() {
             return _taskFinishedCount >= _taskTotalCount;
         }

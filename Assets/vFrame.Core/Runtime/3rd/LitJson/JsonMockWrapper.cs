@@ -16,7 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Specialized;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     public class JsonMockWrapper : IJsonWrapper
     {

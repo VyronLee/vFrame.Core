@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using vFrame.Core.Unity.Asynchronous;
+using vFrame.Core.Unity;
 
 namespace vFrame.Core.Tests.EditMode.Asynchronous
 {

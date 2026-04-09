@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Allows to ignore comparison. Considers all values as equal.

@@ -1,9 +1,24 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: ArrayExtension.cs
+//        Brief: Array extension methods for multi-dimensional array traversal
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2019-09-09 16:56
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Extensions
+using System;
+
+namespace vFrame.Core
 {
     public static class ArrayExtensions
     {
+        /// <summary>
+        /// Invokes the specified action for each element in the array, supporting multi-dimensional arrays.
+        /// </summary>
+        /// <param name="array">The target array.</param>
+        /// <param name="action">The action to invoke for each element, receiving the array and current position indices.</param>
         public static void ForEach(this Array array, Action<Array, int[]> action) {
             if (array.LongLength == 0) {
                 return;
@@ -20,6 +35,10 @@ namespace vFrame.Core.Extensions
         private readonly int[] _maxLengths;
         public readonly int[] Position;
 
+        /// <summary>
+        /// Initializes a new array traverser for the given array.
+        /// </summary>
+        /// <param name="array">The array to traverse.</param>
         public ArrayTraverse(Array array) {
             _maxLengths = new int[array.Rank];
             for (var i = 0; i < array.Rank; ++i) {
@@ -28,6 +47,10 @@ namespace vFrame.Core.Extensions
             Position = new int[array.Rank];
         }
 
+        /// <summary>
+        /// Advances to the next position in the array.
+        /// </summary>
+        /// <returns><c>true</c> if advanced to the next position; <c>false</c> if the end has been reached.</returns>
         public bool Step() {
             for (var i = 0; i < Position.Length; ++i) {
                 if (Position[i] < _maxLengths[i]) {

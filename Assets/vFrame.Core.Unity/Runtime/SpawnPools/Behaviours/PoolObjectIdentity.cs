@@ -1,7 +1,16 @@
-﻿using UnityEngine;
-using Logger = vFrame.Core.Loggers.Logger;
+// ------------------------------------------------------------
+//         File: PoolObjectIdentity.cs
+//        Brief: MonoBehaviour that tracks identity and pooling state for pooled GameObjects.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-01-01 00:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Unity.SpawnPools
+using UnityEngine;
+
+namespace vFrame.Core.Unity
 {
     public class PoolObjectIdentity : MonoBehaviour
     {
@@ -14,21 +23,33 @@ namespace vFrame.Core.Unity.SpawnPools
         [SerializeField]
         private int _uniqueId;
 
+        /// <summary>
+        /// Gets or sets the resource path of the pooled asset.
+        /// </summary>
         public string AssetPath {
             get => _assetPath;
             internal set => _assetPath = value;
         }
 
+        /// <summary>
+        /// Gets or sets whether this object is currently managed by a spawn pool.
+        /// </summary>
         public bool IsPooling {
             get => _pooling;
             internal set => _pooling = value;
         }
 
+        /// <summary>
+        /// Gets or sets the unique identifier assigned by the spawn pool.
+        /// </summary>
         public int UniqueId {
             get => _uniqueId;
             internal set => _uniqueId = value;
         }
 
+        /// <summary>
+        /// Gets or sets whether the underlying Unity object has been destroyed.
+        /// </summary>
         internal bool Destroyed { get; set; }
 
         private void Awake() {

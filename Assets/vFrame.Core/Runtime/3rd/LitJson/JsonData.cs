@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     public class JsonData : IJsonWrapper, IEquatable<JsonData>
     {

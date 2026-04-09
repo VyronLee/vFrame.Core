@@ -1,16 +1,30 @@
+// ------------------------------------------------------------
+//         File: Dispatcher.cs
+//        Brief: Dispatcher implementation aggregating event, command, request and decision dispatching
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-01-01 00:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
 using System;
 using System.Collections.Generic;
-using vFrame.Core.Base;
-using vFrame.Core.Containers;
-using vFrame.Core.Exceptions;
-using vFrame.Core.Loggers;
+using vFrame.Core;
 
-namespace vFrame.Core.Dispatchers
+namespace vFrame.Core
 {
     public class Dispatcher : Component, IDispatcher
     {
         public readonly struct DiagnosticsSnapshot
         {
+            /// <summary>
+            /// Creates a new diagnostics snapshot with the specified subscription counts.
+            /// </summary>
+            /// <param name="eventCount">The number of event subscriptions.</param>
+            /// <param name="commandCount">The number of command subscriptions.</param>
+            /// <param name="requestCount">The number of request subscriptions.</param>
+            /// <param name="decisionCount">The number of decision subscriptions.</param>
             public DiagnosticsSnapshot(int eventCount, int commandCount, int requestCount, int decisionCount) {
                 EventSubscriptionCount = eventCount;
                 CommandSubscriptionCount = commandCount;
@@ -35,11 +49,24 @@ namespace vFrame.Core.Dispatchers
 
         #region IEventDispatcher
 
+        /// <summary>
+        /// Subscribes to events of the specified type.
+        /// </summary>
+        /// <param name="action">The event handler callback.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Subscribe<TEvent>(Action<TEvent> action)
             where TEvent : IEvent {
             return SubscribeEventInternal(action, null);
         }
 
+        /// <summary>
+        /// Subscribes to events of the specified type, bound to the owner's lifetime.
+        /// </summary>
+        /// <param name="action">The event handler callback.</param>
+        /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Subscribe<TEvent>(Action<TEvent> action, BaseObject owner)
             where TEvent : IEvent {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
@@ -48,12 +75,23 @@ namespace vFrame.Core.Dispatchers
             return subscription;
         }
 
+        /// <summary>
+        /// Subscribes to events of the specified type, bound to the given lifetime.
+        /// </summary>
+        /// <param name="action">The event handler callback.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Subscribe<TEvent>(Action<TEvent> action, ILifetime lifetime)
             where TEvent : IEvent {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
             return SubscribeEventInternal(action, lifetime);
         }
 
+        /// <summary>
+        /// Cancels the specified event subscription.
+        /// </summary>
+        /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unsubscribe(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
@@ -61,6 +99,11 @@ namespace vFrame.Core.Dispatchers
             subscription.Destroy();
         }
 
+        /// <summary>
+        /// Publishes an event of the specified type, notifying all subscribers.
+        /// </summary>
+        /// <param name="payload">The event payload.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
         public void Publish<TEvent>(in TEvent payload)
             where TEvent : IEvent {
             ThrowIfNotCreatedOrDestroyed();
@@ -87,6 +130,10 @@ namespace vFrame.Core.Dispatchers
             }
         }
 
+        /// <summary>
+        /// Gets the current total number of event subscriptions.
+        /// </summary>
+        /// <returns>The number of event subscriptions.</returns>
         public int GetEventSubscriptionCount() {
             ThrowIfNotCreatedOrDestroyed();
             var count = 0;
@@ -100,11 +147,24 @@ namespace vFrame.Core.Dispatchers
 
         #region ICommandDispatcher
 
+        /// <summary>
+        /// Registers a handler for the specified command type.
+        /// </summary>
+        /// <param name="handler">The command handler callback.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Handle<TCommand>(Action<TCommand> handler)
             where TCommand : ICommand {
             return HandleCommandInternal(handler, null);
         }
 
+        /// <summary>
+        /// Registers a handler for the specified command type, bound to the owner's lifetime.
+        /// </summary>
+        /// <param name="handler">The command handler callback.</param>
+        /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Handle<TCommand>(Action<TCommand> handler, BaseObject owner)
             where TCommand : ICommand {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
@@ -113,12 +173,23 @@ namespace vFrame.Core.Dispatchers
             return subscription;
         }
 
+        /// <summary>
+        /// Registers a handler for the specified command type, bound to the given lifetime.
+        /// </summary>
+        /// <param name="handler">The command handler callback.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Handle<TCommand>(Action<TCommand> handler, ILifetime lifetime)
             where TCommand : ICommand {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
             return HandleCommandInternal(handler, lifetime);
         }
 
+        /// <summary>
+        /// Cancels the specified command handler subscription.
+        /// </summary>
+        /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unhandle(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
@@ -126,6 +197,11 @@ namespace vFrame.Core.Dispatchers
             subscription.Destroy();
         }
 
+        /// <summary>
+        /// Sends a command of the specified type to be executed by the registered handler.
+        /// </summary>
+        /// <param name="command">The command payload.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
         public void Send<TCommand>(in TCommand command)
             where TCommand : ICommand {
             ThrowIfNotCreatedOrDestroyed();
@@ -154,6 +230,10 @@ namespace vFrame.Core.Dispatchers
             }
         }
 
+        /// <summary>
+        /// Gets the current number of command subscriptions.
+        /// </summary>
+        /// <returns>The number of command subscriptions.</returns>
         public int GetCommandSubscriptionCount() {
             ThrowIfNotCreatedOrDestroyed();
             var count = 0;
@@ -169,6 +249,13 @@ namespace vFrame.Core.Dispatchers
 
         #region IRequestDispatcher
 
+        /// <summary>
+        /// Sends a request and returns the response.
+        /// </summary>
+        /// <param name="payload">The request payload.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>The response from the handler; default value when no handler is registered.</returns>
         public TResponse Request<TRequest, TResponse>(in TRequest payload)
             where TRequest : IRequest<TResponse> {
             ThrowIfNotCreatedOrDestroyed();
@@ -198,6 +285,14 @@ namespace vFrame.Core.Dispatchers
             }
         }
 
+        /// <summary>
+        /// Tries to send a request and retrieve the response.
+        /// </summary>
+        /// <param name="payload">The request payload.</param>
+        /// <param name="response">The output response value.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns><c>true</c> if a handler exists and was invoked successfully; otherwise <c>false</c>.</returns>
         public bool TryRequest<TRequest, TResponse>(in TRequest payload, out TResponse response)
             where TRequest : IRequest<TResponse> {
             ThrowIfNotCreatedOrDestroyed();
@@ -225,11 +320,26 @@ namespace vFrame.Core.Dispatchers
             }
         }
 
+        /// <summary>
+        /// Registers a handler for the specified request type.
+        /// </summary>
+        /// <param name="handler">The request handler callback.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler)
             where TRequest : IRequest<TResponse> {
             return HandleRequestInternal<TRequest, TResponse>(handler, null);
         }
 
+        /// <summary>
+        /// Registers a handler for the specified request type, bound to the owner's lifetime.
+        /// </summary>
+        /// <param name="handler">The request handler callback.</param>
+        /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, BaseObject owner)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
@@ -238,12 +348,24 @@ namespace vFrame.Core.Dispatchers
             return subscription;
         }
 
+        /// <summary>
+        /// Registers a handler for the specified request type, bound to the given lifetime.
+        /// </summary>
+        /// <param name="handler">The request handler callback.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, ILifetime lifetime)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
             return HandleRequestInternal<TRequest, TResponse>(handler, lifetime);
         }
 
+        /// <summary>
+        /// Cancels the specified request handler subscription.
+        /// </summary>
+        /// <param name="subscription">The subscription handle to cancel.</param>
         public void UnhandleRequest(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
@@ -251,6 +373,10 @@ namespace vFrame.Core.Dispatchers
             subscription.Destroy();
         }
 
+        /// <summary>
+        /// Gets the current number of request subscriptions.
+        /// </summary>
+        /// <returns>The number of request subscriptions.</returns>
         public int GetRequestSubscriptionCount() {
             ThrowIfNotCreatedOrDestroyed();
             var count = 0;
@@ -266,11 +392,24 @@ namespace vFrame.Core.Dispatchers
 
         #region IDecisionDispatcher
 
+        /// <summary>
+        /// Listens for decisions of the specified type.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler)
             where TDecision : IDecision {
             return ListenDecisionInternal(handler, null);
         }
 
+        /// <summary>
+        /// Listens for decisions of the specified type, bound to the owner's lifetime.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, BaseObject owner)
             where TDecision : IDecision {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
@@ -279,12 +418,23 @@ namespace vFrame.Core.Dispatchers
             return subscription;
         }
 
+        /// <summary>
+        /// Listens for decisions of the specified type, bound to the given lifetime.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
             where TDecision : IDecision {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
             return ListenDecisionInternal(handler, lifetime);
         }
 
+        /// <summary>
+        /// Cancels the specified decision listener subscription.
+        /// </summary>
+        /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unlisten(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
@@ -292,6 +442,12 @@ namespace vFrame.Core.Dispatchers
             subscription.Destroy();
         }
 
+        /// <summary>
+        /// Initiates a decision vote; all listeners must approve for the result to be <c>true</c>.
+        /// </summary>
+        /// <param name="decision">The decision payload.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns><c>true</c> if all listeners approved; <c>false</c> if no listeners exist or any listener vetoed.</returns>
         public bool Decide<TDecision>(in TDecision decision)
             where TDecision : IDecision {
             ThrowIfNotCreatedOrDestroyed();
@@ -324,6 +480,10 @@ namespace vFrame.Core.Dispatchers
             return pass;
         }
 
+        /// <summary>
+        /// Gets the current number of decision subscriptions.
+        /// </summary>
+        /// <returns>The number of decision subscriptions.</returns>
         public int GetDecisionSubscriptionCount() {
             ThrowIfNotCreatedOrDestroyed();
             var count = 0;
@@ -337,6 +497,9 @@ namespace vFrame.Core.Dispatchers
 
         #region IDispatcher
 
+        /// <summary>
+        /// Removes all registered subscriptions.
+        /// </summary>
         public void RemoveAllSubscriptions() {
             ThrowIfNotCreatedOrDestroyed();
             ClearListSubscriptions(_eventSubscriptions);
@@ -345,6 +508,10 @@ namespace vFrame.Core.Dispatchers
             ClearListSubscriptions(_decisionSubscriptions);
         }
 
+        /// <summary>
+        /// Gets the total number of subscriptions across all types.
+        /// </summary>
+        /// <returns>The total subscription count.</returns>
         public int GetTotalSubscriptionCount() {
             ThrowIfNotCreatedOrDestroyed();
             return GetEventSubscriptionCount()
@@ -353,6 +520,10 @@ namespace vFrame.Core.Dispatchers
                    + GetDecisionSubscriptionCount();
         }
 
+        /// <summary>
+        /// Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
+        /// </summary>
+        /// <returns>A diagnostics snapshot with current subscription counts.</returns>
         public DiagnosticsSnapshot GetDiagnostics() {
             ThrowIfNotCreatedOrDestroyed();
             return new DiagnosticsSnapshot(
@@ -366,6 +537,9 @@ namespace vFrame.Core.Dispatchers
 
         #region Lifecycle
 
+        /// <summary>
+        /// Initializes subscription storage and the subscription object pool.
+        /// </summary>
         protected override void OnCreate() {
             _eventSubscriptions = new Dictionary<Type, List<Subscription>>();
             _commandSubscriptions = new Dictionary<Type, Subscription>();
@@ -376,6 +550,9 @@ namespace vFrame.Core.Dispatchers
             _subscriptionPool.Create();
         }
 
+        /// <summary>
+        /// Destroys all subscriptions and releases the subscription object pool.
+        /// </summary>
         protected override void OnDestroy() {
             ClearListSubscriptions(_eventSubscriptions);
             ClearSingleSubscriptions(_commandSubscriptions);

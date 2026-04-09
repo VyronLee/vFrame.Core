@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Configuration for Objects Comparer.
@@ -9,7 +9,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
     public class ComparisonSettings
     {
         /// <summary>
-        /// If true, all members which are not primitive types, do not have custom comparison rule and 
+        /// If true, all members which are not primitive types, do not have custom comparison rule and
         /// do not implement <see cref="IComparable"/> will be compared as separate objects using the same rules as current objects. True by default.
         /// </summary>
         public bool RecursiveComparison { get; set; }
@@ -20,7 +20,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         public bool EmptyAndNullEnumerablesEqual { get; set; }
 
         /// <summary>
-        /// If true and member does not exists, objects comparer will consider that this member is equal to default value of opposite member type. 
+        /// If true and member does not exists, objects comparer will consider that this member is equal to default value of opposite member type.
         /// Applicable for dynamic types comparison only. False by default.
         /// </summary>
         public bool UseDefaultIfMemberNotExist { get; set; }
@@ -28,7 +28,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         private readonly Dictionary<Tuple<Type, string>, object> _settings = new Dictionary<Tuple<Type, string>, object>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ComparisonSettings" /> class. 
+        /// Initializes a new instance of the <see cref="ComparisonSettings" /> class.
         /// </summary>
         public ComparisonSettings()
         {

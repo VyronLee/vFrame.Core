@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Utils
+namespace vFrame.Core
 {
     internal static class MemberInfoExtensions
     {

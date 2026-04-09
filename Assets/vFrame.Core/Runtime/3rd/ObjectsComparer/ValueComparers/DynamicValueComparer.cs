@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+namespace vFrame.Core
 {
     /// <summary>
     /// Allows to provide comparison rule as a function.
@@ -13,16 +13,16 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
         private readonly Func<T, string> _toStringFunction;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DynamicValueComparer{T}" /> class. 
+        /// Initializes a new instance of the <see cref="DynamicValueComparer{T}" /> class.
         /// </summary>
         /// <param name="compareFunction">Function to compare objects of type <see cref="T"/>.</param>
         public DynamicValueComparer(Func<T, T, ComparisonSettings, bool> compareFunction): this(compareFunction, obj => obj?.ToString() ?? string.Empty)
         {
-            
+
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DynamicValueComparer{T}" /> class. 
+        /// Initializes a new instance of the <see cref="DynamicValueComparer{T}" /> class.
         /// </summary>
         /// <param name="compareFunction">Function to compare objects of type <see cref="T"/>.</param>
         /// <param name="toStringFunction">Function to convert objects of type <see cref="T"/> to <see cref="string"/>.</param>
@@ -63,7 +63,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
         private void IsArgumentException(object obj, string argumentName)
         {
             var t = typeof(T).GetTypeInfo();
-            
+
             if (!(obj is T) && !((t.IsClass || Nullable.GetUnderlyingType(typeof(T)) != null) && obj == null))
             {
                 throw new ArgumentException(argumentName);

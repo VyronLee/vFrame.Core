@@ -1,17 +1,16 @@
-﻿//------------------------------------------------------------
-//       @file  Singleton.cs
-//      @brief  单件模板
+// ------------------------------------------------------------
+//         File: Singleton.cs
+//        Brief: Generic thread-safe singleton base class.
 //
-//     @author  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//   @internal
-//     Created  2016-07-28 15:19
-//   Copyright  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2016-07-28 15:19:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-using vFrame.Core.Base;
+using vFrame.Core;
 
-namespace vFrame.Core.Generic
+namespace vFrame.Core
 {
     public abstract class Singleton<T> : BaseObject where T : BaseObject, new()
     {
@@ -20,7 +19,7 @@ namespace vFrame.Core.Generic
         private static readonly object _lockObject = new object();
 
         /// <summary>
-        ///     销毁函数
+        ///     Clears the static instance reference when this singleton is destroyed.
         /// </summary>
         protected override void OnDestroy() {
             if (_instance == this) {
@@ -29,8 +28,9 @@ namespace vFrame.Core.Generic
         }
 
         /// <summary>
-        ///     获取单例
+        ///     Returns the singleton instance, creating it lazily if necessary.
         /// </summary>
+        /// <returns>The singleton instance of type <typeparamref name="T"/>.</returns>
         public static T Instance() {
             if (null == _instance) {
                 lock (_lockObject) {
@@ -43,8 +43,9 @@ namespace vFrame.Core.Generic
         }
 
         /// <summary>
-        ///     新建单例
+        ///     Creates and initializes a new singleton instance.
         /// </summary>
+        /// <returns>A newly created and initialized instance.</returns>
         private static T NewInstance() {
             var instance = new T();
             instance.Create();

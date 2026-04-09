@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal class DynamicObjectComparer : AbstractDynamicObjectsComprer<DynamicObject>
     {

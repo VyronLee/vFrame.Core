@@ -1,19 +1,16 @@
-//------------------------------------------------------------
-//        File:  ObjectPool.cs
-//       Brief:  ObjectPool
+// ------------------------------------------------------------
+//         File: ObjectPool.cs
+//        Brief: Generic object pool implementation supporting default construction and custom allocator modes
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-07-09 19:09
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-07-09 19:09:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System.Collections.Generic;
-using vFrame.Core.Base;
-using vFrame.Core.Exceptions;
-using vFrame.Core.Loggers;
 
-namespace vFrame.Core.ObjectPools
+namespace vFrame.Core
 {
     public abstract class ObjectPool : BaseObject, IObjectPool
     {
@@ -22,6 +19,7 @@ namespace vFrame.Core.ObjectPools
         /// <summary>
         /// Starts a new pooled use cycle.
         /// </summary>
+        /// <returns>An object from the pool.</returns>
         public object Get() {
             return OnGetInternal();
         }
@@ -29,13 +27,27 @@ namespace vFrame.Core.ObjectPools
         /// <summary>
         /// Ends the current pooled use cycle and applies pool-managed return policy.
         /// </summary>
+        /// <param name="obj">The object to return.</param>
         public void Return(object obj) {
             OnReturnInternal(obj);
         }
 
+        /// <summary>
+        /// Returns observable pool statistics.
+        /// </summary>
+        /// <returns>Current pool statistics snapshot.</returns>
         public abstract ObjectPoolStatistics GetStatistics();
 
+        /// <summary>
+        /// Internal typed get logic implemented by derived pools.
+        /// </summary>
+        /// <returns>An object from the pool.</returns>
         protected abstract object OnGetInternal();
+
+        /// <summary>
+        /// Internal typed return logic implemented by derived pools.
+        /// </summary>
+        /// <param name="obj">The object to return.</param>
         protected abstract void OnReturnInternal(object obj);
     }
 
@@ -51,12 +63,22 @@ namespace vFrame.Core.ObjectPools
         private Stack<TClass> _objects;
         private ObjectPoolStatistics _statistics;
 
+        /// <summary>
+        /// Creates a pool with default options.
+        /// </summary>
         public ObjectPool() : this(null) { }
 
+        /// <summary>
+        /// Creates a pool with the specified options.
+        /// </summary>
+        /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
         public ObjectPool(ObjectPoolOptions<TClass> options) {
             _options = options ?? new ObjectPoolOptions<TClass>();
         }
 
+        /// <summary>
+        /// Gets the lazily-initialized shared singleton instance.
+        /// </summary>
         public static ObjectPool<TClass> Shared {
             get {
                 if (null == _shared) {
@@ -72,6 +94,11 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Returns an object to the pool, applying destroy and overflow policies.
+        /// </summary>
+        /// <param name="obj">The object to return.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
         public void Return(TClass obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
 
@@ -112,6 +139,10 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Gets an object from the pool, creating a new instance if none is available.
+        /// </summary>
+        /// <returns>A pooled or newly created instance of <typeparamref name="TClass"/>.</returns>
         public new TClass Get() {
             TClass item;
             lock (_lockObject) {
@@ -132,6 +163,9 @@ namespace vFrame.Core.ObjectPools
             return item;
         }
 
+        /// <summary>
+        /// Initializes the pool storage and pre-populates with <see cref="ObjectPoolOptions{TClass}.InitialCapacity"/> instances.
+        /// </summary>
         protected override void OnCreate() {
             lock (_lockObject) {
                 _objects = new Stack<TClass>(_options.InitialCapacity);
@@ -147,6 +181,9 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Clears and releases all pooled instances.
+        /// </summary>
         protected override void OnDestroy() {
             lock (_lockObject) {
                 _objects?.Clear();
@@ -156,6 +193,10 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Returns a snapshot of current pool statistics.
+        /// </summary>
+        /// <returns>Current pool statistics.</returns>
         public override ObjectPoolStatistics GetStatistics() {
             lock (_lockObject) {
                 _statistics.CountInactive = _objects?.Count ?? 0;
@@ -164,10 +205,20 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Delegates to the typed <see cref="Get"/> method.
+        /// </summary>
+        /// <returns>An object from the pool.</returns>
         protected override object OnGetInternal() {
             return Get();
         }
 
+        /// <summary>
+        /// Validates type and delegates to the typed <see cref="Return(TClass)"/> method.
+        /// </summary>
+        /// <param name="obj">The object to return.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when <paramref name="obj"/> type does not match <typeparamref name="TClass"/>.</exception>
         protected override void OnReturnInternal(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
             ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
@@ -190,12 +241,22 @@ namespace vFrame.Core.ObjectPools
         private Stack<TClass> _objects;
         private ObjectPoolStatistics _statistics;
 
+        /// <summary>
+        /// Creates a pool with default options.
+        /// </summary>
         public ObjectPool() : this(null) { }
 
+        /// <summary>
+        /// Creates a pool with the specified options.
+        /// </summary>
+        /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
         public ObjectPool(ObjectPoolOptions<TClass> options) {
             _options = options ?? new ObjectPoolOptions<TClass>();
         }
 
+        /// <summary>
+        /// Gets the lazily-initialized shared singleton instance.
+        /// </summary>
         public static ObjectPool<TClass, TAllocator> Shared {
             get {
                 if (null == _shared) {
@@ -211,6 +272,10 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Gets an object from the pool, allocating via <typeparamref name="TAllocator"/> if none is available.
+        /// </summary>
+        /// <returns>A pooled or newly allocated instance of <typeparamref name="TClass"/>.</returns>
         public new TClass Get() {
             TClass item;
             lock (_lockObject) {
@@ -231,6 +296,11 @@ namespace vFrame.Core.ObjectPools
             return item;
         }
 
+        /// <summary>
+        /// Returns an object to the pool, applying reset, destroy, and overflow policies.
+        /// </summary>
+        /// <param name="obj">The object to return.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
         public void Return(TClass obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
 
@@ -272,6 +342,9 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Initializes the allocator, pool storage, and pre-populates with instances.
+        /// </summary>
         protected override void OnCreate() {
             _allocator = new TAllocator();
             lock (_lockObject) {
@@ -288,6 +361,9 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Clears and releases all pooled instances.
+        /// </summary>
         protected override void OnDestroy() {
             lock (_lockObject) {
                 _objects?.Clear();
@@ -297,6 +373,10 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Returns a snapshot of current pool statistics.
+        /// </summary>
+        /// <returns>Current pool statistics.</returns>
         public override ObjectPoolStatistics GetStatistics() {
             lock (_lockObject) {
                 _statistics.CountInactive = _objects?.Count ?? 0;
@@ -305,10 +385,20 @@ namespace vFrame.Core.ObjectPools
             }
         }
 
+        /// <summary>
+        /// Delegates to the typed <see cref="Get"/> method.
+        /// </summary>
+        /// <returns>An object from the pool.</returns>
         protected override object OnGetInternal() {
             return Get();
         }
 
+        /// <summary>
+        /// Validates type and delegates to the typed <see cref="Return(TClass)"/> method.
+        /// </summary>
+        /// <param name="obj">The object to return.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when <paramref name="obj"/> type does not match <typeparamref name="TClass"/>.</exception>
         protected override void OnReturnInternal(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
             ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));

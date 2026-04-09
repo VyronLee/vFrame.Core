@@ -3,9 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal class EnumerablesComparer : AbstractComparer, IComparerWithCondition
     {
@@ -46,7 +45,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
 
             if (array1.Length != array2.Length)
             {
-                yield return new Difference("", array1.Length.ToString(), array2.Length.ToString(), 
+                yield return new Difference("", array1.Length.ToString(), array2.Length.ToString(),
                     DifferenceTypes.NumberOfElementsMismatch);
                 yield break;
             }

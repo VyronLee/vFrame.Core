@@ -1,11 +1,27 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: LZ4Compressor.cs
+//        Brief: LZ4 algorithm-based compressor implementation
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-18 22:55:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.IO;
 using K4os.Compression.LZ4.Streams;
 
-namespace vFrame.Core.Compression
+namespace vFrame.Core
 {
     public class LZ4Compressor : Compressor
     {
+        /// <summary>
+        /// Compresses the input stream using the LZ4 algorithm.
+        /// </summary>
+        /// <param name="input">The stream containing data to compress.</param>
+        /// <param name="output">The stream to write compressed data to.</param>
+        /// <param name="onProgress">Progress callback (currently unused).</param>
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as LZ4CompressorOptions ?? new LZ4CompressorOptions();
             using (var encoder = LZ4Stream.Encode(output, options.Level, 0, true)) {
@@ -17,6 +33,12 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Decompresses the LZ4-compressed input stream.
+        /// </summary>
+        /// <param name="input">The stream containing LZ4-compressed data.</param>
+        /// <param name="output">The stream to write decompressed data to.</param>
+        /// <param name="onProgress">Progress callback (currently unused).</param>
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as LZ4CompressorOptions ?? new LZ4CompressorOptions();
             using (var decoder = LZ4Stream.Decode(input, null, true)) {

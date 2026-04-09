@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Implementation of <see cref="IValueComparer"/> which provides simplest implementation of <see cref="ToString(object)"/> method.

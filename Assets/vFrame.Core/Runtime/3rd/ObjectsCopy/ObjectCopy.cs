@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using vFrame.Core.Extensions;
 
-namespace vFrame.Core.ThirdParty.ObjectsCopy
+namespace vFrame.Core
 {
     internal static class ObjectCopy
     {

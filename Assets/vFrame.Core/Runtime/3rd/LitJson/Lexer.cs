@@ -15,7 +15,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     internal class FsmContext
     {

@@ -1,6 +1,6 @@
 //------------------------------------------------------------
 //        File:  ListPool.cs
-//       Brief:  ListPool
+//       Brief:  Object pool for List instances.
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -10,7 +10,7 @@
 
 using System.Collections.Generic;
 
-namespace vFrame.Core.ObjectPools.Builtin
+namespace vFrame.Core
 {
     public class ListPool<T> : ObjectPool<List<T>, ListAllocator<T>> { }
 }

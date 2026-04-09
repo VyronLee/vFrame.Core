@@ -1,17 +1,24 @@
-﻿using System;
+﻿// ------------------------------------------------------------
+//         File: BlockBasedCompression.cs
+//        Brief: Block-based compression and decompression with a structured file format
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-18 22:55:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.Buffers;
 using System.IO;
 using System.Linq;
 using System.Text;
-using vFrame.Core.Base;
-using vFrame.Core.Extensions;
+using vFrame.Core;
 // Compatibility-only dependency: Profiles remains available for legacy metadata/config paths,
 // but it is no longer a retained modernization investment area.
-using vFrame.Core.Profiles;
-using vFrame.Core.Utils;
 using ByteArrayPool = System.Buffers.ArrayPool<byte>;
 
-namespace vFrame.Core.Compression
+namespace vFrame.Core
 {
     public class BlockBasedCompressionHeader
     {
@@ -23,6 +30,10 @@ namespace vFrame.Core.Compression
         public long BlockTableOffset { get; set; }
         public string Md5 { get; set; }
 
+        /// <summary>
+        /// Returns the serialized size of the header in bytes.
+        /// </summary>
+        /// <returns>The header size in bytes.</returns>
         public static int GetStructSize() {
             return sizeof(long) * 3 + sizeof(int) * 3 + 32;
         }
@@ -33,13 +44,19 @@ namespace vFrame.Core.Compression
         private int _blockIterator;
         public BlockBasedCompressionBlockInfo[] BlockInfos;
 
+        /// <summary>
+        /// Finds the block info for the specified block index.
+        /// </summary>
+        /// <param name="blockIndex">Zero-based block index to look up.</param>
+        /// <returns>The matching block info, or <c>null</c> if not found.</returns>
+        /// <exception cref="BlockIndexOutOfRangeException">Thrown when <paramref name="blockIndex"/> is out of range.</exception>
         public BlockBasedCompressionBlockInfo FindBlock(int blockIndex) {
             if (null == BlockInfos) {
                 return null;
             }
 
             if (blockIndex < 0 || blockIndex >= BlockInfos.Length) {
-                throw new IndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException(0, BlockInfos.Length, blockIndex);
             }
 
             foreach (var blockInfo in BlockInfos) {
@@ -50,12 +67,17 @@ namespace vFrame.Core.Compression
             return null;
         }
 
+        /// <summary>
+        /// Adds a block info entry at the next available slot in the block table.
+        /// </summary>
+        /// <param name="blockInfo">The block info to add.</param>
+        /// <exception cref="BlockIndexOutOfRangeException">Thrown when the internal iterator is out of range.</exception>
         public void AddBlock(BlockBasedCompressionBlockInfo blockInfo) {
             if (null == BlockInfos) {
                 return;
             }
             if (_blockIterator < 0 || _blockIterator >= BlockInfos.Length) {
-                throw new IndexOutOfRangeException();
+                throw new BlockIndexOutOfRangeException();
             }
             BlockInfos[_blockIterator++] = blockInfo;
         }
@@ -71,14 +93,8 @@ namespace vFrame.Core.Compression
     }
 
     /// <summary>
-    ///     Block Based Compression
-    ///     File format:
-    ///     |- header
-    ///     |- block data 1
-    ///     |- block data 2
-    ///     |- block data 3
-    ///     |- ...
-    ///     |- block table
+    /// Block-based compression with a structured file format:
+    /// header, block data, and block table.
     /// </summary>
     public class BlockBasedCompression : BaseObject
     {
@@ -96,14 +112,26 @@ namespace vFrame.Core.Compression
 
         public bool SkipValidation { get; set; } = false;
 
+        /// <summary>
+        /// Initializes the byte array pool used for block compression buffers.
+        /// </summary>
         protected override void OnCreate() {
             _buffers = ByteArrayPool.Create();
         }
 
+        /// <summary>
+        /// Releases the byte array pool reference.
+        /// </summary>
         protected override void OnDestroy() {
             _buffers = null;
         }
 
+        /// <summary>
+        /// Reads and validates the compression header from the input stream.
+        /// </summary>
+        /// <param name="input">The input stream positioned at the header.</param>
+        /// <returns>The parsed header.</returns>
+        /// <exception cref="InvalidBlockBasedCompressionFormatException">Thrown when the header is malformed or validation fails.</exception>
         private BlockBasedCompressionHeader ReadHeader(Stream input) {
             var header = new BlockBasedCompressionHeader();
             try {
@@ -129,6 +157,11 @@ namespace vFrame.Core.Compression
             return header;
         }
 
+        /// <summary>
+        /// Writes the block table to the output stream at the offset recorded in the header.
+        /// </summary>
+        /// <param name="output">The output stream to write to.</param>
+        /// <param name="blockTable">The block table containing all block metadata.</param>
         private void WriteBlockTable(Stream output, BlockBasedCompressionBlockTable blockTable) {
             lock (_outputLock) {
                 output.Seek(_header.BlockTableOffset, SeekOrigin.Begin);
@@ -146,6 +179,13 @@ namespace vFrame.Core.Compression
 
         #region Compress
 
+        /// <summary>
+        /// Initializes the compression session by computing the header, block count, and
+        /// positioning the output stream past the header area.
+        /// </summary>
+        /// <param name="input">The input data stream.</param>
+        /// <param name="output">The output stream for compressed data.</param>
+        /// <param name="options">Compression configuration options.</param>
         protected void BeginCompress(Stream input, Stream output, BlockBasedCompressionOptions options) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("BeginCompress", id);
@@ -162,6 +202,10 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Finalizes the compression session by writing the header and block table.
+        /// </summary>
+        /// <param name="output">The output stream containing compressed data.</param>
         protected void EndCompress(Stream output) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("EndCompress", id);
@@ -179,10 +223,21 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Calculates the number of blocks needed to cover the remaining input data.
+        /// </summary>
+        /// <param name="input">The input stream.</param>
+        /// <param name="blockSize">The size of each block in bytes.</param>
+        /// <returns>The total number of blocks.</returns>
         private static int CalculateBlockCount(Stream input, int blockSize) {
             return (int)Math.Ceiling((input.Length - input.Position) / (double)blockSize);
         }
 
+        /// <summary>
+        /// Validates that the header contains expected magic ID, version, compressor type, and MD5.
+        /// </summary>
+        /// <param name="header">The header to validate.</param>
+        /// <returns><c>true</c> if the header is valid; otherwise <c>false</c>.</returns>
         private static bool ValidateHeader(BlockBasedCompressionHeader header) {
             var ret = true;
             ret &= header.Id == BlockBasedCompressionConst.Id;
@@ -192,6 +247,12 @@ namespace vFrame.Core.Compression
             return ret;
         }
 
+        /// <summary>
+        /// Creates a compression header from the input stream and options.
+        /// </summary>
+        /// <param name="input">The input stream to compute MD5 and block count from.</param>
+        /// <param name="options">Compression configuration options.</param>
+        /// <returns>A fully initialized compression header.</returns>
         private static BlockBasedCompressionHeader CreateHeader(Stream input, BlockBasedCompressionOptions options) {
             var blockCount = CalculateBlockCount(input, options.BlockSize);
             var md5 = MessageDigestUtils.MD5(input);
@@ -206,6 +267,11 @@ namespace vFrame.Core.Compression
             return header;
         }
 
+        /// <summary>
+        /// Creates an empty block table pre-allocated for the given header's block count.
+        /// </summary>
+        /// <param name="header">The compression header containing the block count.</param>
+        /// <returns>A new block table with pre-allocated block info slots.</returns>
         private static BlockBasedCompressionBlockTable CreateBlockTable(BlockBasedCompressionHeader header) {
             var blockTable = new BlockBasedCompressionBlockTable {
                 BlockInfos = new BlockBasedCompressionBlockInfo[header.BlockCount]
@@ -213,6 +279,11 @@ namespace vFrame.Core.Compression
             return blockTable;
         }
 
+        /// <summary>
+        /// Writes the compression header to the beginning of the output stream.
+        /// </summary>
+        /// <param name="output">The output stream.</param>
+        /// <param name="header">The header to write.</param>
         private void WriteHeader(Stream output, BlockBasedCompressionHeader header) {
             lock (_outputLock) {
                 output.Seek(_outputStart, SeekOrigin.Begin);
@@ -228,6 +299,14 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Compresses a single block from the input stream and appends it to the output stream.
+        /// Thread-safe: acquires input and output locks internally.
+        /// </summary>
+        /// <param name="input">The input data stream.</param>
+        /// <param name="output">The output stream for compressed data.</param>
+        /// <param name="options">Compression configuration options.</param>
+        /// <param name="blockIndex">Zero-based index of the block to compress.</param>
         protected void SafeCompress(Stream input,
             Stream output,
             BlockBasedCompressionOptions options,
@@ -249,6 +328,15 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Reads a raw block of data from the input stream under the input lock.
+        /// </summary>
+        /// <param name="input">The input data stream.</param>
+        /// <param name="options">Compression options containing block size.</param>
+        /// <param name="blockIndex">Zero-based block index to read.</param>
+        /// <param name="dataBuffer">Rented buffer to receive the raw block data.</param>
+        /// <param name="dataLength">The number of bytes actually read.</param>
+        /// <exception cref="DataNotEnoughException">Thrown when the block offset exceeds the stream length.</exception>
         private void SafeReadRawBlockData(Stream input,
             BlockBasedCompressionOptions options,
             int blockIndex,
@@ -262,11 +350,20 @@ namespace vFrame.Core.Compression
                     throw new DataNotEnoughException();
                 }
 
-                // Read data
                 dataLength = input.Read(dataBuffer, 0, options.BlockSize);
             }
         }
 
+        /// <summary>
+        /// Compresses a block of data in memory. If the compressed output is larger than the input,
+        /// the original uncompressed data is used instead.
+        /// </summary>
+        /// <param name="dataBuffer">Buffer containing the raw data.</param>
+        /// <param name="dataLength">Length of the raw data in bytes.</param>
+        /// <param name="options">Compression options specifying the compressor and settings.</param>
+        /// <param name="outBuffer">Rented buffer to receive the output data.</param>
+        /// <param name="outLength">The number of bytes written to <paramref name="outBuffer"/>.</param>
+        /// <param name="compressed"><c>true</c> if the data was compressed; <c>false</c> if stored raw.</param>
         private void SafeBufferedCompress(byte[] dataBuffer,
             int dataLength,
             BlockBasedCompressionOptions options,
@@ -275,12 +372,11 @@ namespace vFrame.Core.Compression
             out bool compressed) {
             using (var compressor = CompressorPool.Instance().Rent(options.CompressorType, options.CompressOptions)) {
                 using (var inStream = new MemoryStream(dataBuffer, 0, dataLength)) {
-                    //using (var outStream = new MemoryStream(outBuffer)) {  //System.NotSupportedException: Memory stream is not expandable.
                     using (var outStream = new MemoryStream(dataLength)) {
                         outStream.SetLength(0);
                         compressor.Compress(inStream, outStream);
 
-                        if (outStream.Length > outBuffer.Length) { // Discard if size is larger after compressed.
+                        if (outStream.Length > outBuffer.Length) {
                             Array.Copy(dataBuffer, 0, outBuffer, 0, dataLength);
                             outLength = dataLength;
                             compressed = false;
@@ -295,6 +391,13 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Writes compressed block data to the output stream under the output lock.
+        /// </summary>
+        /// <param name="output">The output stream.</param>
+        /// <param name="dataBuffer">Buffer containing the data to write.</param>
+        /// <param name="dataLength">Number of bytes to write from <paramref name="dataBuffer"/>.</param>
+        /// <param name="offset">The output stream position where the data was written.</param>
         private void SafeWriteCompressedDataToOutput(Stream output, byte[] dataBuffer, int dataLength,
             out long offset) {
             lock (_outputLock) {
@@ -303,11 +406,20 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Records block metadata into the block table under the block table lock.
+        /// </summary>
+        /// <param name="blockIndex">Zero-based block index.</param>
+        /// <param name="offset">Offset of the block data in the output stream.</param>
+        /// <param name="originSize">Original uncompressed size of the block.</param>
+        /// <param name="compressedSize">Compressed size of the block.</param>
+        /// <param name="compressed">Whether the block was actually compressed.</param>
+        /// <exception cref="BlockIndexOutOfRangeException">Thrown when <paramref name="blockIndex"/> is out of range.</exception>
         private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize,
             bool compressed) {
             lock (_blockTable) {
                 if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
-                    throw new IndexOutOfRangeException();
+                    throw new BlockIndexOutOfRangeException();
                 }
 
                 var blockInfo = new BlockBasedCompressionBlockInfo {
@@ -326,6 +438,12 @@ namespace vFrame.Core.Compression
 
         #region Decompress
 
+        /// <summary>
+        /// Initializes the decompression session by reading the header and block table
+        /// from the input stream, and positioning the output stream.
+        /// </summary>
+        /// <param name="input">The compressed input stream.</param>
+        /// <param name="output">The output stream for decompressed data.</param>
         protected void BeginDecompress(Stream input, Stream output) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("BeginDecompress", id);
@@ -344,6 +462,11 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Finalizes the decompression session by optionally validating the output MD5 hash.
+        /// </summary>
+        /// <param name="output">The output stream containing decompressed data.</param>
+        /// <exception cref="HashNotMatchException">Thrown when MD5 validation fails and <see cref="SkipValidation"/> is <c>false</c>.</exception>
         protected void EndDecompress(Stream output) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("EndDecompress", id);
@@ -362,6 +485,11 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Reads the block table from the input stream at the offset specified in the header.
+        /// </summary>
+        /// <param name="input">The compressed input stream.</param>
+        /// <returns>The populated block table.</returns>
         private BlockBasedCompressionBlockTable ReadBlockTable(Stream input) {
             var blockTable = new BlockBasedCompressionBlockTable {
                 BlockInfos = new BlockBasedCompressionBlockInfo[_header.BlockCount]
@@ -385,6 +513,13 @@ namespace vFrame.Core.Compression
             return blockTable;
         }
 
+        /// <summary>
+        /// Decompresses a single block from the input stream and writes it to the output stream.
+        /// Thread-safe: acquires input and output locks internally.
+        /// </summary>
+        /// <param name="input">The compressed input stream.</param>
+        /// <param name="output">The output stream for decompressed data.</param>
+        /// <param name="blockIndex">Zero-based index of the block to decompress.</param>
         protected void SafeDecompress(Stream input, Stream output, int blockIndex) {
             PerfProfile.Start(out var id);
             PerfProfile.Pin("SafeDecompress, blockIndex: " + blockIndex, id);
@@ -402,6 +537,17 @@ namespace vFrame.Core.Compression
             PerfProfile.Unpin(id);
         }
 
+        /// <summary>
+        /// Reads a compressed block from the input stream under the input lock.
+        /// </summary>
+        /// <param name="input">The compressed input stream.</param>
+        /// <param name="blockIndex">Zero-based block index to read.</param>
+        /// <param name="dataBuffer">Rented buffer to receive the compressed data.</param>
+        /// <param name="dataLength">The number of bytes read into <paramref name="dataBuffer"/>.</param>
+        /// <param name="compressed"><c>true</c> if the block was stored compressed.</param>
+        /// <exception cref="BlockTableDataErrorException">Thrown when the block info is not found in the table.</exception>
+        /// <exception cref="DataNotEnoughException">Thrown when the stream does not contain enough data.</exception>
+        /// <exception cref="BufferSizeTooSmallException">Thrown when the rented buffer is too small for the block data.</exception>
         private void SafeReadCompressedBlockData(Stream input,
             int blockIndex,
             ref byte[] dataBuffer,
@@ -415,7 +561,6 @@ namespace vFrame.Core.Compression
             lock (_inputLock) {
                 input.Seek(blockInfo.BlockOffset, SeekOrigin.Begin);
 
-                // Read data
                 if (input.Position + blockInfo.CompressedSize >= input.Length) {
                     throw new DataNotEnoughException();
                 }
@@ -433,6 +578,13 @@ namespace vFrame.Core.Compression
             compressed = blockInfo.Compressed;
         }
 
+        /// <summary>
+        /// Writes decompressed raw data to the output stream at the correct block position.
+        /// </summary>
+        /// <param name="output">The output stream.</param>
+        /// <param name="dataBuffer">Buffer containing the decompressed data.</param>
+        /// <param name="dataLength">Number of bytes to write.</param>
+        /// <param name="blockIndex">Zero-based block index used to compute the output position.</param>
         private void SafeWriteRawDataToOutput(Stream output, byte[] dataBuffer, int dataLength, int blockIndex) {
             lock (_outputLock) {
                 output.Seek(_outputStart + blockIndex * (long)_header.BlockSize, SeekOrigin.Begin);
@@ -440,6 +592,15 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Decompresses a block of data in memory. If the block was not compressed, the data is copied as-is.
+        /// </summary>
+        /// <param name="dataBuffer">Buffer containing the block data.</param>
+        /// <param name="dataLength">Length of the data in bytes.</param>
+        /// <param name="compressed">Whether the data was compressed.</param>
+        /// <param name="outBuffer">Rented buffer to receive the decompressed output.</param>
+        /// <param name="outLength">The number of bytes written to <paramref name="outBuffer"/>.</param>
+        /// <exception cref="BufferSizeTooLargeException">Thrown when decompressed output exceeds <see cref="int.MaxValue"/>.</exception>
         private void SafeBufferedDecompress(byte[] dataBuffer,
             int dataLength,
             bool compressed,

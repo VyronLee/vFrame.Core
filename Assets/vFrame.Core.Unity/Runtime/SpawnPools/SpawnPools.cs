@@ -1,23 +1,23 @@
-//------------------------------------------------------------
-//        File:  SpawnPools.cs
-//       Brief:  Spawn pools.
+// ------------------------------------------------------------
+//         File: SpawnPools.cs
+//        Brief: Retained Unity-side instance reuse layer for
+//                prefab and GameObject pooling with spawn, recycle,
+//                preload, and async/update lifecycle management.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-09-08 23:44
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-09-08 23:44:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using vFrame.Core.Base;
-using vFrame.Core.ObjectPools.Builtin;
-using vFrame.Core.Unity.Asynchronous;
-using vFrame.Core.Unity.Extensions;
+using vFrame.Core;
+using vFrame.Core.Unity;
 
-namespace vFrame.Core.Unity.SpawnPools
+namespace vFrame.Core.Unity
 {
     /// <summary>
     /// Retained Unity-side instance reuse layer for prefab and <see cref="GameObject"/> pooling.
@@ -40,6 +40,7 @@ namespace vFrame.Core.Unity.SpawnPools
         /// <summary>
         /// Ends the current usage cycle for a pooled object and returns it to its matching pool.
         /// </summary>
+        /// <param name="obj">The spawned object to recycle.</param>
         public void Recycle(GameObject obj) {
             ThrowIfDestroyed();
 
@@ -55,6 +56,8 @@ namespace vFrame.Core.Unity.SpawnPools
         /// Starts pool warm-up for the requested asset paths. This prepares retained instance reuse
         /// behavior only and does not shift SpawnPools into resource ownership.
         /// </summary>
+        /// <param name="assetPaths">Array of asset paths to preload into pools.</param>
+        /// <returns>An <see cref="IPreloadAsyncRequest"/> that completes when preloading is done.</returns>
         public IPreloadAsyncRequest PreloadAsync(string[] assetPaths) {
             ThrowIfDestroyed();
 
@@ -113,6 +116,9 @@ namespace vFrame.Core.Unity.SpawnPools
         /// <summary>
         /// Gets a pooled or newly loaded instance for immediate use.
         /// </summary>
+        /// <param name="assetPath">Asset path identifying the prefab to spawn.</param>
+        /// <param name="parent">Optional parent transform; defaults to the pool root.</param>
+        /// <returns>A spawned <see cref="GameObject"/> ready for use.</returns>
         public GameObject Spawn(string assetPath, Transform parent = null) {
             ThrowIfDestroyed();
             return GetPool(assetPath).Spawn(parent);
@@ -122,6 +128,9 @@ namespace vFrame.Core.Unity.SpawnPools
         /// Starts an async instance acquire flow. Completion is driven by <see cref="Update"/>
         /// and still resolves through the retained pooling model.
         /// </summary>
+        /// <param name="assetPath">Asset path identifying the prefab to spawn.</param>
+        /// <param name="parent">Optional parent transform; defaults to the pool root.</param>
+        /// <returns>An <see cref="ILoadAsyncRequest"/> that delivers the spawned object on completion.</returns>
         public ILoadAsyncRequest SpawnAsync(string assetPath, Transform parent = null) {
             ThrowIfDestroyed();
 
@@ -130,6 +139,11 @@ namespace vFrame.Core.Unity.SpawnPools
             return request;
         }
 
+        /// <summary>
+        /// Retrieves an existing pool for the asset path or creates a new one.
+        /// </summary>
+        /// <param name="assetPath">Asset path used as the pool key.</param>
+        /// <returns>The <see cref="IPool"/> managing instances for the given path.</returns>
         private IPool GetPool(string assetPath) {
             if (_pools.TryGetValue(assetPath, out var pool)) {
                 return pool;
@@ -140,6 +154,11 @@ namespace vFrame.Core.Unity.SpawnPools
             return pool;
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Pool"/> bound to the given asset path using the configured loader factory.
+        /// </summary>
+        /// <param name="assetPath">Asset path the pool will manage.</param>
+        /// <returns>A newly created <see cref="Pool"/>, or null if the loader cannot be created.</returns>
         private Pool CreatePool(string assetPath) {
             if (!(_loaderFactory.CreateLoader(assetPath) is IGameObjectLoader builder)) {
                 return null;
@@ -149,6 +168,11 @@ namespace vFrame.Core.Unity.SpawnPools
             return pool;
         }
 
+        /// <summary>
+        /// Initializes the spawn pools runtime with the given loader factory and settings.
+        /// </summary>
+        /// <param name="factory">Factory used to create per-asset loaders; falls back to a default when null.</param>
+        /// <param name="settings">Configuration governing capacity, lifetime, and GC behavior.</param>
         protected override void OnCreate(IGameObjectLoaderFactory factory, SpawnPoolsSettings settings) {
             _loaderFactory = factory ?? new DefaultGameObjectLoaderFactory();
             _comparison = CompareBySpawnedTimes;
@@ -166,6 +190,9 @@ namespace vFrame.Core.Unity.SpawnPools
             };
         }
 
+        /// <summary>
+        /// Tears down all pools, async controllers, and the root container.
+        /// </summary>
         protected override void OnDestroy() {
             Clear();
 
@@ -197,6 +224,12 @@ namespace vFrame.Core.Unity.SpawnPools
             _pools.Clear();
         }
 
+        /// <summary>
+        /// Comparison delegate that orders pool names by descending spawn count for eviction.
+        /// </summary>
+        /// <param name="poolNameA">First pool name.</param>
+        /// <param name="poolNameB">Second pool name.</param>
+        /// <returns>A negative, zero, or positive value as per standard comparison semantics.</returns>
         private int CompareBySpawnedTimes(string poolNameA, string poolNameB) {
             return _pools[poolNameB].SpawnedTimes.CompareTo(_pools[poolNameA].SpawnedTimes);
         }

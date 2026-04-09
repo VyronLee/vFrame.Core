@@ -63,7 +63,7 @@ namespace vFrame.Core.Benchmarks.Editor
 
         public static BenchmarkResult Measure(string name, int warmupIterations, int measureIterations, Action action) {
             if (string.IsNullOrEmpty(name)) {
-                throw new ArgumentException("Value cannot be null or empty.", nameof(name));
+                throw new ArgumentException("Value cannot be null or empty: " + nameof(name));
             }
             if (action == null) {
                 throw new ArgumentNullException(nameof(action));

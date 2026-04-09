@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Allows to compare strings considering that null and empty string are equal.

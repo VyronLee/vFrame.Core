@@ -1,12 +1,29 @@
-﻿using System;
+// ------------------------------------------------------------
+//         File: ZStdCompressor.cs
+//        Brief: Zstandard-based compressor implementation for
+//               stream compression and decompression.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-19 11:52:02
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.IO;
 using System.IO.Compression;
 using vFrame.Core.ThirdParty.ZStd;
 
-namespace vFrame.Core.Compression
+namespace vFrame.Core
 {
     public class ZStdCompressor : Compressor
     {
+        /// <summary>
+        /// Compresses data from the input stream to the output stream using Zstandard.
+        /// </summary>
+        /// <param name="input">The stream containing uncompressed data.</param>
+        /// <param name="output">The stream to receive compressed data.</param>
+        /// <param name="onProgress">Optional progress callback with (processedBytes, totalBytes).</param>
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as ZStdCompressorOptions ?? new ZStdCompressorOptions();
             using (var encoder = new ZstandardStream(output, CompressionMode.Compress, true)) {
@@ -20,6 +37,12 @@ namespace vFrame.Core.Compression
             }
         }
 
+        /// <summary>
+        /// Decompresses data from the input stream to the output stream using Zstandard.
+        /// </summary>
+        /// <param name="input">The stream containing Zstandard-compressed data.</param>
+        /// <param name="output">The stream to receive decompressed data.</param>
+        /// <param name="onProgress">Optional progress callback with (processedBytes, totalBytes).</param>
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as ZStdCompressorOptions ?? new ZStdCompressorOptions();
             using (var decoder = new ZstandardStream(input, CompressionMode.Decompress, true)) {

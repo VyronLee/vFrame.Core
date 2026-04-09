@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal abstract class AbstractDynamicObjectsComprer<T>: AbstractComparer, IComparerWithCondition
     {
@@ -75,7 +74,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
                 if (value1 != null && value2 != null && value1.GetType() != value2.GetType())
                 {
                     var valueComparer2 = OverridesCollection.GetComparer(value2.GetType()) ??
-                        OverridesCollection.GetComparer(propertyKey) ?? 
+                        OverridesCollection.GetComparer(propertyKey) ??
                         DefaultValueComparer;
                     yield return new Difference(propertyKey, valueComparer.ToString(value1), valueComparer2.ToString(value2),
                         DifferenceTypes.TypeMismatch);
@@ -86,7 +85,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
                 if (value1 == null && value2 != null && value2.GetType().GetTypeInfo().IsValueType ||
                     value2 == null && value1 != null && value1.GetType().GetTypeInfo().IsValueType)
                 {
-                    var valueComparer2 = value2 != null ? 
+                    var valueComparer2 = value2 != null ?
                         OverridesCollection.GetComparer(value2.GetType()) ?? OverridesCollection.GetComparer(propertyKey) ?? DefaultValueComparer :
                         DefaultValueComparer;
                     yield return new Difference(propertyKey, valueComparer.ToString(value1), valueComparer2.ToString(value2),
@@ -119,7 +118,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
         public abstract bool SkipMember(Type type, MemberInfo member);
 
         protected abstract IList<string> GetProperties(T obj);
-        
+
         protected abstract bool TryGetMemberValue(T obj, string propertyName, out object value);
     }
 }

@@ -1,6 +1,6 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 //        File:  StackPool.cs
-//       Brief:  Stack pool.
+//       Brief:  Object pool for Stack instances.
 //
 //      Author:  VyronLee, lwz_jz@hotmail.com
 //
@@ -10,7 +10,7 @@
 
 using System.Collections.Generic;
 
-namespace vFrame.Core.ObjectPools.Builtin
+namespace vFrame.Core
 {
     public class StackPool<T> : ObjectPool<Stack<T>, StackAllocator<T>> { }
 }

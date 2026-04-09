@@ -17,7 +17,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     internal enum Condition
     {

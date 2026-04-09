@@ -1,6 +1,6 @@
 using NUnit.Framework;
-using vFrame.Core.Base;
-using vFrame.Core.ObjectPools;
+using vFrame.Core;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode.ObjectPools
 {

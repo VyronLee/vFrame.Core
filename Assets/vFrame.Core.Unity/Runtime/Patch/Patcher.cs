@@ -1,18 +1,24 @@
-﻿using System;
+﻿// ------------------------------------------------------------
+//         File: Patcher.cs
+//        Brief: Orchestrates the patch update lifecycle: version check, download, and hash validation.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-16 22:32:14
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using UnityEngine;
-using vFrame.Core.Exceptions;
-// Compatibility-only dependency: Patch currently still bridges through the legacy Downloader,
-// which remains an exit-line subsystem rather than a retained Unity runtime direction.
-using vFrame.Core.Unity.Download;
-using vFrame.Core.Unity.Utils;
-using Logger = vFrame.Core.Loggers.Logger;
+using vFrame.Core;
+using vFrame.Core.Unity;
 using Object = UnityEngine.Object;
 
-namespace vFrame.Core.Unity.Patch
+namespace vFrame.Core.Unity
 {
     public class Patcher
     {
@@ -114,10 +120,15 @@ namespace vFrame.Core.Unity.Patch
         private int _totalWaitToDownload;
 
         /// <summary>
-        ///     Update confirm callback.
+        ///     Callback invoked to confirm an update before downloading starts.
+        ///     Receives the total download size and a continuation action.
         /// </summary>
         public Action<ulong, Action> OnUpdateConfirm;
 
+        /// <summary>
+        ///     Initializes the patcher with the specified options.
+        /// </summary>
+        /// <param name="options">Configuration options for the patch process.</param>
         public Patcher(PatchOptions options) {
             _options = options;
             _storagePath = options.storagePath.NormalizeDirectoryPath();
@@ -135,9 +146,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Return cdnUrl, prefer value specified in remoteVersion manifest, then option's.
+        ///     Gets or sets the CDN URL. Prefers the remote version manifest value, then the option value.
         /// </summary>
-        /// <exception cref="WebException"></exception>
+        /// <exception cref="WebException">Thrown if no CDN URL is available.</exception>
         public string CdnUrl {
             get {
                 if (!string.IsNullOrEmpty(_cdnUrl)) {
@@ -157,7 +168,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Return downloadUrl specified in remoteVersion manifest.
+        ///     Gets the full game download URL specified in the remote version manifest.
         /// </summary>
         public string DownloadUrl {
             get {
@@ -169,125 +180,125 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Return current validated hash number.
+        ///     Gets the number of assets that have been hash-validated so far.
         /// </summary>
         public int HashNum => _hashChecker ? _hashChecker.HashNum : 0;
 
         /// <summary>
-        ///     Return total hash number.
+        ///     Gets the total number of assets to hash-validate.
         /// </summary>
         public int HashTotal => _hashChecker ? _hashChecker.HashTotal : 0;
 
         /// <summary>
-        ///     Return local engine version.
+        ///     Gets the local engine version string.
         /// </summary>
         public string EngineVersion => null != _localManifest ? _localManifest.EngineVersion.ToString() : string.Empty;
 
         /// <summary>
-        ///     Return local assets version.
+        ///     Gets the local assets version string.
         /// </summary>
         public string AssetsVersion => null != _localManifest ? _localManifest.AssetsVersion.ToString() : string.Empty;
 
         /// <summary>
-        ///     Return remote engine version.
+        ///     Gets the remote engine version string.
         /// </summary>
         public string RemoteEngineVersion =>
             null != _remoteVersion ? _remoteVersion.EngineVersion.ToString() : string.Empty;
 
         /// <summary>
-        ///     Return remote assets version.
+        ///     Gets the remote assets version string.
         /// </summary>
         public string RemoteAssetsVersion =>
             null != _remoteVersion ? _remoteVersion.AssetsVersion.ToString() : string.Empty;
 
         /// <summary>
-        ///     Total size need to download
+        ///     Gets the total size in bytes that needs to be downloaded.
         /// </summary>
         public ulong TotalSize { get; private set; }
 
         /// <summary>
-        ///     Return current download speed
+        ///     Gets the current download speed in bytes per second.
         /// </summary>
         public float DownloadSpeed => _downloader.Speed;
 
         /// <summary>
-        ///     Is Download paused?
+        ///     Gets whether the download is currently paused.
         /// </summary>
         public bool IsPaused => _downloader.IsPaused;
 
         /// <summary>
-        ///     Return current update state.
+        ///     Gets the current update state.
         /// </summary>
         public UpdateState UpdateState { get; private set; } = UpdateState.Unchecked;
 
         /// <summary>
-        ///     Update event callback.
+        ///     Event raised when the patch update state changes.
         /// </summary>
         public event Action<UpdateEvent> OnUpdateEvent;
 
         /// <summary>
-        ///     Initial patcher.
+        ///     Initializes the patcher by loading local and temporary manifests.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         public IEnumerator Initialize() {
             yield return InitManifest();
             _initialized = true;
         }
 
         /// <summary>
-        ///     Pause download.
+        ///     Pauses the active download.
         /// </summary>
         public void Pause() {
             _downloader.Pause();
         }
 
         /// <summary>
-        ///     Resume download.
+        ///     Resumes a paused download.
         /// </summary>
         public void Resume() {
             _downloader.Resume();
         }
 
         /// <summary>
-        ///     Stop download.
+        ///     Stops all active downloads.
         /// </summary>
         public void Stop() {
             _downloader.RemoveAllDownloads();
         }
 
         /// <summary>
-        ///     Return local manifest
+        ///     Returns the local manifest.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The local Manifest instance.</returns>
         public Manifest GetLocalManifest() {
             return _localManifest;
         }
 
         /// <summary>
-        ///     Return remote version manifest
+        ///     Returns the remote version manifest.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The remote VersionManifest instance.</returns>
         public VersionManifest GetRemoteVersionManifest() {
             return _remoteVersion;
         }
 
         /// <summary>
-        ///     Release patcher.
+        ///     Releases all resources held by the patcher.
         /// </summary>
         public void Release() {
             if (_hashChecker) {
-                Object.Destroy(_hashChecker.gameObject);
+                UnityEngine.Object.Destroy(_hashChecker.gameObject);
             }
 
             if (_downloader) {
-                Object.Destroy(_downloader.gameObject);
+                UnityEngine.Object.Destroy(_downloader.gameObject);
             }
 
             _initialized = false;
         }
 
         /// <summary>
-        ///     Check for update
+        ///     Starts the update check by downloading the remote version file.
         /// </summary>
         public void CheckUpdate() {
             if (!_initialized) {
@@ -319,7 +330,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Start update from remote, must call CheckUpdate first
+        ///     Starts downloading assets. Must call <see cref="CheckUpdate"/> first.
         /// </summary>
         public void StartUpdate() {
             if (!_initialized) {
@@ -346,11 +357,13 @@ namespace vFrame.Core.Unity.Patch
 
         #region private methods
 
+        /// <summary>
+        ///     Loads the local and temporary manifests.
+        /// </summary>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         private IEnumerator InitManifest() {
-            // local
             yield return LoadLocalManifest();
 
-            // temp
             if (File.Exists(_tempManifestPath)) {
                 _tempManifest.Parse(_tempManifestPath);
                 if (!_tempManifest.Loaded) {
@@ -359,8 +372,11 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Loads the local manifest from the streaming assets path or cache.
+        /// </summary>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         private IEnumerator LoadLocalManifest() {
-            // Find the cached manifest file
             Manifest cachedManifest = null;
             if (File.Exists(_cacheManifestPath)) {
                 Logger.Info(PatchConst.LogTag, "Cache manifest found at path: {0}, parsing..", _cacheManifestPath);
@@ -373,7 +389,6 @@ namespace vFrame.Core.Unity.Patch
                 }
             }
 
-            // Load local manifest in app package
             var localManifestPath = Path.Combine(Application.streamingAssetsPath, _options.manifestFilename);
             var localVersionPath = Path.Combine(Application.streamingAssetsPath, _options.versionFilename);
 
@@ -422,6 +437,9 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Downloads the remote version file and triggers version comparison.
+        /// </summary>
         private void DownloadVersion() {
             var versionUrl = _options.versionUrl;
             if (string.IsNullOrEmpty(versionUrl)) {
@@ -450,6 +468,9 @@ namespace vFrame.Core.Unity.Patch
             UpdateState = UpdateState.DownloadingVersion;
         }
 
+        /// <summary>
+        ///     Parses the downloaded version file and determines the update state.
+        /// </summary>
         private void ParseVersion() {
             _remoteVersion.ParseVersion(_cacheVersionPath);
             if (!_remoteVersion.VersionLoaded) {
@@ -485,6 +506,9 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Downloads the remote manifest file.
+        /// </summary>
         private void DownloadManifest() {
             var url = PathUtils.Combine(CdnUrl, _options.manifestFilename);
 
@@ -505,6 +529,9 @@ namespace vFrame.Core.Unity.Patch
             UpdateState = UpdateState.DownloadingManifest;
         }
 
+        /// <summary>
+        ///     Parses the downloaded manifest file and starts the update process.
+        /// </summary>
         private void ParseManifest() {
             _remoteManifest.Parse(_tempManifestPath);
 
@@ -518,6 +545,9 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Computes the diff between local and remote manifests and starts downloading.
+        /// </summary>
         private void DoUpdate() {
             UpdateState = UpdateState.Updating;
 
@@ -531,7 +561,6 @@ namespace vFrame.Core.Unity.Patch
 
             _downloader.RemoveAllDownloads();
 
-            // Temporary manifest exists, resuming previous download
             if (_tempManifest.Loaded &&
                 _tempManifest.GameVersionCompareTo(_remoteManifest) == 0 &&
                 _tempManifest.AssetsVersionCompareTo(_remoteManifest) == 0) {
@@ -559,10 +588,8 @@ namespace vFrame.Core.Unity.Patch
                 }
             }
             else {
-                // Temporary manifest not exists or out of date,
                 var diffDic = _localManifest.GenDiff(_remoteManifest);
 
-                // Save assets state which has not changed.
                 var assets = _remoteManifest.GetAssets();
                 foreach (var kv in assets) {
                     var assetName = kv.Key;
@@ -606,6 +633,11 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Sums the sizes of all assets in the list.
+        /// </summary>
+        /// <param name="assets">List of assets to total.</param>
+        /// <returns>Total size in bytes, with a minimum of 1.</returns>
         private ulong CalculateTotalSize(List<AssetInfo> assets) {
             ulong size = 0;
             foreach (var asset in assets) {
@@ -615,6 +647,9 @@ namespace vFrame.Core.Unity.Patch
             return size > 0 ? size : 1;
         }
 
+        /// <summary>
+        ///     Retries downloading all previously failed assets.
+        /// </summary>
         private void DownloadFailedAssets() {
             if (_failedUnits.Count == 0) {
                 return;
@@ -636,6 +671,9 @@ namespace vFrame.Core.Unity.Patch
             BatchDownload();
         }
 
+        /// <summary>
+        ///     Enqueues all pending download units with the downloader.
+        /// </summary>
         private void BatchDownload() {
             if (_downloadUnits.Count <= 0) {
                 OnDownloadUnitsFinished();
@@ -658,10 +696,12 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Called when all download units have completed (success or failure).
+        /// </summary>
         private void OnDownloadUnitsFinished() {
             Logger.Info(PatchConst.LogTag, "Download Finish - {0} download failed.", _failedUnits.Count);
 
-            // Release file locks.
             _downloader.RemoveAllDownloads();
 
             if (_failedUnits.Count > 0) {
@@ -673,17 +713,23 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Marks the update as failed with the specified event code.
+        /// </summary>
+        /// <param name="code">Event code indicating the failure reason.</param>
         private void UpdateFailed(UpdateEvent.EventCode code = UpdateEvent.EventCode.UpdateFailed) {
             _remoteManifest.SaveToFile(_tempManifestPath);
             UpdateState = UpdateState.FailToUpdate;
             DispatchUpdateEvent(code);
         }
 
+        /// <summary>
+        ///     Finalizes a successful update by promoting the temporary manifest.
+        /// </summary>
         private void UpdateSucceed() {
             _localManifest = _remoteManifest;
             _remoteManifest = null;
 
-            // rename temporary manifest to valid manifest
             if (File.Exists(_cacheManifestPath)) {
                 File.Delete(_cacheManifestPath);
             }
@@ -694,6 +740,10 @@ namespace vFrame.Core.Unity.Patch
             DispatchUpdateEvent(UpdateEvent.EventCode.UpdateFinished);
         }
 
+        /// <summary>
+        ///     Handles a single asset download success.
+        /// </summary>
+        /// <param name="args">Download event arguments.</param>
         private void OnDownloadSuccess(DownloadEventArgs args) {
             var asset = (AssetInfo)args.UserData;
             var task = _downloader.GetDownload(args.SerialId);
@@ -716,6 +766,10 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Handles download progress updates, throttled by interval.
+        /// </summary>
+        /// <param name="args">Download event arguments with progress info.</param>
         private void OnDownloadProgress(DownloadEventArgs args) {
             var asset = (AssetInfo)args.UserData;
             RecordDownloadedSize(asset.fileName, args.DownloadedSize);
@@ -728,6 +782,11 @@ namespace vFrame.Core.Unity.Patch
             _lastUpdateTime = Time.realtimeSinceStartup;
         }
 
+        /// <summary>
+        ///     Tracks the downloaded size for an asset.
+        /// </summary>
+        /// <param name="assetName">File name of the asset.</param>
+        /// <param name="size">Bytes downloaded so far.</param>
         private void RecordDownloadedSize(string assetName, ulong size) {
             if (_downloadedSize.ContainsKey(assetName)) {
                 _downloadedSize[assetName] = size;
@@ -737,6 +796,10 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Handles a single asset download failure.
+        /// </summary>
+        /// <param name="args">Download event arguments with error info.</param>
         private void OnDownloadError(DownloadEventArgs args) {
             var asset = (AssetInfo)args.UserData;
             var task = _downloader.GetDownload(args.SerialId);
@@ -748,13 +811,17 @@ namespace vFrame.Core.Unity.Patch
 
             _totalWaitToDownload--;
             _failedUnits.Add(asset);
-            //DispatchUpdateEvent(UpdateEvent.EventCode.ERROR_DOWNLOAD_FAILED, asset.fileName);
 
             if (_totalWaitToDownload <= 0) {
                 OnDownloadUnitsFinished();
             }
         }
 
+        /// <summary>
+        ///     Dispatches an update event to all subscribers.
+        /// </summary>
+        /// <param name="code">The event code to dispatch.</param>
+        /// <param name="assetName">Optional asset name associated with the event.</param>
         private void DispatchUpdateEvent(UpdateEvent.EventCode code, string assetName = "") {
             if (OnUpdateEvent == null) {
                 return;
@@ -774,6 +841,10 @@ namespace vFrame.Core.Unity.Patch
             }
         }
 
+        /// <summary>
+        ///     Sums all recorded download sizes.
+        /// </summary>
+        /// <returns>Total downloaded bytes.</returns>
         private ulong CalculateDownloadedSize() {
             ulong size = 0;
             foreach (var kv in _downloadedSize) {
@@ -783,6 +854,10 @@ namespace vFrame.Core.Unity.Patch
             return size;
         }
 
+        /// <summary>
+        ///     Starts hash validation for the downloaded assets.
+        /// </summary>
+        /// <param name="assets">List of assets to validate.</param>
         private void ValidateAssets(List<AssetInfo> assets) {
             if (!_hashChecker) {
                 _hashChecker = HashChecker.Create(_storagePath);
@@ -794,10 +869,18 @@ namespace vFrame.Core.Unity.Patch
             _hashChecker.Check(assets);
         }
 
+        /// <summary>
+        ///     Handles the hash check start event.
+        /// </summary>
         private void OnCheckStarted() {
             DispatchUpdateEvent(UpdateEvent.EventCode.HashStart);
         }
 
+        /// <summary>
+        ///     Handles a hash check progress event for a single asset.
+        /// </summary>
+        /// <param name="asset">The asset that was checked.</param>
+        /// <param name="valid">Whether the asset's hash matched.</param>
         private void OnCheckProgress(AssetInfo asset, bool valid) {
             if (valid) {
                 _remoteManifest.SetAssetDownloadState(asset.fileName, DownloadState.Succeed);
@@ -814,6 +897,9 @@ namespace vFrame.Core.Unity.Patch
             DispatchUpdateEvent(UpdateEvent.EventCode.HashProgression);
         }
 
+        /// <summary>
+        ///     Handles the hash check completion event.
+        /// </summary>
         private void OnCheckFinished() {
             if (_hashChecker && _hashChecker.Valid) {
                 UpdateSucceed();

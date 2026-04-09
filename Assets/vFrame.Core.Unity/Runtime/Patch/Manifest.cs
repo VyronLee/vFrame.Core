@@ -1,21 +1,30 @@
-﻿using System;
+﻿// ------------------------------------------------------------
+//         File: Manifest.cs
+//        Brief: Represents a patch manifest with version info, asset list, and diff utilities.
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-16 22:32:14
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
-using vFrame.Core.Generic;
-using vFrame.Core.Unity.Utils;
-using Logger = vFrame.Core.Loggers.Logger;
+using vFrame.Core;
+using vFrame.Core.Unity;
 using Version = System.Version;
 
-namespace vFrame.Core.Unity.Patch
+namespace vFrame.Core.Unity
 {
     public class Manifest
     {
         /// <summary>
-        ///     The type of difference
+        ///     Describes how an asset differs between two manifests.
         /// </summary>
         public enum DiffType
         {
@@ -25,52 +34,57 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Full assets list
+        ///     Full assets list keyed by file name.
         /// </summary>
         private readonly Dictionary<string, AssetInfo> _assets = new Dictionary<string, AssetInfo>();
 
         /// <summary>
-        ///     Json Manifest format
+        ///     Parsed JSON manifest data.
         /// </summary>
         private ManifestJson _json;
 
         /// <summary>
-        ///     The asset version
+        ///     The asset version.
         /// </summary>
         public Version AssetsVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
-        ///     The game engine version
+        ///     The game engine version.
         /// </summary>
         public Version EngineVersion { get; private set; } = new Version(0, 0, 0);
 
         /// <summary>
-        ///     The build number
+        ///     The build number.
         /// </summary>
         public string BuildNumber => _json != null ? _json.buildNumber : null;
 
         /// <summary>
-        ///     Whether the manifest have been fully loaded
+        ///     Whether the manifest has been fully loaded.
         /// </summary>
         public bool Loaded { get; private set; }
 
         /// <summary>
-        ///     Whether the version information have been fully loaded
+        ///     Whether the version information has been fully loaded.
         /// </summary>
         public bool VersionLoaded { get; private set; }
 
         /// <summary>
-        ///     Get default manifest
+        ///     Gets a default manifest with empty version and loaded state.
         /// </summary>
         public static Manifest Default => new Manifest { Loaded = true, VersionLoaded = true };
 
+        /// <summary>
+        ///     Returns the full asset dictionary.
+        /// </summary>
+        /// <returns>Dictionary mapping file names to asset info.</returns>
         public Dictionary<string, AssetInfo> GetAssets() {
             return _assets;
         }
 
         /// <summary>
-        ///     Parse the whole file, caller should check where the file exist
+        ///     Parses the manifest file synchronously.
         /// </summary>
+        /// <param name="manifestUrl">Path to the manifest JSON file.</param>
         public void Parse(string manifestUrl) {
             _json = LoadJson(manifestUrl);
             if (null == _json) {
@@ -83,8 +97,10 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Parse the whole file, caller should check where the file exist
+        ///     Parses the manifest file asynchronously.
         /// </summary>
+        /// <param name="manifestUrl">Path to the manifest JSON file.</param>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         public IEnumerator ParseAsync(string manifestUrl) {
             var result = new Box<(bool, ManifestJson)>();
             yield return LoadJsonAsync(manifestUrl, result);
@@ -101,8 +117,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Parse the version part, caller should check where the file exist
+        ///     Parses only the version portion of a manifest file synchronously.
         /// </summary>
+        /// <param name="versionUrl">Path to the version JSON file.</param>
         public void ParseVersion(string versionUrl) {
             _json = LoadJson(versionUrl);
             if (_json == null) {
@@ -115,8 +132,10 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Parse the version part, caller should check where the file exist
+        ///     Parses only the version portion of a manifest file asynchronously.
         /// </summary>
+        /// <param name="versionUrl">Path to the version JSON file.</param>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         public IEnumerator ParseVersionAsync(string versionUrl) {
             var result = new Box<(bool, ManifestJson)>();
             yield return LoadJsonAsync(versionUrl, result);
@@ -133,24 +152,28 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     assets version compare
+        ///     Compares this manifest's asset version to another.
         /// </summary>
+        /// <param name="other">The manifest to compare against.</param>
+        /// <returns>A value indicating the relative order of the versions.</returns>
         public int AssetsVersionCompareTo(Manifest other) {
             return AssetsVersion.CompareTo(other.AssetsVersion);
         }
 
         /// <summary>
-        ///     game version compare
+        ///     Compares this manifest's engine version to another.
         /// </summary>
+        /// <param name="other">The manifest to compare against.</param>
+        /// <returns>A value indicating the relative order of the versions.</returns>
         public int GameVersionCompareTo(Manifest other) {
             return EngineVersion.CompareTo(other.EngineVersion);
         }
 
         /// <summary>
-        ///     Set download state
+        ///     Sets the download state for a specific asset.
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="state"></param>
+        /// <param name="fileName">File name of the asset.</param>
+        /// <param name="state">The new download state.</param>
         public void SetAssetDownloadState(string fileName, DownloadState state) {
             AssetInfo asset;
             if (_assets.TryGetValue(fileName, out asset)) {
@@ -159,8 +182,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Generate resuming download assets list
+        ///     Generates a list of assets that have not yet been fully downloaded.
         /// </summary>
+        /// <returns>List of assets pending download.</returns>
         public List<AssetInfo> GenResumeAssetsList() {
             var list = new List<AssetInfo>();
 
@@ -175,9 +199,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Get downloaded assets (not validated)
+        ///     Gets all assets that have been downloaded but not yet validated.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of downloaded assets awaiting validation.</returns>
         public List<AssetInfo> GetDownloadedAssets() {
             var list = new List<AssetInfo>();
 
@@ -192,9 +216,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Get succeed downloaded assets (validated)
+        ///     Gets all assets that have been downloaded and validated successfully.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of successfully downloaded assets.</returns>
         public List<AssetInfo> GetSucceedDownloadedAssets() {
             var list = new List<AssetInfo>();
 
@@ -209,8 +233,10 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Generate difference between this Manifest and another
+        ///     Generates a dictionary of differences between this manifest and another.
         /// </summary>
+        /// <param name="other">The manifest to diff against.</param>
+        /// <returns>Dictionary mapping file names to their diff information.</returns>
         public Dictionary<string, AssetDiff> GenDiff(Manifest other) {
             var diffDic = new Dictionary<string, AssetDiff>();
 
@@ -219,7 +245,6 @@ namespace vFrame.Core.Unity.Patch
                 var key = assetKV.Key;
                 var valueA = assetKV.Value;
 
-                // Deleted
                 if (!otherAssets.ContainsKey(key)) {
                     var diff = new AssetDiff {
                         asset = valueA,
@@ -229,7 +254,6 @@ namespace vFrame.Core.Unity.Patch
                     continue;
                 }
 
-                // Modified
                 var valueB = otherAssets[key];
                 if (valueA.md5 != valueB.md5) {
                     var diff = new AssetDiff {
@@ -244,7 +268,6 @@ namespace vFrame.Core.Unity.Patch
                 var key = otherKV.Key;
                 var valueB = otherKV.Value;
 
-                // Added
                 if (!_assets.ContainsKey(key)) {
                     var diff = new AssetDiff {
                         asset = valueB,
@@ -258,9 +281,9 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Save manifest to file
+        ///     Saves the manifest data to a JSON file.
         /// </summary>
-        /// <param name="path">File path to save</param>
+        /// <param name="path">File path to save the manifest to.</param>
         public void SaveToFile(string path) {
             var manifest = _json;
             if (null == manifest) {
@@ -279,11 +302,11 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Load json data from url
+        ///     Loads and deserializes a manifest JSON file asynchronously.
         /// </summary>
-        /// <param name="url"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
+        /// <param name="url">Path to the JSON file.</param>
+        /// <param name="result">Box receiving the parsed result.</param>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         private IEnumerator LoadJsonAsync(string url, Box<(bool, ManifestJson)> result) {
             Clear();
 
@@ -308,10 +331,10 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Load json data from url
+        ///     Loads and deserializes a manifest JSON file synchronously.
         /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
+        /// <param name="url">Path to the JSON file.</param>
+        /// <returns>Parsed ManifestJson, or null on failure.</returns>
         private ManifestJson LoadJson(string url) {
             Clear();
 
@@ -328,7 +351,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Load the version part
+        ///     Extracts version numbers from the parsed JSON.
         /// </summary>
         private void LoadVersion() {
             AssetsVersion = string.IsNullOrEmpty(_json.assetsVersion)
@@ -342,7 +365,7 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Load all
+        ///     Loads version and asset data from the parsed JSON.
         /// </summary>
         private void LoadManifest() {
             LoadVersion();
@@ -355,12 +378,13 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     On load json
+        ///     Override to handle additional JSON fields in derived manifest types.
         /// </summary>
+        /// <param name="json">The parsed manifest JSON data.</param>
         protected virtual void OnLoadJson(ManifestJson json) { }
 
         /// <summary>
-        ///     Clear all data
+        ///     Resets all manifest state to default values.
         /// </summary>
         private void Clear() {
             _assets.Clear();
@@ -374,11 +398,11 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     Load text from file async
+        ///     Reads text from a local file using UnityWebRequest.
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
+        /// <param name="path">File path to read.</param>
+        /// <param name="result">Box receiving the read result.</param>
+        /// <returns>Enumerator for coroutine scheduling.</returns>
         private static IEnumerator LoadTextFromFileAsync(string path, Box<(bool, string)> result) {
             var fileUrl = path.NormalizeLocalFileURL();
             using (var webRequest = UnityWebRequest.Get(fileUrl)) {
@@ -399,11 +423,18 @@ namespace vFrame.Core.Unity.Patch
         }
 
         /// <summary>
-        ///     difference between 2 assets
+        ///     Describes the difference between two asset entries.
         /// </summary>
         public class AssetDiff
         {
+            /// <summary>
+            ///     The asset that differs.
+            /// </summary>
             public AssetInfo asset;
+
+            /// <summary>
+            ///     The type of difference (added, deleted, or modified).
+            /// </summary>
             public DiffType diffType;
         }
     }

@@ -1,16 +1,16 @@
-﻿// ------------------------------------------------------------
+// ------------------------------------------------------------
 //         File: IDestroyable.cs
-//        Brief: IDestroyable.cs
+//        Brief: Terminal destroy contract for one-shot teardown
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
-//      Created: 2024-3-18 16:0
+//      Created: 2024-03-18 16:00:00
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
 using System;
 
-namespace vFrame.Core.Base
+namespace vFrame.Core
 {
     /// <summary>
     /// Represents a terminal destroy contract. Once <see cref="Destroy"/> completes,
@@ -19,6 +19,9 @@ namespace vFrame.Core.Base
     /// </summary>
     public interface IDestroyable : IDisposable
     {
+        /// <summary>
+        /// Gets whether the instance has been destroyed.
+        /// </summary>
         bool Destroyed { get; }
 
         /// <summary>

@@ -1,47 +1,44 @@
-﻿//------------------------------------------------------------
-//        File:  Localization.cs
-//       Brief:  多语言管理器
+﻿// ------------------------------------------------------------
+//         File: Localization.cs
+//        Brief: Localization manager that provides multilingual text lookup.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-09-30 20:32
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-09-30 20:32:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 using System.Collections.Generic;
-using vFrame.Core.Base;
-using vFrame.Core.Loggers;
-using vFrame.Core.ThirdParty.LitJson;
 
-namespace vFrame.Core.Localize
+namespace vFrame.Core
 {
     public class Localization : BaseObject<ILocalizationReader>, ILocalization
     {
         private static readonly LogTag LogTag = new LogTag("Localization");
 
         /// <summary>
-        ///     当前语言代码
+        ///     Current language code.
         /// </summary>
         private string _langCode = "zh_CN";
 
         /// <summary>
-        ///     各语言TextID映射
+        ///     Language code to text ID mapping.
         /// </summary>
         private Dictionary<string, JsonData> _langTextIdMap;
 
         /// <summary>
-        ///     数据读取器
+        ///     Data reader for localization content.
         /// </summary>
         private ILocalizationReader _reader;
 
         /// <summary>
-        ///     多语言设置变更通知
+        ///     Notifies when the language setting changes.
         /// </summary>
         public event Action<string> OnLocalize;
 
         /// <summary>
-        ///     获取/设置语言代码
+        ///     Gets or sets the current language code.
         /// </summary>
         public string Language {
             get => _langCode;
@@ -56,10 +53,10 @@ namespace vFrame.Core.Localize
         }
 
         /// <summary>
-        ///     获取文本
+        ///     Gets the localized text for the specified text ID.
         /// </summary>
-        /// <param name="textId"></param>
-        /// <returns>文本内容</returns>
+        /// <param name="textId">The text identifier to look up.</param>
+        /// <returns>The localized text content, or empty string if not found.</returns>
         public string GetText(string textId) {
             LazyLoad();
 
@@ -77,15 +74,16 @@ namespace vFrame.Core.Localize
         }
 
         /// <summary>
-        ///     创建
+        ///     Called when the instance is created with the given reader.
         /// </summary>
+        /// <param name="arg1">The localization reader providing raw data.</param>
         protected override void OnCreate(ILocalizationReader arg1) {
             _langTextIdMap = new Dictionary<string, JsonData>();
             _reader = arg1;
         }
 
         /// <summary>
-        ///     销毁
+        ///     Called when the instance is destroyed. Releases held references.
         /// </summary>
         protected override void OnDestroy() {
             _reader = null;
@@ -93,7 +91,7 @@ namespace vFrame.Core.Localize
         }
 
         /// <summary>
-        ///     懒加载
+        ///     Lazily loads language data on first access.
         /// </summary>
         private void LazyLoad() {
             if (_langTextIdMap.ContainsKey(Language)) {
@@ -104,9 +102,9 @@ namespace vFrame.Core.Localize
         }
 
         /// <summary>
-        ///     加载语言数据
+        ///     Loads and parses localization data for the specified language.
         /// </summary>
-        /// <param name="lang"></param>
+        /// <param name="lang">The language code to load.</param>
         private void LoadLanguage(string lang) {
             var data = _reader.ReadData(lang);
             if (string.IsNullOrEmpty(data)) {

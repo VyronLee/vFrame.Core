@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.Exceptions
+namespace vFrame.Core
 {
     /// <summary>
     /// Represents errors that occur when comparer for Member has already been added.
@@ -13,7 +13,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer.Exceptions
         /// </summary>
         public MemberInfo MemberInfo { get; }
 
-        internal ValueComparerExistsException(MemberInfo memberInfo) 
+        internal ValueComparerExistsException(MemberInfo memberInfo)
             : base($"Comparer override for member {memberInfo.MemberType} has already been added.")
         {
             MemberInfo = memberInfo;

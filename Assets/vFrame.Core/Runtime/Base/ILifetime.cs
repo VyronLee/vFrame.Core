@@ -1,4 +1,16 @@
-namespace vFrame.Core.Base
+// ------------------------------------------------------------
+//         File: ILifetime.cs
+//        Brief: Grouped-cleanup primitive for ownership boundaries
+//
+//       Author: VyronLee, lwz_jz@hotmail.com
+//
+//      Created: 2024-03-18 16:00:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
+
+using System;
+
+namespace vFrame.Core
 {
     /// <summary>
     /// Lightweight grouped-cleanup primitive for retained ownership boundaries.
@@ -20,6 +32,6 @@ namespace vFrame.Core.Base
         /// <summary>
         /// Binds a cleanup action to this lifetime so it executes when the lifetime ends.
         /// </summary>
-        void Add(System.Action action);
+        void Add(Action action);
     }
 }

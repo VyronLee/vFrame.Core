@@ -2,7 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using vFrame.Core.Unity.SpawnPools;
+using vFrame.Core.Unity;
 
 namespace vFrame.Core.Tests.PlayMode.SpawnPools
 {

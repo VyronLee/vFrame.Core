@@ -1,12 +1,26 @@
-using UnityEngine;
-using vFrame.Core.Exceptions;
-using vFrame.Core.Loggers;
-using Logger = vFrame.Core.Loggers.Logger;
+//------------------------------------------------------------
+//        File:  LogLevelExtension.cs
+//       Brief:  Extension methods for converting core log levels to Unity LogType.
+//
+//      Author:  VyronLee, lwz_jz@hotmail.com
+//
+//     Created:  2024-3-19 20:42
+//   Copyright:  Copyright (c) 2024, VyronLee
+//============================================================
 
-namespace vFrame.Core.Unity.Loggers
+using UnityEngine;
+using vFrame.Core;
+
+namespace vFrame.Core.Unity
 {
+    /// <summary>
+    /// Provides extension methods for converting core log levels to Unity LogType values.
+    /// </summary>
     public static class LogLevelExtension
     {
+        /// <summary>
+        /// Converts a core LogLevelDef value to the equivalent Unity LogType.
+        /// </summary>
         public static LogType ToUnityLogLevel(this LogLevelDef level) {
             switch (level) {
                 case LogLevelDef.Debug:

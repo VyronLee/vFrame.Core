@@ -1,4 +1,4 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
     /// Allows to consider provided value and default value of type <see cref="T"/> as equal values.
@@ -11,7 +11,7 @@
         private readonly IValueComparer _valueComparer;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DefaultValueValueComparer{T}" /> class. 
+        /// Initializes a new instance of the <see cref="DefaultValueValueComparer{T}" /> class.
         /// </summary>
         /// <param name="defaultValue">Default value.</param>
         /// <param name="valueComparer">Instance of <see cref="IValueComparer"/> which is used when values are not defaults.</param>

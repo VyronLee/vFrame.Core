@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using NUnit.Framework;
-using vFrame.Core.MultiThreading;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode
 {

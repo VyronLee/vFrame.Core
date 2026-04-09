@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer.CustomComparers
+namespace vFrame.Core
 {
     internal interface IComparerWithCondition: IComparer
     {

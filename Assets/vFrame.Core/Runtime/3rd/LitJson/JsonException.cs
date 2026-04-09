@@ -13,7 +13,7 @@
 
 using System;
 
-namespace vFrame.Core.ThirdParty.LitJson
+namespace vFrame.Core
 {
     public class JsonException :
 #if NETSTANDARD1_5

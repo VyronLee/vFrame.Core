@@ -1,19 +1,30 @@
-﻿using System;
-using UnityEngine;
-using vFrame.Core.Exceptions;
-using vFrame.Core.Loggers;
-using Logger = vFrame.Core.Loggers.Logger;
+﻿//------------------------------------------------------------
+//        File:  UnityLogger.cs
+//       Brief:  Bridge that forwards core log events to the Unity Console.
+//
+//      Author:  VyronLee, lwz_jz@hotmail.com
+//
+//     Created:  2024-3-19 20:42
+//   Copyright:  Copyright (c) 2024, VyronLee
+//============================================================
 
-namespace vFrame.Core.Unity.Loggers
+using System;
+using UnityEngine;
+using vFrame.Core;
+
+namespace vFrame.Core.Unity
 {
+    /// <summary>
+    /// Bridges the core logging system to the Unity Console.
+    /// </summary>
     public static class UnityLogger
     {
+        private static bool _opened;
+
         /// <summary>
         /// Opens the Unity logging bridge over the core logging surface.
         /// Unity remains one consumer of core log emission rather than the whole logging system.
         /// </summary>
-        private static bool _opened;
-
         public static void Open(LogLevelDef level,
             string logFile = null,
             string logTagFormat = Logger.DefaultTagFormatter,

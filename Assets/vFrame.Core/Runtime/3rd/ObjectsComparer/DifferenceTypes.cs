@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Specifies types of the differences between object members.

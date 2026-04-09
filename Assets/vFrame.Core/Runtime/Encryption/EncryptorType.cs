@@ -1,14 +1,14 @@
-//------------------------------------------------------------
-//        File:  EncryptorType.cs
-//       Brief:  EncryptorType
+// ------------------------------------------------------------
+//         File: EncryptorType.cs
+//        Brief: Enum defining the supported encryptor types
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-05-24 20:44
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-05-24 20:44:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Encryption
+namespace vFrame.Core
 {
     public enum EncryptorType
     {

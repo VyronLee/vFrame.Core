@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Implementation of <see cref="T:vFrame.Core.ThirdParty.ObjectsComparer.IComparer" /> which provides implementation of Compare methods.
     /// </summary>
     public abstract class AbstractComparer: BaseComparer, IComparer
     {
-        protected AbstractComparer(ComparisonSettings settings, BaseComparer parentComparer, IComparersFactory factory) 
+        protected AbstractComparer(ComparisonSettings settings, BaseComparer parentComparer, IComparersFactory factory)
             : base(settings, parentComparer, factory)
         {
         }

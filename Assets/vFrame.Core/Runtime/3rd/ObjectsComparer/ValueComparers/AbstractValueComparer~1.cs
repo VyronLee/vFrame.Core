@@ -1,7 +1,7 @@
-﻿namespace vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers
+﻿namespace vFrame.Core
 {
     /// <summary>
-    /// Implementation of <see cref="IValueComparer{T}"/> which provides simplest implementation of <see cref="ToString(T)"/> method and 
+    /// Implementation of <see cref="IValueComparer{T}"/> which provides simplest implementation of <see cref="ToString(T)"/> method and
     /// <see cref="Compare(object, object, ComparisonSettings)"/> method to call <see cref="Compare(T, T, ComparisonSettings)"/>.
     /// </summary>
     /// <typeparam name="T">Type of the objects.</typeparam>

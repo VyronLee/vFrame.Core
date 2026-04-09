@@ -1,33 +1,33 @@
-﻿//------------------------------------------------------------
-//        File:  ILocalization.cs
-//       Brief:  多语言管理器接口
+// ------------------------------------------------------------
+//         File: ILocalization.cs
+//        Brief: Interface for the localization manager.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-10-05 11:09
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-10-05 11:09:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 
-namespace vFrame.Core.Localize
+namespace vFrame.Core
 {
     public interface ILocalization
     {
         /// <summary>
-        ///     获取/设置语言代码
+        ///     Gets or sets the current language code.
         /// </summary>
         string Language { get; set; }
 
         /// <summary>
-        ///     获取文本
+        ///     Gets the localized text for the specified text ID.
         /// </summary>
-        /// <param name="textId"></param>
-        /// <returns>文本内容</returns>
+        /// <param name="textId">The text identifier to look up.</param>
+        /// <returns>The localized text content.</returns>
         string GetText(string textId);
 
         /// <summary>
-        ///     语言设置变更回调
+        ///     Raised when the language setting changes.
         /// </summary>
         event Action<string> OnLocalize;
     }

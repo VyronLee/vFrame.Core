@@ -1,10 +1,8 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using vFrame.Core.ThirdParty.ObjectsComparer.Utils;
-using vFrame.Core.ThirdParty.ObjectsComparer.ValueComparers;
 
-namespace vFrame.Core.ThirdParty.ObjectsComparer
+namespace vFrame.Core
 {
     /// <summary>
     /// Provides base implementation to configure comparer.
@@ -24,7 +22,7 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         protected IComparersFactory Factory { get; }
 
         internal ComparerOverridesCollection OverridesCollection { get;  } = new ComparerOverridesCollection();
-        
+
         protected BaseComparer(ComparisonSettings settings, BaseComparer parentComparer, IComparersFactory factory)
         {
             Factory = factory ?? new ComparersFactory();
@@ -89,8 +87,8 @@ namespace vFrame.Core.ThirdParty.ObjectsComparer
         /// <param name="compareFunction">Function to compare objects.</param>
         /// <param name="toStringFunction">Function to convert objects to string.</param>
         public void AddComparerOverride<TProp>(
-            Expression<Func<TProp>> memberLambda, 
-            Func<TProp, TProp, ComparisonSettings, bool> compareFunction, 
+            Expression<Func<TProp>> memberLambda,
+            Func<TProp, TProp, ComparisonSettings, bool> compareFunction,
             Func<TProp, string> toStringFunction)
         {
             OverridesCollection.AddComparer(

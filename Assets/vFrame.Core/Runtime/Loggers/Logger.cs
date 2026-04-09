@@ -1,24 +1,29 @@
-//------------------------------------------------------------
-//        File:  Logger.cs
-//       Brief:  日志系统
+// ------------------------------------------------------------
+//         File: Logger.cs
+//        Brief: Central logging system with buffered log queue,
+//               multiple sinks, and configurable format output.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2018-10-20 18:09
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2018-10-20 18:09:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using vFrame.Core.ObjectPools.Builtin;
+using vFrame.Core;
 
-namespace vFrame.Core.Loggers
+namespace vFrame.Core
 {
     public static class Logger
     {
         public interface ILogSink
         {
+            /// <summary>
+            /// Called when a new log context is received.
+            /// </summary>
+            /// <param name="context">The log context containing level, tag, content, and optional stack trace.</param>
             void OnLogReceived(LogContext context);
         }
 
@@ -51,9 +56,10 @@ namespace vFrame.Core.Loggers
         public static event Action<LogContext> OnLogReceived;
 
         /// <summary>
-        /// Registers a lightweight log sink. Core logging can fan out to multiple sinks while
-        /// remaining Unity-free.
+        /// Registers a lightweight log sink that receives all dispatched log contexts.
         /// </summary>
+        /// <param name="sink">The sink to register.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sink"/> is null.</exception>
         public static void AddSink(ILogSink sink) {
             if (sink == null) {
                 throw new ArgumentNullException(nameof(sink));
@@ -69,8 +75,10 @@ namespace vFrame.Core.Loggers
         }
 
         /// <summary>
-        /// Removes a previously registered lightweight sink.
+        /// Removes a previously registered lightweight log sink.
         /// </summary>
+        /// <param name="sink">The sink to remove.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sink"/> is null.</exception>
         public static void RemoveSink(ILogSink sink) {
             if (sink == null) {
                 throw new ArgumentNullException(nameof(sink));
@@ -84,12 +92,16 @@ namespace vFrame.Core.Loggers
         /// <summary>
         /// Returns the current number of registered lightweight sinks.
         /// </summary>
+        /// <returns>The number of registered sinks.</returns>
         public static int GetSinkCount() {
             lock (_queueLock) {
                 return _sinks.Count;
             }
         }
 
+        /// <summary>
+        /// Closes the current log file if one is open.
+        /// </summary>
         private static void RecreateLogFile() {
             Close();
 
@@ -102,55 +114,128 @@ namespace vFrame.Core.Loggers
             _logFile.AppendTimestamp = true;
         }
 
+        /// <summary>
+        /// Closes and disposes the current log file.
+        /// </summary>
         public static void Close() {
             _logFile?.Destroy();
             _logFile = null;
         }
 
+        /// <summary>
+        /// Logs a debug-level message with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Debug(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Debug, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs an info-level message with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Info(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Info, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs a warning-level message with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Warning(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Warning, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs an error-level message with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Error(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Error, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs a fatal-level message with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Fatal(LogTag tag, string text, params object[] args) {
             Log(LogLevelDef.Fatal, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs a fatal-level exception with the specified tag.
+        /// </summary>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="exception">The exception to log.</param>
         public static void Fatal(LogTag tag, Exception exception) {
             Log(LogLevelDef.Fatal, tag, exception);
         }
 
+        /// <summary>
+        /// Logs a debug-level message with additional stack frame skip count.
+        /// </summary>
+        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Debug(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Debug, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs an info-level message with additional stack frame skip count.
+        /// </summary>
+        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Info(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Info, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs a warning-level message with additional stack frame skip count.
+        /// </summary>
+        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Warning(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Warning, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs an error-level message with additional stack frame skip count.
+        /// </summary>
+        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
+        /// <param name="tag">The log tag identifying the source.</param>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Error(int skip, LogTag tag, string text, params object[] args) {
             Log(skip, LogLevelDef.Error, tag, text, args);
         }
 
+        /// <summary>
+        /// Logs a message at the specified level with default stack frame skip.
+        /// </summary>
         private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args) {
             Log(1, level, tag, text, args);
         }
 
+        /// <summary>
+        /// Core logging method. Formats the message, captures the stack trace, enqueues the context,
+        /// writes to the log file, and dispatches to sinks.
+        /// </summary>
         private static void Log(int skip, LogLevelDef level, LogTag tag, string text, params object[] args) {
             if (LogLevel > level) {
                 return;
@@ -174,6 +259,10 @@ namespace vFrame.Core.Loggers
             EmitToSinks(context);
         }
 
+        /// <summary>
+        /// Logs an exception at the specified level. Enqueues the context, writes to the log file,
+        /// and dispatches to sinks.
+        /// </summary>
         private static void Log(LogLevelDef level, LogTag tag, Exception exception) {
             if (LogLevel > level) {
                 return;
@@ -193,6 +282,9 @@ namespace vFrame.Core.Loggers
             EmitToSinks(context);
         }
 
+        /// <summary>
+        /// Dispatches the log context to all currently registered sinks.
+        /// </summary>
         private static void EmitToSinks(LogContext context) {
             ILogSink[] sinks;
 
@@ -209,6 +301,11 @@ namespace vFrame.Core.Loggers
             }
         }
 
+        /// <summary>
+        /// Builds a formatted log string based on the current <see cref="LogFormatMask"/>.
+        /// Includes optional tag, timestamp, class name, and function name.
+        /// </summary>
+        /// <returns>The formatted log text.</returns>
         private static string GetFormattedLogText(int skip, LogTag tag, string log) {
             var builder = StringBuilderPool.Shared.Get();
             if ((LogFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(LogTagFormatter) &&
@@ -262,9 +359,12 @@ namespace vFrame.Core.Loggers
             return text;
         }
 
+        /// <summary>
+        /// Extracts and trims the stack trace, skipping the specified number of internal frames.
+        /// </summary>
+        /// <returns>The trimmed stack trace string.</returns>
         private static string GetLogStack(int skip) {
             var stackTrace = StackTraceUtility.ExtractStackTrace();
-            // Remove first three lines, GetLogStack(), Log() and LogInfo()/LogWarning(), etc.
             skip += 3;
             while (skip-- > 0) {
                 stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
@@ -272,26 +372,55 @@ namespace vFrame.Core.Loggers
             return stackTrace;
         }
 
+        /// <summary>
+        /// Logs a debug-level message without a tag.
+        /// </summary>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Debug(string text, params object[] args) {
             Log(LogLevelDef.Debug, EmptyLogTag, text, args);
         }
 
+        /// <summary>
+        /// Logs an info-level message without a tag.
+        /// </summary>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Info(string text, params object[] args) {
             Log(LogLevelDef.Info, EmptyLogTag, text, args);
         }
 
+        /// <summary>
+        /// Logs a warning-level message without a tag.
+        /// </summary>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Warning(string text, params object[] args) {
             Log(LogLevelDef.Warning, EmptyLogTag, text, args);
         }
 
+        /// <summary>
+        /// Logs an error-level message without a tag.
+        /// </summary>
+        /// <param name="text">The format string for the log message.</param>
+        /// <param name="args">Optional format arguments.</param>
         public static void Error(string text, params object[] args) {
             Log(LogLevelDef.Error, EmptyLogTag, text, args);
         }
 
+        /// <summary>
+        /// Logs a fatal-level exception without a tag.
+        /// </summary>
+        /// <param name="exception">The exception to log.</param>
         public static void Fatal(Exception exception) {
             Fatal(EmptyLogTag, exception);
         }
 
+        /// <summary>
+        /// Returns buffered log contexts matching the specified level mask.
+        /// </summary>
+        /// <param name="logMask">A bitmask matching <see cref="LogLevelDef"/> values.</param>
+        /// <returns>A collection of matching log contexts.</returns>
         public static IEnumerable<LogContext> Logs(int logMask) {
             var logs = new Queue<LogContext>();
 
@@ -306,6 +435,10 @@ namespace vFrame.Core.Loggers
             return logs;
         }
 
+        /// <summary>
+        /// Returns the current number of buffered log entries.
+        /// </summary>
+        /// <returns>The number of entries in the log queue.</returns>
         public static int GetBufferedLogCount() {
             lock (_queueLock) {
                 return _logQueue.Count;
@@ -320,6 +453,9 @@ namespace vFrame.Core.Loggers
             public string StackTrace;
             public Exception Exception;
 
+            /// <summary>
+            /// Creates a new log context with the specified fields.
+            /// </summary>
             public LogContext(LogLevelDef level, LogTag tag, string content, string stackTrace,
                 Exception exception) : this() {
                 Level = level;

@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using vFrame.Core.Dispatchers;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode.Dispatchers
 {

@@ -1,6 +1,6 @@
 using System;
 using NUnit.Framework;
-using vFrame.Core.Base;
+using vFrame.Core;
 
 namespace vFrame.Core.Tests.EditMode.Base
 {

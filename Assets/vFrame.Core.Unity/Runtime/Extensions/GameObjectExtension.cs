@@ -1,24 +1,24 @@
-//------------------------------------------------------------
-//        File:  GameObjectUtility.cs
-//       Brief:  GameObject工具类
+// ------------------------------------------------------------
+//         File: GameObjectExtension.cs
+//        Brief: Extension methods for GameObject and Unity Object utilities.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-01-04 17:20
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-01-04 17:20:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
 using UnityEngine;
 
-namespace vFrame.Core.Unity.Extensions
+namespace vFrame.Core.Unity
 {
     public static class GameObjectExtension
     {
         /// <summary>
-        ///     设置物件以及子物件的Layer
+        ///     Sets the layer of the GameObject and all its children recursively.
         /// </summary>
-        /// <param name="go"></param>
-        /// <param name="layer"></param>
+        /// <param name="go">The GameObject whose layer to set.</param>
+        /// <param name="layer">The layer index to assign.</param>
         public static void SetLayerRecursive(this GameObject go, int layer) {
             for (var i = 0; i < go.transform.childCount; ++i) {
                 SetLayerRecursive(go.transform.GetChild(i).gameObject, layer);
@@ -27,10 +27,10 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        ///     设置物件以及子物件的Tag
+        ///     Sets the tag of the GameObject and all its children recursively.
         /// </summary>
-        /// <param name="go"></param>
-        /// <param name="tag"></param>
+        /// <param name="go">The GameObject whose tag to set.</param>
+        /// <param name="tag">The tag string to assign.</param>
         public static void SetTagRecursive(this GameObject go, string tag) {
             for (var i = 0; i < go.transform.childCount; ++i) {
                 SetTagRecursive(go.transform.GetChild(i).gameObject, tag);
@@ -39,11 +39,11 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        ///     获取或者添加组件
+        ///     Gets an existing component of the specified type, or adds one if it does not exist.
         /// </summary>
-        /// <param name="go"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <typeparam name="T">The MonoBehaviour type to get or add.</typeparam>
+        /// <param name="go">The GameObject to search on.</param>
+        /// <returns>The existing or newly added component instance.</returns>
         public static T GetOrAddComponent<T>(this GameObject go) where T : MonoBehaviour {
             var comp = go.GetComponent<T>();
             if (null == comp) {
@@ -53,35 +53,41 @@ namespace vFrame.Core.Unity.Extensions
         }
 
         /// <summary>
-        ///     扩展销毁方法
+        ///     Destroys a Unity Object safely, using <see cref="UnityEngine.Object.DestroyImmediate"/> in edit mode
+        ///     and <see cref="Object.Destroy"/> at runtime.
         /// </summary>
-        /// <param name="go"></param>
-        public static void DestroyEx(this Object go) {
+        /// <param name="go">The Object to destroy.</param>
+        public static void DestroyEx(this UnityEngine.Object go) {
             if (Application.isPlaying) {
-                Object.Destroy(go);
+                UnityEngine.Object.Destroy(go);
                 return;
             }
-            Object.DestroyImmediate(go);
+            UnityEngine.Object.DestroyImmediate(go);
         }
 
         /// <summary>
-        /// 设置为不销毁
+        ///     Marks a Unity Object so it is not destroyed when loading a new scene,
+        ///     and returns the object for fluent chaining.
         /// </summary>
-        /// <param name="obj"></param>
-        public static T DontDestroyEx<T>(this T obj) where T: Object {
+        /// <typeparam name="T">The Object type.</typeparam>
+        /// <param name="obj">The Object to protect from scene unload.</param>
+        /// <returns>The same object instance.</returns>
+        public static T DontDestroyEx<T>(this T obj) where T: UnityEngine.Object {
             if (obj) {
-                Object.DontDestroyOnLoad(obj);
+                UnityEngine.Object.DontDestroyOnLoad(obj);
             }
             return obj;
         }
 
         /// <summary>
-        /// 设置为隐藏并且不保存，与HideFlags.DontSave的区别是少了DontUnloadUnusedAsset
+        ///     Hides the Object in the hierarchy and inspector, and prevents it from being saved
+        ///     in builds or the editor. Unlike <see cref="HideFlags.DontSave"/>, this does not
+        ///     set <see cref="HideFlags.DontUnloadUnusedAsset"/>.
         /// </summary>
-        /// <param name="obj"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T DontSaveAndHideEx<T>(this T obj) where T : Object {
+        /// <typeparam name="T">The Object type.</typeparam>
+        /// <param name="obj">The Object to configure.</param>
+        /// <returns>The same object instance.</returns>
+        public static T DontSaveAndHideEx<T>(this T obj) where T : UnityEngine.Object {
             if (obj) {
                 obj.hideFlags = HideFlags.HideInHierarchy
                                 | HideFlags.HideInInspector

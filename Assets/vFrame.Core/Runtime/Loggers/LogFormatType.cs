@@ -1,14 +1,15 @@
-﻿//------------------------------------------------------------
-//        File:  LogFormatType.cs
-//       Brief:  Log format type definition
+// ------------------------------------------------------------
+//         File: LogFormatType.cs
+//        Brief: Bitmask constants for configuring which fields
+//               appear in formatted log output.
 //
-//      Author:  VyronLee, lwz_jz@hotmail.com
+//       Author: VyronLee, lwz_jz@hotmail.com
 //
-//     Created:  2019-10-08 11:53
-//   Copyright:  Copyright (c) 2024, VyronLee
-//============================================================
+//      Created: 2019-10-08 11:53:00
+//    Copyright: Copyright (c) 2024, VyronLee
+// ============================================================
 
-namespace vFrame.Core.Loggers
+namespace vFrame.Core
 {
     public static class LogFormatType
     {
