@@ -33,7 +33,7 @@ namespace vFrame.Core.Unity
 
         internal readonly int Capacity;
         internal readonly List<CoroutineRunnerBehaviour> RunnerList;
-        internal readonly List<CoroutineTask> TasksWaiting;
+        internal readonly Queue<CoroutineTask> TasksWaiting;
         private int _taskHandle;
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace vFrame.Core.Unity
             Capacity = capacity;
             RunnerList = new List<CoroutineRunnerBehaviour>();
 
-            TasksWaiting = new List<CoroutineTask>(16);
+            TasksWaiting = new Queue<CoroutineTask>(16);
 
             _holder = new GameObject($"Pool_{++_index}({name ?? "Unnamed"})");
             _holder.AddComponent<CoroutinePoolBehaviour>().Pool = this;
@@ -105,7 +105,7 @@ namespace vFrame.Core.Unity
             }
             else {
                 Debug.Log("CoroutinePool:StartCoroutine - pool is full, add to waiting list ..");
-                TasksWaiting.Add(context);
+                TasksWaiting.Enqueue(context);
             }
 
             return handle;
@@ -118,14 +118,20 @@ namespace vFrame.Core.Unity
         /// <param name="handle">The handle of the coroutine to stop.</param>
         public void StopCoroutine(int handle) {
             Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine: " + handle);
-            // Remove from waiting list
-            for (var i = 0; i < TasksWaiting.Count; ++i) {
-                if (TasksWaiting[i].Handle != handle) {
-                    continue;
+            // Remove from waiting list (rebuild queue without the matched item)
+            var newQueue = new Queue<CoroutineTask>();
+            while (TasksWaiting.Count > 0) {
+                var task = TasksWaiting.Dequeue();
+                if (task.Handle != handle) {
+                    newQueue.Enqueue(task);
                 }
-                TasksWaiting.RemoveAt(i);
-                Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
-                break;
+                else {
+                    Debug.Log("CoroutinePool:StopCoroutine - Stopping coroutine, remove from waiting list: " + handle);
+                }
+            }
+            // Re-enqueue remaining items
+            while (newQueue.Count > 0) {
+                TasksWaiting.Enqueue(newQueue.Dequeue());
             }
 
             // Remove from running list
@@ -247,8 +253,7 @@ namespace vFrame.Core.Unity
                 return false;
             }
 
-            var context = TasksWaiting[0];
-            TasksWaiting.RemoveAt(0);
+            var context = TasksWaiting.Dequeue();
 
             Debug.Log("CoroutinePool:PopupAndRunNext - popup new task: " + context.Handle);
             RunTask(context, runnerId);

@@ -20,7 +20,7 @@ namespace vFrame.Core.Unity
         private int _capacity;
 
         [SerializeField]
-        private List<CoroutineTask> _tasksWaiting;
+        private Queue<CoroutineTask> _tasksWaiting;
 
         [SerializeField]
         private List<CoroutineRunnerBehaviour> _coroutineList;

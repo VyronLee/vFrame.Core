@@ -83,7 +83,7 @@ namespace vFrame.Core.Unity
             _task = task;
             _state |= CoroutineState.Running;
 
-            StartCoroutine(RunTask());
+            StartCoroutine(RunTaskWrapper());
         }
 
         /// <summary>
@@ -129,15 +129,56 @@ namespace vFrame.Core.Unity
         }
 
         /// <summary>
-        /// Coroutine loop that drives the assigned task, respecting pause
-        /// and stop signals, and invokes <see cref="OnFinished"/> on completion.
+        /// Wrapper coroutine that provides exception safety around the task execution.
+        /// Unity's C# does not allow yield return inside try-catch, so we wrap
+        /// the task enumerator in a helper that catches exceptions.
         /// </summary>
         /// <returns>Enumerator for Unity coroutine scheduling.</returns>
-        private IEnumerator RunTask() {
+        private IEnumerator RunTaskWrapper() {
             var taskContext = _task;
-            while (IsRunning()) {
+            var hasException = false;
+
+            // Run the task coroutine; exceptions will be caught by SafeRunTask
+            yield return SafeRunTask(taskContext.Task);
+
+            if (!IsRunning()) {
+                // Stopped externally via CoStop()
+                Cleanup(taskContext);
+                yield break;
+            }
+
+            if (hasException) {
+                _state |= CoroutineState.Stopped;
+            }
+            else {
+                _state |= CoroutineState.Finished;
+            }
+
+            Cleanup(taskContext);
+        }
+
+        /// <summary>
+        /// Drives the user's IEnumerator, catching any exceptions.
+        /// Returns true if an exception occurred.
+        /// </summary>
+        private IEnumerator SafeRunTask(IEnumerator task) {
+            var hasException = false;
+            while (true) {
+                object current;
+                try {
+                    if (!task.MoveNext()) {
+                        break;
+                    }
+                    current = task.Current;
+                }
+                catch (Exception ex) {
+                    Debug.LogError($"CoroutineRunnerBehaviour: Unhandled exception in task {_task.Handle}: {ex}");
+                    hasException = true;
+                    yield break;
+                }
+
                 if (IsStopped()) {
-                    break;
+                    yield break;
                 }
 
                 if (IsPause()) {
@@ -145,12 +186,14 @@ namespace vFrame.Core.Unity
                     continue;
                 }
 
-                yield return taskContext.Task;
-
-                _state |= CoroutineState.Finished;
-                break;
+                yield return current;
             }
+        }
 
+        /// <summary>
+        /// Cleans up runner state after task completion or stop.
+        /// </summary>
+        private void Cleanup(CoroutineTask taskContext) {
             _state &= ~CoroutineState.Running;
             _state |= CoroutineState.Stopped;
             _task = default;
