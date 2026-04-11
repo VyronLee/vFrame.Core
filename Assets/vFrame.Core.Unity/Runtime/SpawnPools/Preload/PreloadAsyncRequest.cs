@@ -78,12 +78,12 @@ namespace vFrame.Core.Unity
 
                 var elapsed = _stopWatch.Elapsed.TotalSeconds;
                 if (request.IsError) {
-                    Logger.Error("[SpawnPools] Preload asset failed: {1}, cost: {0:0.000}s", elapsed, path);
+                    Logger.Error($"[SpawnPools] Preload asset failed: {path}, cost: {elapsed:0.000}s");
                     continue;
                 }
 
                 SpawnPools.Recycle(request.GameObject);
-                Logger.Info("[SpawnPools] Preload asset finished: {1}, cost: {0:0.000}s", elapsed, path);
+                Logger.Info($"[SpawnPools] Preload asset finished: {path}, cost: {elapsed:0.000}s");
             }
         }
     }

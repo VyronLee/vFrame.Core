@@ -58,8 +58,7 @@ namespace vFrame.Core.Unity
 
         private void OnDestroy() {
             if (IsPooling && !Destroyed) {
-                Logger.Warning("Pool object(id: {0}, path: {1}) get destroyed outside the pool!!!!",
-                    _uniqueId, _assetPath);
+                Logger.Warning($"Pool object(id: {_uniqueId}, path: {_assetPath}) get destroyed outside the pool!!!!");
             }
         }
     }

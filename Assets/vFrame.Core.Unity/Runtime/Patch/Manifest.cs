@@ -326,7 +326,7 @@ namespace vFrame.Core.Unity
             catch (Exception e) {
                 result.Value = (false, null);
                 Logger.Error(PatchConst.LogTag,
-                    "Load json failed, url: {0}, text: {1}, message: {2}", url, text, e.Message);
+                    $"Load json failed, url: {url}, text: {text}, message: {e.Message}");
             }
         }
 
@@ -345,7 +345,7 @@ namespace vFrame.Core.Unity
             }
             catch (Exception e) {
                 Logger.Error(PatchConst.LogTag,
-                    "Load json failed, url: {0}, text: {1}, message: {2}", url, text, e.Message);
+                    $"Load json failed, url: {url}, text: {text}, message: {e.Message}");
                 return null;
             }
         }
@@ -408,7 +408,7 @@ namespace vFrame.Core.Unity
             using (var webRequest = UnityWebRequest.Get(fileUrl)) {
                 yield return webRequest.SendWebRequest();
                 if (webRequest.isHttpError || webRequest.isNetworkError) {
-                    Logger.Info(PatchConst.LogTag,
+                    Logger.Error(PatchConst.LogTag,
                         "Load text from file failed: {0}, error: {1}", path, webRequest.error);
                     result.Value = (false, string.Empty);
                     yield break;

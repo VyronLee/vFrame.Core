@@ -23,6 +23,7 @@ namespace vFrame.Core.Unity
         /// </summary>
         public static LogType ToUnityLogLevel(this LogLevelDef level) {
             switch (level) {
+                case LogLevelDef.Trace:
                 case LogLevelDef.Debug:
                 case LogLevelDef.Info:
                     return LogType.Log;

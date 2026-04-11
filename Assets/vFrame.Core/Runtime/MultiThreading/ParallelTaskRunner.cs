@@ -33,6 +33,7 @@ namespace vFrame.Core
         private int _taskTotalCount;
         private List<T> _taskWaiting;
         private CancellationTokenSource[] _tokenSources;
+        private static readonly LogTag LogTag = new LogTag("ParallelTaskRunner");
         private SpinLock _waitingListLock;
 
         /// <summary>
@@ -87,7 +88,7 @@ namespace vFrame.Core
             for (var i = 0; i < _threadCount; i++) {
                 var source = _tokenSources[i] = new CancellationTokenSource();
                 if (!ThreadPool.QueueUserWorkItem(_taskHandler, source)) {
-                    Logger.Error("Queue work item to thread pool failed: {0}", i);
+                    Logger.Error(LogTag, $"Queue work item to thread pool failed: {i}");
                 }
             }
             return this;

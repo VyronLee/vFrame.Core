@@ -23,7 +23,7 @@ namespace vFrame.Core.Unity
         /// <param name="args">Optional format arguments.</param>
         [Conditional("DEBUG_COROUTINE_POOL")]
         public static void Log(string message, params object[] args) {
-            Logger.Info(CoroutinePool.LogTag, message, args);
+            Logger.Info(CoroutinePool.LogTag, string.Format(message, args));
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace vFrame.Core.Unity
         /// <param name="message">Log message format string.</param>
         /// <param name="args">Optional format arguments.</param>
         public static void Warning(string message, params object[] args) {
-            Logger.Warning(CoroutinePool.LogTag, message, args);
+            Logger.Warning(CoroutinePool.LogTag, string.Format(message, args));
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace vFrame.Core.Unity
         /// <param name="message">Log message format string.</param>
         /// <param name="args">Optional format arguments.</param>
         public static void Error(string message, params object[] args) {
-            Logger.Warning(CoroutinePool.LogTag, message, args);
+            Logger.Error(CoroutinePool.LogTag, string.Format(message, args));
         }
     }
 }

@@ -151,7 +151,7 @@ namespace vFrame.Core.Unity
             }
 
             if (IsWebRequestError(_headRequest)) {
-                Logger.Warning("Request file head failed, uri: {0}, error: {1}", Task.DownloadUrl, _headRequest.error);
+                Logger.Warning($"Request file head failed, uri: {Task.DownloadUrl}, error: {_headRequest.error}");
                 _state = DownloadProcessState.HeadRequested;
                 _totalSize = 1;
                 return;
@@ -159,7 +159,7 @@ namespace vFrame.Core.Unity
 
             var size = _headRequest.GetResponseHeader("Content-Length");
             if (string.IsNullOrEmpty(size)) {
-                Logger.Warning("Retrieve file size failed, uri: {0}", Task.DownloadUrl);
+                Logger.Warning($"Retrieve file size failed, uri: {Task.DownloadUrl}");
                 _state = DownloadProcessState.HeadRequested;
                 _totalSize = 1;
                 return;
@@ -169,7 +169,7 @@ namespace vFrame.Core.Unity
                 _totalSize = Convert.ToUInt32(size);
             }
             catch (Exception e) {
-                Logger.Warning("Parse file size failed: {0}, exception: {1}", size, e);
+                Logger.Warning($"Parse file size failed: {size}, exception: {e}");
                 _state = DownloadProcessState.HeadRequested;
                 _totalSize = 1;
                 return;
@@ -220,7 +220,7 @@ namespace vFrame.Core.Unity
             }
 
             if (IsWebRequestError(_contentRequest)) {
-                Logger.Warning("Download error, uri: {0}, msg: {1}", Task.DownloadUrl, _contentRequest.error);
+                Logger.Warning($"Download error, uri: {Task.DownloadUrl}, msg: {_contentRequest.error}");
                 _state = DownloadProcessState.Error;
                 _error = _contentRequest.error;
                 return;

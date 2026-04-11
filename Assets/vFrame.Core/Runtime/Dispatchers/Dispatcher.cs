@@ -124,8 +124,8 @@ namespace vFrame.Core
                     ((Action<TEvent>)subscription.Action).Invoke(payload);
                 }
                 catch (Exception exception) {
-                    Logger.Error(LogTag, "Exception occurred, event type: {0}, exception: {1}",
-                        typeof(TEvent).FullName, exception);
+                    Logger.Error(LogTag, exception,
+                        $"Exception occurred, event type: {typeof(TEvent).FullName}");
                 }
             }
         }
@@ -208,14 +208,12 @@ namespace vFrame.Core
 
             var type = typeof(TCommand);
             if (!_commandSubscriptions.TryGetValue(type, out var subscription)) {
-                Logger.Warning(LogTag, "No handler registered for command type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"No handler registered for command type: {type.FullName}");
                 return;
             }
 
             if (subscription.Destroyed) {
-                Logger.Warning(LogTag, "Handler destroyed for command type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"Handler destroyed for command type: {type.FullName}");
                 _commandSubscriptions.Remove(type);
                 _subscriptionPool.Return(subscription);
                 return;
@@ -225,8 +223,8 @@ namespace vFrame.Core
                 ((Action<TCommand>)subscription.Action).Invoke(command);
             }
             catch (Exception exception) {
-                Logger.Error(LogTag, "Exception occurred, command type: {0}, exception: {1}",
-                    typeof(TCommand).FullName, exception);
+                Logger.Error(LogTag, exception,
+                    $"Exception occurred, command type: {typeof(TCommand).FullName}");
             }
         }
 
@@ -262,14 +260,12 @@ namespace vFrame.Core
 
             var type = typeof(TRequest);
             if (!_requestSubscriptions.TryGetValue(type, out var subscription)) {
-                Logger.Warning(LogTag, "No handler registered for request type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"No handler registered for request type: {type.FullName}");
                 return default;
             }
 
             if (subscription.Destroyed) {
-                Logger.Warning(LogTag, "Handler destroyed for request type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"Handler destroyed for request type: {type.FullName}");
                 _requestSubscriptions.Remove(type);
                 _subscriptionPool.Return(subscription);
                 return default;
@@ -279,8 +275,8 @@ namespace vFrame.Core
                 return ((Func<TRequest, TResponse>)subscription.Action).Invoke(payload);
             }
             catch (Exception exception) {
-                Logger.Error(LogTag, "Exception occurred, request type: {0}, exception: {1}",
-                    type.FullName, exception);
+                Logger.Error(LogTag, exception,
+                    $"Exception occurred, request type: {typeof(TRequest).FullName}");
                 return default;
             }
         }
@@ -314,8 +310,8 @@ namespace vFrame.Core
                 return true;
             }
             catch (Exception exception) {
-                Logger.Error(LogTag, "Exception occurred, request type: {0}, exception: {1}",
-                    type.FullName, exception);
+                Logger.Error(LogTag, exception,
+                    $"Exception occurred, request type: {typeof(TRequest).FullName}");
                 return false;
             }
         }
@@ -472,8 +468,8 @@ namespace vFrame.Core
                     }
                 }
                 catch (Exception exception) {
-                    Logger.Error(LogTag, "Exception occurred, decision type: {0}, exception: {1}",
-                        typeof(TDecision).FullName, exception);
+                    Logger.Error(LogTag, exception,
+                        $"Exception occurred, decision type: {typeof(TDecision).FullName}");
                 }
             }
 
@@ -596,8 +592,7 @@ namespace vFrame.Core
 
             var type = typeof(TCommand);
             if (_commandSubscriptions.TryGetValue(type, out var existing) && !existing.Destroyed) {
-                Logger.Warning(LogTag, "Replacing existing handler for command type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"Replacing existing handler for command type: {type.FullName}");
                 existing.Destroy();
                 _subscriptionPool.Return(existing);
             }
@@ -618,8 +613,7 @@ namespace vFrame.Core
 
             var type = typeof(TRequest);
             if (_requestSubscriptions.TryGetValue(type, out var existing) && !existing.Destroyed) {
-                Logger.Warning(LogTag, "Replacing existing handler for request type: {0}",
-                    type.FullName);
+                Logger.Warning(LogTag, $"Replacing existing handler for request type: {type.FullName}");
                 existing.Destroy();
                 _subscriptionPool.Return(existing);
             }

@@ -87,7 +87,7 @@ namespace vFrame.Core.Unity
             }
 
             _snapshot.LogCount++;
-            Logger.Info(SpawnPoolsSettings.LogTag, message, args);
+            Logger.Info(SpawnPoolsSettings.LogTag, string.Format(message, args));
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace vFrame.Core.Unity
                 _snapshot.WarningCount++;
             }
 
-            Logger.Warning(SpawnPoolsSettings.LogTag, message, args);
+            Logger.Warning(SpawnPoolsSettings.LogTag, string.Format(message, args));
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace vFrame.Core.Unity
                 _snapshot.ErrorCount++;
             }
 
-            Logger.Error(SpawnPoolsSettings.LogTag, message, args);
+            Logger.Error(SpawnPoolsSettings.LogTag, string.Format(message, args));
         }
     }
 }

@@ -53,7 +53,14 @@ namespace vFrame.Core.Unity
         }
 
         private static void OnLogReceived(Logger.LogContext context) {
+            // If an exception is present at any level, log it as an exception
+            if (context.Exception != null) {
+                Debug.LogException(context.Exception);
+                return;
+            }
+
             switch (context.Level) {
+                case LogLevelDef.Trace:
                 case LogLevelDef.Debug:
                 case LogLevelDef.Info:
                     Debug.Log(context.Content);
@@ -65,12 +72,7 @@ namespace vFrame.Core.Unity
                     Debug.LogError(context.Content);
                     break;
                 case LogLevelDef.Fatal:
-                    if (null != context.Exception) {
-                        Debug.LogException(context.Exception);
-                    }
-                    else {
-                        Debug.LogError(context.Content);
-                    }
+                    Debug.LogError(context.Content);
                     break;
                 default:
                     ThrowHelper.ThrowUnsupportedEnum(context.Level);

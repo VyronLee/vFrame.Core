@@ -66,7 +66,7 @@ namespace vFrame.Core
             }
 
             if (!lang.ContainsKey(textId)) {
-                Logger.Error(LogTag, "No text Id defined in dict: {0}", textId);
+                Logger.Error(LogTag, $"No text Id defined in dict: {textId}");
                 return string.Empty;
             }
 
@@ -116,7 +116,7 @@ namespace vFrame.Core
                 _langTextIdMap[lang] = JsonMapper.ToObject(data);
             }
             catch (Exception e) {
-                Logger.Error(LogTag, "Parse localization data failed: {0}, exception: {1}", lang, e);
+                Logger.Error(LogTag, e, $"Parse localization data failed: {lang}");
             }
         }
     }

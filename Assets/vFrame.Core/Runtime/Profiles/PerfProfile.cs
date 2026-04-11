@@ -62,7 +62,7 @@ namespace vFrame.Core
 
             data.Stopwatch.Stop();
 
-            Logger.Info(LogTag, "{0}: {1:n}ms", data.Tag, data.Stopwatch.Elapsed.TotalMilliseconds);
+            Logger.Info(LogTag, $"{data.Tag}: {data.Stopwatch.Elapsed.TotalMilliseconds:n}ms");
         }
 
         private class ProfileData

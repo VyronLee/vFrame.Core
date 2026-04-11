@@ -11,8 +11,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using vFrame.Core;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace vFrame.Core
 {
@@ -27,6 +27,15 @@ namespace vFrame.Core
             void OnLogReceived(LogContext context);
         }
 
+        public interface IStructuredLogSink
+        {
+            /// <summary>
+            /// Called when a new log context is received for structured/JSON output.
+            /// </summary>
+            /// <param name="context">The log context containing all structured fields.</param>
+            void OnLogReceived(LogContext context);
+        }
+
         public const int DefaultCapacity = 1000;
         public const string DefaultTagFormatter = "{0}";
 
@@ -34,7 +43,12 @@ namespace vFrame.Core
             LogFormatType.Tag | LogFormatType.Time | LogFormatType.Class | LogFormatType.Function;
 
         private static readonly Queue<LogContext> _logQueue;
-        private static readonly List<ILogSink> _sinks = new List<ILogSink>();
+        private static readonly List<(ILogSink sink, LogLevelDef minLevel)> _sinks =
+            new List<(ILogSink, LogLevelDef)>();
+        private static readonly List<(IStructuredLogSink sink, LogLevelDef minLevel)> _structuredSinks =
+            new List<(IStructuredLogSink, LogLevelDef)>();
+        private static readonly Dictionary<string, LoggerCategory> _categories =
+            new Dictionary<string, LoggerCategory>();
         private static readonly object _queueLock;
         private static string _logFilePath;
         private static LogToFile _logFile;
@@ -56,21 +70,25 @@ namespace vFrame.Core
         public static event Action<LogContext> OnLogReceived;
 
         /// <summary>
-        /// Registers a lightweight log sink that receives all dispatched log contexts.
+        /// Registers a lightweight log sink that receives log contexts at or above the specified level.
         /// </summary>
         /// <param name="sink">The sink to register.</param>
+        /// <param name="minLevel">Minimum log level for this sink (default: Trace = receive all).</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="sink"/> is null.</exception>
-        public static void AddSink(ILogSink sink) {
+        public static void AddSink(ILogSink sink, LogLevelDef minLevel = LogLevelDef.Trace) {
             if (sink == null) {
                 throw new ArgumentNullException(nameof(sink));
             }
 
             lock (_queueLock) {
-                if (_sinks.Contains(sink)) {
-                    return;
+                for (var i = 0; i < _sinks.Count; i++) {
+                    if (ReferenceEquals(_sinks[i].sink, sink)) {
+                        _sinks[i] = (sink, minLevel);
+                        return;
+                    }
                 }
 
-                _sinks.Add(sink);
+                _sinks.Add((sink, minLevel));
             }
         }
 
@@ -85,7 +103,7 @@ namespace vFrame.Core
             }
 
             lock (_queueLock) {
-                _sinks.Remove(sink);
+                _sinks.RemoveAll(entry => ReferenceEquals(entry.sink, sink));
             }
         }
 
@@ -96,6 +114,44 @@ namespace vFrame.Core
         public static int GetSinkCount() {
             lock (_queueLock) {
                 return _sinks.Count;
+            }
+        }
+
+        /// <summary>
+        /// Registers a structured log sink that receives log contexts at or above the specified level.
+        /// </summary>
+        /// <param name="sink">The structured sink to register.</param>
+        /// <param name="minLevel">Minimum log level for this sink (default: Trace = receive all).</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sink"/> is null.</exception>
+        public static void AddStructuredSink(IStructuredLogSink sink, LogLevelDef minLevel = LogLevelDef.Trace) {
+            if (sink == null) {
+                throw new ArgumentNullException(nameof(sink));
+            }
+
+            lock (_queueLock) {
+                for (var i = 0; i < _structuredSinks.Count; i++) {
+                    if (ReferenceEquals(_structuredSinks[i].sink, sink)) {
+                        _structuredSinks[i] = (sink, minLevel);
+                        return;
+                    }
+                }
+
+                _structuredSinks.Add((sink, minLevel));
+            }
+        }
+
+        /// <summary>
+        /// Removes a previously registered structured log sink.
+        /// </summary>
+        /// <param name="sink">The structured sink to remove.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sink"/> is null.</exception>
+        public static void RemoveStructuredSink(IStructuredLogSink sink) {
+            if (sink == null) {
+                throw new ArgumentNullException(nameof(sink));
+            }
+
+            lock (_queueLock) {
+                _structuredSinks.RemoveAll(entry => ReferenceEquals(entry.sink, sink));
             }
         }
 
@@ -122,130 +178,411 @@ namespace vFrame.Core
             _logFile = null;
         }
 
-        /// <summary>
-        /// Logs a debug-level message with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Debug(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Debug, tag, text, args);
+        // ── Tagged log methods ──
+
+        #region Tagged Text
+
+        /// <summary>Logs a trace-level plain text message with the specified tag.</summary>
+        public static void Trace(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Trace) return;
+            Log(LogLevelDef.Trace, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs an info-level message with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Info(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Info, tag, text, args);
+        /// <summary>Logs a trace-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Trace(LogTag tag, LogLevelDef level = LogLevelDef.Trace,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Trace, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a warning-level message with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Warning(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Warning, tag, text, args);
+        /// <summary>Logs a debug-level plain text message with the specified tag.</summary>
+        public static void Debug(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Debug) return;
+            Log(LogLevelDef.Debug, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs an error-level message with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Error(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Error, tag, text, args);
+        /// <summary>Logs a debug-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Debug(LogTag tag, LogLevelDef level = LogLevelDef.Debug,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Debug, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a fatal-level message with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Fatal(LogTag tag, string text, params object[] args) {
-            Log(LogLevelDef.Fatal, tag, text, args);
+        /// <summary>Logs an info-level plain text message with the specified tag.</summary>
+        public static void Info(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Info) return;
+            Log(LogLevelDef.Info, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a fatal-level exception with the specified tag.
-        /// </summary>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="exception">The exception to log.</param>
-        public static void Fatal(LogTag tag, Exception exception) {
-            Log(LogLevelDef.Fatal, tag, exception);
+        /// <summary>Logs an info-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Info(LogTag tag, LogLevelDef level = LogLevelDef.Info,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Info, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a debug-level message with additional stack frame skip count.
-        /// </summary>
-        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Debug(int skip, LogTag tag, string text, params object[] args) {
-            Log(skip, LogLevelDef.Debug, tag, text, args);
+        /// <summary>Logs a warning-level plain text message with the specified tag.</summary>
+        public static void Warning(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Warning) return;
+            Log(LogLevelDef.Warning, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs an info-level message with additional stack frame skip count.
-        /// </summary>
-        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Info(int skip, LogTag tag, string text, params object[] args) {
-            Log(skip, LogLevelDef.Info, tag, text, args);
+        /// <summary>Logs a warning-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Warning(LogTag tag, LogLevelDef level = LogLevelDef.Warning,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Warning, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a warning-level message with additional stack frame skip count.
-        /// </summary>
-        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Warning(int skip, LogTag tag, string text, params object[] args) {
-            Log(skip, LogLevelDef.Warning, tag, text, args);
+        /// <summary>Logs an error-level plain text message with the specified tag.</summary>
+        public static void Error(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Error) return;
+            Log(LogLevelDef.Error, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs an error-level message with additional stack frame skip count.
-        /// </summary>
-        /// <param name="skip">Number of additional stack frames to skip when capturing caller info.</param>
-        /// <param name="tag">The log tag identifying the source.</param>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Error(int skip, LogTag tag, string text, params object[] args) {
-            Log(skip, LogLevelDef.Error, tag, text, args);
+        /// <summary>Logs an error-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Error(LogTag tag, LogLevelDef level = LogLevelDef.Error,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Error, tag, text, memberName, filePath, lineNumber);
         }
 
-        /// <summary>
-        /// Logs a message at the specified level with default stack frame skip.
-        /// </summary>
-        private static void Log(LogLevelDef level, LogTag tag, string text, params object[] args) {
-            Log(1, level, tag, text, args);
+        /// <summary>Logs a fatal-level plain text message with the specified tag.</summary>
+        public static void Fatal(LogTag tag, string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Fatal) return;
+            Log(LogLevelDef.Fatal, tag, text, memberName, filePath, lineNumber);
         }
 
+        /// <summary>Logs a fatal-level interpolated message. Zero-alloc when disabled.</summary>
+        public static void Fatal(LogTag tag, LogLevelDef level = LogLevelDef.Fatal,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Fatal, tag, text, memberName, filePath, lineNumber);
+        }
+
+        #endregion
+
+        #region Tagged Exception
+
+        /// <summary>Logs a trace-level exception with the specified tag.</summary>
+        public static void Trace(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Trace, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a debug-level exception with the specified tag.</summary>
+        public static void Debug(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Debug, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an info-level exception with the specified tag.</summary>
+        public static void Info(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Info, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a warning-level exception with the specified tag.</summary>
+        public static void Warning(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Warning, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an error-level exception with the specified tag.</summary>
+        public static void Error(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Error, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a fatal-level exception with the specified tag.</summary>
+        public static void Fatal(LogTag tag, Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Fatal, tag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        #endregion
+
+        // ── Untagged log methods ──
+
+        #region Untagged Text
+
+        /// <summary>Logs a trace-level plain text message without a tag.</summary>
+        public static void Trace(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Trace) return;
+            Log(LogLevelDef.Trace, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a trace-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Trace(LogLevelDef level = LogLevelDef.Trace,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Trace, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a debug-level plain text message without a tag.</summary>
+        public static void Debug(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Debug) return;
+            Log(LogLevelDef.Debug, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a debug-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Debug(LogLevelDef level = LogLevelDef.Debug,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Debug, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an info-level plain text message without a tag.</summary>
+        public static void Info(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Info) return;
+            Log(LogLevelDef.Info, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an info-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Info(LogLevelDef level = LogLevelDef.Info,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Info, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a warning-level plain text message without a tag.</summary>
+        public static void Warning(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Warning) return;
+            Log(LogLevelDef.Warning, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a warning-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Warning(LogLevelDef level = LogLevelDef.Warning,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Warning, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an error-level plain text message without a tag.</summary>
+        public static void Error(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Error) return;
+            Log(LogLevelDef.Error, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an error-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Error(LogLevelDef level = LogLevelDef.Error,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Error, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a fatal-level plain text message without a tag.</summary>
+        public static void Fatal(string text,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            if (LogLevel > LogLevelDef.Fatal) return;
+            Log(LogLevelDef.Fatal, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a fatal-level interpolated message without a tag. Zero-alloc when disabled.</summary>
+        public static void Fatal(LogLevelDef level = LogLevelDef.Fatal,
+            [InterpolatedStringHandlerArgument("level")] LogInterpolatedStringHandler handler = default,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            var text = handler.GetFormattedText();
+            if (text == null) return;
+            Log(LogLevelDef.Fatal, EmptyLogTag, text, memberName, filePath, lineNumber);
+        }
+
+        #endregion
+
+        #region Untagged Exception
+
+        /// <summary>Logs a trace-level exception without a tag.</summary>
+        public static void Trace(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Trace, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a debug-level exception without a tag.</summary>
+        public static void Debug(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Debug, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an info-level exception without a tag.</summary>
+        public static void Info(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Info, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a warning-level exception without a tag.</summary>
+        public static void Warning(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Warning, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs an error-level exception without a tag.</summary>
+        public static void Error(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Error, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>Logs a fatal-level exception without a tag.</summary>
+        public static void Fatal(Exception exception, string text = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Fatal, EmptyLogTag, exception, text, memberName, filePath, lineNumber);
+        }
+
+        #endregion
+
+        // ── Core log methods ──
+
         /// <summary>
-        /// Core logging method. Formats the message, captures the stack trace, enqueues the context,
-        /// writes to the log file, and dispatches to sinks.
+        /// Core logging method for formatted text. Builds the log context,
+        /// enqueues it, writes to the log file, and dispatches to sinks.
         /// </summary>
-        private static void Log(int skip, LogLevelDef level, LogTag tag, string text, params object[] args) {
+        private static void Log(LogLevelDef level, LogTag tag, string formattedText,
+            string memberName, string filePath, int lineNumber) {
             if (LogLevel > level) {
                 return;
             }
 
-            var logText = args != null && args.Length > 0 ? string.Format(text, args) : text;
-            var content = GetFormattedLogText(skip, tag, logText);
-            var stack = GetLogStack(skip);
+            var content = GetFormattedLogText(tag, formattedText, memberName, filePath, lineNumber);
+            var stack = CaptureStackTrace && level >= LogLevelDef.Error
+                ? GetLogStack()
+                : null;
 
-            var context = new LogContext(level, tag, content, stack, null);
+            var context = new LogContext(level, tag, content, formattedText, null, stack, null,
+                memberName, filePath, lineNumber);
+            EnqueueAndDispatch(context);
+        }
+
+        /// <summary>
+        /// Core logging method for exception messages with optional text.
+        /// Builds the log context, enqueues it, writes to the log file, and dispatches to sinks.
+        /// </summary>
+        private static void Log(LogLevelDef level, LogTag tag, Exception exception,
+            string text, string memberName, string filePath, int lineNumber) {
+            if (LogLevel > level) {
+                return;
+            }
+
+            var message = string.IsNullOrEmpty(text)
+                ? exception.Message
+                : $"{text} — {exception.Message}";
+            var stack = CaptureStackTrace
+                ? GetLogStack()
+                : exception?.StackTrace;
+
+            var context = new LogContext(level, tag, message, message, null,
+                stack, exception, memberName, filePath, lineNumber);
+            EnqueueAndDispatch(context);
+            _logFile?.AppendText(exception.ToString(), urgent: level >= LogLevelDef.Error);
+        }
+
+        /// <summary>
+        /// Enqueues the context, writes to file, and dispatches to sinks.
+        /// </summary>
+        private static void EnqueueAndDispatch(LogContext context) {
             lock (_queueLock) {
                 if (_logQueue.Count >= LogCapacity) {
                     _logQueue.Dequeue();
@@ -253,60 +590,52 @@ namespace vFrame.Core
                 _logQueue.Enqueue(context);
             }
 
-            _logFile?.AppendText(content);
+            _logFile?.AppendText(context.Content, urgent: context.Level >= LogLevelDef.Error);
 
             OnLogReceived?.Invoke(context);
             EmitToSinks(context);
         }
 
-        /// <summary>
-        /// Logs an exception at the specified level. Enqueues the context, writes to the log file,
-        /// and dispatches to sinks.
-        /// </summary>
-        private static void Log(LogLevelDef level, LogTag tag, Exception exception) {
-            if (LogLevel > level) {
-                return;
-            }
-
-            var context = new LogContext(level, tag, exception.Message, exception.StackTrace, exception);
-            lock (_queueLock) {
-                if (_logQueue.Count >= LogCapacity) {
-                    _logQueue.Dequeue();
-                }
-                _logQueue.Enqueue(context);
-            }
-
-            _logFile?.AppendText(exception.ToString());
-
-            OnLogReceived?.Invoke(context);
-            EmitToSinks(context);
-        }
+        // ── Sink dispatch ──
 
         /// <summary>
-        /// Dispatches the log context to all currently registered sinks.
+        /// Dispatches the log context to all registered sinks whose minimum level matches.
         /// </summary>
         private static void EmitToSinks(LogContext context) {
-            ILogSink[] sinks;
+            (ILogSink sink, LogLevelDef minLevel)[] sinks;
+            (IStructuredLogSink sink, LogLevelDef minLevel)[] structuredSinks;
 
             lock (_queueLock) {
-                if (_sinks.Count == 0) {
-                    return;
-                }
-
-                sinks = _sinks.ToArray();
+                sinks = _sinks.Count > 0 ? _sinks.ToArray() : null;
+                structuredSinks = _structuredSinks.Count > 0 ? _structuredSinks.ToArray() : null;
             }
 
-            foreach (var sink in sinks) {
-                sink.OnLogReceived(context);
+            if (sinks != null) {
+                foreach (var (sink, minLevel) in sinks) {
+                    if (context.Level >= minLevel) {
+                        sink.OnLogReceived(context);
+                    }
+                }
+            }
+
+            if (structuredSinks != null) {
+                foreach (var (sink, minLevel) in structuredSinks) {
+                    if (context.Level >= minLevel) {
+                        sink.OnLogReceived(context);
+                    }
+                }
             }
         }
+
+        // ── Formatting ──
 
         /// <summary>
         /// Builds a formatted log string based on the current <see cref="LogFormatMask"/>.
-        /// Includes optional tag, timestamp, class name, and function name.
+        /// Uses compiler-injected caller info instead of StackFrame reflection.
         /// </summary>
         /// <returns>The formatted log text.</returns>
-        private static string GetFormattedLogText(int skip, LogTag tag, string log) {
+        private static string GetFormattedLogText(LogTag tag, string log,
+            string memberName, string filePath, int lineNumber) {
             var builder = StringBuilderPool.Shared.Get();
             if ((LogFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(LogTagFormatter) &&
                 !tag.Equals(EmptyLogTag)) {
@@ -322,32 +651,37 @@ namespace vFrame.Core
                 builder.Append(" ");
             }
 
-            if ((LogFormatMask & LogFormatType.Class) > 0) {
-                var stackFrame = new StackFrame(skip + 3);
-                var methodBase = stackFrame.GetMethod();
-                if (null != methodBase) {
-                    if ((LogFormatMask & LogFormatType.Function) > 0) {
-                        builder.Append("[");
-                        builder.Append(null == methodBase.ReflectedType ? "<Unknown>" : methodBase.ReflectedType.Name);
-                        builder.Append("::");
-                        builder.Append(methodBase.Name);
-                        builder.Append("]");
-                    }
-                    else {
-                        builder.Append("[");
-                        builder.Append(null == methodBase.ReflectedType ? "<Unknown>" : methodBase.ReflectedType.Name);
-                        builder.Append("]");
-                    }
+            if ((LogFormatMask & LogFormatType.Class) > 0 && !string.IsNullOrEmpty(filePath)) {
+                var className = ExtractClassName(filePath);
+                if ((LogFormatMask & LogFormatType.Function) > 0) {
+                    builder.Append("[");
+                    builder.Append(className);
+                    builder.Append("::");
+                    builder.Append(memberName);
+                    builder.Append("]");
+                }
+                else {
+                    builder.Append("[");
+                    builder.Append(className);
+                    builder.Append("]");
                 }
             }
             else if ((LogFormatMask & LogFormatType.Function) > 0) {
-                var stackFrame = new StackFrame(skip + 3);
-                var methodBase = stackFrame.GetMethod();
-                if (null != methodBase) {
-                    builder.Append("[");
-                    builder.Append(methodBase.Name);
-                    builder.Append("]");
-                }
+                builder.Append("[");
+                builder.Append(memberName);
+                builder.Append("]");
+            }
+
+            if ((LogFormatMask & LogFormatType.Thread) > 0) {
+                builder.Append(" [T:");
+                builder.Append(Environment.CurrentManagedThreadId);
+                builder.Append("]");
+            }
+
+            if ((LogFormatMask & LogFormatType.Line) > 0 && lineNumber > 0) {
+                builder.Append(" [L:");
+                builder.Append(lineNumber);
+                builder.Append("]");
             }
 
             builder.Append(" ");
@@ -360,61 +694,46 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Extracts and trims the stack trace, skipping the specified number of internal frames.
+        /// Extracts the class name from a file path.
+        /// Handles both "Namespace.ClassName" and full file paths like "/path/to/ClassName.cs".
+        /// </summary>
+        private static string ExtractClassName(string filePath) {
+            if (string.IsNullOrEmpty(filePath)) {
+                return "<Unknown>";
+            }
+
+            // If the path contains directory separators, extract the file name without extension
+            var lastSlash = filePath.LastIndexOfAny(new[] { '/', '\\' });
+            if (lastSlash >= 0) {
+                filePath = filePath.Substring(lastSlash + 1);
+            }
+
+            // Remove .cs extension if present
+            if (filePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) {
+                filePath = filePath.Substring(0, filePath.Length - 3);
+            }
+
+            return filePath;
+        }
+
+        /// <summary>
+        /// Extracts the current stack trace, skipping internal Logger frames.
+        /// Only called when <see cref="CaptureStackTrace"/> is true or for Error/Fatal with exceptions.
         /// </summary>
         /// <returns>The trimmed stack trace string.</returns>
-        private static string GetLogStack(int skip) {
+        private static string GetLogStack() {
             var stackTrace = StackTraceUtility.ExtractStackTrace();
-            skip += 3;
-            while (skip-- > 0) {
-                stackTrace = stackTrace.Substring(stackTrace.IndexOf("\n", StringComparison.Ordinal) + 1);
+            // Skip the first 3 internal frames (GetLogStack → Log → public method)
+            const int skip = 3;
+            for (var i = 0; i < skip; i++) {
+                var idx = stackTrace.IndexOf("\n", StringComparison.Ordinal);
+                if (idx < 0) break;
+                stackTrace = stackTrace.Substring(idx + 1);
             }
             return stackTrace;
         }
 
-        /// <summary>
-        /// Logs a debug-level message without a tag.
-        /// </summary>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Debug(string text, params object[] args) {
-            Log(LogLevelDef.Debug, EmptyLogTag, text, args);
-        }
-
-        /// <summary>
-        /// Logs an info-level message without a tag.
-        /// </summary>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Info(string text, params object[] args) {
-            Log(LogLevelDef.Info, EmptyLogTag, text, args);
-        }
-
-        /// <summary>
-        /// Logs a warning-level message without a tag.
-        /// </summary>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Warning(string text, params object[] args) {
-            Log(LogLevelDef.Warning, EmptyLogTag, text, args);
-        }
-
-        /// <summary>
-        /// Logs an error-level message without a tag.
-        /// </summary>
-        /// <param name="text">The format string for the log message.</param>
-        /// <param name="args">Optional format arguments.</param>
-        public static void Error(string text, params object[] args) {
-            Log(LogLevelDef.Error, EmptyLogTag, text, args);
-        }
-
-        /// <summary>
-        /// Logs a fatal-level exception without a tag.
-        /// </summary>
-        /// <param name="exception">The exception to log.</param>
-        public static void Fatal(Exception exception) {
-            Fatal(EmptyLogTag, exception);
-        }
+        // ── Buffered log access ──
 
         /// <summary>
         /// Returns buffered log contexts matching the specified level mask.
@@ -445,24 +764,105 @@ namespace vFrame.Core
             }
         }
 
+        // ── Category management ──
+
+        /// <summary>
+        /// Returns a category-based logger for the specified category name.
+        /// Creates a new instance if one does not already exist.
+        /// </summary>
+        /// <param name="categoryName">The category name used as the log tag.</param>
+        /// <returns>A logger instance for the category.</returns>
+        public static ILogger GetLogger(string categoryName) {
+            lock (_queueLock) {
+                if (!_categories.TryGetValue(categoryName, out var logger)) {
+                    logger = new LoggerCategory(categoryName);
+                    _categories[categoryName] = logger;
+                }
+                return logger;
+            }
+        }
+
+        /// <summary>
+        /// Returns a category-based logger for the specified type's full name.
+        /// Creates a new instance if one does not already exist.
+        /// </summary>
+        /// <typeparam name="T">The type whose full name is used as the category.</typeparam>
+        /// <returns>A logger instance for the type's category.</returns>
+        public static ILogger GetLogger<T>() {
+            return GetLogger(typeof(T).FullName ?? typeof(T).Name);
+        }
+
+        /// <summary>
+        /// Sets the minimum log level for all categories whose name starts with the specified prefix.
+        /// </summary>
+        /// <param name="prefix">The category name prefix to match.</param>
+        /// <param name="level">The minimum log level for matching categories.</param>
+        public static void SetLevel(string prefix, LogLevelDef level) {
+            lock (_queueLock) {
+                foreach (var entry in _categories) {
+                    if (entry.Key.StartsWith(prefix, StringComparison.Ordinal)) {
+                        entry.Value.MinimumLevel = level;
+                    }
+                }
+            }
+        }
+
+        // ── Configuration ──
+
+        /// <summary>
+        /// Applies a <see cref="LogConfiguration"/> to this logger instance.
+        /// Sets global level, per-category levels, file path, and other options.
+        /// </summary>
+        /// <param name="config">The configuration to apply.</param>
+        public static void ApplyConfiguration(LogConfiguration config) {
+            if (config == null) return;
+
+            LogLevel = config.GlobalMinimumLevel;
+
+            if (config.CategoryLevels != null) {
+                foreach (var kvp in config.CategoryLevels) {
+                    SetLevel(kvp.Key, kvp.Value);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(config.FileLogPath)) {
+                LogFilePath = config.FileLogPath;
+            }
+
+            CaptureStackTrace = config.CaptureStackTrace;
+        }
+
+        // ── LogContext ──
+
         public struct LogContext
         {
             public LogLevelDef Level;
-            public string Content;
             public LogTag Tag;
+            public string Content;
+            public string MessageTemplate;
+            public object[] Args;
             public string StackTrace;
             public Exception Exception;
+            public string MemberName;
+            public string FilePath;
+            public int LineNumber;
 
             /// <summary>
-            /// Creates a new log context with the specified fields.
+            /// Creates a new log context with all fields.
             /// </summary>
-            public LogContext(LogLevelDef level, LogTag tag, string content, string stackTrace,
-                Exception exception) : this() {
+            public LogContext(LogLevelDef level, LogTag tag, string content,
+                string messageTemplate, object[] args, string stackTrace,
+                Exception exception, string memberName, string filePath, int lineNumber) : this() {
                 Level = level;
-                Content = content;
                 Tag = tag;
+                Content = content;
+                MessageTemplate = messageTemplate;
+                Args = args;
                 StackTrace = stackTrace;
                 Exception = exception;
+                MemberName = memberName;
+                FilePath = filePath;
+                LineNumber = lineNumber;
             }
         }
 
@@ -470,11 +870,25 @@ namespace vFrame.Core
 
         public static LogLevelDef LogLevel { get; set; } = LogLevelDef.Error;
 
+        /// <summary>
+        /// Returns true if the given log level would produce output.
+        /// Used internally by LogInterpolatedStringHandler for
+        /// compile-time short-circuit evaluation.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsEnabled(LogLevelDef level) => LogLevel <= level;
+
         public static int LogFormatMask { get; set; } = DefaultLogFormatMask;
 
         public static string LogTagFormatter { get; set; } = DefaultTagFormatter;
 
         public static int LogCapacity { get; set; } = DefaultCapacity;
+
+        /// <summary>
+        /// When true, stack traces are captured for Error/Fatal log entries.
+        /// Defaults to false.
+        /// </summary>
+        public static bool CaptureStackTrace { get; set; }
 
         #endregion
     }

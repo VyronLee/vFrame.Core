@@ -98,7 +98,7 @@ namespace vFrame.Core.Unity
                 OnCheckStarted();
             }
 
-            Logger.Info(PatchConst.LogTag, "Validate file hash started, total count: {0}", HashTotal);
+            Logger.Info(PatchConst.LogTag, $"Validate file hash started, total count: {HashTotal}");
 
             for (HashNum = 1; HashNum <= HashTotal; HashNum++) {
                 var asset = _assets[HashNum - 1];
@@ -107,7 +107,7 @@ namespace vFrame.Core.Unity
                 yield return process;
 
                 if (process.Error != null) {
-                    Logger.Error(PatchConst.LogTag, "Hash file failed: {0}, error: {1}", filePath, process.Error);
+                    Logger.Error(PatchConst.LogTag, $"Hash file failed: {filePath}, error: {process.Error}");
                     HashFailedNum++;
                     Valid = false;
                     continue;
@@ -119,7 +119,7 @@ namespace vFrame.Core.Unity
                 }
 
                 if (valid) {
-                    Logger.Info(PatchConst.LogTag, "Hash file succeed: {0}.", filePath);
+                    Logger.Info(PatchConst.LogTag, $"Hash file succeed: {filePath}.");
                     continue;
                 }
 
@@ -127,12 +127,10 @@ namespace vFrame.Core.Unity
                 Valid = false;
 
                 Logger.Error(PatchConst.LogTag,
-                    "Validate file hash failed, hash not match, file path: {0}, md5 desired: {1}, got: {2}",
-                    filePath, asset.md5, process.HashValue);
+                    $"Validate file hash failed, hash not match, file path: {filePath}, md5 desired: {asset.md5}, got: {process.HashValue}");
             }
 
-            Logger.Info(PatchConst.LogTag, "Validate file hash finished, failed count: {0}, total count: {1}",
-                HashFailedNum, HashTotal);
+            Logger.Info(PatchConst.LogTag, $"Validate file hash finished, failed count: {HashFailedNum}, total count: {HashTotal}");
 
             yield return null;
 

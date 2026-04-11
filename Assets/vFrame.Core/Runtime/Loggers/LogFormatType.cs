@@ -17,5 +17,7 @@ namespace vFrame.Core
         public const int Time = 1 << 1;
         public const int Class = 1 << 2;
         public const int Function = 1 << 3;
+        public const int Thread = 1 << 4;
+        public const int Line = 1 << 5;
     }
 }
