@@ -418,7 +418,7 @@ namespace vFrame.Core
         private void SafeSaveBlockInfo(int blockIndex, long offset, int originSize, int compressedSize,
             bool compressed) {
             lock (_blockTable) {
-                if (blockIndex < 0 || blockIndex > _blockTable.BlockInfos.Length) {
+                if (blockIndex < 0 || blockIndex >= _blockTable.BlockInfos.Length) {
                     throw new BlockIndexOutOfRangeException();
                 }
 
@@ -561,7 +561,7 @@ namespace vFrame.Core
             lock (_inputLock) {
                 input.Seek(blockInfo.BlockOffset, SeekOrigin.Begin);
 
-                if (input.Position + blockInfo.CompressedSize >= input.Length) {
+                if (input.Position + blockInfo.CompressedSize > input.Length) {
                     throw new DataNotEnoughException();
                 }
 

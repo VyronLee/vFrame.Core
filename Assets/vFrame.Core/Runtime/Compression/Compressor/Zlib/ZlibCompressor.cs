@@ -25,11 +25,15 @@ namespace vFrame.Core
         /// <param name="onProgress">Optional progress callback with (processedBytes, totalBytes).</param>
         public override void Compress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as ZlibCompressorOptions ?? new ZlibCompressorOptions();
+            var totalBytesRead = 0L;
+            var inputLength = input.CanSeek ? input.Length : -1;
             using (var encoder = new DeflateStream(output, CompressionMode.Compress, options.Level, true)) {
                 int length;
                 var buffer = new byte[options.BuffSize];
                 while ((length = input.Read(buffer, 0, buffer.Length)) > 0) {
                     encoder.Write(buffer, 0, length);
+                    totalBytesRead += length;
+                    onProgress?.Invoke(totalBytesRead, inputLength);
                 }
             }
         }
@@ -42,11 +46,15 @@ namespace vFrame.Core
         /// <param name="onProgress">Optional progress callback with (processedBytes, totalBytes).</param>
         public override void Decompress(Stream input, Stream output, Action<long, long> onProgress) {
             var options = Options as ZlibCompressorOptions ?? new ZlibCompressorOptions();
+            var totalBytesRead = 0L;
+            var inputLength = input.CanSeek ? input.Length : -1;
             using (var decoder = new DeflateStream(input, CompressionMode.Decompress, options.Level, true)) {
                 int length;
                 var buffer = new byte[options.BuffSize];
                 while ((length = decoder.Read(buffer, 0, buffer.Length)) > 0) {
                     output.Write(buffer, 0, length);
+                    totalBytesRead += length;
+                    onProgress?.Invoke(totalBytesRead, inputLength);
                 }
             }
         }
