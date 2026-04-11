@@ -26,12 +26,16 @@ namespace vFrame.Core
             var byteArrayPool = ByteArrayPool.Shared;
             var buffer = byteArrayPool.Rent(size);
 
-            var count = fromStream.Read(buffer, 0, size);
-            if (count != size) {
-                ThrowHelper.ThrowInvalidDataException($"size expected: {size}, got: {count}");
+            try {
+                var count = fromStream.Read(buffer, 0, size);
+                if (count != size) {
+                    ThrowHelper.ThrowInvalidDataException($"size expected: {size}, got: {count}");
+                }
+                toStream.Write(buffer, 0, size);
             }
-            toStream.Write(buffer, 0, size);
-            byteArrayPool.Return(buffer);
+            finally {
+                byteArrayPool.Return(buffer);
+            }
         }
     }
 }

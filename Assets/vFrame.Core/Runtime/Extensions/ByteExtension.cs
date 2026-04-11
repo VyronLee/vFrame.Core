@@ -29,6 +29,7 @@ namespace vFrame.Core
         /// <param name="bytes">The byte array.</param>
         /// <returns>A concatenated uppercase hexadecimal string.</returns>
         public static string ToHex(this byte[] bytes) {
+            ThrowHelper.ThrowIfNull(bytes, nameof(bytes));
             var builder = StringBuilderPool.Shared.Get();
             foreach (var b in bytes) {
                 builder.Append(b.ToString("X2"));
@@ -45,6 +46,7 @@ namespace vFrame.Core
         /// <param name="format">The format string (e.g. "X2", "x2").</param>
         /// <returns>A concatenated hexadecimal string.</returns>
         public static string ToHex(this byte[] bytes, string format) {
+            ThrowHelper.ThrowIfNull(bytes, nameof(bytes));
             var builder = StringBuilderPool.Shared.Get();
             foreach (var b in bytes) {
                 builder.Append(b.ToString(format));
@@ -62,6 +64,10 @@ namespace vFrame.Core
         /// <param name="count">The number of bytes to convert.</param>
         /// <returns>A concatenated uppercase hexadecimal string.</returns>
         public static string ToHex(this byte[] bytes, int offset, int count) {
+            ThrowHelper.ThrowIfNull(bytes, nameof(bytes));
+            if (offset < 0 || count < 0 || offset + count > bytes.Length) {
+                ThrowHelper.ThrowArgumentException("Invalid offset or count for byte array.");
+            }
             var builder = StringBuilderPool.Shared.Get();
             for (var i = offset; i < offset + count; ++i) {
                 builder.Append(bytes[i].ToString("X2"));

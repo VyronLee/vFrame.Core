@@ -8,6 +8,7 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -53,6 +54,12 @@ namespace vFrame.Core
         /// <returns>A byte array.</returns>
         /// <exception cref="System.ArgumentException">Thrown when the hexadecimal string has an odd length.</exception>
         public static byte[] HexToBytes(this string hexString) {
+            ThrowHelper.ThrowIfNull(hexString, nameof(hexString));
+
+            if (hexString.Length == 0) {
+                return Array.Empty<byte>();
+            }
+
             if (hexString.Length % 2 != 0) {
                 ThrowHelper.ThrowArgumentException(string.Format(CultureInfo.InvariantCulture,
                     "The binary key cannot have an odd number of digits: {0}", hexString));
@@ -60,13 +67,23 @@ namespace vFrame.Core
 
             var hexAsBytes = new byte[hexString.Length / 2];
             for (var index = 0; index < hexAsBytes.Length; index++) {
-                var byteValue = "";
-                byteValue += hexString[index * 2];
-                byteValue += hexString[index * 2 + 1];
-                hexAsBytes[index] = byte.Parse(byteValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                var high = ParseHexChar(hexString[index * 2]);
+                var low = ParseHexChar(hexString[index * 2 + 1]);
+                hexAsBytes[index] = (byte)(high << 4 | low);
             }
 
             return hexAsBytes;
+        }
+
+        /// <summary>
+        /// Parses a single hex character to its numeric value.
+        /// </summary>
+        private static int ParseHexChar(char c) {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            ThrowHelper.ThrowArgumentException($"Invalid hex character: {c}");
+            return 0;
         }
     }
 }
