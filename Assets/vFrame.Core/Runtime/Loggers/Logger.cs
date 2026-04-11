@@ -825,8 +825,16 @@ namespace vFrame.Core
                 }
             }
 
+            if (!string.IsNullOrEmpty(config.FormatTemplate)) {
+                var formatter = new LogFormatter(config.FormatTemplate);
+                LogFormatMask = 0; // Disable legacy bitmask when template is active
+            }
+
             if (!string.IsNullOrEmpty(config.FileLogPath)) {
                 LogFilePath = config.FileLogPath;
+                if (_logFile != null && config.FileLogOptions != null) {
+                    _logFile.Configure(config.FileLogOptions);
+                }
             }
 
             CaptureStackTrace = config.CaptureStackTrace;

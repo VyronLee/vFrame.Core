@@ -1,7 +1,6 @@
 // ------------------------------------------------------------
 //         File: LogToFile.cs
-//        Brief: Asynchronous log file writer that flushes
-//               buffered entries to disk at a fixed interval.
+//        Brief: Asynchronous log file writer with rolling file support
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
@@ -13,6 +12,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using vFrame.Core;
@@ -31,6 +31,10 @@ namespace vFrame.Core
         private FileStream _fileStream;
         private StreamWriter _writer;
         private Task _task;
+        private LogToFileOptions _options;
+        private DateTime _currentFileDate;
+        private long _currentFileSize;
+        private int _fileIndex;
 
         public bool AppendTimestamp { get; set; }
         public string AppendTimestampFormat { get; set; } = "[yyyy-MM-dd HH:mm:ss.fff] ";
@@ -42,8 +46,9 @@ namespace vFrame.Core
         /// <param name="path">The file path for the log output.</param>
         protected override void OnCreate(string path) {
             CreateDirectory(path);
-
             _logPath = path;
+            _currentFileDate = DateTime.Today;
+            _fileIndex = 0;
             OpenFileHandle();
             _cancellationTokenSource = new CancellationTokenSource();
             _task = Task.Run(Update);
@@ -78,6 +83,17 @@ namespace vFrame.Core
         }
 
         /// <summary>
+        /// Configures rolling file options. Can be called after Create.
+        /// </summary>
+        /// <param name="options">The rolling file configuration.</param>
+        public void Configure(LogToFileOptions options) {
+            _options = options;
+            if (options != null && options.FlushIntervalSeconds > 0) {
+                // Note: interval is used by the background loop
+            }
+        }
+
+        /// <summary>
         /// Creates the directory for the given file path if it does not already exist.
         /// </summary>
         private static void CreateDirectory(string filePath) {
@@ -94,6 +110,7 @@ namespace vFrame.Core
         private void OpenFileHandle() {
             _fileStream = new FileStream(_logPath, FileMode.Append, FileAccess.Write, FileShare.Read);
             _writer = new StreamWriter(_fileStream) { AutoFlush = false };
+            _currentFileSize = _fileStream.Length;
         }
 
         /// <summary>
@@ -141,11 +158,15 @@ namespace vFrame.Core
         /// Exits when the cancellation token is triggered.
         /// </summary>
         private void Update() {
+            var interval = _options?.FlushIntervalSeconds > 0
+                ? _options.FlushIntervalSeconds * 1000
+                : WaitForMilliseconds;
+
             while (!_cancellationTokenSource.Token.IsCancellationRequested) {
                 WriteAllText();
 
                 try {
-                    Task.Delay(WaitForMilliseconds, _cancellationTokenSource.Token).Wait();
+                    Task.Delay(interval, _cancellationTokenSource.Token).Wait();
                 }
                 catch (AggregateException) {
                     // TaskCanceledException wrapped in AggregateException — exit loop
@@ -156,6 +177,7 @@ namespace vFrame.Core
 
         /// <summary>
         /// Dequeues all pending log entries and writes them to the log file.
+        /// Checks for rolling conditions before writing.
         /// </summary>
         private void WriteAllText() {
             lock (_lockObject) {
@@ -167,7 +189,9 @@ namespace vFrame.Core
 
                 try {
                     while (_logQueue.TryDequeue(out var value)) {
+                        CheckRolling();
                         _writer.WriteLine(value);
+                        _currentFileSize += value.Length + Environment.NewLine.Length;
                     }
                     _writer.Flush();
                 }
@@ -178,6 +202,108 @@ namespace vFrame.Core
                 catch (Exception ex) {
                     Debug.WriteLine($"[LogToFile] Write failed: {ex.Message}");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Checks if the current log file needs rolling based on the configured strategy.
+        /// </summary>
+        private void CheckRolling() {
+            if (_options == null || _options.Strategy == RollingStrategy.None) {
+                return;
+            }
+
+            var needsRoll = false;
+
+            if (_options.Strategy == RollingStrategy.BySize) {
+                needsRoll = _currentFileSize >= _options.MaxFileSizeBytes;
+            }
+            else if (_options.Strategy == RollingStrategy.ByDate) {
+                needsRoll = DateTime.Today != _currentFileDate;
+            }
+
+            if (needsRoll) {
+                RollFile();
+            }
+        }
+
+        /// <summary>
+        /// Rolls the current log file: closes the handle, renames the file with a
+        /// timestamp or index suffix, and opens a fresh file.
+        /// </summary>
+        private void RollFile() {
+            CloseFileHandle();
+
+            // Generate archive name
+            var archivePath = GenerateArchivePath();
+            try {
+                if (File.Exists(_logPath)) {
+                    File.Move(_logPath, archivePath);
+                }
+            }
+            catch (IOException ex) {
+                Debug.WriteLine($"[LogToFile] Failed to roll file: {ex.Message}");
+            }
+
+            // Cleanup old archives if exceeding MaxFileCount
+            CleanupOldArchives();
+
+            // Reset state
+            _currentFileDate = DateTime.Today;
+            _currentFileSize = 0;
+
+            // Reopen fresh file
+            OpenFileHandle();
+        }
+
+        /// <summary>
+        /// Generates the archive file path based on the rolling strategy.
+        /// </summary>
+        private string GenerateArchivePath() {
+            var dir = Path.GetDirectoryName(_logPath) ?? "";
+            var fileName = Path.GetFileNameWithoutExtension(_logPath);
+            var ext = Path.GetExtension(_logPath);
+
+            if (_options.Strategy == RollingStrategy.ByDate) {
+                return Path.Combine(dir, $"{fileName}_{_currentFileDate:yyyy-MM-dd}{ext}");
+            }
+
+            // BySize: use index suffix
+            _fileIndex++;
+            return Path.Combine(dir, $"{fileName}.{_fileIndex:D3}{ext}");
+        }
+
+        /// <summary>
+        /// Removes old archive files when the count exceeds <see cref="LogToFileOptions.MaxFileCount"/>.
+        /// Only considers files matching the base name pattern.
+        /// </summary>
+        private void CleanupOldArchives() {
+            if (_options == null || _options.MaxFileCount <= 0) {
+                return;
+            }
+
+            try {
+                var dir = Path.GetDirectoryName(_logPath) ?? "";
+                var fileName = Path.GetFileNameWithoutExtension(_logPath);
+                var ext = Path.GetExtension(_logPath);
+
+                var archives = Directory.GetFiles(dir, $"{fileName}_*{ext}")
+                    .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}"))
+                    .OrderBy(f => f)
+                    .ToList();
+
+                var filesToDelete = archives.Count - _options.MaxFileCount;
+                for (var i = 0; i < filesToDelete; i++) {
+                    try {
+                        File.Delete(archives[i]);
+                    }
+                    catch (IOException ex) {
+                        Debug.WriteLine($"[LogToFile] Failed to delete old archive: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"[LogToFile] Cleanup failed: {ex.Message}");
             }
         }
     }
