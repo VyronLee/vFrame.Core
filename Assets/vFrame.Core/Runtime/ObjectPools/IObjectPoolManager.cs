@@ -77,5 +77,33 @@ namespace vFrame.Core
         IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
             where TClass : class, new()
             where TAllocator : IPoolObjectAllocator<TClass>, new();
+
+        /// <summary>
+        /// Gets the existing pool for <typeparamref name="T"/> without creating one.
+        /// </summary>
+        /// <typeparam name="T">The pooled object type.</typeparam>
+        /// <param name="pool">The existing pool, or <c>null</c> if none is registered.</param>
+        /// <returns><c>true</c> if a pool exists; otherwise <c>false</c>.</returns>
+        bool TryGetObjectPool<T>(out IObjectPool<T> pool) where T : class, new();
+
+        /// <summary>
+        /// Gets the existing pool for the specified <paramref name="type"/> without creating one.
+        /// </summary>
+        /// <param name="type">The pooled object type.</param>
+        /// <param name="pool">The existing pool, or <c>null</c> if none is registered.</param>
+        /// <returns><c>true</c> if a pool exists; otherwise <c>false</c>.</returns>
+        bool TryGetObjectPool(Type type, out IObjectPool pool);
+
+        /// <summary>
+        /// Removes excess inactive objects from all registered pools.
+        /// </summary>
+        /// <param name="maxRetainedPerPool">Maximum inactive objects to retain per pool.</param>
+        /// <returns>Total number of objects removed across all pools.</returns>
+        int TrimAll(int maxRetainedPerPool);
+
+        /// <summary>
+        /// Gets the number of registered pools.
+        /// </summary>
+        int GetPoolCount();
     }
 }

@@ -34,6 +34,13 @@ namespace vFrame.Core
         /// </summary>
         /// <returns>Current pool statistics.</returns>
         ObjectPoolStatistics GetStatistics();
+
+        /// <summary>
+        /// Removes excess inactive objects from the pool.
+        /// </summary>
+        /// <param name="maxRetained">Maximum inactive objects to retain.</param>
+        /// <returns>The number of objects removed.</returns>
+        int Trim(int maxRetained);
     }
 
     public interface IObjectPool<T> : IObjectPool

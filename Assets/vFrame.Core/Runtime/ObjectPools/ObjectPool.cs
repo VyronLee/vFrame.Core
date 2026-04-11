@@ -39,6 +39,14 @@ namespace vFrame.Core
         public abstract ObjectPoolStatistics GetStatistics();
 
         /// <summary>
+        /// Removes excess inactive objects from the pool. Default implementation returns 0.
+        /// Override in derived pools to implement actual trimming.
+        /// </summary>
+        /// <param name="maxRetained">Maximum number of inactive objects to retain.</param>
+        /// <returns>The number of objects removed.</returns>
+        public virtual int Trim(int maxRetained) => 0;
+
+        /// <summary>
         /// Internal typed get logic implemented by derived pools.
         /// </summary>
         /// <returns>An object from the pool.</returns>
@@ -116,6 +124,7 @@ namespace vFrame.Core
             if (obj is Object pooledObject && pooledObject.Destroyed) {
                 _statistics.TotalReturnCount++;
                 _statistics.TotalDestroyedCount++;
+                _statistics.CountAll--;
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -130,6 +139,7 @@ namespace vFrame.Core
 
                 if (_objects.Count >= _options.MaxSize && _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
                     _statistics.TotalDestroyedCount++;
+                    _statistics.CountAll--;
                     _options.OnDestroy?.Invoke(obj);
                     return;
                 }
@@ -161,6 +171,25 @@ namespace vFrame.Core
 
             _options.OnGet?.Invoke(item);
             return item;
+        }
+
+        /// <summary>
+        /// Removes excess inactive objects from the pool, releasing them for garbage collection.
+        /// </summary>
+        /// <param name="maxRetained">Maximum number of inactive objects to retain. If the pool holds more, the excess are discarded.</param>
+        /// <returns>The number of objects removed.</returns>
+        public int Trim(int maxRetained) {
+            int removed = 0;
+            lock (_lockObject) {
+                while (_objects.Count > maxRetained) {
+                    var item = _objects.Pop();
+                    _inactiveLookup.Remove(item);
+                    _statistics.CountAll--;
+                    _statistics.TotalDestroyedCount++;
+                    removed++;
+                }
+            }
+            return removed;
         }
 
         /// <summary>
@@ -319,6 +348,7 @@ namespace vFrame.Core
             if (obj is Object pooledObject && pooledObject.Destroyed) {
                 _statistics.TotalReturnCount++;
                 _statistics.TotalDestroyedCount++;
+                _statistics.CountAll--;
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -333,6 +363,7 @@ namespace vFrame.Core
 
                 if (_objects.Count >= _options.MaxSize && _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
                     _statistics.TotalDestroyedCount++;
+                    _statistics.CountAll--;
                     _options.OnDestroy?.Invoke(obj);
                     return;
                 }
@@ -340,6 +371,25 @@ namespace vFrame.Core
                 _objects.Push(obj);
                 _inactiveLookup.Add(obj);
             }
+        }
+
+        /// <summary>
+        /// Removes excess inactive objects from the pool, releasing them for garbage collection.
+        /// </summary>
+        /// <param name="maxRetained">Maximum number of inactive objects to retain. If the pool holds more, the excess are discarded.</param>
+        /// <returns>The number of objects removed.</returns>
+        public int Trim(int maxRetained) {
+            int removed = 0;
+            lock (_lockObject) {
+                while (_objects.Count > maxRetained) {
+                    var item = _objects.Pop();
+                    _inactiveLookup.Remove(item);
+                    _statistics.CountAll--;
+                    _statistics.TotalDestroyedCount++;
+                    removed++;
+                }
+            }
+            return removed;
         }
 
         /// <summary>

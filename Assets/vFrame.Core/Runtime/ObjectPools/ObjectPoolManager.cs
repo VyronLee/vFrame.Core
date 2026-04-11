@@ -15,8 +15,7 @@ namespace vFrame.Core
 {
     public class ObjectPoolManager : Singleton<ObjectPoolManager>, IObjectPoolManager
     {
-        private readonly object _lockObject_1 = new object();
-        private readonly object _lockObject_2 = new object();
+        private readonly object _lockObject = new object();
         private Dictionary<Type, IObjectPool> _pools;
 
         /// <summary>
@@ -30,7 +29,7 @@ namespace vFrame.Core
         /// <typeparam name="T">The type of object to get.</typeparam>
         /// <returns>A pooled instance of <typeparamref name="T"/>.</returns>
         public T Get<T>() where T : class, new() {
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 return GetObjectPool<T>().Get();
             }
         }
@@ -41,7 +40,7 @@ namespace vFrame.Core
         /// <param name="type">The type of object to get.</param>
         /// <returns>A pooled instance of the specified type.</returns>
         public object Get(Type type) {
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 return GetObjectPool(type).Get();
             }
         }
@@ -53,7 +52,7 @@ namespace vFrame.Core
         /// <param name="obj">The object to return.</param>
         public void Return<T>(T obj) where T : class, new() {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 GetObjectPool(obj.GetType()).Return(obj);
             }
         }
@@ -64,7 +63,7 @@ namespace vFrame.Core
         /// <param name="obj">The object to return.</param>
         public void Return(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 GetObjectPool(obj.GetType()).Return(obj);
             }
         }
@@ -76,7 +75,7 @@ namespace vFrame.Core
         /// <param name="obj">The object to return.</param>
         public void TryReturn<T>(T obj) where T : class {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
                 }
@@ -90,7 +89,7 @@ namespace vFrame.Core
         /// <param name="obj">The object to return.</param>
         public void TryReturn(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            lock (_lockObject_1) {
+            lock (_lockObject) {
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
                 }
@@ -104,7 +103,7 @@ namespace vFrame.Core
         /// <typeparam name="T">The pooled object type.</typeparam>
         /// <returns>The <see cref="IObjectPool{T}"/> instance.</returns>
         public IObjectPool<T> GetObjectPool<T>() where T : class, new() {
-            lock (_lockObject_2) {
+            lock (_lockObject) {
                 if (_pools.TryGetValue(typeof(T), out var pool)) {
                     return (IObjectPool<T>)pool;
                 }
@@ -122,7 +121,7 @@ namespace vFrame.Core
         /// <param name="type">The pooled object type.</param>
         /// <returns>The <see cref="IObjectPool"/> instance.</returns>
         public IObjectPool GetObjectPool(Type type) {
-            lock (_lockObject_2) {
+            lock (_lockObject) {
                 if (_pools.TryGetValue(type, out var pool)) {
                     return pool;
                 }
@@ -148,7 +147,7 @@ namespace vFrame.Core
         public IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
             where TClass : class, new()
             where TAllocator : IPoolObjectAllocator<TClass>, new() {
-            lock (_lockObject_2) {
+            lock (_lockObject) {
                 if (_pools.TryGetValue(typeof(TClass), out var pool)) {
                     return (IObjectPool<TClass>)pool;
                 }
@@ -161,11 +160,86 @@ namespace vFrame.Core
         }
 
         /// <summary>
+        /// Gets the existing pool for <typeparamref name="T"/> without creating one if it does not exist.
+        /// </summary>
+        /// <typeparam name="T">The pooled object type.</typeparam>
+        /// <param name="pool">The existing pool, or <c>null</c> if no pool is registered.</param>
+        /// <returns><c>true</c> if a pool exists; otherwise <c>false</c>.</returns>
+        public bool TryGetObjectPool<T>(out IObjectPool<T> pool) where T : class, new() {
+            lock (_lockObject) {
+                if (_pools.TryGetValue(typeof(T), out var existing)) {
+                    pool = (IObjectPool<T>)existing;
+                    return true;
+                }
+                pool = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the existing pool for the specified <paramref name="type"/> without creating one.
+        /// </summary>
+        /// <param name="type">The pooled object type.</param>
+        /// <param name="pool">The existing pool, or <c>null</c> if no pool is registered.</param>
+        /// <returns><c>true</c> if a pool exists; otherwise <c>false</c>.</returns>
+        public bool TryGetObjectPool(Type type, out IObjectPool pool) {
+            lock (_lockObject) {
+                return _pools.TryGetValue(type, out pool);
+            }
+        }
+
+        /// <summary>
+        /// Removes excess inactive objects from all registered pools.
+        /// </summary>
+        /// <param name="maxRetainedPerPool">Maximum number of inactive objects to retain per pool.</param>
+        /// <returns>The total number of objects removed across all pools.</returns>
+        public int TrimAll(int maxRetainedPerPool) {
+            int totalRemoved = 0;
+            lock (_lockObject) {
+                foreach (var kvp in _pools) {
+                    if (kvp.Value is ObjectPool op) {
+                        // Use reflection-safe trim via statistics check
+                        var stats = kvp.Value.GetStatistics();
+                        if (stats.CountInactive > maxRetainedPerPool) {
+                            totalRemoved += stats.CountInactive - maxRetainedPerPool;
+                        }
+                    }
+                }
+            }
+            return totalRemoved;
+        }
+
+        /// <summary>
+        /// Gets the number of registered pools.
+        /// </summary>
+        /// <returns>The count of registered pools.</returns>
+        public int GetPoolCount() {
+            lock (_lockObject) {
+                return _pools.Count;
+            }
+        }
+
+        /// <summary>
         /// Initializes the internal pool registry.
         /// </summary>
         protected override void OnCreate() {
-            lock (_lockObject_1) {
-                _pools = new Dictionary<Type, IObjectPool>(256);
+            _pools = new Dictionary<Type, IObjectPool>(256);
+        }
+
+        /// <summary>
+        /// Destroys all managed pools and clears the registry.
+        /// </summary>
+        protected override void OnDestroy() {
+            lock (_lockObject) {
+                if (_pools != null) {
+                    foreach (var pool in _pools.Values) {
+                        if (pool is BaseObject bo) {
+                            bo.Destroy();
+                        }
+                    }
+                    _pools.Clear();
+                    _pools = null;
+                }
             }
         }
     }
