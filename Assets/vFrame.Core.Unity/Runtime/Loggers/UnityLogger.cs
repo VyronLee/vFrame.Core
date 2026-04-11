@@ -53,6 +53,11 @@ namespace vFrame.Core.Unity
         }
 
         private static void OnLogReceived(Logger.LogContext context) {
+            // Include tag for console filtering
+            var tag = context.Tag.ToString() != "undefined"
+                ? $"[{context.Tag}] "
+                : "";
+
             // If an exception is present at any level, log it as an exception
             if (context.Exception != null) {
                 Debug.LogException(context.Exception);
@@ -63,16 +68,16 @@ namespace vFrame.Core.Unity
                 case LogLevelDef.Trace:
                 case LogLevelDef.Debug:
                 case LogLevelDef.Info:
-                    Debug.Log(context.Content);
+                    Debug.Log($"{tag}{context.Content}");
                     break;
                 case LogLevelDef.Warning:
-                    Debug.LogWarning(context.Content);
+                    Debug.LogWarning($"{tag}{context.Content}");
                     break;
                 case LogLevelDef.Error:
-                    Debug.LogError(context.Content);
+                    Debug.LogError($"{tag}{context.Content}");
                     break;
                 case LogLevelDef.Fatal:
-                    Debug.LogError(context.Content);
+                    Debug.LogError($"[FATAL] {tag}{context.Content}");
                     break;
                 default:
                     ThrowHelper.ThrowUnsupportedEnum(context.Level);

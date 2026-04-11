@@ -30,7 +30,7 @@ namespace vFrame.Core.Unity
                 case LogLevelDef.Warning:
                     return LogType.Warning;
                 case LogLevelDef.Error:
-                    return LogType.Assert;
+                    return LogType.Error;
                 case LogLevelDef.Fatal:
                     return LogType.Exception;
                 default:
