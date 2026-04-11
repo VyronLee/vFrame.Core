@@ -99,10 +99,10 @@ namespace vFrame.Core
         /// Initializes the wrap with the owning pool and the underlying encryptor.
         /// </summary>
         /// <param name="pool">The pool that owns this wrap.</param>
-        /// <param name="compressor">The underlying encryptor instance.</param>
-        protected override void OnCreate(EncryptorPool pool, Encryptor compressor) {
+        /// <param name="encryptor">The underlying encryptor instance.</param>
+        protected override void OnCreate(EncryptorPool pool, Encryptor encryptor) {
             _pool = pool;
-            _encryptor = compressor;
+            _encryptor = encryptor;
         }
 
         /// <summary>
