@@ -28,7 +28,7 @@ namespace vFrame.Core.Unity
         /// <summary>
         /// Gets the overall preload progress as a normalized value between 0 and 1.
         /// </summary>
-        public override float Progress => IsDone ? 1f : (AssetPaths?.Count ?? 0f) / _total;
+        public override float Progress => IsDone ? 1f : 1f - (AssetPaths?.Count ?? 0f) / _total;
 
         /// <summary>
         /// Starts the preload operation by spawning async requests for every asset path.

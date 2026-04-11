@@ -93,6 +93,10 @@ namespace vFrame.Core.Unity
                 pool.Clear();
                 pools.Add(kv.Key);
             }
+            // Remove expired pools from the dictionary to prevent unbounded growth
+            foreach (var key in pools) {
+                _pools.Remove(key);
+            }
             pools.Clear();
 
             // Trim least-used pools when retained pool count exceeds configured capacity.
@@ -109,6 +113,7 @@ namespace vFrame.Core.Unity
             for (var i = _settings.Capacity; i < pools.Count; i++) {
                 SpawnPoolsDebug.Log("Pool({0}) over capacity, destroying..", pools[i]);
                 _pools[pools[i]].Clear();
+                _pools.Remove(pools[i]);
             }
             ListPool<string>.Shared.Return(pools);
         }
