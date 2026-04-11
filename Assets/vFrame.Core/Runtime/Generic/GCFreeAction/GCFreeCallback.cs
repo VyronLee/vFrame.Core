@@ -49,6 +49,9 @@ namespace vFrame.Core
         /// </summary>
         /// <param name="callback">The callback wrapper instance.</param>
         public static implicit operator TCallback(GCFreeCallback<TC, TCallback> callback) {
+            if (callback == null) {
+                return default;
+            }
             return callback.Callback;
         }
     }

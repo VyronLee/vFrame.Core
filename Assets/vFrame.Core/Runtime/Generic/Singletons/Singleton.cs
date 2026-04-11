@@ -14,7 +14,7 @@ namespace vFrame.Core
 {
     public abstract class Singleton<T> : BaseObject where T : BaseObject, new()
     {
-        private static T _instance;
+        private static volatile T _instance;
 
         private static readonly object _lockObject = new object();
 

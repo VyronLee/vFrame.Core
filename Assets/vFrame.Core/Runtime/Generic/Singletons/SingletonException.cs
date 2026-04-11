@@ -8,11 +8,21 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using vFrame.Core;
+using System;
 
 namespace vFrame.Core
 {
-    public class SingletonException : vFrameException { }
+    public class SingletonException : vFrameException
+    {
+        public SingletonException() { }
 
-    public class SingletonDuplicatedException : SingletonException { }
+        public SingletonException(string message) : base(message) { }
+    }
+
+    public class SingletonDuplicatedException : SingletonException
+    {
+        public SingletonDuplicatedException() { }
+
+        public SingletonDuplicatedException(string message) : base(message) { }
+    }
 }

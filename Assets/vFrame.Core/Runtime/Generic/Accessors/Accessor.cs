@@ -54,6 +54,10 @@ namespace vFrame.Core
         protected Accessor(Expression<Func<TSource, TArg>> memberSelector)
         {
             var prop = memberSelector.GetPropertyInfo();
+            if (prop == null) {
+                ThrowHelper.ThrowArgumentException(
+                    $"Expression must select a property, not a field: {memberSelector}");
+            }
             IsReadable = prop.CanRead;
             IsWritable = prop.CanWrite;
             AssignDelegate(IsReadable, ref Getter, prop.GetGetMethod());
