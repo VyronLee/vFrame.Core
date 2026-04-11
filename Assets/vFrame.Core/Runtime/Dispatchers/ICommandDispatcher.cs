@@ -16,11 +16,22 @@ namespace vFrame.Core
     {
         /// <summary>
         /// Registers a handler for the specified command type.
+        /// If a handler already exists, it is replaced (default <see cref="RegisterMode.Replace"/>).
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <typeparam name="TCommand">The command type.</typeparam>
         /// <returns>A subscription handle.</returns>
         ISubscription Handle<TCommand>(Action<TCommand> handler)
+            where TCommand : ICommand;
+
+        /// <summary>
+        /// Registers a handler for the specified command type with explicit register mode.
+        /// </summary>
+        /// <param name="handler">The command handler callback.</param>
+        /// <param name="mode">The behavior when a handler already exists.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        ISubscription Handle<TCommand>(Action<TCommand> handler, RegisterMode mode)
             where TCommand : ICommand;
 
         /// <summary>

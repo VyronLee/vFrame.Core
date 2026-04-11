@@ -15,7 +15,7 @@ namespace vFrame.Core
     public interface IDecisionDispatcher
     {
         /// <summary>
-        /// Listens for decisions of the specified type.
+        /// Listens for decisions of the specified type with default priority (0).
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <typeparam name="TDecision">The decision type.</typeparam>
@@ -41,6 +41,28 @@ namespace vFrame.Core
         /// <typeparam name="TDecision">The decision type.</typeparam>
         /// <returns>A subscription handle.</returns>
         ISubscription Listen<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
+            where TDecision : IDecision;
+
+        /// <summary>
+        /// Listens for decisions of the specified type with explicit priority.
+        /// Higher priority listeners are invoked first.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        ISubscription Listen<TDecision>(Func<TDecision, bool> handler, int priority)
+            where TDecision : IDecision;
+
+        /// <summary>
+        /// Listens for decisions of the specified type with explicit priority and lifetime binding.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        ISubscription Listen<TDecision>(Func<TDecision, bool> handler, int priority, ILifetime lifetime)
             where TDecision : IDecision;
 
         /// <summary>

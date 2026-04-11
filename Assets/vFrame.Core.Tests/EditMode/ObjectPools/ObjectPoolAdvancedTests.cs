@@ -253,7 +253,7 @@ namespace vFrame.Core.Tests.EditMode.ObjectPools
 
         [Test]
         public void ArrayPool_OversizedArraysNotPooled() {
-            var pool = new VFrameArrayPool<byte>(maxArrayLength: 1024);
+            var pool = new VFrameArrayPool<byte>(maxArrayLength: 1024, maxArraysPerBucket: 10);
             var array = pool.Rent(2048);
             Assert.That(array.Length, Is.GreaterThanOrEqualTo(2048));
             pool.Return(array);

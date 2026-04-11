@@ -1,6 +1,6 @@
 // ------------------------------------------------------------
 //         File: Subscription.cs
-//        Brief: Subscription handle implementation holding callback delegate and destroy state
+//        Brief: Subscription handle implementation holding callback delegate, priority and destroy state
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
@@ -18,6 +18,8 @@ namespace vFrame.Core
         public Type MessageType { get; set; }
         public Delegate Action { get; set; }
         public bool Destroyed { get; private set; }
+        public int Priority { get; set; }
+        public uint RegistrationOrder { get; set; }
 
         /// <summary>
         /// Destroys the subscription, clearing the held callback delegate and metadata.
@@ -30,6 +32,8 @@ namespace vFrame.Core
             Action = null;
             MessageType = null;
             Handle = 0;
+            Priority = 0;
+            RegistrationOrder = 0;
         }
 
         /// <summary>
@@ -47,6 +51,8 @@ namespace vFrame.Core
             Handle = 0;
             MessageType = null;
             Action = null;
+            Priority = 0;
+            RegistrationOrder = 0;
         }
     }
 }

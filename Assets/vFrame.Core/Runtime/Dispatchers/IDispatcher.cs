@@ -22,5 +22,11 @@ namespace vFrame.Core
         /// </summary>
         /// <returns>The total subscription count.</returns>
         int GetTotalSubscriptionCount();
+
+        /// <summary>
+        /// Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
+        /// </summary>
+        /// <returns>A diagnostics snapshot with current subscription counts.</returns>
+        Dispatcher.DiagnosticsSnapshot GetDiagnostics();
     }
 }

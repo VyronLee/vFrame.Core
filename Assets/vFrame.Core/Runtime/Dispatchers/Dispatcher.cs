@@ -1,6 +1,7 @@
 // ------------------------------------------------------------
 //         File: Dispatcher.cs
 //        Brief: Dispatcher implementation aggregating event, command, request and decision dispatching
+//                with priority ordering, register modes, and interceptor pipeline
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
@@ -16,6 +17,9 @@ namespace vFrame.Core
 {
     public class Dispatcher : Component, IDispatcher
     {
+        /// <summary>
+        /// Immutable diagnostics snapshot of subscription counts across all dispatching categories.
+        /// </summary>
         public readonly struct DiagnosticsSnapshot
         {
             /// <summary>
@@ -40,24 +44,28 @@ namespace vFrame.Core
 
         private static readonly LogTag LogTag = new LogTag("Dispatcher");
 
-        private uint _index = 1;
+        private uint _index;
+        private uint _registrationOrder;
         private Dictionary<Type, List<Subscription>> _eventSubscriptions;
         private Dictionary<Type, Subscription> _commandSubscriptions;
         private Dictionary<Type, Subscription> _requestSubscriptions;
         private Dictionary<Type, List<Subscription>> _decisionSubscriptions;
         private SubscriptionPool _subscriptionPool;
+        private List<IEventInterceptor> _interceptors;
+        private HashSet<Type> _dirtyEventTypes;
+        private HashSet<Type> _dirtyDecisionTypes;
 
         #region IEventDispatcher
 
         /// <summary>
-        /// Subscribes to events of the specified type.
+        /// Subscribes to events of the specified type with default priority (0).
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
         /// <returns>A subscription handle.</returns>
         public ISubscription Subscribe<TEvent>(Action<TEvent> action)
             where TEvent : IEvent {
-            return SubscribeEventInternal(action, null);
+            return SubscribeInternal(action, 0, null);
         }
 
         /// <summary>
@@ -70,7 +78,7 @@ namespace vFrame.Core
         public ISubscription Subscribe<TEvent>(Action<TEvent> action, BaseObject owner)
             where TEvent : IEvent {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
-            var subscription = SubscribeEventInternal(action, null);
+            var subscription = SubscribeInternal(action, 0, null);
             owner.OwnLifetime(subscription);
             return subscription;
         }
@@ -85,7 +93,34 @@ namespace vFrame.Core
         public ISubscription Subscribe<TEvent>(Action<TEvent> action, ILifetime lifetime)
             where TEvent : IEvent {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
-            return SubscribeEventInternal(action, lifetime);
+            return SubscribeInternal(action, 0, lifetime);
+        }
+
+        /// <summary>
+        /// Subscribes to events of the specified type with explicit priority.
+        /// Higher priority subscribers are invoked first during Publish.
+        /// </summary>
+        /// <param name="action">The event handler callback.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        public ISubscription Subscribe<TEvent>(Action<TEvent> action, int priority)
+            where TEvent : IEvent {
+            return SubscribeInternal(action, priority, null);
+        }
+
+        /// <summary>
+        /// Subscribes to events of the specified type with explicit priority and lifetime binding.
+        /// </summary>
+        /// <param name="action">The event handler callback.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TEvent">The event type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        public ISubscription Subscribe<TEvent>(Action<TEvent> action, int priority, ILifetime lifetime)
+            where TEvent : IEvent {
+            ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
+            return SubscribeInternal(action, priority, lifetime);
         }
 
         /// <summary>
@@ -100,7 +135,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Publishes an event of the specified type, notifying all subscribers.
+        /// Publishes an event of the specified type, notifying all subscribers in priority order.
+        /// Interceptors are invoked before and after dispatch.
         /// </summary>
         /// <param name="payload">The event payload.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
@@ -108,12 +144,26 @@ namespace vFrame.Core
             where TEvent : IEvent {
             ThrowIfNotCreatedOrDestroyed();
 
-            if (!_eventSubscriptions.TryGetValue(typeof(TEvent), out var subscriptions)) {
+            var eventType = typeof(TEvent);
+
+            // Run pre-publish interceptors
+            if (_interceptors != null && _interceptors.Count > 0) {
+                IEvent eventData = payload;
+                for (var i = 0; i < _interceptors.Count; i++) {
+                    if (!_interceptors[i].OnBeforePublish(eventType, ref eventData)) {
+                        return; // Short-circuited by interceptor
+                    }
+                }
+            }
+
+            if (!_eventSubscriptions.TryGetValue(eventType, out var subscriptions)) {
                 return;
             }
 
             CleanupDestroyedSubscriptions(subscriptions);
+            SortIfNeeded(subscriptions, eventType, _dirtyEventTypes);
 
+            var subscriberCount = 0;
             for (var i = 0; i < subscriptions.Count; i++) {
                 var subscription = subscriptions[i];
                 if (subscription.Destroyed) {
@@ -122,10 +172,19 @@ namespace vFrame.Core
 
                 try {
                     ((Action<TEvent>)subscription.Action).Invoke(payload);
+                    subscriberCount++;
                 }
                 catch (Exception exception) {
                     Logger.Error(LogTag, exception,
-                        $"Exception occurred, event type: {typeof(TEvent).FullName}");
+                        $"Exception occurred, event type: {eventType.FullName}");
+                }
+            }
+
+            // Run post-publish interceptors
+            if (_interceptors != null && _interceptors.Count > 0) {
+                IEvent eventData = payload;
+                for (var i = 0; i < _interceptors.Count; i++) {
+                    _interceptors[i].OnAfterPublish(eventType, eventData, subscriberCount);
                 }
             }
         }
@@ -148,14 +207,26 @@ namespace vFrame.Core
         #region ICommandDispatcher
 
         /// <summary>
-        /// Registers a handler for the specified command type.
+        /// Registers a handler for the specified command type (default <see cref="RegisterMode.Replace"/>).
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <typeparam name="TCommand">The command type.</typeparam>
         /// <returns>A subscription handle.</returns>
         public ISubscription Handle<TCommand>(Action<TCommand> handler)
             where TCommand : ICommand {
-            return HandleCommandInternal(handler, null);
+            return HandleInternal(handler, RegisterMode.Replace, null);
+        }
+
+        /// <summary>
+        /// Registers a handler for the specified command type with explicit register mode.
+        /// </summary>
+        /// <param name="handler">The command handler callback.</param>
+        /// <param name="mode">The behavior when a handler already exists.</param>
+        /// <typeparam name="TCommand">The command type.</typeparam>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        public ISubscription Handle<TCommand>(Action<TCommand> handler, RegisterMode mode)
+            where TCommand : ICommand {
+            return HandleInternal(handler, mode, null);
         }
 
         /// <summary>
@@ -168,7 +239,7 @@ namespace vFrame.Core
         public ISubscription Handle<TCommand>(Action<TCommand> handler, BaseObject owner)
             where TCommand : ICommand {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
-            var subscription = HandleCommandInternal(handler, null);
+            var subscription = HandleInternal(handler, RegisterMode.Replace, null);
             owner.OwnLifetime(subscription);
             return subscription;
         }
@@ -183,7 +254,7 @@ namespace vFrame.Core
         public ISubscription Handle<TCommand>(Action<TCommand> handler, ILifetime lifetime)
             where TCommand : ICommand {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
-            return HandleCommandInternal(handler, lifetime);
+            return HandleInternal(handler, RegisterMode.Replace, lifetime);
         }
 
         /// <summary>
@@ -317,7 +388,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Registers a handler for the specified request type.
+        /// Registers a handler for the specified request type (default <see cref="RegisterMode.Replace"/>).
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
@@ -325,7 +396,20 @@ namespace vFrame.Core
         /// <returns>A subscription handle.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler)
             where TRequest : IRequest<TResponse> {
-            return HandleRequestInternal<TRequest, TResponse>(handler, null);
+            return HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, null);
+        }
+
+        /// <summary>
+        /// Registers a handler for the specified request type with explicit register mode.
+        /// </summary>
+        /// <param name="handler">The request handler callback.</param>
+        /// <param name="mode">The behavior when a handler already exists.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode)
+            where TRequest : IRequest<TResponse> {
+            return HandleRequestInternal<TRequest, TResponse>(handler, mode, null);
         }
 
         /// <summary>
@@ -339,7 +423,7 @@ namespace vFrame.Core
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, BaseObject owner)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
-            var subscription = HandleRequestInternal<TRequest, TResponse>(handler, null);
+            var subscription = HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, null);
             owner.OwnLifetime(subscription);
             return subscription;
         }
@@ -355,7 +439,7 @@ namespace vFrame.Core
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, ILifetime lifetime)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
-            return HandleRequestInternal<TRequest, TResponse>(handler, lifetime);
+            return HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, lifetime);
         }
 
         /// <summary>
@@ -389,14 +473,14 @@ namespace vFrame.Core
         #region IDecisionDispatcher
 
         /// <summary>
-        /// Listens for decisions of the specified type.
+        /// Listens for decisions of the specified type with default priority (0).
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <typeparam name="TDecision">The decision type.</typeparam>
         /// <returns>A subscription handle.</returns>
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler)
             where TDecision : IDecision {
-            return ListenDecisionInternal(handler, null);
+            return ListenInternal(handler, 0, null);
         }
 
         /// <summary>
@@ -409,7 +493,7 @@ namespace vFrame.Core
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, BaseObject owner)
             where TDecision : IDecision {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
-            var subscription = ListenDecisionInternal(handler, null);
+            var subscription = ListenInternal(handler, 0, null);
             owner.OwnLifetime(subscription);
             return subscription;
         }
@@ -424,7 +508,34 @@ namespace vFrame.Core
         public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
             where TDecision : IDecision {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
-            return ListenDecisionInternal(handler, lifetime);
+            return ListenInternal(handler, 0, lifetime);
+        }
+
+        /// <summary>
+        /// Listens for decisions of the specified type with explicit priority.
+        /// Higher priority listeners are invoked first.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, int priority)
+            where TDecision : IDecision {
+            return ListenInternal(handler, priority, null);
+        }
+
+        /// <summary>
+        /// Listens for decisions of the specified type with explicit priority and lifetime binding.
+        /// </summary>
+        /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
+        /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
+        /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
+        /// <typeparam name="TDecision">The decision type.</typeparam>
+        /// <returns>A subscription handle.</returns>
+        public ISubscription Listen<TDecision>(Func<TDecision, bool> handler, int priority, ILifetime lifetime)
+            where TDecision : IDecision {
+            ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
+            return ListenInternal(handler, priority, lifetime);
         }
 
         /// <summary>
@@ -440,6 +551,7 @@ namespace vFrame.Core
 
         /// <summary>
         /// Initiates a decision vote; all listeners must approve for the result to be <c>true</c>.
+        /// Listeners are invoked in priority order; the first veto short-circuits.
         /// </summary>
         /// <param name="decision">The decision payload.</param>
         /// <typeparam name="TDecision">The decision type.</typeparam>
@@ -453,6 +565,7 @@ namespace vFrame.Core
             }
 
             CleanupDestroyedSubscriptions(subscriptions);
+            SortIfNeeded(subscriptions, typeof(TDecision), _dirtyDecisionTypes);
 
             var pass = true;
             for (var i = 0; i < subscriptions.Count; i++) {
@@ -531,23 +644,64 @@ namespace vFrame.Core
 
         #endregion
 
+        #region Interceptor Management
+
+        /// <summary>
+        /// Adds an event interceptor to the pipeline. Interceptors are invoked in registration order.
+        /// </summary>
+        /// <param name="interceptor">The interceptor to add.</param>
+        public void AddInterceptor(IEventInterceptor interceptor) {
+            ThrowHelper.ThrowIfNull(interceptor, nameof(interceptor));
+            ThrowIfNotCreatedOrDestroyed();
+            if (_interceptors == null) {
+                _interceptors = new List<IEventInterceptor>(4);
+            }
+            _interceptors.Add(interceptor);
+        }
+
+        /// <summary>
+        /// Removes an event interceptor from the pipeline.
+        /// </summary>
+        /// <param name="interceptor">The interceptor to remove.</param>
+        /// <returns><c>true</c> if the interceptor was found and removed; otherwise <c>false</c>.</returns>
+        public bool RemoveInterceptor(IEventInterceptor interceptor) {
+            if (_interceptors == null || interceptor == null) {
+                return false;
+            }
+            return _interceptors.Remove(interceptor);
+        }
+
+        /// <summary>
+        /// Gets the current number of registered interceptors.
+        /// </summary>
+        /// <returns>The interceptor count.</returns>
+        public int GetInterceptorCount() {
+            return _interceptors?.Count ?? 0;
+        }
+
+        #endregion
+
         #region Lifecycle
 
         /// <summary>
-        /// Initializes subscription storage and the subscription object pool.
+        /// Initializes subscription storage, the subscription object pool, and dirty-tracking sets.
         /// </summary>
         protected override void OnCreate() {
+            _index = 1;
+            _registrationOrder = 0;
             _eventSubscriptions = new Dictionary<Type, List<Subscription>>();
             _commandSubscriptions = new Dictionary<Type, Subscription>();
             _requestSubscriptions = new Dictionary<Type, Subscription>();
             _decisionSubscriptions = new Dictionary<Type, List<Subscription>>();
+            _dirtyEventTypes = new HashSet<Type>();
+            _dirtyDecisionTypes = new HashSet<Type>();
 
             _subscriptionPool = new SubscriptionPool();
             _subscriptionPool.Create();
         }
 
         /// <summary>
-        /// Destroys all subscriptions and releases the subscription object pool.
+        /// Destroys all subscriptions, interceptors, and releases the subscription object pool.
         /// </summary>
         protected override void OnDestroy() {
             ClearListSubscriptions(_eventSubscriptions);
@@ -562,13 +716,16 @@ namespace vFrame.Core
             _requestSubscriptions = null;
             _decisionSubscriptions = null;
             _subscriptionPool = null;
+            _interceptors = null;
+            _dirtyEventTypes = null;
+            _dirtyDecisionTypes = null;
         }
 
         #endregion
 
         #region Internal: Subscribe helpers
 
-        private Subscription SubscribeEventInternal<TEvent>(Action<TEvent> action, ILifetime lifetime)
+        private ISubscription SubscribeInternal<TEvent>(Action<TEvent> action, int priority, ILifetime lifetime)
             where TEvent : IEvent {
             ThrowHelper.ThrowIfNull(action, nameof(action));
 
@@ -576,25 +733,38 @@ namespace vFrame.Core
             subscription.Handle = _index++;
             subscription.MessageType = typeof(TEvent);
             subscription.Action = action;
+            subscription.Priority = priority;
+            subscription.RegistrationOrder = _registrationOrder++;
 
             if (!_eventSubscriptions.TryGetValue(typeof(TEvent), out var subscriptions)) {
                 subscriptions = _eventSubscriptions[typeof(TEvent)] = new List<Subscription>();
             }
 
             subscriptions.Add(subscription);
+            _dirtyEventTypes.Add(typeof(TEvent));
             lifetime?.Add(subscription);
             return subscription;
         }
 
-        private Subscription HandleCommandInternal<TCommand>(Action<TCommand> handler, ILifetime lifetime)
+        private Subscription HandleInternal<TCommand>(Action<TCommand> handler, RegisterMode mode, ILifetime lifetime)
             where TCommand : ICommand {
             ThrowHelper.ThrowIfNull(handler, nameof(handler));
 
             var type = typeof(TCommand);
             if (_commandSubscriptions.TryGetValue(type, out var existing) && !existing.Destroyed) {
-                Logger.Warning(LogTag, $"Replacing existing handler for command type: {type.FullName}");
-                existing.Destroy();
-                _subscriptionPool.Return(existing);
+                switch (mode) {
+                    case RegisterMode.Throw:
+                        ThrowHelper.ThrowArgumentException(
+                            $"Handler already registered for command type: {type.FullName}");
+                        return null;
+                    case RegisterMode.Ignore:
+                        return null;
+                    case RegisterMode.Replace:
+                        Logger.Warning(LogTag, $"Replacing existing handler for command type: {type.FullName}");
+                        existing.Destroy();
+                        _subscriptionPool.Return(existing);
+                        break;
+                }
             }
 
             var subscription = _subscriptionPool.Get();
@@ -607,15 +777,25 @@ namespace vFrame.Core
             return subscription;
         }
 
-        private Subscription HandleRequestInternal<TRequest, TResponse>(Func<TRequest, TResponse> handler, ILifetime lifetime)
+        private Subscription HandleRequestInternal<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode, ILifetime lifetime)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(handler, nameof(handler));
 
             var type = typeof(TRequest);
             if (_requestSubscriptions.TryGetValue(type, out var existing) && !existing.Destroyed) {
-                Logger.Warning(LogTag, $"Replacing existing handler for request type: {type.FullName}");
-                existing.Destroy();
-                _subscriptionPool.Return(existing);
+                switch (mode) {
+                    case RegisterMode.Throw:
+                        ThrowHelper.ThrowArgumentException(
+                            $"Handler already registered for request type: {type.FullName}");
+                        return null;
+                    case RegisterMode.Ignore:
+                        return null;
+                    case RegisterMode.Replace:
+                        Logger.Warning(LogTag, $"Replacing existing handler for request type: {type.FullName}");
+                        existing.Destroy();
+                        _subscriptionPool.Return(existing);
+                        break;
+                }
             }
 
             var subscription = _subscriptionPool.Get();
@@ -628,7 +808,7 @@ namespace vFrame.Core
             return subscription;
         }
 
-        private Subscription ListenDecisionInternal<TDecision>(Func<TDecision, bool> handler, ILifetime lifetime)
+        private ISubscription ListenInternal<TDecision>(Func<TDecision, bool> handler, int priority, ILifetime lifetime)
             where TDecision : IDecision {
             ThrowHelper.ThrowIfNull(handler, nameof(handler));
 
@@ -636,14 +816,33 @@ namespace vFrame.Core
             subscription.Handle = _index++;
             subscription.MessageType = typeof(TDecision);
             subscription.Action = handler;
+            subscription.Priority = priority;
+            subscription.RegistrationOrder = _registrationOrder++;
 
             if (!_decisionSubscriptions.TryGetValue(typeof(TDecision), out var subscriptions)) {
                 subscriptions = _decisionSubscriptions[typeof(TDecision)] = new List<Subscription>();
             }
 
             subscriptions.Add(subscription);
+            _dirtyDecisionTypes.Add(typeof(TDecision));
             lifetime?.Add(subscription);
             return subscription;
+        }
+
+        #endregion
+
+        #region Internal: Priority sorting
+
+        private static void SortIfNeeded(List<Subscription> subscriptions, Type type, HashSet<Type> dirtySet) {
+            if (dirtySet == null || !dirtySet.Remove(type)) {
+                return;
+            }
+
+            // Sort by priority descending, then by registration order ascending for stable ordering
+            subscriptions.Sort((a, b) => {
+                var priorityDiff = b.Priority.CompareTo(a.Priority);
+                return priorityDiff != 0 ? priorityDiff : a.RegistrationOrder.CompareTo(b.RegistrationOrder);
+            });
         }
 
         #endregion

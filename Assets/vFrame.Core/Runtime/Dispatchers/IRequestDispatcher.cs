@@ -37,12 +37,24 @@ namespace vFrame.Core
 
         /// <summary>
         /// Registers a handler for the specified request type.
+        /// If a handler already exists, it is replaced (default <see cref="RegisterMode.Replace"/>).
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
         /// <typeparam name="TResponse">The response type.</typeparam>
         /// <returns>A subscription handle.</returns>
         ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler)
+            where TRequest : IRequest<TResponse>;
+
+        /// <summary>
+        /// Registers a handler for the specified request type with explicit register mode.
+        /// </summary>
+        /// <param name="handler">The request handler callback.</param>
+        /// <param name="mode">The behavior when a handler already exists.</param>
+        /// <typeparam name="TRequest">The request type.</typeparam>
+        /// <typeparam name="TResponse">The response type.</typeparam>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode)
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
