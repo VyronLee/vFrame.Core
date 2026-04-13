@@ -13,8 +13,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-// Compatibility-only dependency: the historical MultiThreading / Task runner remains here for
-// legacy async compression flow, but it is not the preferred direction for new retained systems.
+using System.Threading.Tasks;
 
 namespace vFrame.Core
 {
@@ -25,7 +24,7 @@ namespace vFrame.Core
         private Stream _input;
         private Stream _output;
 
-        private ParallelTaskRunner<CompressThreadState> _parallelTaskRunner;
+        private CancellationTokenSource _cts;
 
         private CompressionState _state = CompressionState.Idle;
         private int _threadCount = DefaultThreadCount;
@@ -36,8 +35,9 @@ namespace vFrame.Core
         /// Releases the parallel task runner and cleans up resources.
         /// </summary>
         protected override void OnDestroy() {
-            _parallelTaskRunner?.Destroy();
-            _parallelTaskRunner = null;
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
 
             base.OnDestroy();
         }
@@ -87,11 +87,27 @@ namespace vFrame.Core
                 };
                 contexts.Add(stateContext);
             }
-            ParallelTaskRunner<CompressThreadState>.Spawn(_threadCount)
-                .OnHandle(CompressInternal)
-                .OnComplete(CompressedFinished(request))
-                .OnError(OnException)
-                .Run(contexts);
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+            var parallelOptions = new ParallelOptions {
+                MaxDegreeOfParallelism = _threadCount,
+                CancellationToken = token
+            };
+            System.Threading.Tasks.Task.Run(() => {
+                try {
+                    Parallel.ForEach(contexts, parallelOptions, CompressInternal);
+                    OnCompressedFinished(request);
+                }
+                catch (OperationCanceledException) {
+                    // Cancelled via Destroy, do nothing
+                }
+                catch (AggregateException ae) {
+                    OnException(ae.InnerException);
+                }
+                catch (Exception e) {
+                    OnException(e);
+                }
+            }, token);
 
             return request;
         }
@@ -106,14 +122,6 @@ namespace vFrame.Core
             state.Request.IncreaseFinishedCount();
         }
 
-        /// <summary>
-        /// Creates a callback delegate for compression completion.
-        /// </summary>
-        /// <param name="request">The compression request to finalize on completion.</param>
-        /// <returns>An action delegate invoked when all blocks are compressed.</returns>
-        private Action CompressedFinished(BlockBasedCompressionRequest request) {
-            return () => OnCompressedFinished(request);
-        }
 
         /// <summary>
         /// Finalizes the compression output stream and marks the request as done.
@@ -157,11 +165,27 @@ namespace vFrame.Core
                 };
                 contexts.Add(stateContext);
             }
-            ParallelTaskRunner<DecompressThreadState>.Spawn(_threadCount)
-                .OnHandle(DecompressInternal)
-                .OnComplete(DecompressedFinished(request))
-                .OnError(OnException)
-                .Run(contexts);
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+            var parallelOptions = new ParallelOptions {
+                MaxDegreeOfParallelism = _threadCount,
+                CancellationToken = token
+            };
+            System.Threading.Tasks.Task.Run(() => {
+                try {
+                    Parallel.ForEach(contexts, parallelOptions, DecompressInternal);
+                    OnDecompressedFinished(request);
+                }
+                catch (OperationCanceledException) {
+                    // Cancelled via Destroy, do nothing
+                }
+                catch (AggregateException ae) {
+                    OnException(ae.InnerException);
+                }
+                catch (Exception e) {
+                    OnException(e);
+                }
+            }, token);
 
             return request;
         }
@@ -176,14 +200,6 @@ namespace vFrame.Core
             state.Request.IncreaseFinishedCount();
         }
 
-        /// <summary>
-        /// Creates a callback delegate for decompression completion.
-        /// </summary>
-        /// <param name="request">The decompression request to finalize on completion.</param>
-        /// <returns>An action delegate invoked when all blocks are decompressed.</returns>
-        private Action DecompressedFinished(BlockBasedDecompressionRequest request) {
-            return () => OnDecompressedFinished(request);
-        }
 
         /// <summary>
         /// Finalizes the decompression output stream and marks the request as done.
