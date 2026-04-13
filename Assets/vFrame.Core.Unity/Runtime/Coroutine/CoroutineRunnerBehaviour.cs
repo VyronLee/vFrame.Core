@@ -46,6 +46,11 @@ namespace vFrame.Core.Unity
         public int TaskHandle => _task.Handle;
 
         /// <summary>
+        /// Gets the current execution state of this runner.
+        /// </summary>
+        public CoroutineState State => _state;
+
+        /// <summary>
         /// Resets the runner state to idle.
         /// </summary>
         private void Reset() {
