@@ -47,6 +47,9 @@ namespace vFrame.Core
                 case EncryptorType.Xor:
                     encryptor = _poolManager.GetObjectPool<XOREncryptor>().Get();
                     break;
+                case EncryptorType.AesGcm:
+                    encryptor = _poolManager.GetObjectPool<AesGcmEncryptor>().Get();
+                    break;
                 default:
                     ThrowHelper.ThrowUnsupportedEnum(encryptorType);
                     break;

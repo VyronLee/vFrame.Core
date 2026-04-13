@@ -13,6 +13,7 @@ namespace vFrame.Core
     public enum EncryptorType
     {
         Plain = 0,
-        Xor = 1
+        Xor = 1,
+        AesGcm = 2
     }
 }
