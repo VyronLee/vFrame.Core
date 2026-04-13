@@ -17,7 +17,7 @@ namespace vFrame.Core
         private ObjectPoolManager _poolManager;
 
         /// <summary>
-        /// Initializes the pool manager during singleton creation.
+        ///     Initializes the pool manager during singleton creation.
         /// </summary>
         protected override void OnCreate() {
             _poolManager = new ObjectPoolManager();
@@ -25,7 +25,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Tears down the pool manager during singleton destruction.
+        ///     Tears down the pool manager during singleton destruction.
         /// </summary>
         protected override void OnDestroy() {
             _poolManager?.Destroy();
@@ -33,10 +33,10 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Rents an encryptor of the specified type from the object pool.
+        ///     Rents an encryptor of the specified type from the object pool.
         /// </summary>
         /// <param name="encryptorType">The type of encryptor to rent.</param>
-        /// <returns>An <see cref="IEncryptor"/> instance that must be returned after use.</returns>
+        /// <returns>An <see cref="IEncryptor" /> instance that must be returned after use.</returns>
         /// <exception cref="System.ArgumentException">Thrown when an unsupported encryptor type is specified.</exception>
         public IEncryptor Rent(EncryptorType encryptorType) {
             Encryptor encryptor = null;
@@ -54,9 +54,11 @@ namespace vFrame.Core
                     ThrowHelper.ThrowUnsupportedEnum(encryptorType);
                     break;
             }
+
             if (null == encryptor) {
                 return null;
             }
+
             encryptor.Create();
 
             var wrap = _poolManager.GetObjectPool<EncryptorWrap>().Get();
@@ -65,7 +67,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns an encryptor to the object pool.
+        ///     Returns an encryptor to the object pool.
         /// </summary>
         /// <param name="encryptor">The encryptor to return.</param>
         public void Return(IEncryptor encryptor) {
@@ -78,28 +80,28 @@ namespace vFrame.Core
         private Encryptor _encryptor;
         private EncryptorPool _pool;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             _encryptor.Encrypt(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             _encryptor.Decrypt(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
             _encryptor.Encrypt(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
             _encryptor.Decrypt(input, output, key, keyLength);
         }
 
         /// <summary>
-        /// Initializes the wrap with the owning pool and the underlying encryptor.
+        ///     Initializes the wrap with the owning pool and the underlying encryptor.
         /// </summary>
         /// <param name="pool">The pool that owns this wrap.</param>
         /// <param name="encryptor">The underlying encryptor instance.</param>
@@ -109,7 +111,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns both the underlying encryptor and this wrap to the pool.
+        ///     Returns both the underlying encryptor and this wrap to the pool.
         /// </summary>
         protected override void OnDestroy() {
             _pool.Return(_encryptor);

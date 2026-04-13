@@ -9,16 +9,15 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the formatted log message content ({message}).
+    ///     A format token that renders the formatted log message content ({message}).
     /// </summary>
     public class MessageToken : IToken
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append(context.Content);
         }

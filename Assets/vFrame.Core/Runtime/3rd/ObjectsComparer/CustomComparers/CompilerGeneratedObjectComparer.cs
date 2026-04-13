@@ -8,30 +8,27 @@ namespace vFrame.Core
 {
     internal class CompilerGeneratedObjectComparer : AbstractDynamicObjectsComprer<object>
     {
-        public CompilerGeneratedObjectComparer(ComparisonSettings settings, BaseComparer parentComparer, IComparersFactory factory)
-            : base(settings, parentComparer, factory)
-        {
-        }
+        public CompilerGeneratedObjectComparer(ComparisonSettings settings, BaseComparer parentComparer,
+            IComparersFactory factory)
+            : base(settings, parentComparer, factory) { }
 
-        public override bool IsMatch(Type type, object obj1, object obj2)
-        {
+        public override bool IsMatch(Type type, object obj1, object obj2) {
             return (obj1 != null || obj2 != null) &&
-                   (obj1 == null || obj1.GetType().GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute)) != null) &&
-                   (obj2 == null || obj2.GetType().GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute)) != null);
+                   (obj1 == null ||
+                    obj1.GetType().GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute)) != null) &&
+                   (obj2 == null ||
+                    obj2.GetType().GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute)) != null);
         }
 
-        public override bool IsStopComparison(Type type, object obj1, object obj2)
-        {
+        public override bool IsStopComparison(Type type, object obj1, object obj2) {
             return true;
         }
 
-        public override bool SkipMember(Type type, MemberInfo member)
-        {
+        public override bool SkipMember(Type type, MemberInfo member) {
             return false;
         }
 
-        protected override IList<string> GetProperties(object obj)
-        {
+        protected override IList<string> GetProperties(object obj) {
             return obj?.GetType().GetTypeInfo().GetMembers()
                 .Where(memberInfo => memberInfo is PropertyInfo)
                 .Select(memberInfo => memberInfo.Name)
@@ -39,24 +36,20 @@ namespace vFrame.Core
                 .ToList() ?? new List<string>();
         }
 
-        protected override bool TryGetMemberValue(object obj, string propertyName, out object value)
-        {
+        protected override bool TryGetMemberValue(object obj, string propertyName, out object value) {
             value = null;
-            if (obj == null)
-            {
+            if (obj == null) {
                 return false;
             }
 
             var propertyInfo = obj.GetType().GetTypeInfo().GetProperty(propertyName);
-            if (propertyInfo == null)
-            {
+            if (propertyInfo == null) {
                 return false;
             }
 
             value = propertyInfo.GetValue(obj);
 
             return true;
-
         }
     }
 }

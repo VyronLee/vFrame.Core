@@ -11,18 +11,19 @@
 namespace vFrame.Core
 {
     /// <summary>
-    /// Represents a runnable asynchronous task.
+    ///     Represents a runnable asynchronous task.
     /// </summary>
-    public interface ITask : IAsync { }
+    public interface ITask : IAsync
+    { }
 
     /// <summary>
-    /// Represents a runnable asynchronous task that produces a result.
+    ///     Represents a runnable asynchronous task that produces a result.
     /// </summary>
     /// <typeparam name="TRet">The type of the task result.</typeparam>
     public interface ITask<out TRet> : ITask
     {
         /// <summary>
-        /// Gets the result of the task.
+        ///     Gets the result of the task.
         /// </summary>
         TRet Value { get; }
     }

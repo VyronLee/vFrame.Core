@@ -11,7 +11,7 @@
 namespace vFrame.Core
 {
     /// <summary>
-    /// Identifies the compression algorithm to use.
+    ///     Identifies the compression algorithm to use.
     /// </summary>
     public enum CompressorType
     {

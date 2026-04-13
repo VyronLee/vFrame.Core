@@ -15,7 +15,7 @@ namespace vFrame.Core
     public abstract class Encryptor : BaseObject, IEncryptor
     {
         /// <summary>
-        /// Encrypts the given byte array.
+        ///     Encrypts the given byte array.
         /// </summary>
         /// <param name="input">The input data to encrypt.</param>
         /// <param name="output">The output buffer to receive encrypted data.</param>
@@ -24,7 +24,7 @@ namespace vFrame.Core
         public abstract void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Decrypts the given byte array.
+        ///     Decrypts the given byte array.
         /// </summary>
         /// <param name="input">The input data to decrypt.</param>
         /// <param name="output">The output buffer to receive decrypted data.</param>
@@ -33,7 +33,7 @@ namespace vFrame.Core
         public abstract void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Encrypts the given stream.
+        ///     Encrypts the given stream.
         /// </summary>
         /// <param name="input">The input stream to read from.</param>
         /// <param name="output">The output stream to write encrypted data to.</param>
@@ -42,7 +42,7 @@ namespace vFrame.Core
         public abstract void Encrypt(Stream input, Stream output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Decrypts the given stream.
+        ///     Decrypts the given stream.
         /// </summary>
         /// <param name="input">The input stream to read from.</param>
         /// <param name="output">The output stream to write decrypted data to.</param>
@@ -51,12 +51,12 @@ namespace vFrame.Core
         public abstract void Decrypt(Stream input, Stream output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Called when the encryptor is created. No-op by default.
+        ///     Called when the encryptor is created. No-op by default.
         /// </summary>
         protected override void OnCreate() { }
 
         /// <summary>
-        /// Called when the encryptor is destroyed. No-op by default.
+        ///     Called when the encryptor is destroyed. No-op by default.
         /// </summary>
         protected override void OnDestroy() { }
     }

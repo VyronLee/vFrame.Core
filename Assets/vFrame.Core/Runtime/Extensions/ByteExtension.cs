@@ -15,7 +15,7 @@ namespace vFrame.Core
     public static class ByteExtension
     {
         /// <summary>
-        /// Converts a single byte to an uppercase hexadecimal string.
+        ///     Converts a single byte to an uppercase hexadecimal string.
         /// </summary>
         /// <param name="b">The byte value.</param>
         /// <returns>A two-character uppercase hexadecimal string.</returns>
@@ -24,7 +24,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts a byte array to an uppercase hexadecimal string.
+        ///     Converts a byte array to an uppercase hexadecimal string.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <returns>A concatenated uppercase hexadecimal string.</returns>
@@ -34,13 +34,14 @@ namespace vFrame.Core
             foreach (var b in bytes) {
                 builder.Append(b.ToString("X2"));
             }
+
             var str = builder.ToString();
             StringBuilderPool.Shared.Return(builder);
             return str;
         }
 
         /// <summary>
-        /// Converts a byte array to a hexadecimal string using the specified format.
+        ///     Converts a byte array to a hexadecimal string using the specified format.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <param name="format">The format string (e.g. "X2", "x2").</param>
@@ -51,13 +52,14 @@ namespace vFrame.Core
             foreach (var b in bytes) {
                 builder.Append(b.ToString(format));
             }
+
             var str = builder.ToString();
             StringBuilderPool.Shared.Return(builder);
             return str;
         }
 
         /// <summary>
-        /// Converts a specified range of a byte array to an uppercase hexadecimal string.
+        ///     Converts a specified range of a byte array to an uppercase hexadecimal string.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <param name="offset">The starting offset.</param>
@@ -68,17 +70,19 @@ namespace vFrame.Core
             if (offset < 0 || count < 0 || offset + count > bytes.Length) {
                 ThrowHelper.ThrowArgumentException("Invalid offset or count for byte array.");
             }
+
             var builder = StringBuilderPool.Shared.Get();
             for (var i = offset; i < offset + count; ++i) {
                 builder.Append(bytes[i].ToString("X2"));
             }
+
             var str = builder.ToString();
             StringBuilderPool.Shared.Return(builder);
             return str;
         }
 
         /// <summary>
-        /// Converts a byte array to a string using the default encoding.
+        ///     Converts a byte array to a string using the default encoding.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <returns>The decoded string.</returns>
@@ -87,7 +91,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts a specified range of a byte array to a string using the default encoding.
+        ///     Converts a specified range of a byte array to a string using the default encoding.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <param name="index">The starting index.</param>
@@ -98,7 +102,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts a byte array to a string using UTF-8 encoding.
+        ///     Converts a byte array to a string using UTF-8 encoding.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <returns>The UTF-8 decoded string.</returns>
@@ -107,7 +111,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts a specified range of a byte array to a string using UTF-8 encoding.
+        ///     Converts a specified range of a byte array to a string using UTF-8 encoding.
         /// </summary>
         /// <param name="bytes">The byte array.</param>
         /// <param name="index">The starting index.</param>

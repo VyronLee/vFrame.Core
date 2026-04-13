@@ -15,7 +15,7 @@ namespace vFrame.Core
     public class LZ4CompressorOptions : CompressorOptions
     {
         /// <summary>
-        /// Gets or sets the LZ4 compression level.
+        ///     Gets or sets the LZ4 compression level.
         /// </summary>
         public LZ4Level Level { get; set; } = LZ4Level.L12_MAX;
     }

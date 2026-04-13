@@ -19,7 +19,7 @@ namespace vFrame.Core
         private static readonly byte[] EmptyBuffer = new byte[0];
 
         /// <summary>
-        /// Computes the MD5 hash of a byte array as a lowercase hexadecimal string.
+        ///     Computes the MD5 hash of a byte array as a lowercase hexadecimal string.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 32-character lowercase hexadecimal MD5 string.</returns>
@@ -28,7 +28,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the MD5 hash of a stream as a lowercase hexadecimal string.
+        ///     Computes the MD5 hash of a stream as a lowercase hexadecimal string.
         /// </summary>
         /// <param name="data">The input stream.</param>
         /// <returns>A 32-character lowercase hexadecimal MD5 string.</returns>
@@ -37,7 +37,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the MD5 hash of a byte array as a raw byte array.
+        ///     Computes the MD5 hash of a byte array as a raw byte array.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 16-byte MD5 hash.</returns>
@@ -46,7 +46,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the MD5 hash of a stream as a raw byte array.
+        ///     Computes the MD5 hash of a stream as a raw byte array.
         /// </summary>
         /// <param name="data">The input stream.</param>
         /// <returns>A 16-byte MD5 hash.</returns>
@@ -55,7 +55,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the SHA256 hash of a byte array as a lowercase hexadecimal string.
+        ///     Computes the SHA256 hash of a byte array as a lowercase hexadecimal string.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 64-character lowercase hexadecimal SHA256 string.</returns>
@@ -64,7 +64,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the SHA256 hash of a byte array as a raw byte array.
+        ///     Computes the SHA256 hash of a byte array as a raw byte array.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 32-byte SHA256 hash.</returns>
@@ -73,7 +73,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the SHA512 hash of a byte array as a lowercase hexadecimal string.
+        ///     Computes the SHA512 hash of a byte array as a lowercase hexadecimal string.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 128-character lowercase hexadecimal SHA512 string.</returns>
@@ -82,7 +82,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the SHA512 hash of a byte array as a raw byte array.
+        ///     Computes the SHA512 hash of a byte array as a raw byte array.
         /// </summary>
         /// <param name="data">The input data.</param>
         /// <returns>A 64-byte SHA512 hash.</returns>
@@ -91,7 +91,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the MD5 hash of a file as a lowercase hexadecimal string.
+        ///     Computes the MD5 hash of a file as a lowercase hexadecimal string.
         /// </summary>
         /// <param name="filePath">The path to the file.</param>
         /// <returns>A 32-character lowercase hexadecimal MD5 string.</returns>
@@ -102,7 +102,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Computes the MD5 hash of a file as a raw byte array.
+        ///     Computes the MD5 hash of a file as a raw byte array.
         /// </summary>
         /// <param name="filePath">The path to the file.</param>
         /// <returns>A 16-byte MD5 hash.</returns>

@@ -13,13 +13,13 @@ namespace vFrame.Core
     public interface IPoolObjectAllocator<T>
     {
         /// <summary>
-        /// Creates a new instance of <typeparamref name="T"/>.
+        ///     Creates a new instance of <typeparamref name="T" />.
         /// </summary>
         /// <returns>A newly allocated instance.</returns>
         T Alloc();
 
         /// <summary>
-        /// Resets the given instance so it can be safely reused.
+        ///     Resets the given instance so it can be safely reused.
         /// </summary>
         /// <param name="obj">The instance to reset.</param>
         void Reset(T obj);

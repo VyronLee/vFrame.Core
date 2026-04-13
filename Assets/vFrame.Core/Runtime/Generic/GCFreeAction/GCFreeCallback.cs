@@ -9,7 +9,6 @@
 // ============================================================
 
 using System;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
@@ -52,6 +51,7 @@ namespace vFrame.Core
             if (callback == null) {
                 return default;
             }
+
             return callback.Callback;
         }
     }

@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace vFrame.Core
 {
-    internal interface IComparerWithCondition: IComparer
+    internal interface IComparerWithCondition : IComparer
     {
         bool IsMatch(Type type, object obj1, object obj2);
 

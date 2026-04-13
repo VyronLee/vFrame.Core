@@ -14,7 +14,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
         private const uint kStartMaxLen = 1;
         private const uint kHash3Offset = kHash2Size;
         private const uint kEmptyHashValue = 0;
-        private const uint kMaxValForNormalize = ((uint) 1 << 31) - 1;
+        private const uint kMaxValForNormalize = ((uint)1 << 31) - 1;
 
         private uint _cutValue = 0xFF;
         private uint _cyclicBufferPos;
@@ -42,8 +42,10 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
 
         public new void Init() {
             base.Init();
-            for (uint i = 0; i < _hashSizeSum; i++)
+            for (uint i = 0; i < _hashSizeSum; i++) {
                 _hash[i] = kEmptyHashValue;
+            }
+
             _cyclicBufferPos = 0;
             ReduceOffsets(-1);
         }
@@ -62,8 +64,10 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
 
         public void Create(uint historySize, uint keepAddBufferBefore,
             uint matchMaxLen, uint keepAddBufferAfter) {
-            if (historySize > kMaxValForNormalize - 256)
+            if (historySize > kMaxValForNormalize - 256) {
                 throw new Exception();
+            }
+
             _cutValue = 16 + (matchMaxLen >> 1);
 
             var windowReservSize = (historySize + keepAddBufferBefore +
@@ -74,8 +78,9 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
             _matchMaxLen = matchMaxLen;
 
             var cyclicBufferSize = historySize + 1;
-            if (_cyclicBufferSize != cyclicBufferSize)
+            if (_cyclicBufferSize != cyclicBufferSize) {
                 _son = new uint[(_cyclicBufferSize = cyclicBufferSize) * 2];
+            }
 
             var hs = kBT2HashSize;
 
@@ -87,15 +92,18 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
                 hs |= hs >> 8;
                 hs >>= 1;
                 hs |= 0xFFFF;
-                if (hs > 1 << 24)
+                if (hs > 1 << 24) {
                     hs >>= 1;
+                }
+
                 _hashMask = hs;
                 hs++;
                 hs += kFixHashSize;
             }
 
-            if (hs != _hashSizeSum)
+            if (hs != _hashSizeSum) {
                 _hash = new uint[_hashSizeSum = hs];
+            }
         }
 
         public uint GetMatches(uint[] distances) {
@@ -120,12 +128,12 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
             if (HASH_ARRAY) {
                 var temp = CRC.Table[_bufferBase[cur]] ^ _bufferBase[cur + 1];
                 hash2Value = temp & (kHash2Size - 1);
-                temp ^= (uint) _bufferBase[cur + 2] << 8;
+                temp ^= (uint)_bufferBase[cur + 2] << 8;
                 hash3Value = temp & (kHash3Size - 1);
                 hashValue = (temp ^ (CRC.Table[_bufferBase[cur + 3]] << 5)) & _hashMask;
             }
             else {
-                hashValue = _bufferBase[cur] ^ ((uint) _bufferBase[cur + 1] << 8);
+                hashValue = _bufferBase[cur] ^ ((uint)_bufferBase[cur + 1] << 8);
             }
 
             var curMatch = _hash[kFixHashSize + hashValue];
@@ -134,20 +142,24 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
                 var curMatch3 = _hash[kHash3Offset + hash3Value];
                 _hash[hash2Value] = _pos;
                 _hash[kHash3Offset + hash3Value] = _pos;
-                if (curMatch2 > matchMinPos)
+                if (curMatch2 > matchMinPos) {
                     if (_bufferBase[_bufferOffset + curMatch2] == _bufferBase[cur]) {
                         distances[offset++] = maxLen = 2;
                         distances[offset++] = _pos - curMatch2 - 1;
                     }
+                }
 
-                if (curMatch3 > matchMinPos)
+                if (curMatch3 > matchMinPos) {
                     if (_bufferBase[_bufferOffset + curMatch3] == _bufferBase[cur]) {
-                        if (curMatch3 == curMatch2)
+                        if (curMatch3 == curMatch2) {
                             offset -= 2;
+                        }
+
                         distances[offset++] = maxLen = 3;
                         distances[offset++] = _pos - curMatch3 - 1;
                         curMatch2 = curMatch3;
                     }
+                }
 
                 if (offset != 0 && curMatch2 == curMatch) {
                     offset -= 2;
@@ -163,13 +175,15 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
             uint len0, len1;
             len0 = len1 = kNumHashDirectBytes;
 
-            if (kNumHashDirectBytes != 0)
-                if (curMatch > matchMinPos)
+            if (kNumHashDirectBytes != 0) {
+                if (curMatch > matchMinPos) {
                     if (_bufferBase[_bufferOffset + curMatch + kNumHashDirectBytes] !=
                         _bufferBase[cur + kNumHashDirectBytes]) {
                         distances[offset++] = maxLen = kNumHashDirectBytes;
                         distances[offset++] = _pos - curMatch - 1;
                     }
+                }
+            }
 
             var count = _cutValue;
 
@@ -181,15 +195,18 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
 
                 var delta = _pos - curMatch;
                 var cyclicPos = (delta <= _cyclicBufferPos
-                                    ? _cyclicBufferPos - delta
-                                    : _cyclicBufferPos - delta + _cyclicBufferSize) << 1;
+                    ? _cyclicBufferPos - delta
+                    : _cyclicBufferPos - delta + _cyclicBufferSize) << 1;
 
                 var pby1 = _bufferOffset + curMatch;
                 var len = Math.Min(len0, len1);
                 if (_bufferBase[pby1 + len] == _bufferBase[cur + len]) {
-                    while (++len != lenLimit)
-                        if (_bufferBase[pby1 + len] != _bufferBase[cur + len])
+                    while (++len != lenLimit) {
+                        if (_bufferBase[pby1 + len] != _bufferBase[cur + len]) {
                             break;
+                        }
+                    }
+
                     if (maxLen < len) {
                         distances[offset++] = maxLen = len;
                         distances[offset++] = delta - 1;
@@ -242,13 +259,13 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
                     var temp = CRC.Table[_bufferBase[cur]] ^ _bufferBase[cur + 1];
                     var hash2Value = temp & (kHash2Size - 1);
                     _hash[hash2Value] = _pos;
-                    temp ^= (uint) _bufferBase[cur + 2] << 8;
+                    temp ^= (uint)_bufferBase[cur + 2] << 8;
                     var hash3Value = temp & (kHash3Size - 1);
                     _hash[kHash3Offset + hash3Value] = _pos;
                     hashValue = (temp ^ (CRC.Table[_bufferBase[cur + 3]] << 5)) & _hashMask;
                 }
                 else {
-                    hashValue = _bufferBase[cur] ^ ((uint) _bufferBase[cur + 1] << 8);
+                    hashValue = _bufferBase[cur] ^ ((uint)_bufferBase[cur + 1] << 8);
                 }
 
                 var curMatch = _hash[kFixHashSize + hashValue];
@@ -269,15 +286,18 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
 
                     var delta = _pos - curMatch;
                     var cyclicPos = (delta <= _cyclicBufferPos
-                                        ? _cyclicBufferPos - delta
-                                        : _cyclicBufferPos - delta + _cyclicBufferSize) << 1;
+                        ? _cyclicBufferPos - delta
+                        : _cyclicBufferPos - delta + _cyclicBufferSize) << 1;
 
                     var pby1 = _bufferOffset + curMatch;
                     var len = Math.Min(len0, len1);
                     if (_bufferBase[pby1 + len] == _bufferBase[cur + len]) {
-                        while (++len != lenLimit)
-                            if (_bufferBase[pby1 + len] != _bufferBase[cur + len])
+                        while (++len != lenLimit) {
+                            if (_bufferBase[pby1 + len] != _bufferBase[cur + len]) {
                                 break;
+                            }
+                        }
+
                         if (len == lenLimit) {
                             _son[ptr1] = _son[cyclicPos];
                             _son[ptr0] = _son[cyclicPos + 1];
@@ -300,7 +320,8 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
                 }
 
                 MovePos();
-            } while (--num != 0);
+            }
+            while (--num != 0);
         }
 
         public void SetType(int numHashBytes) {
@@ -318,20 +339,26 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
         }
 
         public new void MovePos() {
-            if (++_cyclicBufferPos >= _cyclicBufferSize)
+            if (++_cyclicBufferPos >= _cyclicBufferSize) {
                 _cyclicBufferPos = 0;
+            }
+
             base.MovePos();
-            if (_pos == kMaxValForNormalize)
+            if (_pos == kMaxValForNormalize) {
                 Normalize();
+            }
         }
 
         private void NormalizeLinks(uint[] items, uint numItems, uint subValue) {
             for (uint i = 0; i < numItems; i++) {
                 var value = items[i];
-                if (value <= subValue)
+                if (value <= subValue) {
                     value = kEmptyHashValue;
-                else
+                }
+                else {
                     value -= subValue;
+                }
+
                 items[i] = value;
             }
         }
@@ -340,7 +367,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZ
             var subValue = _pos - _cyclicBufferSize;
             NormalizeLinks(_son, _cyclicBufferSize * 2, subValue);
             NormalizeLinks(_hash, _hashSizeSum, subValue);
-            ReduceOffsets((int) subValue);
+            ReduceOffsets((int)subValue);
         }
 
         public void SetCutValue(uint cutValue) {

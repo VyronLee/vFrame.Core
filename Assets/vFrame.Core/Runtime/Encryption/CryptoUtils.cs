@@ -9,18 +9,17 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
 using System.Security.Cryptography;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// Provides common cryptographic utility methods.
+    ///     Provides common cryptographic utility methods.
     /// </summary>
     public static class CryptoUtils
     {
         /// <summary>
-        /// Derives a cryptographic key from a password using PBKDF2.
+        ///     Derives a cryptographic key from a password using PBKDF2.
         /// </summary>
         /// <param name="password">The password bytes to derive the key from.</param>
         /// <param name="salt">The salt bytes. Must be at least 8 bytes.</param>
@@ -33,6 +32,7 @@ namespace vFrame.Core
             if (iterations <= 0) {
                 ThrowHelper.ThrowArgumentException("Iterations must be positive.");
             }
+
             if (keyLength <= 0) {
                 ThrowHelper.ThrowArgumentException("Key length must be positive.");
             }
@@ -43,7 +43,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Generates cryptographically secure random bytes.
+        ///     Generates cryptographically secure random bytes.
         /// </summary>
         /// <param name="length">The number of bytes to generate. Must be non-negative.</param>
         /// <returns>A byte array filled with random bytes.</returns>

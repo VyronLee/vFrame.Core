@@ -20,10 +20,8 @@ namespace vFrame.Core.ThirdParty.ZStd
             public UIntPtr Position = UIntPtr.Zero;
         }
 
-        public static void ThrowIfError(UIntPtr code)
-        {
-            if (ZSTD_isError(code))
-            {
+        public static void ThrowIfError(UIntPtr code) {
+            if (ZSTD_isError(code)) {
                 var errorPtr = ZSTD_getErrorName(code);
                 var errorMsg = Marshal.PtrToStringAnsi(errorPtr);
                 throw new IOException(errorMsg);
@@ -76,7 +74,9 @@ namespace vFrame.Core.ThirdParty.ZStd
         public static extern UIntPtr ZSTD_CStreamOutSize();
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern UIntPtr ZSTD_compressStream(IntPtr zcs, [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer, [MarshalAs(UnmanagedType.LPStruct)] Buffer inputBuffer);
+        public static extern UIntPtr ZSTD_compressStream(IntPtr zcs,
+            [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer,
+            [MarshalAs(UnmanagedType.LPStruct)] Buffer inputBuffer);
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr ZSTD_createCDict(IntPtr dictBuffer, UIntPtr dictSize, int compressionLevel);
@@ -105,7 +105,9 @@ namespace vFrame.Core.ThirdParty.ZStd
         public static extern UIntPtr ZSTD_DStreamOutSize();
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern UIntPtr ZSTD_decompressStream(IntPtr zds, [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer, [MarshalAs(UnmanagedType.LPStruct)] Buffer inputBuffer);
+        public static extern UIntPtr ZSTD_decompressStream(IntPtr zds,
+            [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer,
+            [MarshalAs(UnmanagedType.LPStruct)] Buffer inputBuffer);
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr ZSTD_createDDict(IntPtr dictBuffer, UIntPtr dictSize);
@@ -119,10 +121,12 @@ namespace vFrame.Core.ThirdParty.ZStd
         //-----------------------------------------------------------------------------------------
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern UIntPtr ZSTD_flushStream(IntPtr zcs, [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer);
+        public static extern UIntPtr ZSTD_flushStream(IntPtr zcs,
+            [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer);
 
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern UIntPtr ZSTD_endStream(IntPtr zcs, [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer);
+        public static extern UIntPtr
+            ZSTD_endStream(IntPtr zcs, [MarshalAs(UnmanagedType.LPStruct)] Buffer outputBuffer);
 
         //-----------------------------------------------------------------------------------------
 

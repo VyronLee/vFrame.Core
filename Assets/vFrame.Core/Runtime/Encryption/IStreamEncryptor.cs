@@ -9,18 +9,16 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
-
 namespace vFrame.Core
 {
     /// <summary>
-    /// Extended encryptor interface with convenience methods for auto-allocating buffer operations.
+    ///     Extended encryptor interface with convenience methods for auto-allocating buffer operations.
     /// </summary>
     public interface IStreamEncryptor : IEncryptor
     {
         /// <summary>
-        /// Encrypts the given data and returns a new byte array with the result.
-        /// The caller must determine the required output size based on the encryptor type.
+        ///     Encrypts the given data and returns a new byte array with the result.
+        ///     The caller must determine the required output size based on the encryptor type.
         /// </summary>
         /// <param name="data">The data to encrypt.</param>
         /// <param name="key">The encryption key.</param>
@@ -34,8 +32,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decrypts the given data and returns a new byte array with the result.
-        /// The caller must determine the required output size based on the encryptor type.
+        ///     Decrypts the given data and returns a new byte array with the result.
+        ///     The caller must determine the required output size based on the encryptor type.
         /// </summary>
         /// <param name="data">The data to decrypt.</param>
         /// <param name="key">The decryption key.</param>

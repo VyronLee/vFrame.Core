@@ -51,13 +51,13 @@ namespace vFrame.Core
         ///     Builds fast get/set delegates from the given property expression.
         /// </summary>
         /// <param name="memberSelector">An expression selecting the target property.</param>
-        protected Accessor(Expression<Func<TSource, TArg>> memberSelector)
-        {
+        protected Accessor(Expression<Func<TSource, TArg>> memberSelector) {
             var prop = memberSelector.GetPropertyInfo();
             if (prop == null) {
                 ThrowHelper.ThrowArgumentException(
                     $"Expression must select a property, not a field: {memberSelector}");
             }
+
             IsReadable = prop.CanRead;
             IsWritable = prop.CanWrite;
             AssignDelegate(IsReadable, ref Getter, prop.GetGetMethod());
@@ -84,12 +84,14 @@ namespace vFrame.Core
                 if (!IsReadable) {
                     throw new ArgumentException("Property get method not found.");
                 }
+
                 return Getter(instance);
             }
             set {
                 if (!IsWritable) {
                     throw new ArgumentException("Property set method not found.");
                 }
+
                 Setter(instance, value);
             }
         }
@@ -101,7 +103,8 @@ namespace vFrame.Core
         /// <param name="assignable">Whether the delegate should be assigned.</param>
         /// <param name="assignee">The delegate field to assign.</param>
         /// <param name="assignor">The method info to create the delegate from.</param>
-        private void AssignDelegate<TDelegate>(bool assignable, ref TDelegate assignee, MethodInfo assignor) where TDelegate : class {
+        private void AssignDelegate<TDelegate>(bool assignable, ref TDelegate assignee, MethodInfo assignor)
+            where TDelegate : class {
             if (assignable) {
                 assignee = assignor.CreateDelegate<TDelegate>();
             }
@@ -113,14 +116,16 @@ namespace vFrame.Core
         /// <summary>
         ///     Builds a fast getter delegate from a property selector expression.
         /// </summary>
-        public static Func<TSource, TArg> BuildGetAccessor<TSource, TArg>(Expression<Func<TSource, TArg>> propertySelector) {
+        public static Func<TSource, TArg> BuildGetAccessor<TSource, TArg>(
+            Expression<Func<TSource, TArg>> propertySelector) {
             return propertySelector.GetPropertyInfo().GetGetMethod().CreateDelegate<Func<TSource, TArg>>();
         }
 
         /// <summary>
         ///     Builds a fast setter delegate from a property selector expression.
         /// </summary>
-        public static Action<TSource, TArg> BuildSetAccessor<TSource, TArg>(Expression<Func<TSource, TArg>> propertySelector) {
+        public static Action<TSource, TArg> BuildSetAccessor<TSource, TArg>(
+            Expression<Func<TSource, TArg>> propertySelector) {
             return propertySelector.GetPropertyInfo().GetSetMethod().CreateDelegate<Action<TSource, TArg>>();
         }
 
@@ -135,10 +140,12 @@ namespace vFrame.Core
         ///     Extracts property info from a member expression.
         /// </summary>
         /// <exception cref="MissingMemberException">Thrown when the expression body is not a member expression.</exception>
-        public static PropertyInfo GetPropertyInfo<TSource, TArg>(this Expression<Func<TSource, TArg>> propertySelector) {
+        public static PropertyInfo
+            GetPropertyInfo<TSource, TArg>(this Expression<Func<TSource, TArg>> propertySelector) {
             if (!(propertySelector.Body is MemberExpression body)) {
                 throw new MissingMemberException();
             }
+
             return body.Member as PropertyInfo;
         }
     }

@@ -8,8 +8,6 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using vFrame.Core;
-
 namespace vFrame.Core
 {
     public abstract class Singleton<T> : BaseObject where T : BaseObject, new()
@@ -30,7 +28,7 @@ namespace vFrame.Core
         /// <summary>
         ///     Returns the singleton instance, creating it lazily if necessary.
         /// </summary>
-        /// <returns>The singleton instance of type <typeparamref name="T"/>.</returns>
+        /// <returns>The singleton instance of type <typeparamref name="T" />.</returns>
         public static T Instance() {
             if (null == _instance) {
                 lock (_lockObject) {
@@ -39,6 +37,7 @@ namespace vFrame.Core
                     }
                 }
             }
+
             return _instance;
         }
 

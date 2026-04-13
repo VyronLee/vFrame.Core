@@ -15,7 +15,7 @@ namespace vFrame.Core
     public static class ArrayExtensions
     {
         /// <summary>
-        /// Invokes the specified action for each element in the array, supporting multi-dimensional arrays.
+        ///     Invokes the specified action for each element in the array, supporting multi-dimensional arrays.
         /// </summary>
         /// <param name="array">The target array.</param>
         /// <param name="action">The action to invoke for each element, receiving the array and current position indices.</param>
@@ -23,10 +23,12 @@ namespace vFrame.Core
             if (array.LongLength == 0) {
                 return;
             }
+
             var walker = new ArrayTraverse(array);
             do {
                 action(array, walker.Position);
-            } while (walker.Step());
+            }
+            while (walker.Step());
         }
     }
 
@@ -36,7 +38,7 @@ namespace vFrame.Core
         public readonly int[] Position;
 
         /// <summary>
-        /// Initializes a new array traverser for the given array.
+        ///     Initializes a new array traverser for the given array.
         /// </summary>
         /// <param name="array">The array to traverse.</param>
         public ArrayTraverse(Array array) {
@@ -44,11 +46,12 @@ namespace vFrame.Core
             for (var i = 0; i < array.Rank; ++i) {
                 _maxLengths[i] = array.GetLength(i) - 1;
             }
+
             Position = new int[array.Rank];
         }
 
         /// <summary>
-        /// Advances to the next position in the array.
+        ///     Advances to the next position in the array.
         /// </summary>
         /// <returns><c>true</c> if advanced to the next position; <c>false</c> if the end has been reached.</returns>
         public bool Step() {
@@ -58,9 +61,11 @@ namespace vFrame.Core
                     for (var j = 0; j < i; j++) {
                         Position[j] = 0;
                     }
+
                     return true;
                 }
             }
+
             return false;
         }
     }

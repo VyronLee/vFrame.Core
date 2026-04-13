@@ -19,7 +19,7 @@ namespace vFrame.Core
     public class ZStdCompressor : Compressor
     {
         /// <summary>
-        /// Compresses data from the input stream to the output stream using Zstandard.
+        ///     Compresses data from the input stream to the output stream using Zstandard.
         /// </summary>
         /// <param name="input">The stream containing uncompressed data.</param>
         /// <param name="output">The stream to receive compressed data.</param>
@@ -42,7 +42,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses data from the input stream to the output stream using Zstandard.
+        ///     Decompresses data from the input stream to the output stream using Zstandard.
         /// </summary>
         /// <param name="input">The stream containing Zstandard-compressed data.</param>
         /// <param name="output">The stream to receive decompressed data.</param>

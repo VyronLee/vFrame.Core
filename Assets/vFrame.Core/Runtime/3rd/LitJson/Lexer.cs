@@ -29,8 +29,9 @@ namespace vFrame.Core
     internal class Lexer
     {
         private bool GetChar() {
-            if ((input_char = NextChar()) != -1)
+            if ((input_char = NextChar()) != -1) {
                 return true;
+            }
 
             EndOfInput = true;
             return false;
@@ -54,19 +55,22 @@ namespace vFrame.Core
             while (true) {
                 handler = fsm_handler_table[state - 1];
 
-                if (!handler(fsm_context))
+                if (!handler(fsm_context)) {
                     throw new JsonException(input_char);
+                }
 
-                if (EndOfInput)
+                if (EndOfInput) {
                     return false;
+                }
 
                 if (fsm_context.Return) {
                     StringValue = string_buffer.ToString();
                     string_buffer.Remove(0, string_buffer.Length);
                     Token = fsm_return_table[state - 1];
 
-                    if (Token == (int) ParserToken.Char)
+                    if (Token == (int)ParserToken.Char) {
                         Token = input_char;
+                    }
 
                     state = fsm_context.NextState;
 
@@ -205,30 +209,30 @@ namespace vFrame.Core
             };
 
             fsm_return_table = new int[28] {
-                (int) ParserToken.Char,
+                (int)ParserToken.Char,
                 0,
-                (int) ParserToken.Number,
-                (int) ParserToken.Number,
+                (int)ParserToken.Number,
+                (int)ParserToken.Number,
                 0,
-                (int) ParserToken.Number,
+                (int)ParserToken.Number,
                 0,
-                (int) ParserToken.Number,
-                0,
-                0,
-                (int) ParserToken.True,
+                (int)ParserToken.Number,
                 0,
                 0,
-                0,
-                (int) ParserToken.False,
-                0,
-                0,
-                (int) ParserToken.Null,
-                (int) ParserToken.CharSeq,
-                (int) ParserToken.Char,
+                (int)ParserToken.True,
                 0,
                 0,
-                (int) ParserToken.CharSeq,
-                (int) ParserToken.Char,
+                0,
+                (int)ParserToken.False,
+                0,
+                0,
+                (int)ParserToken.Null,
+                (int)ParserToken.CharSeq,
+                (int)ParserToken.Char,
+                0,
+                0,
+                (int)ParserToken.CharSeq,
+                (int)ParserToken.Char,
                 0,
                 0,
                 0,
@@ -268,11 +272,12 @@ namespace vFrame.Core
         private static bool State1(FsmContext ctx) {
             while (ctx.L.GetChar()) {
                 if (ctx.L.input_char == ' ' ||
-                    ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')
+                    (ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')) {
                     continue;
+                }
 
                 if (ctx.L.input_char >= '1' && ctx.L.input_char <= '9') {
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     ctx.NextState = 3;
                     return true;
                 }
@@ -294,12 +299,12 @@ namespace vFrame.Core
                         return true;
 
                     case '-':
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         ctx.NextState = 2;
                         return true;
 
                     case '0':
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         ctx.NextState = 4;
                         return true;
 
@@ -316,8 +321,9 @@ namespace vFrame.Core
                         return true;
 
                     case '\'':
-                        if (!ctx.L.AllowSingleQuotedStrings)
+                        if (!ctx.L.AllowSingleQuotedStrings) {
                             return false;
+                        }
 
                         ctx.L.input_char = '"';
                         ctx.NextState = 23;
@@ -325,8 +331,9 @@ namespace vFrame.Core
                         return true;
 
                     case '/':
-                        if (!ctx.L.AllowComments)
+                        if (!ctx.L.AllowComments) {
                             return false;
+                        }
 
                         ctx.NextState = 25;
                         return true;
@@ -343,14 +350,14 @@ namespace vFrame.Core
             ctx.L.GetChar();
 
             if (ctx.L.input_char >= '1' && ctx.L.input_char <= '9') {
-                ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                ctx.L.string_buffer.Append((char)ctx.L.input_char);
                 ctx.NextState = 3;
                 return true;
             }
 
             switch (ctx.L.input_char) {
                 case '0':
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     ctx.NextState = 4;
                     return true;
 
@@ -362,12 +369,12 @@ namespace vFrame.Core
         private static bool State3(FsmContext ctx) {
             while (ctx.L.GetChar()) {
                 if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9') {
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     continue;
                 }
 
                 if (ctx.L.input_char == ' ' ||
-                    ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r') {
+                    (ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')) {
                     ctx.Return = true;
                     ctx.NextState = 1;
                     return true;
@@ -383,13 +390,13 @@ namespace vFrame.Core
                         return true;
 
                     case '.':
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         ctx.NextState = 5;
                         return true;
 
                     case 'e':
                     case 'E':
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         ctx.NextState = 7;
                         return true;
 
@@ -405,7 +412,7 @@ namespace vFrame.Core
             ctx.L.GetChar();
 
             if (ctx.L.input_char == ' ' ||
-                ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r') {
+                (ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')) {
                 ctx.Return = true;
                 ctx.NextState = 1;
                 return true;
@@ -421,13 +428,13 @@ namespace vFrame.Core
                     return true;
 
                 case '.':
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     ctx.NextState = 5;
                     return true;
 
                 case 'e':
                 case 'E':
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     ctx.NextState = 7;
                     return true;
 
@@ -440,7 +447,7 @@ namespace vFrame.Core
             ctx.L.GetChar();
 
             if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9') {
-                ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                ctx.L.string_buffer.Append((char)ctx.L.input_char);
                 ctx.NextState = 6;
                 return true;
             }
@@ -451,12 +458,12 @@ namespace vFrame.Core
         private static bool State6(FsmContext ctx) {
             while (ctx.L.GetChar()) {
                 if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9') {
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     continue;
                 }
 
                 if (ctx.L.input_char == ' ' ||
-                    ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r') {
+                    (ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')) {
                     ctx.Return = true;
                     ctx.NextState = 1;
                     return true;
@@ -473,7 +480,7 @@ namespace vFrame.Core
 
                     case 'e':
                     case 'E':
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         ctx.NextState = 7;
                         return true;
 
@@ -489,7 +496,7 @@ namespace vFrame.Core
             ctx.L.GetChar();
 
             if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9') {
-                ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                ctx.L.string_buffer.Append((char)ctx.L.input_char);
                 ctx.NextState = 8;
                 return true;
             }
@@ -497,7 +504,7 @@ namespace vFrame.Core
             switch (ctx.L.input_char) {
                 case '+':
                 case '-':
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     ctx.NextState = 8;
                     return true;
 
@@ -509,12 +516,12 @@ namespace vFrame.Core
         private static bool State8(FsmContext ctx) {
             while (ctx.L.GetChar()) {
                 if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9') {
-                    ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                    ctx.L.string_buffer.Append((char)ctx.L.input_char);
                     continue;
                 }
 
                 if (ctx.L.input_char == ' ' ||
-                    ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r') {
+                    (ctx.L.input_char >= '\t' && ctx.L.input_char <= '\r')) {
                     ctx.Return = true;
                     ctx.NextState = 1;
                     return true;
@@ -671,7 +678,7 @@ namespace vFrame.Core
         }
 
         private static bool State19(FsmContext ctx) {
-            while (ctx.L.GetChar())
+            while (ctx.L.GetChar()) {
                 switch (ctx.L.input_char) {
                     case '"':
                         ctx.L.UngetChar();
@@ -685,9 +692,10 @@ namespace vFrame.Core
                         return true;
 
                     default:
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         continue;
                 }
+            }
 
             return true;
         }
@@ -740,9 +748,9 @@ namespace vFrame.Core
             ctx.L.unichar = 0;
 
             while (ctx.L.GetChar()) {
-                if (ctx.L.input_char >= '0' && ctx.L.input_char <= '9' ||
-                    ctx.L.input_char >= 'A' && ctx.L.input_char <= 'F' ||
-                    ctx.L.input_char >= 'a' && ctx.L.input_char <= 'f') {
+                if ((ctx.L.input_char >= '0' && ctx.L.input_char <= '9') ||
+                    (ctx.L.input_char >= 'A' && ctx.L.input_char <= 'F') ||
+                    (ctx.L.input_char >= 'a' && ctx.L.input_char <= 'f')) {
                     ctx.L.unichar += HexValue(ctx.L.input_char) * mult;
 
                     counter++;
@@ -765,7 +773,7 @@ namespace vFrame.Core
         }
 
         private static bool State23(FsmContext ctx) {
-            while (ctx.L.GetChar())
+            while (ctx.L.GetChar()) {
                 switch (ctx.L.input_char) {
                     case '\'':
                         ctx.L.UngetChar();
@@ -779,9 +787,10 @@ namespace vFrame.Core
                         return true;
 
                     default:
-                        ctx.L.string_buffer.Append((char) ctx.L.input_char);
+                        ctx.L.string_buffer.Append((char)ctx.L.input_char);
                         continue;
                 }
+            }
 
             return true;
         }
@@ -819,29 +828,32 @@ namespace vFrame.Core
         }
 
         private static bool State26(FsmContext ctx) {
-            while (ctx.L.GetChar())
+            while (ctx.L.GetChar()) {
                 if (ctx.L.input_char == '\n') {
                     ctx.NextState = 1;
                     return true;
                 }
+            }
 
             return true;
         }
 
         private static bool State27(FsmContext ctx) {
-            while (ctx.L.GetChar())
+            while (ctx.L.GetChar()) {
                 if (ctx.L.input_char == '*') {
                     ctx.NextState = 28;
                     return true;
                 }
+            }
 
             return true;
         }
 
         private static bool State28(FsmContext ctx) {
             while (ctx.L.GetChar()) {
-                if (ctx.L.input_char == '*')
+                if (ctx.L.input_char == '*') {
                     continue;
+                }
 
                 if (ctx.L.input_char == '/') {
                     ctx.NextState = 1;

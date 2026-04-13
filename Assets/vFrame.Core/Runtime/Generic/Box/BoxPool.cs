@@ -8,9 +8,8 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using vFrame.Core;
-
 namespace vFrame.Core
 {
-    public class BoxPool<T> : ObjectPool<Box<T>, BoxAllocator<T>> { }
+    public class BoxPool<T> : ObjectPool<Box<T>, BoxAllocator<T>>
+    { }
 }

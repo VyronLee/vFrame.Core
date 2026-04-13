@@ -15,10 +15,12 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         }
 
         public void UpdateModel(uint symbol) {
-            if (symbol == 0)
+            if (symbol == 0) {
                 Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
-            else
+            }
+            else {
                 Prob -= Prob >> kNumMoveBits;
+            }
         }
 
         public void Encode(Encoder encoder, uint symbol) {
@@ -46,16 +48,17 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         static BitEncoder() {
             const int kNumBits = kNumBitModelTotalBits - kNumMoveReducingBits;
             for (var i = kNumBits - 1; i >= 0; i--) {
-                var start = (uint) 1 << (kNumBits - i - 1);
-                var end = (uint) 1 << (kNumBits - i);
-                for (var j = start; j < end; j++)
-                    ProbPrices[j] = ((uint) i << kNumBitPriceShiftBits) +
+                var start = (uint)1 << (kNumBits - i - 1);
+                var end = (uint)1 << (kNumBits - i);
+                for (var j = start; j < end; j++) {
+                    ProbPrices[j] = ((uint)i << kNumBitPriceShiftBits) +
                                     (((end - j) << kNumBitPriceShiftBits) >> (kNumBits - i - 1));
+                }
             }
         }
 
         public uint GetPrice(uint symbol) {
-            return ProbPrices[(((Prob - symbol) ^ -(int) symbol) & (kBitModelTotal - 1)) >> kNumMoveReducingBits];
+            return ProbPrices[(((Prob - symbol) ^ -(int)symbol) & (kBitModelTotal - 1)) >> kNumMoveReducingBits];
         }
 
         public uint GetPrice0() {
@@ -76,10 +79,12 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         private uint Prob;
 
         public void UpdateModel(int numMoveBits, uint symbol) {
-            if (symbol == 0)
+            if (symbol == 0) {
                 Prob += (kBitModelTotal - Prob) >> numMoveBits;
-            else
+            }
+            else {
                 Prob -= Prob >> numMoveBits;
+            }
         }
 
         public void Init() {
@@ -92,7 +97,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
                 rangeDecoder.Range = newBound;
                 Prob += (kBitModelTotal - Prob) >> kNumMoveBits;
                 if (rangeDecoder.Range < Decoder.kTopValue) {
-                    rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte) rangeDecoder.Stream.ReadByte();
+                    rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                     rangeDecoder.Range <<= 8;
                 }
 
@@ -103,7 +108,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
             rangeDecoder.Code -= newBound;
             Prob -= Prob >> kNumMoveBits;
             if (rangeDecoder.Range < Decoder.kTopValue) {
-                rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte) rangeDecoder.Stream.ReadByte();
+                rangeDecoder.Code = (rangeDecoder.Code << 8) | (byte)rangeDecoder.Stream.ReadByte();
                 rangeDecoder.Range <<= 8;
             }
 

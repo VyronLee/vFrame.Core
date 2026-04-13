@@ -8,18 +8,17 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
 using System.Security.Cryptography;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// Provides HMAC-SHA256 hash computation and verification.
+    ///     Provides HMAC-SHA256 hash computation and verification.
     /// </summary>
     public static class HmacSha256
     {
         /// <summary>
-        /// Computes the HMAC-SHA256 hash of the given data using the specified key.
+        ///     Computes the HMAC-SHA256 hash of the given data using the specified key.
         /// </summary>
         /// <param name="data">The data to hash.</param>
         /// <param name="key">The HMAC key.</param>
@@ -34,7 +33,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Verifies that the HMAC-SHA256 hash of the given data matches the expected hash.
+        ///     Verifies that the HMAC-SHA256 hash of the given data matches the expected hash.
         /// </summary>
         /// <param name="data">The data to verify.</param>
         /// <param name="key">The HMAC key.</param>

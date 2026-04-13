@@ -3,12 +3,12 @@ using System.Collections.Generic;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Defines methods to compare complex objects of particular type.
+    ///     Defines methods to compare complex objects of particular type.
     /// </summary>
-    public interface IComparer<in T>: IBaseComparer
+    public interface IComparer<in T> : IBaseComparer
     {
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <param name="obj1">Object 1.</param>
         /// <param name="obj2">Object 2.</param>
@@ -17,7 +17,7 @@ namespace vFrame.Core
         bool Compare(T obj1, T obj2, out IEnumerable<Difference> differences);
 
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <param name="obj1">Object 1.</param>
         /// <param name="obj2">Object 2.</param>
@@ -25,7 +25,7 @@ namespace vFrame.Core
         bool Compare(T obj1, T obj2);
 
         /// <summary>
-        /// Calculates list of differences between objects.
+        ///     Calculates list of differences between objects.
         /// </summary>
         /// <param name="obj1">Object 1.</param>
         /// <param name="obj2">Object 2.</param>

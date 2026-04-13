@@ -15,7 +15,7 @@ namespace vFrame.Core
     public class HashSetAllocator<T> : IPoolObjectAllocator<HashSet<T>>
     {
         /// <summary>
-        /// Allocates a new <see cref="HashSet{T}"/> instance.
+        ///     Allocates a new <see cref="HashSet{T}" /> instance.
         /// </summary>
         /// <returns>A new hash set instance.</returns>
         public HashSet<T> Alloc() {
@@ -23,7 +23,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Resets the given hash set by clearing all elements.
+        ///     Resets the given hash set by clearing all elements.
         /// </summary>
         /// <param name="obj">The hash set to reset.</param>
         public void Reset(HashSet<T> obj) {

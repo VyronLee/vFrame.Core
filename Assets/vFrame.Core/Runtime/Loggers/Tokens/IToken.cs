@@ -14,12 +14,12 @@ using System.Text;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Interface for a single format token in a log template.
+    ///     Interface for a single format token in a log template.
     /// </summary>
     public interface IToken
     {
         /// <summary>
-        /// Renders this token into the given string builder using the provided log context.
+        ///     Renders this token into the given string builder using the provided log context.
         /// </summary>
         /// <param name="sb">The string builder to append to.</param>
         /// <param name="context">The log context containing values for rendering.</param>

@@ -11,28 +11,28 @@
 namespace vFrame.Core
 {
     /// <summary>
-    /// Controls the behavior when registering a handler for a message type that
-    /// already has a registered handler (applicable to Command and Request dispatchers
-    /// which allow only one handler per type).
+    ///     Controls the behavior when registering a handler for a message type that
+    ///     already has a registered handler (applicable to Command and Request dispatchers
+    ///     which allow only one handler per type).
     /// </summary>
     public enum RegisterMode
     {
         /// <summary>
-        /// Silently replaces the existing handler with the new one.
-        /// The old subscription is destroyed and returned to the pool.
+        ///     Silently replaces the existing handler with the new one.
+        ///     The old subscription is destroyed and returned to the pool.
         /// </summary>
         Replace,
 
         /// <summary>
-        /// Throws an <see cref="System.InvalidOperationException"/> if a handler
-        /// is already registered for the same message type.
+        ///     Throws an <see cref="System.InvalidOperationException" /> if a handler
+        ///     is already registered for the same message type.
         /// </summary>
         Throw,
 
         /// <summary>
-        /// Silently ignores the new registration if a handler already exists.
-        /// The existing handler remains active.
+        ///     Silently ignores the new registration if a handler already exists.
+        ///     The existing handler remains active.
         /// </summary>
-        Ignore,
+        Ignore
     }
 }

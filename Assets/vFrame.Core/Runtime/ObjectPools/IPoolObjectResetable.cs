@@ -13,7 +13,7 @@ namespace vFrame.Core
     public interface IPoolObjectResetable
     {
         /// <summary>
-        /// Resets the object to a clean state so it can be safely reused from the pool.
+        ///     Resets the object to a clean state so it can be safely reused from the pool.
         /// </summary>
         void Reset();
     }

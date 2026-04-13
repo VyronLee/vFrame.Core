@@ -17,7 +17,7 @@ namespace vFrame.Core
     public class LZ4Compressor : Compressor
     {
         /// <summary>
-        /// Compresses the input stream using the LZ4 algorithm.
+        ///     Compresses the input stream using the LZ4 algorithm.
         /// </summary>
         /// <param name="input">The stream containing data to compress.</param>
         /// <param name="output">The stream to write compressed data to.</param>
@@ -38,7 +38,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses the LZ4-compressed input stream.
+        ///     Decompresses the LZ4-compressed input stream.
         /// </summary>
         /// <param name="input">The stream containing LZ4-compressed data.</param>
         /// <param name="output">The stream to write decompressed data to.</param>

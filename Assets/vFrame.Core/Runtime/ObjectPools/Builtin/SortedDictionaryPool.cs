@@ -13,5 +13,6 @@ using System.Collections.Generic;
 namespace vFrame.Core
 {
     public class
-        SortedDictionaryPool<T1, T2> : ObjectPool<SortedDictionary<T1, T2>, SortedDictionaryAllocator<T1, T2>> { }
+        SortedDictionaryPool<T1, T2> : ObjectPool<SortedDictionary<T1, T2>, SortedDictionaryAllocator<T1, T2>>
+    { }
 }

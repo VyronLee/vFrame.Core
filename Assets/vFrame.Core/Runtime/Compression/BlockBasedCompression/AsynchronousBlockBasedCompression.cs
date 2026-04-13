@@ -21,10 +21,10 @@ namespace vFrame.Core
     {
         private const int DefaultThreadCount = 3;
         private const int MaxThreadCount = 16;
-        private Stream _input;
-        private Stream _output;
 
         private CancellationTokenSource _cts;
+        private Stream _input;
+        private Stream _output;
 
         private CompressionState _state = CompressionState.Idle;
         private int _threadCount = DefaultThreadCount;
@@ -32,7 +32,7 @@ namespace vFrame.Core
         public Exception LastError { get; private set; }
 
         /// <summary>
-        /// Releases the parallel task runner and cleans up resources.
+        ///     Releases the parallel task runner and cleans up resources.
         /// </summary>
         protected override void OnDestroy() {
             _cts?.Cancel();
@@ -43,8 +43,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Sets the number of worker threads for parallel compression.
-        /// Clamped to the range [0, <see cref="MaxThreadCount"/>].
+        ///     Sets the number of worker threads for parallel compression.
+        ///     Clamped to the range [0, <see cref="MaxThreadCount" />].
         /// </summary>
         /// <param name="count">Desired thread count.</param>
         public void SetThreadCount(int count) {
@@ -53,7 +53,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Starts asynchronous compression of the input stream into the output stream.
+        ///     Starts asynchronous compression of the input stream into the output stream.
         /// </summary>
         /// <param name="input">The input data stream to compress.</param>
         /// <param name="output">The output stream to receive compressed data.</param>
@@ -87,13 +87,14 @@ namespace vFrame.Core
                 };
                 contexts.Add(stateContext);
             }
+
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
             var parallelOptions = new ParallelOptions {
                 MaxDegreeOfParallelism = _threadCount,
                 CancellationToken = token
             };
-            System.Threading.Tasks.Task.Run(() => {
+            Task.Run(() => {
                 try {
                     Parallel.ForEach(contexts, parallelOptions, CompressInternal);
                     OnCompressedFinished(request);
@@ -113,7 +114,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Compresses a single block as part of the parallel compression pipeline.
+        ///     Compresses a single block as part of the parallel compression pipeline.
         /// </summary>
         /// <param name="state">The thread-local state containing block parameters.</param>
         private void CompressInternal(CompressThreadState state) {
@@ -124,7 +125,7 @@ namespace vFrame.Core
 
 
         /// <summary>
-        /// Finalizes the compression output stream and marks the request as done.
+        ///     Finalizes the compression output stream and marks the request as done.
         /// </summary>
         /// <param name="request">The compression request to finalize.</param>
         private void OnCompressedFinished(BlockBasedCompressionRequest request) {
@@ -134,7 +135,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Starts asynchronous decompression of the input stream into the output stream.
+        ///     Starts asynchronous decompression of the input stream into the output stream.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream to receive decompressed data.</param>
@@ -165,13 +166,14 @@ namespace vFrame.Core
                 };
                 contexts.Add(stateContext);
             }
+
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
             var parallelOptions = new ParallelOptions {
                 MaxDegreeOfParallelism = _threadCount,
                 CancellationToken = token
             };
-            System.Threading.Tasks.Task.Run(() => {
+            Task.Run(() => {
                 try {
                     Parallel.ForEach(contexts, parallelOptions, DecompressInternal);
                     OnDecompressedFinished(request);
@@ -191,7 +193,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses a single block as part of the parallel decompression pipeline.
+        ///     Decompresses a single block as part of the parallel decompression pipeline.
         /// </summary>
         /// <param name="state">The thread-local state containing block parameters.</param>
         private void DecompressInternal(DecompressThreadState state) {
@@ -202,7 +204,7 @@ namespace vFrame.Core
 
 
         /// <summary>
-        /// Finalizes the decompression output stream and marks the request as done.
+        ///     Finalizes the decompression output stream and marks the request as done.
         /// </summary>
         /// <param name="request">The decompression request to finalize.</param>
         private void OnDecompressedFinished(BlockBasedDecompressionRequest request) {
@@ -212,8 +214,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Handles errors from the parallel task runner by recording the last error
-        /// and transitioning to the error state.
+        ///     Handles errors from the parallel task runner by recording the last error
+        ///     and transitioning to the error state.
         /// </summary>
         /// <param name="e">The exception that occurred.</param>
         private void OnException(Exception e) {
@@ -254,10 +256,10 @@ namespace vFrame.Core
             private int _isDone;
 
             /// <summary>
-            /// Initializes a new compression request bound to the given compressor instance.
+            ///     Initializes a new compression request bound to the given compressor instance.
             /// </summary>
             /// <param name="compression">The parent asynchronous compressor.</param>
-            /// <exception cref="ArgumentNullException">Thrown when <paramref name="compression"/> is null.</exception>
+            /// <exception cref="ArgumentNullException">Thrown when <paramref name="compression" /> is null.</exception>
             public BlockBasedCompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
@@ -275,7 +277,7 @@ namespace vFrame.Core
             public Exception Error => _compression?.LastError;
 
             /// <summary>
-            /// Returns <c>true</c> while the request is not yet done.
+            ///     Returns <c>true</c> while the request is not yet done.
             /// </summary>
             /// <returns><c>true</c> if the request is still in progress; otherwise <c>false</c>.</returns>
             public bool MoveNext() {
@@ -283,14 +285,14 @@ namespace vFrame.Core
             }
 
             /// <summary>
-            /// Resets the enumerator. No-op for this implementation.
+            ///     Resets the enumerator. No-op for this implementation.
             /// </summary>
             public void Reset() { }
 
             public object Current => null;
 
             /// <summary>
-            /// Atomically increments the finished block counter by one.
+            ///     Atomically increments the finished block counter by one.
             /// </summary>
             public void IncreaseFinishedCount() {
                 Interlocked.Add(ref _finishedCount, 1);
@@ -306,10 +308,10 @@ namespace vFrame.Core
             private int _isDone;
 
             /// <summary>
-            /// Initializes a new decompression request bound to the given compressor instance.
+            ///     Initializes a new decompression request bound to the given compressor instance.
             /// </summary>
             /// <param name="compression">The parent asynchronous compressor.</param>
-            /// <exception cref="ArgumentNullException">Thrown when <paramref name="compression"/> is null.</exception>
+            /// <exception cref="ArgumentNullException">Thrown when <paramref name="compression" /> is null.</exception>
             public BlockBasedDecompressionRequest(AsynchronousBlockBasedCompression compression) {
                 ThrowHelper.ThrowIfNull(compression, nameof(compression));
                 _compression = compression;
@@ -327,7 +329,7 @@ namespace vFrame.Core
             public Exception Error => _compression?.LastError;
 
             /// <summary>
-            /// Returns <c>true</c> while the request is not yet done.
+            ///     Returns <c>true</c> while the request is not yet done.
             /// </summary>
             /// <returns><c>true</c> if the request is still in progress; otherwise <c>false</c>.</returns>
             public bool MoveNext() {
@@ -335,14 +337,14 @@ namespace vFrame.Core
             }
 
             /// <summary>
-            /// Resets the enumerator. No-op for this implementation.
+            ///     Resets the enumerator. No-op for this implementation.
             /// </summary>
             public void Reset() { }
 
             public object Current => null;
 
             /// <summary>
-            /// Atomically increments the finished block counter by one.
+            ///     Atomically increments the finished block counter by one.
             /// </summary>
             public void IncreaseFinishedCount() {
                 Interlocked.Add(ref _finishedCount, 1);

@@ -16,7 +16,7 @@ namespace vFrame.Core
     public class SynchronousBlockBasedCompression : BlockBasedCompression
     {
         /// <summary>
-        /// Compresses the input stream synchronously and writes the result to the output stream.
+        ///     Compresses the input stream synchronously and writes the result to the output stream.
         /// </summary>
         /// <param name="input">The input data stream to compress.</param>
         /// <param name="output">The output stream to receive compressed data.</param>
@@ -29,11 +29,12 @@ namespace vFrame.Core
                 SafeCompress(input, output, options, i);
                 onProgress?.Invoke(i, BlockCount);
             }
+
             EndCompress(output);
         }
 
         /// <summary>
-        /// Decompresses the input stream synchronously and writes the result to the output stream.
+        ///     Decompresses the input stream synchronously and writes the result to the output stream.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream to receive decompressed data.</param>
@@ -44,6 +45,7 @@ namespace vFrame.Core
                 SafeDecompress(input, output, i);
                 onProgress?.Invoke(i, BlockCount);
             }
+
             EndDecompress(output);
         }
     }

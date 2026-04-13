@@ -9,16 +9,15 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the source line number ({line}).
+    ///     A format token that renders the source line number ({line}).
     /// </summary>
     public class LineToken : IToken
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append(context.LineNumber);
         }

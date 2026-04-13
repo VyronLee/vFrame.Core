@@ -11,27 +11,26 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the log level.
-    /// Supports {level} (full name) and {level:u3} (3-character uppercase abbreviation).
+    ///     A format token that renders the log level.
+    ///     Supports {level} (full name) and {level:u3} (3-character uppercase abbreviation).
     /// </summary>
     public class LevelToken : IToken
     {
         private readonly string _format;
 
         /// <summary>
-        /// Creates a new level token with the specified format.
+        ///     Creates a new level token with the specified format.
         /// </summary>
         /// <param name="format">Format string. "u3" for 3-character uppercase, null for full name.</param>
         public LevelToken(string format) {
             _format = format;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             if (_format == "u3") {
                 sb.Append(GetShortLevel(context.Level));

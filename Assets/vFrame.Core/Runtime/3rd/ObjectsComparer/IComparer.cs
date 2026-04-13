@@ -4,12 +4,12 @@ using System.Collections.Generic;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Defines methods to compare complex objects.
+    ///     Defines methods to compare complex objects.
     /// </summary>
     public interface IComparer : IBaseComparer
     {
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <param name="type">Type.</param>
         /// <param name="obj1">Object 1.</param>
@@ -19,7 +19,7 @@ namespace vFrame.Core
         bool Compare(Type type, object obj1, object obj2, out IEnumerable<Difference> differences);
 
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <typeparam name="T">Type.</typeparam>
         /// <param name="obj1">Object 1.</param>
@@ -29,7 +29,7 @@ namespace vFrame.Core
         bool Compare<T>(T obj1, T obj2, out IEnumerable<Difference> differences);
 
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <param name="type">Type.</param>
         /// <param name="obj1">Object 1.</param>
@@ -38,7 +38,7 @@ namespace vFrame.Core
         bool Compare(Type type, object obj1, object obj2);
 
         /// <summary>
-        /// Compares objects.
+        ///     Compares objects.
         /// </summary>
         /// <typeparam name="T">Type.</typeparam>
         /// <param name="obj1">Object 1.</param>
@@ -47,7 +47,7 @@ namespace vFrame.Core
         bool Compare<T>(T obj1, T obj2);
 
         /// <summary>
-        /// Calculates list of differences between objects.
+        ///     Calculates list of differences between objects.
         /// </summary>
         /// <param name="type">Type.</param>
         /// <param name="obj1">Object 1.</param>
@@ -56,7 +56,7 @@ namespace vFrame.Core
         IEnumerable<Difference> CalculateDifferences(Type type, object obj1, object obj2);
 
         /// <summary>
-        /// Calculates list of differences between objects.
+        ///     Calculates list of differences between objects.
         /// </summary>
         /// <typeparam name="T">Type.</typeparam>
         /// <param name="obj1">Object 1.</param>

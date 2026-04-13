@@ -16,13 +16,42 @@ namespace vFrame.Core
 {
     public class Dispatcher : BaseObject, IDispatcher
     {
+        private static readonly LogTag LogTag = new LogTag("Dispatcher");
+        private Dictionary<Type, Subscription> _commandSubscriptions;
+        private Dictionary<Type, List<Subscription>> _decisionSubscriptions;
+        private HashSet<Type> _dirtyDecisionTypes;
+        private HashSet<Type> _dirtyEventTypes;
+        private Dictionary<Type, List<Subscription>> _eventSubscriptions;
+
+        private uint _index;
+        private List<IEventInterceptor> _interceptors;
+        private uint _registrationOrder;
+        private Dictionary<Type, Subscription> _requestSubscriptions;
+        private SubscriptionPool _subscriptionPool;
+
+        #region Internal: Priority sorting
+
+        private static void SortIfNeeded(List<Subscription> subscriptions, Type type, HashSet<Type> dirtySet) {
+            if (dirtySet == null || !dirtySet.Remove(type)) {
+                return;
+            }
+
+            // Sort by priority descending, then by registration order ascending for stable ordering
+            subscriptions.Sort((a, b) => {
+                var priorityDiff = b.Priority.CompareTo(a.Priority);
+                return priorityDiff != 0 ? priorityDiff : a.RegistrationOrder.CompareTo(b.RegistrationOrder);
+            });
+        }
+
+        #endregion
+
         /// <summary>
-        /// Immutable diagnostics snapshot of subscription counts across all dispatching categories.
+        ///     Immutable diagnostics snapshot of subscription counts across all dispatching categories.
         /// </summary>
         public readonly struct DiagnosticsSnapshot
         {
             /// <summary>
-            /// Creates a new diagnostics snapshot with the specified subscription counts.
+            ///     Creates a new diagnostics snapshot with the specified subscription counts.
             /// </summary>
             /// <param name="eventCount">The number of event subscriptions.</param>
             /// <param name="commandCount">The number of command subscriptions.</param>
@@ -41,23 +70,10 @@ namespace vFrame.Core
             public int DecisionSubscriptionCount { get; }
         }
 
-        private static readonly LogTag LogTag = new LogTag("Dispatcher");
-
-        private uint _index;
-        private uint _registrationOrder;
-        private Dictionary<Type, List<Subscription>> _eventSubscriptions;
-        private Dictionary<Type, Subscription> _commandSubscriptions;
-        private Dictionary<Type, Subscription> _requestSubscriptions;
-        private Dictionary<Type, List<Subscription>> _decisionSubscriptions;
-        private SubscriptionPool _subscriptionPool;
-        private List<IEventInterceptor> _interceptors;
-        private HashSet<Type> _dirtyEventTypes;
-        private HashSet<Type> _dirtyDecisionTypes;
-
         #region IEventDispatcher
 
         /// <summary>
-        /// Subscribes to events of the specified type with default priority (0).
+        ///     Subscribes to events of the specified type with default priority (0).
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
@@ -68,7 +84,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Subscribes to events of the specified type, bound to the owner's lifetime.
+        ///     Subscribes to events of the specified type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -83,7 +99,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Subscribes to events of the specified type, bound to the given lifetime.
+        ///     Subscribes to events of the specified type, bound to the given lifetime.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -96,8 +112,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Subscribes to events of the specified type with explicit priority.
-        /// Higher priority subscribers are invoked first during Publish.
+        ///     Subscribes to events of the specified type with explicit priority.
+        ///     Higher priority subscribers are invoked first during Publish.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -109,7 +125,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Subscribes to events of the specified type with explicit priority and lifetime binding.
+        ///     Subscribes to events of the specified type with explicit priority and lifetime binding.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -123,19 +139,20 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Cancels the specified event subscription.
+        ///     Cancels the specified event subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unsubscribe(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
             }
+
             subscription.Destroy();
         }
 
         /// <summary>
-        /// Publishes an event of the specified type, notifying all subscribers in priority order.
-        /// Interceptors are invoked before and after dispatch.
+        ///     Publishes an event of the specified type, notifying all subscribers in priority order.
+        ///     Interceptors are invoked before and after dispatch.
         /// </summary>
         /// <param name="payload">The event payload.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
@@ -189,7 +206,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the current total number of event subscriptions.
+        ///     Gets the current total number of event subscriptions.
         /// </summary>
         /// <returns>The number of event subscriptions.</returns>
         public int GetEventSubscriptionCount() {
@@ -198,6 +215,7 @@ namespace vFrame.Core
             foreach (var item in _eventSubscriptions) {
                 count += item.Value.Count;
             }
+
             return count;
         }
 
@@ -206,7 +224,7 @@ namespace vFrame.Core
         #region ICommandDispatcher
 
         /// <summary>
-        /// Registers a handler for the specified command type (default <see cref="RegisterMode.Replace"/>).
+        ///     Registers a handler for the specified command type (default <see cref="RegisterMode.Replace" />).
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <typeparam name="TCommand">The command type.</typeparam>
@@ -217,19 +235,19 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Registers a handler for the specified command type with explicit register mode.
+        ///     Registers a handler for the specified command type with explicit register mode.
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <param name="mode">The behavior when a handler already exists.</param>
         /// <typeparam name="TCommand">The command type.</typeparam>
-        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore" /> and a handler already exists.</returns>
         public ISubscription Handle<TCommand>(Action<TCommand> handler, RegisterMode mode)
             where TCommand : ICommand {
             return HandleInternal(handler, mode, null);
         }
 
         /// <summary>
-        /// Registers a handler for the specified command type, bound to the owner's lifetime.
+        ///     Registers a handler for the specified command type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -244,7 +262,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Registers a handler for the specified command type, bound to the given lifetime.
+        ///     Registers a handler for the specified command type, bound to the given lifetime.
         /// </summary>
         /// <param name="handler">The command handler callback.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -257,18 +275,19 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Cancels the specified command handler subscription.
+        ///     Cancels the specified command handler subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unhandle(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
             }
+
             subscription.Destroy();
         }
 
         /// <summary>
-        /// Sends a command of the specified type to be executed by the registered handler.
+        ///     Sends a command of the specified type to be executed by the registered handler.
         /// </summary>
         /// <param name="command">The command payload.</param>
         /// <typeparam name="TCommand">The command type.</typeparam>
@@ -299,7 +318,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the current number of command subscriptions.
+        ///     Gets the current number of command subscriptions.
         /// </summary>
         /// <returns>The number of command subscriptions.</returns>
         public int GetCommandSubscriptionCount() {
@@ -310,6 +329,7 @@ namespace vFrame.Core
                     count++;
                 }
             }
+
             return count;
         }
 
@@ -318,7 +338,7 @@ namespace vFrame.Core
         #region IRequestDispatcher
 
         /// <summary>
-        /// Sends a request and returns the response.
+        ///     Sends a request and returns the response.
         /// </summary>
         /// <param name="payload">The request payload.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
@@ -352,7 +372,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Tries to send a request and retrieve the response.
+        ///     Tries to send a request and retrieve the response.
         /// </summary>
         /// <param name="payload">The request payload.</param>
         /// <param name="response">The output response value.</param>
@@ -387,7 +407,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Registers a handler for the specified request type (default <see cref="RegisterMode.Replace"/>).
+        ///     Registers a handler for the specified request type (default <see cref="RegisterMode.Replace" />).
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
@@ -395,24 +415,24 @@ namespace vFrame.Core
         /// <returns>A subscription handle.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler)
             where TRequest : IRequest<TResponse> {
-            return HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, null);
+            return HandleRequestInternal(handler, RegisterMode.Replace, null);
         }
 
         /// <summary>
-        /// Registers a handler for the specified request type with explicit register mode.
+        ///     Registers a handler for the specified request type with explicit register mode.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="mode">The behavior when a handler already exists.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
         /// <typeparam name="TResponse">The response type.</typeparam>
-        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore" /> and a handler already exists.</returns>
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode)
             where TRequest : IRequest<TResponse> {
-            return HandleRequestInternal<TRequest, TResponse>(handler, mode, null);
+            return HandleRequestInternal(handler, mode, null);
         }
 
         /// <summary>
-        /// Registers a handler for the specified request type, bound to the owner's lifetime.
+        ///     Registers a handler for the specified request type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -422,13 +442,13 @@ namespace vFrame.Core
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, BaseObject owner)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(owner, nameof(owner));
-            var subscription = HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, null);
+            var subscription = HandleRequestInternal(handler, RegisterMode.Replace, null);
             owner.OwnLifetime(subscription);
             return subscription;
         }
 
         /// <summary>
-        /// Registers a handler for the specified request type, bound to the given lifetime.
+        ///     Registers a handler for the specified request type, bound to the given lifetime.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -438,22 +458,23 @@ namespace vFrame.Core
         public ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, ILifetime lifetime)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(lifetime, nameof(lifetime));
-            return HandleRequestInternal<TRequest, TResponse>(handler, RegisterMode.Replace, lifetime);
+            return HandleRequestInternal(handler, RegisterMode.Replace, lifetime);
         }
 
         /// <summary>
-        /// Cancels the specified request handler subscription.
+        ///     Cancels the specified request handler subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         public void UnhandleRequest(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
             }
+
             subscription.Destroy();
         }
 
         /// <summary>
-        /// Gets the current number of request subscriptions.
+        ///     Gets the current number of request subscriptions.
         /// </summary>
         /// <returns>The number of request subscriptions.</returns>
         public int GetRequestSubscriptionCount() {
@@ -464,6 +485,7 @@ namespace vFrame.Core
                     count++;
                 }
             }
+
             return count;
         }
 
@@ -472,7 +494,7 @@ namespace vFrame.Core
         #region IDecisionDispatcher
 
         /// <summary>
-        /// Listens for decisions of the specified type with default priority (0).
+        ///     Listens for decisions of the specified type with default priority (0).
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <typeparam name="TDecision">The decision type.</typeparam>
@@ -483,7 +505,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Listens for decisions of the specified type, bound to the owner's lifetime.
+        ///     Listens for decisions of the specified type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -498,7 +520,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Listens for decisions of the specified type, bound to the given lifetime.
+        ///     Listens for decisions of the specified type, bound to the given lifetime.
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -511,8 +533,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Listens for decisions of the specified type with explicit priority.
-        /// Higher priority listeners are invoked first.
+        ///     Listens for decisions of the specified type with explicit priority.
+        ///     Higher priority listeners are invoked first.
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -524,7 +546,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Listens for decisions of the specified type with explicit priority and lifetime binding.
+        ///     Listens for decisions of the specified type with explicit priority and lifetime binding.
         /// </summary>
         /// <param name="handler">The decision handler callback; returns <c>true</c> to approve, <c>false</c> to veto.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -538,19 +560,20 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Cancels the specified decision listener subscription.
+        ///     Cancels the specified decision listener subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         public void Unlisten(ISubscription subscription) {
             if (subscription == null || subscription.Destroyed) {
                 return;
             }
+
             subscription.Destroy();
         }
 
         /// <summary>
-        /// Initiates a decision vote; all listeners must approve for the result to be <c>true</c>.
-        /// Listeners are invoked in priority order; the first veto short-circuits.
+        ///     Initiates a decision vote; all listeners must approve for the result to be <c>true</c>.
+        ///     Listeners are invoked in priority order; the first veto short-circuits.
         /// </summary>
         /// <param name="decision">The decision payload.</param>
         /// <typeparam name="TDecision">The decision type.</typeparam>
@@ -589,7 +612,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the current number of decision subscriptions.
+        ///     Gets the current number of decision subscriptions.
         /// </summary>
         /// <returns>The number of decision subscriptions.</returns>
         public int GetDecisionSubscriptionCount() {
@@ -598,6 +621,7 @@ namespace vFrame.Core
             foreach (var kv in _decisionSubscriptions) {
                 count += kv.Value.Count;
             }
+
             return count;
         }
 
@@ -606,7 +630,7 @@ namespace vFrame.Core
         #region IDispatcher
 
         /// <summary>
-        /// Removes all registered subscriptions.
+        ///     Removes all registered subscriptions.
         /// </summary>
         public void RemoveAllSubscriptions() {
             ThrowIfNotCreatedOrDestroyed();
@@ -617,7 +641,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the total number of subscriptions across all types.
+        ///     Gets the total number of subscriptions across all types.
         /// </summary>
         /// <returns>The total subscription count.</returns>
         public int GetTotalSubscriptionCount() {
@@ -629,7 +653,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
+        ///     Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
         /// </summary>
         /// <returns>A diagnostics snapshot with current subscription counts.</returns>
         public DiagnosticsSnapshot GetDiagnostics() {
@@ -646,7 +670,7 @@ namespace vFrame.Core
         #region Interceptor Management
 
         /// <summary>
-        /// Adds an event interceptor to the pipeline. Interceptors are invoked in registration order.
+        ///     Adds an event interceptor to the pipeline. Interceptors are invoked in registration order.
         /// </summary>
         /// <param name="interceptor">The interceptor to add.</param>
         public void AddInterceptor(IEventInterceptor interceptor) {
@@ -655,11 +679,12 @@ namespace vFrame.Core
             if (_interceptors == null) {
                 _interceptors = new List<IEventInterceptor>(4);
             }
+
             _interceptors.Add(interceptor);
         }
 
         /// <summary>
-        /// Removes an event interceptor from the pipeline.
+        ///     Removes an event interceptor from the pipeline.
         /// </summary>
         /// <param name="interceptor">The interceptor to remove.</param>
         /// <returns><c>true</c> if the interceptor was found and removed; otherwise <c>false</c>.</returns>
@@ -667,11 +692,12 @@ namespace vFrame.Core
             if (_interceptors == null || interceptor == null) {
                 return false;
             }
+
             return _interceptors.Remove(interceptor);
         }
 
         /// <summary>
-        /// Gets the current number of registered interceptors.
+        ///     Gets the current number of registered interceptors.
         /// </summary>
         /// <returns>The interceptor count.</returns>
         public int GetInterceptorCount() {
@@ -683,7 +709,7 @@ namespace vFrame.Core
         #region Lifecycle
 
         /// <summary>
-        /// Initializes subscription storage, the subscription object pool, and dirty-tracking sets.
+        ///     Initializes subscription storage, the subscription object pool, and dirty-tracking sets.
         /// </summary>
         protected override void OnCreate() {
             _index = 1;
@@ -700,7 +726,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Destroys all subscriptions, interceptors, and releases the subscription object pool.
+        ///     Destroys all subscriptions, interceptors, and releases the subscription object pool.
         /// </summary>
         protected override void OnDestroy() {
             ClearListSubscriptions(_eventSubscriptions);
@@ -776,7 +802,8 @@ namespace vFrame.Core
             return subscription;
         }
 
-        private Subscription HandleRequestInternal<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode, ILifetime lifetime)
+        private Subscription HandleRequestInternal<TRequest, TResponse>(Func<TRequest, TResponse> handler,
+            RegisterMode mode, ILifetime lifetime)
             where TRequest : IRequest<TResponse> {
             ThrowHelper.ThrowIfNull(handler, nameof(handler));
 
@@ -830,22 +857,6 @@ namespace vFrame.Core
 
         #endregion
 
-        #region Internal: Priority sorting
-
-        private static void SortIfNeeded(List<Subscription> subscriptions, Type type, HashSet<Type> dirtySet) {
-            if (dirtySet == null || !dirtySet.Remove(type)) {
-                return;
-            }
-
-            // Sort by priority descending, then by registration order ascending for stable ordering
-            subscriptions.Sort((a, b) => {
-                var priorityDiff = b.Priority.CompareTo(a.Priority);
-                return priorityDiff != 0 ? priorityDiff : a.RegistrationOrder.CompareTo(b.RegistrationOrder);
-            });
-        }
-
-        #endregion
-
         #region Internal: Cleanup
 
         private void CleanupDestroyedSubscriptions(List<Subscription> subscriptions) {
@@ -877,6 +888,7 @@ namespace vFrame.Core
                     if (!subscription.Destroyed) {
                         subscription.Destroy();
                     }
+
                     _subscriptionPool.Return(subscription);
                 }
 
@@ -900,6 +912,7 @@ namespace vFrame.Core
                 if (!subscription.Destroyed) {
                     subscription.Destroy();
                 }
+
                 _subscriptionPool.Return(subscription);
             }
 

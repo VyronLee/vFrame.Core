@@ -13,19 +13,19 @@ using System;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Represents a terminal destroy contract. Once <see cref="Destroy"/> completes,
-    /// the instance must remain in the destroyed state and is not expected to re-enter
-    /// a usable lifecycle.
+    ///     Represents a terminal destroy contract. Once <see cref="Destroy" /> completes,
+    ///     the instance must remain in the destroyed state and is not expected to re-enter
+    ///     a usable lifecycle.
     /// </summary>
     public interface IDestroyable : IDisposable
     {
         /// <summary>
-        /// Gets whether the instance has been destroyed.
+        ///     Gets whether the instance has been destroyed.
         /// </summary>
         bool Destroyed { get; }
 
         /// <summary>
-        /// Executes one-shot teardown for the instance.
+        ///     Executes one-shot teardown for the instance.
         /// </summary>
         void Destroy();
     }

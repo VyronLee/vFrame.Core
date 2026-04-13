@@ -12,7 +12,7 @@
 namespace vFrame.Core
 {
     /// <summary>
-    /// Defines strategies for rolling (rotating) log files.
+    ///     Defines strategies for rolling (rotating) log files.
     /// </summary>
     public enum RollingStrategy
     {

@@ -8,14 +8,12 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using vFrame.Core;
-
 namespace vFrame.Core
 {
     public class BoxAllocator<T> : IPoolObjectAllocator<Box<T>>
     {
         /// <summary>
-        ///     Allocates a new <see cref="Box{T}"/> instance.
+        ///     Allocates a new <see cref="Box{T}" /> instance.
         /// </summary>
         /// <returns>A new boxed value instance.</returns>
         public Box<T> Alloc() {

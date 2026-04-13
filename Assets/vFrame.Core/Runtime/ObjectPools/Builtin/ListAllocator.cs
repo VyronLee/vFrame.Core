@@ -17,7 +17,7 @@ namespace vFrame.Core
         public int PresetLength = 64;
 
         /// <summary>
-        /// Allocates a new <see cref="List{T}"/> with the configured preset capacity.
+        ///     Allocates a new <see cref="List{T}" /> with the configured preset capacity.
         /// </summary>
         /// <returns>A new list instance.</returns>
         public List<T> Alloc() {
@@ -25,7 +25,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Resets the given list by clearing all elements.
+        ///     Resets the given list by clearing all elements.
         /// </summary>
         /// <param name="obj">The list to reset.</param>
         public void Reset(List<T> obj) {

@@ -15,7 +15,7 @@ namespace vFrame.Core
     public static class EnumUtils
     {
         /// <summary>
-        /// Gets the index position of an enum value within its enum definition.
+        ///     Gets the index position of an enum value within its enum definition.
         /// </summary>
         /// <param name="value">The integer value of the enum.</param>
         /// <typeparam name="T">The enum type.</typeparam>
@@ -25,11 +25,12 @@ namespace vFrame.Core
                 ThrowHelper.ThrowArgumentException(
                     $"Type {typeof(T).Name} is not an enum type.");
             }
+
             return EnumIndex(typeof(T), value);
         }
 
         /// <summary>
-        /// Gets the index position of an enum value within the specified enum type.
+        ///     Gets the index position of an enum value within the specified enum type.
         /// </summary>
         /// <param name="type">The enum type.</param>
         /// <param name="value">The integer value of the enum.</param>
@@ -40,6 +41,7 @@ namespace vFrame.Core
                 if ((int)v == value) {
                     return i;
                 }
+
                 ++i;
             }
 
@@ -47,7 +49,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Parses an enum value from its string name.
+        ///     Parses an enum value from its string name.
         /// </summary>
         /// <param name="str">The enum name string.</param>
         /// <typeparam name="T">The enum type.</typeparam>
@@ -58,7 +60,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Parses an enum value from its string name for the specified enum type.
+        ///     Parses an enum value from its string name for the specified enum type.
         /// </summary>
         /// <param name="type">The enum type.</param>
         /// <param name="str">The enum name string.</param>
@@ -68,6 +70,7 @@ namespace vFrame.Core
             if (!Enum.IsDefined(type, str)) {
                 ThrowHelper.ThrowUndesiredException($"No enum value defined in type: {type.Name}, {str}");
             }
+
             return Enum.Parse(type, str);
         }
     }

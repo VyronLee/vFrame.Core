@@ -15,7 +15,7 @@ namespace vFrame.Core
     public interface IRequestDispatcher
     {
         /// <summary>
-        /// Sends a request and returns the response.
+        ///     Sends a request and returns the response.
         /// </summary>
         /// <param name="payload">The request payload.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
@@ -25,7 +25,7 @@ namespace vFrame.Core
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Tries to send a request and retrieve the response.
+        ///     Tries to send a request and retrieve the response.
         /// </summary>
         /// <param name="payload">The request payload.</param>
         /// <param name="response">The output response value.</param>
@@ -36,8 +36,8 @@ namespace vFrame.Core
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Registers a handler for the specified request type.
-        /// If a handler already exists, it is replaced (default <see cref="RegisterMode.Replace"/>).
+        ///     Registers a handler for the specified request type.
+        ///     If a handler already exists, it is replaced (default <see cref="RegisterMode.Replace" />).
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
@@ -47,18 +47,18 @@ namespace vFrame.Core
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Registers a handler for the specified request type with explicit register mode.
+        ///     Registers a handler for the specified request type with explicit register mode.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="mode">The behavior when a handler already exists.</param>
         /// <typeparam name="TRequest">The request type.</typeparam>
         /// <typeparam name="TResponse">The response type.</typeparam>
-        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore"/> and a handler already exists.</returns>
+        /// <returns>A subscription handle, or <c>null</c> if <see cref="RegisterMode.Ignore" /> and a handler already exists.</returns>
         ISubscription HandleRequest<TRequest, TResponse>(Func<TRequest, TResponse> handler, RegisterMode mode)
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Registers a handler for the specified request type, bound to the owner's lifetime.
+        ///     Registers a handler for the specified request type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -69,7 +69,7 @@ namespace vFrame.Core
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Registers a handler for the specified request type, bound to the given lifetime.
+        ///     Registers a handler for the specified request type, bound to the given lifetime.
         /// </summary>
         /// <param name="handler">The request handler callback.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -80,13 +80,13 @@ namespace vFrame.Core
             where TRequest : IRequest<TResponse>;
 
         /// <summary>
-        /// Cancels the specified request handler subscription.
+        ///     Cancels the specified request handler subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         void UnhandleRequest(ISubscription subscription);
 
         /// <summary>
-        /// Gets the current number of request subscriptions.
+        ///     Gets the current number of request subscriptions.
         /// </summary>
         /// <returns>The number of request subscriptions.</returns>
         int GetRequestSubscriptionCount();

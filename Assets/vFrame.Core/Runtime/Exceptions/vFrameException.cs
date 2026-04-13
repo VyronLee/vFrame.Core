@@ -15,53 +15,53 @@ using System;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Base exception for all vFrame errors.
+    ///     Base exception for all vFrame errors.
     /// </summary>
     public class vFrameException : Exception
     {
         /// <summary>
-        /// Initializes a new vFrame exception.
+        ///     Initializes a new vFrame exception.
         /// </summary>
         public vFrameException() { }
 
         /// <summary>
-        /// Initializes a new vFrame exception with a specified error message.
+        ///     Initializes a new vFrame exception with a specified error message.
         /// </summary>
         /// <param name="message">The error message that describes the exception.</param>
         public vFrameException(string message) : base(message) { }
     }
 
     /// <summary>
-    /// Exception thrown when an invalid argument is provided.
+    ///     Exception thrown when an invalid argument is provided.
     /// </summary>
     public class ArgumentException : vFrameException
     {
         /// <summary>
-        /// Initializes a new argument exception with a specified error message.
+        ///     Initializes a new argument exception with a specified error message.
         /// </summary>
         /// <param name="message">The error message that describes the exception.</param>
         public ArgumentException(string message) : base(message) { }
     }
 
     /// <summary>
-    /// Exception thrown when an argument is null.
+    ///     Exception thrown when an argument is null.
     /// </summary>
     public class ArgumentNullException : vFrameException
     {
         /// <summary>
-        /// Initializes a new argument null exception with the name of the null parameter.
+        ///     Initializes a new argument null exception with the name of the null parameter.
         /// </summary>
         /// <param name="name">The name of the parameter that is null.</param>
         public ArgumentNullException(string name) : base(name) { }
     }
 
     /// <summary>
-    /// Exception thrown when a type does not match the expected type.
+    ///     Exception thrown when a type does not match the expected type.
     /// </summary>
     public class TypeMismatchException : vFrameException
     {
         /// <summary>
-        /// Initializes a new type mismatch exception.
+        ///     Initializes a new type mismatch exception.
         /// </summary>
         /// <param name="inputType">The actual type that was provided.</param>
         /// <param name="desiredType">The expected type.</param>
@@ -70,36 +70,36 @@ namespace vFrame.Core
     }
 
     /// <summary>
-    /// Exception thrown when an unsupported enum value is encountered.
+    ///     Exception thrown when an unsupported enum value is encountered.
     /// </summary>
     public class UnsupportedEnumException : vFrameException
     {
         /// <summary>
-        /// Initializes a new unsupported enum exception with a specified error message.
+        ///     Initializes a new unsupported enum exception with a specified error message.
         /// </summary>
         /// <param name="message">The error message that describes the exception.</param>
         public UnsupportedEnumException(string message) : base(message) { }
     }
 
     /// <summary>
-    /// Exception thrown when invalid data is encountered.
+    ///     Exception thrown when invalid data is encountered.
     /// </summary>
     public class InvalidDataException : vFrameException
     {
         /// <summary>
-        /// Initializes a new invalid data exception with a specified error message.
+        ///     Initializes a new invalid data exception with a specified error message.
         /// </summary>
         /// <param name="message">The error message that describes the exception.</param>
         public InvalidDataException(string message) : base(message) { }
     }
 
     /// <summary>
-    /// Exception thrown when an index is outside the valid range.
+    ///     Exception thrown when an index is outside the valid range.
     /// </summary>
     public class IndexOutOfRangeException : vFrameException
     {
         /// <summary>
-        /// Initializes a new index out of range exception.
+        ///     Initializes a new index out of range exception.
         /// </summary>
         /// <param name="start">The start of the valid range.</param>
         /// <param name="end">The end of the valid range.</param>
@@ -107,5 +107,4 @@ namespace vFrame.Core
         public IndexOutOfRangeException(int start, int end, int input)
             : base($"Range: [{start}, {end}], got: {input}") { }
     }
-
 }

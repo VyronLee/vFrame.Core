@@ -18,7 +18,7 @@ namespace vFrame.Core
         private readonly string _name;
 
         /// <summary>
-        /// Creates a new log tag with the specified name.
+        ///     Creates a new log tag with the specified name.
         /// </summary>
         /// <param name="name">The tag name. Defaults to "undefined".</param>
         public LogTag(string name = "undefined") {
@@ -26,7 +26,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns the tag name.
+        ///     Returns the tag name.
         /// </summary>
         /// <returns>The tag name string.</returns>
         public override string ToString() {
@@ -34,7 +34,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Determines whether this tag is equal to another log tag by name comparison.
+        ///     Determines whether this tag is equal to another log tag by name comparison.
         /// </summary>
         /// <param name="other">The other log tag to compare.</param>
         /// <returns><c>true</c> if both tags have the same name; otherwise, <c>false</c>.</returns>
@@ -43,16 +43,16 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Determines whether this tag is equal to the specified object.
+        ///     Determines whether this tag is equal to the specified object.
         /// </summary>
         /// <param name="obj">The object to compare.</param>
-        /// <returns><c>true</c> if the object is a <see cref="LogTag"/> with the same name; otherwise, <c>false</c>.</returns>
+        /// <returns><c>true</c> if the object is a <see cref="LogTag" /> with the same name; otherwise, <c>false</c>.</returns>
         public override bool Equals(object obj) {
             return obj is LogTag other && Equals(other);
         }
 
         /// <summary>
-        /// Returns a hash code based on the tag name.
+        ///     Returns a hash code based on the tag name.
         /// </summary>
         /// <returns>The hash code for this tag.</returns>
         public override int GetHashCode() {

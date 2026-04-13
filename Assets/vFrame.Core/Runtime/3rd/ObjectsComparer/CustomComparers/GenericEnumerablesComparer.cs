@@ -10,14 +10,10 @@ namespace vFrame.Core
     {
         public GenericEnumerablesComparer(ComparisonSettings settings, BaseComparer parentComparer,
             IComparersFactory factory)
-            : base(settings, parentComparer, factory)
-        {
-        }
+            : base(settings, parentComparer, factory) { }
 
-        public override IEnumerable<Difference> CalculateDifferences(Type type, object obj1, object obj2)
-        {
-            if (obj1 == null && obj2 == null)
-            {
+        public override IEnumerable<Difference> CalculateDifferences(Type type, object obj1, object obj2) {
+            if (obj1 == null && obj2 == null) {
                 yield break;
             }
 
@@ -25,17 +21,14 @@ namespace vFrame.Core
 
             Type elementType;
 
-            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-            {
+            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>)) {
                 elementType = typeInfo.GetElementType();
             }
-            else
-            {
+            else {
                 elementType = typeInfo.GetInterfaces()
-                    .Where(
-                        i =>
-                            i.GetTypeInfo().IsGenericType &&
-                            i.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    .Where(i =>
+                        i.GetTypeInfo().IsGenericType &&
+                        i.GetTypeInfo().GetGenericTypeDefinition() == typeof(IEnumerable<>))
                     .Select(i => i.GetTypeInfo().GetGenericArguments()[0])
                     .First();
             }
@@ -43,32 +36,26 @@ namespace vFrame.Core
             var enumerablesComparerType = typeof(EnumerablesComparer<>).MakeGenericType(elementType);
             var comparer = (IComparer)Activator.CreateInstance(enumerablesComparerType, Settings, this, Factory);
 
-            foreach (var difference in comparer.CalculateDifferences(type, obj1, obj2))
-            {
+            foreach (var difference in comparer.CalculateDifferences(type, obj1, obj2)) {
                 yield return difference;
             }
         }
 
-        public override bool IsMatch(Type type, object obj1, object obj2)
-        {
+        public override bool IsMatch(Type type, object obj1, object obj2) {
             return type.InheritsFrom(typeof(IEnumerable<>));
         }
 
-        public override bool SkipMember(Type type, MemberInfo member)
-        {
-            if (base.SkipMember(type, member))
-            {
+        public override bool SkipMember(Type type, MemberInfo member) {
+            if (base.SkipMember(type, member)) {
                 return true;
             }
 
             if (type.InheritsFrom(typeof(ICollection<>)) &&
-                member.Name == PropertyHelper.GetMemberInfo(() => new Collection<string>().Count).Name)
-            {
+                member.Name == PropertyHelper.GetMemberInfo(() => new Collection<string>().Count).Name) {
                 return true;
             }
 
-            if (!type.InheritsFrom(typeof(IDictionary<,>)))
-            {
+            if (!type.InheritsFrom(typeof(IDictionary<,>))) {
                 return false;
             }
 

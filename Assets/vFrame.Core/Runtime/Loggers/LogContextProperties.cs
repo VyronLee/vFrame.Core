@@ -15,17 +15,20 @@ using System.Threading;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Manages async-local properties that can be attached to log contexts.
-    /// Properties are automatically propagated across async/await boundaries.
+    ///     Manages async-local properties that can be attached to log contexts.
+    ///     Properties are automatically propagated across async/await boundaries.
     /// </summary>
     public static class LogContextProperties
     {
         private static readonly AsyncLocal<Dictionary<string, object>> _properties =
             new AsyncLocal<Dictionary<string, object>>();
 
+        private static readonly IReadOnlyDictionary<string, object> EmptyProperties =
+            new Dictionary<string, object>();
+
         /// <summary>
-        /// Pushes a property value onto the current async-local context.
-        /// If the key already exists, its value is overwritten.
+        ///     Pushes a property value onto the current async-local context.
+        ///     If the key already exists, its value is overwritten.
         /// </summary>
         /// <param name="key">The property key.</param>
         /// <param name="value">The property value.</param>
@@ -38,7 +41,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Removes a property from the current async-local context.
+        ///     Removes a property from the current async-local context.
         /// </summary>
         /// <param name="key">The property key to remove.</param>
         public static void PopProperty(string key) {
@@ -46,8 +49,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns a read-only snapshot of the current async-local properties.
-        /// Returns an empty dictionary if no properties are set.
+        ///     Returns a read-only snapshot of the current async-local properties.
+        ///     Returns an empty dictionary if no properties are set.
         /// </summary>
         /// <returns>A read-only dictionary of current properties.</returns>
         public static IReadOnlyDictionary<string, object> GetCurrentProperties() {
@@ -58,8 +61,5 @@ namespace vFrame.Core
 
             return new Dictionary<string, object>(props);
         }
-
-        private static readonly IReadOnlyDictionary<string, object> EmptyProperties =
-            new Dictionary<string, object>();
     }
 }

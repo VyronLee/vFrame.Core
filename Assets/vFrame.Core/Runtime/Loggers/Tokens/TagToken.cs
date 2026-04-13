@@ -9,16 +9,15 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the log tag ({tag}).
+    ///     A format token that renders the log tag ({tag}).
     /// </summary>
     public class TagToken : IToken
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append(context.Tag.ToString());
         }

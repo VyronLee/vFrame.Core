@@ -15,12 +15,12 @@ namespace vFrame.Core
     public interface IAsync : IEnumerator
     {
         /// <summary>
-        /// Gets whether the asynchronous operation has completed.
+        ///     Gets whether the asynchronous operation has completed.
         /// </summary>
         bool IsDone { get; }
 
         /// <summary>
-        /// Gets the current progress of the asynchronous operation, ranging from 0 to 1.
+        ///     Gets the current progress of the asynchronous operation, ranging from 0 to 1.
         /// </summary>
         float Progress { get; }
     }

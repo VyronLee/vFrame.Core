@@ -11,6 +11,5 @@
 namespace vFrame.Core
 {
     public interface IEvent
-    {
-    }
+    { }
 }

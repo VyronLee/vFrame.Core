@@ -8,8 +8,6 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using vFrame.Core;
-
 namespace vFrame.Core
 {
     public class Box<T> : BaseObject<T>

@@ -19,15 +19,15 @@ namespace vFrame.Core
         private Dictionary<Type, IObjectPool> _pools;
 
         /// <summary>
-        /// Gets the shared singleton instance of the pool manager.
+        ///     Gets the shared singleton instance of the pool manager.
         /// </summary>
         public static ObjectPoolManager Shared => Instance();
 
         /// <summary>
-        /// Gets an object from the pool registered for <typeparamref name="T"/>.
+        ///     Gets an object from the pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The type of object to get.</typeparam>
-        /// <returns>A pooled instance of <typeparamref name="T"/>.</returns>
+        /// <returns>A pooled instance of <typeparamref name="T" />.</returns>
         public T Get<T>() where T : class, new() {
             lock (_lockObject) {
                 return GetObjectPool<T>().Get();
@@ -35,7 +35,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets an object from the pool registered for the specified <paramref name="type"/>.
+        ///     Gets an object from the pool registered for the specified <paramref name="type" />.
         /// </summary>
         /// <param name="type">The type of object to get.</param>
         /// <returns>A pooled instance of the specified type.</returns>
@@ -46,7 +46,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns an object to the pool registered for <typeparamref name="T"/>.
+        ///     Returns an object to the pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The type of object to return.</typeparam>
         /// <param name="obj">The object to return.</param>
@@ -58,7 +58,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns an object to the pool registered for its runtime type.
+        ///     Returns an object to the pool registered for its runtime type.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         public void Return(object obj) {
@@ -69,7 +69,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Attempts to return an object to the pool; no-op if no pool is registered for its type.
+        ///     Attempts to return an object to the pool; no-op if no pool is registered for its type.
         /// </summary>
         /// <typeparam name="T">The type of object to return.</typeparam>
         /// <param name="obj">The object to return.</param>
@@ -79,12 +79,13 @@ namespace vFrame.Core
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
                 }
+
                 pool.Return(obj);
             }
         }
 
         /// <summary>
-        /// Attempts to return an object to the pool; no-op if no pool is registered for its runtime type.
+        ///     Attempts to return an object to the pool; no-op if no pool is registered for its runtime type.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         public void TryReturn(object obj) {
@@ -93,15 +94,16 @@ namespace vFrame.Core
                 if (!_pools.TryGetValue(obj.GetType(), out var pool)) {
                     return;
                 }
+
                 pool.Return(obj);
             }
         }
 
         /// <summary>
-        /// Gets or creates the typed object pool registered for <typeparamref name="T"/>.
+        ///     Gets or creates the typed object pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The pooled object type.</typeparam>
-        /// <returns>The <see cref="IObjectPool{T}"/> instance.</returns>
+        /// <returns>The <see cref="IObjectPool{T}" /> instance.</returns>
         public IObjectPool<T> GetObjectPool<T>() where T : class, new() {
             lock (_lockObject) {
                 if (_pools.TryGetValue(typeof(T), out var pool)) {
@@ -116,10 +118,10 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets or creates a non-generic object pool for the specified <paramref name="type"/>.
+        ///     Gets or creates a non-generic object pool for the specified <paramref name="type" />.
         /// </summary>
         /// <param name="type">The pooled object type.</param>
-        /// <returns>The <see cref="IObjectPool"/> instance.</returns>
+        /// <returns>The <see cref="IObjectPool" /> instance.</returns>
         public IObjectPool GetObjectPool(Type type) {
             lock (_lockObject) {
                 if (_pools.TryGetValue(type, out var pool)) {
@@ -132,6 +134,7 @@ namespace vFrame.Core
                     ThrowHelper.ThrowUndesiredException("Create object pool failed, type: " + type.FullName);
                     return null;
                 }
+
                 objPool.Create();
                 _pools.Add(type, objPool);
                 return objPool;
@@ -139,11 +142,11 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets or creates a typed object pool using the specified allocator type.
+        ///     Gets or creates a typed object pool using the specified allocator type.
         /// </summary>
         /// <typeparam name="TClass">The pooled object type.</typeparam>
         /// <typeparam name="TAllocator">The allocator type used to create and reset instances.</typeparam>
-        /// <returns>The <see cref="IObjectPool{TClass}"/> instance using <typeparamref name="TAllocator"/>.</returns>
+        /// <returns>The <see cref="IObjectPool{TClass}" /> instance using <typeparamref name="TAllocator" />.</returns>
         public IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
             where TClass : class, new()
             where TAllocator : IPoolObjectAllocator<TClass>, new() {
@@ -160,7 +163,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the existing pool for <typeparamref name="T"/> without creating one if it does not exist.
+        ///     Gets the existing pool for <typeparamref name="T" /> without creating one if it does not exist.
         /// </summary>
         /// <typeparam name="T">The pooled object type.</typeparam>
         /// <param name="pool">The existing pool, or <c>null</c> if no pool is registered.</param>
@@ -171,13 +174,14 @@ namespace vFrame.Core
                     pool = (IObjectPool<T>)existing;
                     return true;
                 }
+
                 pool = null;
                 return false;
             }
         }
 
         /// <summary>
-        /// Gets the existing pool for the specified <paramref name="type"/> without creating one.
+        ///     Gets the existing pool for the specified <paramref name="type" /> without creating one.
         /// </summary>
         /// <param name="type">The pooled object type.</param>
         /// <param name="pool">The existing pool, or <c>null</c> if no pool is registered.</param>
@@ -189,12 +193,12 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Removes excess inactive objects from all registered pools.
+        ///     Removes excess inactive objects from all registered pools.
         /// </summary>
         /// <param name="maxRetainedPerPool">Maximum number of inactive objects to retain per pool.</param>
         /// <returns>The total number of objects removed across all pools.</returns>
         public int TrimAll(int maxRetainedPerPool) {
-            int totalRemoved = 0;
+            var totalRemoved = 0;
             lock (_lockObject) {
                 foreach (var kvp in _pools) {
                     if (kvp.Value is ObjectPool op) {
@@ -206,11 +210,12 @@ namespace vFrame.Core
                     }
                 }
             }
+
             return totalRemoved;
         }
 
         /// <summary>
-        /// Gets the number of registered pools.
+        ///     Gets the number of registered pools.
         /// </summary>
         /// <returns>The count of registered pools.</returns>
         public int GetPoolCount() {
@@ -220,14 +225,14 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Initializes the internal pool registry.
+        ///     Initializes the internal pool registry.
         /// </summary>
         protected override void OnCreate() {
             _pools = new Dictionary<Type, IObjectPool>(256);
         }
 
         /// <summary>
-        /// Destroys all managed pools and clears the registry.
+        ///     Destroys all managed pools and clears the registry.
         /// </summary>
         protected override void OnDestroy() {
             lock (_lockObject) {
@@ -237,6 +242,7 @@ namespace vFrame.Core
                             bo.Destroy();
                         }
                     }
+
                     _pools.Clear();
                     _pools = null;
                 }

@@ -18,7 +18,7 @@ namespace vFrame.Core
         private ObjectPoolManager _poolManager;
 
         /// <summary>
-        /// Initializes the pool manager during creation.
+        ///     Initializes the pool manager during creation.
         /// </summary>
         protected override void OnCreate() {
             _poolManager = new ObjectPoolManager();
@@ -26,7 +26,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Tears down the pool manager during destruction.
+        ///     Tears down the pool manager during destruction.
         /// </summary>
         protected override void OnDestroy() {
             _poolManager?.Destroy();
@@ -34,11 +34,11 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Rents a compressor of the specified type, wrapped for automatic return.
+        ///     Rents a compressor of the specified type, wrapped for automatic return.
         /// </summary>
         /// <param name="compressorType">The type of compressor to rent.</param>
         /// <param name="options">Optional compressor configuration. Uses defaults if null.</param>
-        /// <returns>An <see cref="ICompressor"/> that returns itself to the pool on dispose.</returns>
+        /// <returns>An <see cref="ICompressor" /> that returns itself to the pool on dispose.</returns>
         public ICompressor Rent(CompressorType compressorType, CompressorOptions options = null) {
             Compressor compressor = null;
             switch (compressorType) {
@@ -58,6 +58,7 @@ namespace vFrame.Core
                     ThrowHelper.ThrowUnsupportedEnum(compressorType);
                     break;
             }
+
             compressor?.Create(options);
 
             var wrap = _poolManager.GetObjectPool<CompressorWrap>().Get();
@@ -66,7 +67,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns a compressor or wrapper to its pool.
+        ///     Returns a compressor or wrapper to its pool.
         /// </summary>
         /// <param name="compressor">The compressor instance to return.</param>
         public void Return(ICompressor compressor) {
@@ -75,8 +76,8 @@ namespace vFrame.Core
     }
 
     /// <summary>
-    /// Poolable wrapper that delegates compression calls to an inner <see cref="Compressor"/>
-    /// and returns both the inner instance and itself to the pool on destruction.
+    ///     Poolable wrapper that delegates compression calls to an inner <see cref="Compressor" />
+    ///     and returns both the inner instance and itself to the pool on destruction.
     /// </summary>
     public class CompressorWrap : BaseObject<CompressorPool, Compressor>, ICompressor
     {
@@ -84,7 +85,7 @@ namespace vFrame.Core
         private CompressorPool _pool;
 
         /// <summary>
-        /// Compresses the input stream to the output stream.
+        ///     Compresses the input stream to the output stream.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
@@ -93,7 +94,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Compresses the input stream to the output stream with progress reporting.
+        ///     Compresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
@@ -103,7 +104,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses the input stream to the output stream.
+        ///     Decompresses the input stream to the output stream.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream receiving decompressed data.</param>
@@ -112,7 +113,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses the input stream to the output stream with progress reporting.
+        ///     Decompresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream receiving decompressed data.</param>
@@ -122,7 +123,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Stores the pool reference and inner compressor during creation.
+        ///     Stores the pool reference and inner compressor during creation.
         /// </summary>
         /// <param name="pool">The owning compressor pool.</param>
         /// <param name="compressor">The inner compressor instance to delegate to.</param>
@@ -132,7 +133,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns the inner compressor and this wrapper to the pool during destruction.
+        ///     Returns the inner compressor and this wrapper to the pool during destruction.
         /// </summary>
         protected override void OnDestroy() {
             _pool.Return(_compressor);

@@ -15,22 +15,22 @@ namespace vFrame.Core
 {
     public sealed class PlainEncryptor : Encryptor
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             Array.Copy(input, output, input.Length);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             Array.Copy(input, output, input.Length);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
             input.CopyTo(output);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
             input.CopyTo(output);
         }

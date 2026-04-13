@@ -13,7 +13,7 @@ namespace vFrame.Core
     public class ZStdCompressorOptions : CompressorOptions
     {
         /// <summary>
-        /// Gets or sets the Zstandard compression level. Defaults to 11.
+        ///     Gets or sets the Zstandard compression level. Defaults to 11.
         /// </summary>
         public int Level { get; set; } = 11;
     }

@@ -13,14 +13,14 @@ using System;
 namespace vFrame.Core
 {
     /// <summary>
-    /// An interceptor that can observe, modify, or short-circuit event publishing.
-    /// Interceptors are invoked in registration order before and after each Publish call.
+    ///     An interceptor that can observe, modify, or short-circuit event publishing.
+    ///     Interceptors are invoked in registration order before and after each Publish call.
     /// </summary>
     public interface IEventInterceptor
     {
         /// <summary>
-        /// Called before an event is published. Return <c>false</c> to short-circuit
-        /// and prevent the event from being dispatched to subscribers.
+        ///     Called before an event is published. Return <c>false</c> to short-circuit
+        ///     and prevent the event from being dispatched to subscribers.
         /// </summary>
         /// <param name="eventType">The runtime type of the event being published.</param>
         /// <param name="eventData">The event payload (boxed). May be modified by reference for struct events.</param>
@@ -28,7 +28,7 @@ namespace vFrame.Core
         bool OnBeforePublish(Type eventType, ref IEvent eventData);
 
         /// <summary>
-        /// Called after an event has been published to all subscribers.
+        ///     Called after an event has been published to all subscribers.
         /// </summary>
         /// <param name="eventType">The runtime type of the event that was published.</param>
         /// <param name="eventData">The event payload.</param>

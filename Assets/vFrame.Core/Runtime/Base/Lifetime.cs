@@ -14,21 +14,21 @@ using System.Collections.Generic;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Lightweight grouped-cleanup implementation used for child ownership and
-    /// same-lifetime resource binding.
+    ///     Lightweight grouped-cleanup implementation used for child ownership and
+    ///     same-lifetime resource binding.
     /// </summary>
     public sealed class Lifetime : ILifetime
     {
-        private List<IDestroyable> _destroyables;
         private List<Action> _actions;
+        private List<IDestroyable> _destroyables;
 
         /// <summary>
-        /// Gets whether the lifetime has been destroyed.
+        ///     Gets whether the lifetime has been destroyed.
         /// </summary>
         public bool Destroyed { get; private set; }
 
         /// <summary>
-        /// Creates a child lifetime that is destroyed through this lifetime's cleanup boundary.
+        ///     Creates a child lifetime that is destroyed through this lifetime's cleanup boundary.
         /// </summary>
         public ILifetime CreateChild() {
             var lifetime = new Lifetime();
@@ -37,7 +37,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Binds a destroyable resource to this lifetime.
+        ///     Binds a destroyable resource to this lifetime.
         /// </summary>
         public void Add(IDestroyable destroyable) {
             ThrowHelper.ThrowIfNull(destroyable, nameof(destroyable));
@@ -52,7 +52,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Binds a cleanup action to this lifetime.
+        ///     Binds a cleanup action to this lifetime.
         /// </summary>
         public void Add(Action action) {
             ThrowHelper.ThrowIfNull(action, nameof(action));
@@ -67,8 +67,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Ends the lifetime and tears down child lifetimes, destroyables, and cleanup actions
-        /// through one grouped cleanup boundary.
+        ///     Ends the lifetime and tears down child lifetimes, destroyables, and cleanup actions
+        ///     through one grouped cleanup boundary.
         /// </summary>
         public void Destroy() {
             if (Destroyed) {
@@ -100,7 +100,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Releases all resources by invoking <see cref="Destroy"/>.
+        ///     Releases all resources by invoking <see cref="Destroy" />.
         /// </summary>
         public void Dispose() {
             Destroy();

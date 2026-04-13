@@ -16,7 +16,7 @@ namespace vFrame.Core
     public static class StreamExtension
     {
         /// <summary>
-        /// Copies a fixed number of bytes from the source stream to the destination stream using a pooled buffer.
+        ///     Copies a fixed number of bytes from the source stream to the destination stream using a pooled buffer.
         /// </summary>
         /// <param name="fromStream">The source stream.</param>
         /// <param name="toStream">The destination stream.</param>
@@ -31,6 +31,7 @@ namespace vFrame.Core
                 if (count != size) {
                     ThrowHelper.ThrowInvalidDataException($"size expected: {size}, got: {count}");
                 }
+
                 toStream.Write(buffer, 0, size);
             }
             finally {

@@ -12,7 +12,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using vFrame.Core;
 using vFrame.Core.ThirdParty.SevenZip;
 using vFrame.Core.ThirdParty.SevenZip.Compression.LZMA;
 
@@ -61,7 +60,7 @@ namespace vFrame.Core
         };
 
         /// <summary>
-        /// Called when the compressor is created. Falls back to default options if none are provided.
+        ///     Called when the compressor is created. Falls back to default options if none are provided.
         /// </summary>
         /// <param name="options">The compressor options, or null to use defaults.</param>
         protected override void OnCreate(CompressorOptions options) {
@@ -69,7 +68,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Compresses the input stream using the LZMA algorithm.
+        ///     Compresses the input stream using the LZMA algorithm.
         /// </summary>
         /// <param name="input">The stream containing data to compress.</param>
         /// <param name="output">The stream to write compressed data to.</param>
@@ -99,9 +98,11 @@ namespace vFrame.Core
             if (!EncoderCache.TryGetValue(options.DictionarySize, out var cache)) {
                 throw new NotSupportedException("Dictionary size not support: " + options.DictionarySize);
             }
+
             if (!cache.TryDequeue(out var lzmaEncoder)) {
                 lzmaEncoder = new Encoder();
             }
+
             lzmaEncoder.SetCoderProperties(PropIDs, properties);
             lzmaEncoder.WriteCoderProperties(output);
             var fileSize = input.Length;
@@ -121,7 +122,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses the LZMA-compressed input stream.
+        ///     Decompresses the LZMA-compressed input stream.
         /// </summary>
         /// <param name="input">The stream containing LZMA-compressed data.</param>
         /// <param name="output">The stream to write decompressed data to.</param>
@@ -132,6 +133,7 @@ namespace vFrame.Core
             if (!ByteArrayCache.TryDequeue(out var properties)) {
                 properties = new byte[5];
             }
+
             if (input.Read(properties, 0, 5) != 5) {
                 throw new Exception("input .lzma is too short");
             }
@@ -156,6 +158,7 @@ namespace vFrame.Core
                 if (v < 0) {
                     throw new Exception("Can't Read 1");
                 }
+
                 fileLength |= (long)(byte)v << (8 * i);
             }
 
@@ -177,27 +180,27 @@ namespace vFrame.Core
             private Action<long, long> _handler = DefaultHandler;
 
             /// <summary>
-            /// Initializes the progress handler with the given callback.
+            ///     Reports compression progress by invoking the registered handler.
             /// </summary>
-            /// <param name="handler">The progress callback, or null to use a no-op handler.</param>
-            public void Initialize(Action<long, long> handler) {
-                _handler = handler ?? DefaultHandler;
+            /// <param name="inSize">Number of bytes processed from the input.</param>
+            /// <param name="outSize">Number of bytes written to the output.</param>
+            public void SetProgress(long inSize, long outSize) {
+                _handler(inSize, outSize);
             }
 
             /// <summary>
-            /// Resets the progress handler to the default no-op.
+            ///     Resets the progress handler to the default no-op.
             /// </summary>
             public void Reset() {
                 _handler = DefaultHandler;
             }
 
             /// <summary>
-            /// Reports compression progress by invoking the registered handler.
+            ///     Initializes the progress handler with the given callback.
             /// </summary>
-            /// <param name="inSize">Number of bytes processed from the input.</param>
-            /// <param name="outSize">Number of bytes written to the output.</param>
-            public void SetProgress(long inSize, long outSize) {
-                _handler(inSize, outSize);
+            /// <param name="handler">The progress callback, or null to use a no-op handler.</param>
+            public void Initialize(Action<long, long> handler) {
+                _handler = handler ?? DefaultHandler;
             }
         }
     }

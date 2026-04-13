@@ -10,44 +10,44 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A thread-safe, bucketized array pool that minimizes GC pressure for large buffer allocations.
-    /// Compatible with the <c>System.Buffers.ArrayPool&lt;T&gt;</c> rental pattern:
-    /// rent a buffer, use it, then return it to the pool.
+    ///     A thread-safe, bucketized array pool that minimizes GC pressure for large buffer allocations.
+    ///     Compatible with the <c>System.Buffers.ArrayPool&lt;T&gt;</c> rental pattern:
+    ///     rent a buffer, use it, then return it to the pool.
     /// </summary>
     /// <typeparam name="T">The element type of the arrays to pool.</typeparam>
     public class VFrameArrayPool<T>
     {
         /// <summary>
-        /// Default maximum array length. Arrays requesting more than this are not pooled.
+        ///     Default maximum array length. Arrays requesting more than this are not pooled.
         /// </summary>
         public const int DefaultMaxArrayLength = 1024 * 1024; // 1 MB
 
         /// <summary>
-        /// Default number of arrays per bucket.
+        ///     Default number of arrays per bucket.
         /// </summary>
         public const int DefaultMaxArraysPerBucket = 50;
 
         /// <summary>
-        /// Shared singleton instance with default configuration.
+        ///     Shared singleton instance with default configuration.
         /// </summary>
         public static readonly VFrameArrayPool<T> Shared = new VFrameArrayPool<T>();
 
-        private readonly int _maxArrayLength;
-        private readonly int _maxArraysPerBucket;
         private readonly Bucket[] _buckets;
 
+        private readonly int _maxArrayLength;
+        private readonly int _maxArraysPerBucket;
+
         /// <summary>
-        /// Creates a pool with default settings.
+        ///     Creates a pool with default settings.
         /// </summary>
         public VFrameArrayPool() : this(DefaultMaxArrayLength, DefaultMaxArraysPerBucket) { }
 
         /// <summary>
-        /// Creates a pool with custom configuration.
+        ///     Creates a pool with custom configuration.
         /// </summary>
         /// <param name="maxArrayLength">Maximum array length to pool. Requests exceeding this allocate fresh.</param>
         /// <param name="maxArraysPerBucket">Maximum number of arrays retained per bucket.</param>
@@ -55,6 +55,7 @@ namespace vFrame.Core
             if (maxArrayLength <= 0) {
                 throw new ArgumentOutOfRangeException(nameof(maxArrayLength));
             }
+
             if (maxArraysPerBucket <= 0) {
                 throw new ArgumentOutOfRangeException(nameof(maxArraysPerBucket));
             }
@@ -70,14 +71,15 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Rents an array of at least the specified length from the pool.
+        ///     Rents an array of at least the specified length from the pool.
         /// </summary>
         /// <param name="minimumLength">The minimum length of the returned array.</param>
-        /// <returns>An array of at least <paramref name="minimumLength"/> elements.</returns>
+        /// <returns>An array of at least <paramref name="minimumLength" /> elements.</returns>
         public T[] Rent(int minimumLength) {
             if (minimumLength < 0) {
                 throw new ArgumentOutOfRangeException(nameof(minimumLength));
             }
+
             if (minimumLength == 0) {
                 return Array.Empty<T>();
             }
@@ -94,11 +96,11 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns an array to the pool. The array is only retained if its length is within pool limits.
+        ///     Returns an array to the pool. The array is only retained if its length is within pool limits.
         /// </summary>
         /// <param name="array">The array to return. May be <c>null</c> (no-op).</param>
         /// <param name="clearArray">
-        /// If <c>true</c>, the array contents are cleared before pooling to prevent information leaks.
+        ///     If <c>true</c>, the array contents are cleared before pooling to prevent information leaks.
         /// </param>
         public void Return(T[] array, bool clearArray = false) {
             if (array == null || array.Length == 0) {
@@ -118,18 +120,19 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the total number of arrays currently pooled across all buckets.
+        ///     Gets the total number of arrays currently pooled across all buckets.
         /// </summary>
         public int GetPooledCount() {
             var total = 0;
             for (var i = 0; i < _buckets.Length; i++) {
                 total += _buckets[i].Count;
             }
+
             return total;
         }
 
         /// <summary>
-        /// Selects the bucket index for a given array length using power-of-two bucketing.
+        ///     Selects the bucket index for a given array length using power-of-two bucketing.
         /// </summary>
         private static int SelectBucketIndex(int bufferSize) {
             // BitManipulation.Log2Ceiling-like logic
@@ -147,18 +150,19 @@ namespace vFrame.Core
                 bufferSize >>= 1;
                 log2++;
             }
+
             return log2;
         }
 
         /// <summary>
-        /// Gets the actual array size for a given bucket index.
+        ///     Gets the actual array size for a given bucket index.
         /// </summary>
         private static int GetBucketSize(int index) {
             return 1 << (index > 30 ? 30 : index);
         }
 
         /// <summary>
-        /// A per-size-bucket holding pooled arrays.
+        ///     A per-size-bucket holding pooled arrays.
         /// </summary>
         private sealed class Bucket
         {
@@ -171,7 +175,7 @@ namespace vFrame.Core
             }
 
             /// <summary>
-            /// Gets the approximate count of arrays in this bucket.
+            ///     Gets the approximate count of arrays in this bucket.
             /// </summary>
             public int Count => _stack.Count;
 
@@ -188,6 +192,7 @@ namespace vFrame.Core
                 if (_stack.Count >= _maxPerBucket) {
                     return; // Bucket full, discard
                 }
+
                 _stack.Push(array);
             }
         }

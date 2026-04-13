@@ -9,7 +9,6 @@
 // ============================================================
 
 using System;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
@@ -43,7 +42,8 @@ namespace vFrame.Core
         protected abstract void OnCallback();
     }
 
-    public abstract class ActionCallback<TC, TArg1> : GCFreeCallback<TC, Action<TArg1>> where TC : BaseObject<IObjectPoolManager>
+    public abstract class ActionCallback<TC, TArg1> : GCFreeCallback<TC, Action<TArg1>>
+        where TC : BaseObject<IObjectPoolManager>
     {
         /// <summary>
         ///     Returns the initial single-argument callback delegate.
@@ -75,7 +75,8 @@ namespace vFrame.Core
         protected abstract void OnCallback(TArg1 arg1);
     }
 
-    public abstract class ActionCallback<TC, TArg1, TArg2> : GCFreeCallback<TC, Action<TArg1, TArg2>> where TC : BaseObject<IObjectPoolManager>
+    public abstract class ActionCallback<TC, TArg1, TArg2> : GCFreeCallback<TC, Action<TArg1, TArg2>>
+        where TC : BaseObject<IObjectPoolManager>
     {
         /// <summary>
         ///     Returns the initial two-argument callback delegate.

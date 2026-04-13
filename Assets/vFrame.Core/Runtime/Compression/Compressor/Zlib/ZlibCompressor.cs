@@ -18,7 +18,7 @@ namespace vFrame.Core
     public class ZlibCompressor : Compressor
     {
         /// <summary>
-        /// Compresses data from the input stream to the output stream using Zlib deflate.
+        ///     Compresses data from the input stream to the output stream using Zlib deflate.
         /// </summary>
         /// <param name="input">The stream containing uncompressed data.</param>
         /// <param name="output">The stream to receive compressed data.</param>
@@ -39,7 +39,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses data from the input stream to the output stream using Zlib inflate.
+        ///     Decompresses data from the input stream to the output stream using Zlib inflate.
         /// </summary>
         /// <param name="input">The stream containing Zlib-compressed data.</param>
         /// <param name="output">The stream to receive decompressed data.</param>

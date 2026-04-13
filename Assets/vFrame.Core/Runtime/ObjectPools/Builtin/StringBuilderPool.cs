@@ -12,5 +12,6 @@ using System.Text;
 
 namespace vFrame.Core
 {
-    public class StringBuilderPool : ObjectPool<StringBuilder, StringBuilderAllocator> { }
+    public class StringBuilderPool : ObjectPool<StringBuilder, StringBuilderAllocator>
+    { }
 }

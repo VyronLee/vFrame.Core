@@ -15,71 +15,71 @@ namespace vFrame.Core
     public interface IObjectPoolManager
     {
         /// <summary>
-        /// Gets an object from the pool registered for <typeparamref name="T"/>.
+        ///     Gets an object from the pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The type of object to get.</typeparam>
-        /// <returns>A pooled instance of <typeparamref name="T"/>.</returns>
+        /// <returns>A pooled instance of <typeparamref name="T" />.</returns>
         T Get<T>() where T : class, new();
 
         /// <summary>
-        /// Gets an object from the pool registered for the specified <paramref name="type"/>.
+        ///     Gets an object from the pool registered for the specified <paramref name="type" />.
         /// </summary>
         /// <param name="type">The type of object to get.</param>
         /// <returns>A pooled instance of the specified type.</returns>
         object Get(Type type);
 
         /// <summary>
-        /// Returns an object to the pool registered for <typeparamref name="T"/>.
+        ///     Returns an object to the pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The type of object to return.</typeparam>
         /// <param name="obj">The object to return.</param>
         void Return<T>(T obj) where T : class, new();
 
         /// <summary>
-        /// Returns an object to the pool registered for its runtime type.
+        ///     Returns an object to the pool registered for its runtime type.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         void Return(object obj);
 
         /// <summary>
-        /// Attempts to return an object to the pool; no-op if no pool is registered for its type.
+        ///     Attempts to return an object to the pool; no-op if no pool is registered for its type.
         /// </summary>
         /// <typeparam name="T">The type of object to return.</typeparam>
         /// <param name="obj">The object to return.</param>
         void TryReturn<T>(T obj) where T : class;
 
         /// <summary>
-        /// Attempts to return an object to the pool; no-op if no pool is registered for its runtime type.
+        ///     Attempts to return an object to the pool; no-op if no pool is registered for its runtime type.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         void TryReturn(object obj);
 
         /// <summary>
-        /// Gets the typed object pool registered for <typeparamref name="T"/>.
+        ///     Gets the typed object pool registered for <typeparamref name="T" />.
         /// </summary>
         /// <typeparam name="T">The pooled object type.</typeparam>
-        /// <returns>The <see cref="IObjectPool{T}"/> instance.</returns>
+        /// <returns>The <see cref="IObjectPool{T}" /> instance.</returns>
         IObjectPool<T> GetObjectPool<T>() where T : class, new();
 
         /// <summary>
-        /// Gets the non-generic object pool registered for the specified <paramref name="type"/>.
+        ///     Gets the non-generic object pool registered for the specified <paramref name="type" />.
         /// </summary>
         /// <param name="type">The pooled object type.</param>
-        /// <returns>The <see cref="IObjectPool"/> instance.</returns>
+        /// <returns>The <see cref="IObjectPool" /> instance.</returns>
         IObjectPool GetObjectPool(Type type);
 
         /// <summary>
-        /// Gets or creates a typed object pool using the specified allocator type.
+        ///     Gets or creates a typed object pool using the specified allocator type.
         /// </summary>
         /// <typeparam name="TClass">The pooled object type.</typeparam>
         /// <typeparam name="TAllocator">The allocator type used to create and reset instances.</typeparam>
-        /// <returns>The <see cref="IObjectPool{TClass}"/> instance using <typeparamref name="TAllocator"/>.</returns>
+        /// <returns>The <see cref="IObjectPool{TClass}" /> instance using <typeparamref name="TAllocator" />.</returns>
         IObjectPool<TClass> GetObjectPool<TClass, TAllocator>()
             where TClass : class, new()
             where TAllocator : IPoolObjectAllocator<TClass>, new();
 
         /// <summary>
-        /// Gets the existing pool for <typeparamref name="T"/> without creating one.
+        ///     Gets the existing pool for <typeparamref name="T" /> without creating one.
         /// </summary>
         /// <typeparam name="T">The pooled object type.</typeparam>
         /// <param name="pool">The existing pool, or <c>null</c> if none is registered.</param>
@@ -87,7 +87,7 @@ namespace vFrame.Core
         bool TryGetObjectPool<T>(out IObjectPool<T> pool) where T : class, new();
 
         /// <summary>
-        /// Gets the existing pool for the specified <paramref name="type"/> without creating one.
+        ///     Gets the existing pool for the specified <paramref name="type" /> without creating one.
         /// </summary>
         /// <param name="type">The pooled object type.</param>
         /// <param name="pool">The existing pool, or <c>null</c> if none is registered.</param>
@@ -95,14 +95,14 @@ namespace vFrame.Core
         bool TryGetObjectPool(Type type, out IObjectPool pool);
 
         /// <summary>
-        /// Removes excess inactive objects from all registered pools.
+        ///     Removes excess inactive objects from all registered pools.
         /// </summary>
         /// <param name="maxRetainedPerPool">Maximum inactive objects to retain per pool.</param>
         /// <returns>Total number of objects removed across all pools.</returns>
         int TrimAll(int maxRetainedPerPool);
 
         /// <summary>
-        /// Gets the number of registered pools.
+        ///     Gets the number of registered pools.
         /// </summary>
         int GetPoolCount();
     }

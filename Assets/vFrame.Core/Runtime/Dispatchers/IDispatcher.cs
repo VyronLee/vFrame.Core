@@ -13,18 +13,18 @@ namespace vFrame.Core
     public interface IDispatcher : IEventDispatcher, ICommandDispatcher, IRequestDispatcher, IDecisionDispatcher
     {
         /// <summary>
-        /// Removes all registered subscriptions.
+        ///     Removes all registered subscriptions.
         /// </summary>
         void RemoveAllSubscriptions();
 
         /// <summary>
-        /// Gets the total number of subscriptions across all types.
+        ///     Gets the total number of subscriptions across all types.
         /// </summary>
         /// <returns>The total subscription count.</returns>
         int GetTotalSubscriptionCount();
 
         /// <summary>
-        /// Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
+        ///     Gets a diagnostics snapshot containing subscription counts for all dispatching categories.
         /// </summary>
         /// <returns>A diagnostics snapshot with current subscription counts.</returns>
         Dispatcher.DiagnosticsSnapshot GetDiagnostics();

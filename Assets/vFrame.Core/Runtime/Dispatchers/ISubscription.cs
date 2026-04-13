@@ -13,13 +13,13 @@ namespace vFrame.Core
     public interface ISubscription : IDestroyable
     {
         /// <summary>
-        /// Gets the unique handle identifier for this subscription.
+        ///     Gets the unique handle identifier for this subscription.
         /// </summary>
         uint Handle { get; }
 
         /// <summary>
-        /// Gets the dispatch priority. Higher values are invoked first during Publish.
-        /// Default is 0. Subscribers with the same priority are invoked in registration order.
+        ///     Gets the dispatch priority. Higher values are invoked first during Publish.
+        ///     Default is 0. Subscribers with the same priority are invoked in registration order.
         /// </summary>
         int Priority { get; }
     }

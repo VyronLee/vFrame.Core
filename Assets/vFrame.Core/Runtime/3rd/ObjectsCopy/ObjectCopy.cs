@@ -19,6 +19,7 @@ namespace vFrame.Core
             if (originObjectType != targetObjectType) {
                 throw new ArgumentException("Objects to clone from must be same type.");
             }
+
             return InternalCopyFrom(originalObject, targetObject,
                 new Dictionary<object, object>(new ReferenceEqualityComparer()));
         }
@@ -28,7 +29,7 @@ namespace vFrame.Core
             var typeToReflect = originalObject.GetType();
             if (typeToReflect.IsArray) {
                 var arrayType = typeToReflect.GetElementType();
-                if (arrayType.IsPrimitive() == false) {
+                if (!arrayType.IsPrimitive()) {
                     var clonedArray = (Array)originalObject;
                     clonedArray.ForEach((array, indices) =>
                         array.SetValue(InternalCopy(clonedArray.GetValue(indices), visited), indices));
@@ -91,13 +92,14 @@ namespace vFrame.Core
             Func<FieldInfo, bool> filter = null
         ) {
             foreach (var fieldInfo in typeToReflect.GetFields(bindingFlags)) {
-                if (filter != null && filter(fieldInfo) == false) {
+                if (filter != null && !filter(fieldInfo)) {
                     continue;
                 }
 
                 if (fieldInfo.FieldType.IsPrimitive()) {
                     continue;
                 }
+
                 var originalFieldValue = fieldInfo.GetValue(originalObject);
                 var clonedFieldValue = InternalCopy(originalFieldValue, visited);
                 fieldInfo.SetValue(cloneObject, clonedFieldValue);

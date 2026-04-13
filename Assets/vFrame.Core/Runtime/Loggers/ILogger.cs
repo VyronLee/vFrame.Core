@@ -14,16 +14,26 @@ using System;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Interface for category-based logger instances with per-category log level filtering.
-    /// Zero-GC interpolated string support is provided via extension methods in
-    /// <see cref="LoggerExtensions"/>.
+    ///     Interface for category-based logger instances with per-category log level filtering.
+    ///     Zero-GC interpolated string support is provided via extension methods in
+    ///     <see cref="LoggerExtensions" />.
     /// </summary>
     public interface ILogger
     {
         /// <summary>
-        /// Returns true if the given log level would produce output for this category.
-        /// Used internally by <see cref="LogInterpolatedStringHandler"/> for
-        /// compile-time short-circuit evaluation.
+        ///     The category name associated with this logger instance.
+        /// </summary>
+        string CategoryName { get; }
+
+        /// <summary>
+        ///     The minimum log level for this category. Messages below this level are suppressed.
+        /// </summary>
+        LogLevelDef MinimumLevel { get; set; }
+
+        /// <summary>
+        ///     Returns true if the given log level would produce output for this category.
+        ///     Used internally by <see cref="LogInterpolatedStringHandler" /> for
+        ///     compile-time short-circuit evaluation.
         /// </summary>
         bool IsEnabled(LogLevelDef level);
 
@@ -40,15 +50,5 @@ namespace vFrame.Core
         void Warning(Exception exception, string text = null);
         void Error(Exception exception, string text = null);
         void Fatal(Exception exception, string text = null);
-
-        /// <summary>
-        /// The category name associated with this logger instance.
-        /// </summary>
-        string CategoryName { get; }
-
-        /// <summary>
-        /// The minimum log level for this category. Messages below this level are suppressed.
-        /// </summary>
-        LogLevelDef MinimumLevel { get; set; }
     }
 }

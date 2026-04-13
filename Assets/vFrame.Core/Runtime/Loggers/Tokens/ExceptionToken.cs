@@ -10,20 +10,19 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders exception information ({exception}).
-    /// Renders nothing if no exception is present.
+    ///     A format token that renders exception information ({exception}).
+    ///     Renders nothing if no exception is present.
     /// </summary>
     public class ExceptionToken : IToken
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             if (context.Exception != null) {
-                sb.Append(context.Exception.ToString());
+                sb.Append(context.Exception);
             }
         }
     }

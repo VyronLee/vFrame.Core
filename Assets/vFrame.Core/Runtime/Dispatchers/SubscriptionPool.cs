@@ -11,12 +11,13 @@
 
 namespace vFrame.Core
 {
-    internal class SubscriptionPool : ObjectPool<Subscription, SubscriptionAllocator> { }
+    internal class SubscriptionPool : ObjectPool<Subscription, SubscriptionAllocator>
+    { }
 
     internal class SubscriptionAllocator : IPoolObjectAllocator<Subscription>
     {
         /// <summary>
-        /// Allocates a new <see cref="Subscription"/> instance.
+        ///     Allocates a new <see cref="Subscription" /> instance.
         /// </summary>
         /// <returns>The newly created subscription instance.</returns>
         public Subscription Alloc() {
@@ -24,7 +25,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Resets the subscription instance so it can be reused by the object pool.
+        ///     Resets the subscription instance so it can be reused by the object pool.
         /// </summary>
         /// <param name="obj">The subscription instance to reset.</param>
         public void Reset(Subscription obj) {

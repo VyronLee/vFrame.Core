@@ -11,17 +11,16 @@
 
 using System;
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the current managed thread ID ({thread}).
-    /// Output format: [T:id]
+    ///     A format token that renders the current managed thread ID ({thread}).
+    ///     Output format: [T:id]
     /// </summary>
     public class ThreadToken : IToken
     {
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append("[T:");
             sb.Append(Environment.CurrentManagedThreadId);

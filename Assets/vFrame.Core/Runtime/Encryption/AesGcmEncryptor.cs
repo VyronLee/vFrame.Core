@@ -16,12 +16,12 @@ using System.Security.Cryptography;
 namespace vFrame.Core
 {
     /// <summary>
-    /// AES-GCM authenticated symmetric encryptor using AES-256.
+    ///     AES-GCM authenticated symmetric encryptor using AES-256.
     /// </summary>
     /// <remarks>
-    /// Output format: [12-byte nonce][ciphertext][16-byte tag]
-    /// Requires a 32-byte key (AES-256). Uses System.Security.Cryptography.AesGcm
-    /// (.NET Standard 2.1 / Unity 2022.3+).
+    ///     Output format: [12-byte nonce][ciphertext][16-byte tag]
+    ///     Requires a 32-byte key (AES-256). Uses System.Security.Cryptography.AesGcm
+    ///     (.NET Standard 2.1 / Unity 2022.3+).
     /// </remarks>
     public sealed class AesGcmEncryptor : Encryptor
     {
@@ -29,7 +29,7 @@ namespace vFrame.Core
         private const int TagSize = 16;
         private const int RequiredKeyLength = 32;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
             ThrowHelper.ThrowIfNull(output, nameof(output));
@@ -38,6 +38,7 @@ namespace vFrame.Core
                 ThrowHelper.ThrowArgumentException(
                     $"Key length must be {RequiredKeyLength} for AES-256-GCM, got {keyLength}.");
             }
+
             if (output.Length < input.Length + NonceSize + TagSize) {
                 ThrowHelper.ThrowArgumentException("Output buffer is too small.");
             }
@@ -47,14 +48,15 @@ namespace vFrame.Core
             RandomNumberGenerator.Fill(nonce);
 
             using (var aesGcm = new AesGcm(key)) {
-                aesGcm.Encrypt(nonce, input, output.AsSpan(NonceSize), output.AsSpan(NonceSize + input.Length, TagSize));
+                aesGcm.Encrypt(nonce, input, output.AsSpan(NonceSize),
+                    output.AsSpan(NonceSize + input.Length, TagSize));
             }
 
             nonce.CopyTo(output.AsSpan(0, NonceSize));
             tag.CopyTo(output.AsSpan(NonceSize + input.Length, TagSize));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
             ThrowHelper.ThrowIfNull(output, nameof(output));
@@ -63,11 +65,13 @@ namespace vFrame.Core
                 ThrowHelper.ThrowArgumentException(
                     $"Key length must be {RequiredKeyLength} for AES-256-GCM, got {keyLength}.");
             }
+
             var minInputLength = NonceSize + TagSize;
             if (input.Length < minInputLength) {
                 ThrowHelper.ThrowArgumentException(
                     $"Input is too short to contain nonce and tag (minimum {minInputLength} bytes).");
             }
+
             var cipherLength = input.Length - NonceSize - TagSize;
             if (output.Length < cipherLength) {
                 ThrowHelper.ThrowArgumentException("Output buffer is too small.");
@@ -82,7 +86,7 @@ namespace vFrame.Core
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
             ThrowHelper.ThrowIfNull(output, nameof(output));
@@ -97,7 +101,7 @@ namespace vFrame.Core
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
             ThrowHelper.ThrowIfNull(output, nameof(output));

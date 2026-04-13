@@ -40,8 +40,9 @@ namespace vFrame.Core
     public class JsonWriter
     {
         public override string ToString() {
-            if (inst_string_builder == null)
+            if (inst_string_builder == null) {
                 return string.Empty;
+            }
 
             return inst_string_builder.ToString();
         }
@@ -53,8 +54,9 @@ namespace vFrame.Core
             context = new WriterContext();
             ctx_stack.Push(context);
 
-            if (inst_string_builder != null)
+            if (inst_string_builder != null) {
                 inst_string_builder.Remove(0, inst_string_builder.Length);
+            }
         }
 
         public void Write(bool boolean) {
@@ -83,8 +85,9 @@ namespace vFrame.Core
             Put(str);
 
             if (str.IndexOf('.') == -1 &&
-                str.IndexOf('E') == -1)
+                str.IndexOf('E') == -1) {
                 TextWriter.Write(".0");
+            }
 
             context.ExpectingValue = false;
         }
@@ -111,10 +114,12 @@ namespace vFrame.Core
             DoValidation(Condition.Value);
             PutNewline();
 
-            if (str == null)
+            if (str == null) {
                 Put("null");
-            else
+            }
+            else {
                 PutString(str);
+            }
 
             context.ExpectingValue = false;
         }
@@ -199,13 +204,15 @@ namespace vFrame.Core
             PutString(propertyName);
 
             if (PrettyPrint) {
-                if (propertyName.Length > context.Padding)
+                if (propertyName.Length > context.Padding) {
                     context.Padding = propertyName.Length;
+                }
 
                 for (var i = context.Padding - propertyName.Length;
-                    i >= 0;
-                    i--)
+                     i >= 0;
+                     i--) {
                     TextWriter.Write(' ');
+                }
 
                 TextWriter.Write(": ");
             }
@@ -266,12 +273,12 @@ namespace vFrame.Core
         }
 
         public JsonWriter(StringBuilder sb) :
-            this(new StringWriter(sb)) {
-        }
+            this(new StringWriter(sb)) { }
 
         public JsonWriter(TextWriter writer) {
-            if (writer == null)
+            if (writer == null) {
                 throw new ArgumentNullException("writer");
+            }
 
             TextWriter = writer;
 
@@ -284,46 +291,58 @@ namespace vFrame.Core
         #region Private Methods
 
         private void DoValidation(Condition cond) {
-            if (!context.ExpectingValue)
+            if (!context.ExpectingValue) {
                 context.Count++;
+            }
 
-            if (!Validate)
+            if (!Validate) {
                 return;
+            }
 
-            if (has_reached_end)
+            if (has_reached_end) {
                 throw new JsonException(
                     "A complete JSON symbol has already been written");
+            }
 
             switch (cond) {
                 case Condition.InArray:
-                    if (!context.InArray)
+                    if (!context.InArray) {
                         throw new JsonException(
                             "Can't close an array here");
+                    }
+
                     break;
 
                 case Condition.InObject:
-                    if (!context.InObject || context.ExpectingValue)
+                    if (!context.InObject || context.ExpectingValue) {
                         throw new JsonException(
                             "Can't close an object here");
+                    }
+
                     break;
 
                 case Condition.NotAProperty:
-                    if (context.InObject && !context.ExpectingValue)
+                    if (context.InObject && !context.ExpectingValue) {
                         throw new JsonException(
                             "Expected a property");
+                    }
+
                     break;
 
                 case Condition.Property:
-                    if (!context.InObject || context.ExpectingValue)
+                    if (!context.InObject || context.ExpectingValue) {
                         throw new JsonException(
                             "Can't add a property here");
+                    }
+
                     break;
 
                 case Condition.Value:
                     if (!context.InArray &&
-                        (!context.InObject || !context.ExpectingValue))
+                        (!context.InObject || !context.ExpectingValue)) {
                         throw new JsonException(
                             "Can't add a value here");
+                    }
 
                     break;
             }
@@ -349,25 +368,30 @@ namespace vFrame.Core
             for (var i = 0; i < 4; i++) {
                 num = n % 16;
 
-                if (num < 10)
-                    hex[3 - i] = (char) ('0' + num);
-                else
-                    hex[3 - i] = (char) ('A' + (num - 10));
+                if (num < 10) {
+                    hex[3 - i] = (char)('0' + num);
+                }
+                else {
+                    hex[3 - i] = (char)('A' + (num - 10));
+                }
 
                 n >>= 4;
             }
         }
 
         private void Indent() {
-            if (PrettyPrint)
+            if (PrettyPrint) {
                 indentation += indent_value;
+            }
         }
 
 
         private void Put(string str) {
-            if (PrettyPrint && !context.ExpectingValue)
-                for (var i = 0; i < indentation; i++)
+            if (PrettyPrint && !context.ExpectingValue) {
+                for (var i = 0; i < indentation; i++) {
                     TextWriter.Write(' ');
+                }
+            }
 
             TextWriter.Write(str);
         }
@@ -378,11 +402,13 @@ namespace vFrame.Core
 
         private void PutNewline(bool add_comma) {
             if (add_comma && !context.ExpectingValue &&
-                context.Count > 1)
+                context.Count > 1) {
                 TextWriter.Write(',');
+            }
 
-            if (PrettyPrint && !context.ExpectingValue)
+            if (PrettyPrint && !context.ExpectingValue) {
                 TextWriter.Write(Environment.NewLine);
+            }
         }
 
         private void PutString(string str) {
@@ -435,8 +461,9 @@ namespace vFrame.Core
         }
 
         private void Unindent() {
-            if (PrettyPrint)
+            if (PrettyPrint) {
                 indentation -= indent_value;
+            }
         }
 
         #endregion

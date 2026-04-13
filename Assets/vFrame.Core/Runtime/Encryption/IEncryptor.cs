@@ -16,7 +16,7 @@ namespace vFrame.Core
     public interface IEncryptor : IDisposable
     {
         /// <summary>
-        /// Encrypts the given byte array.
+        ///     Encrypts the given byte array.
         /// </summary>
         /// <param name="input">The input data to encrypt.</param>
         /// <param name="output">The output buffer to receive encrypted data.</param>
@@ -25,7 +25,7 @@ namespace vFrame.Core
         void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Decrypts the given byte array.
+        ///     Decrypts the given byte array.
         /// </summary>
         /// <param name="input">The input data to decrypt.</param>
         /// <param name="output">The output buffer to receive decrypted data.</param>
@@ -34,7 +34,7 @@ namespace vFrame.Core
         void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Encrypts the given stream.
+        ///     Encrypts the given stream.
         /// </summary>
         /// <param name="input">The input stream to read from.</param>
         /// <param name="output">The output stream to write encrypted data to.</param>
@@ -43,7 +43,7 @@ namespace vFrame.Core
         void Encrypt(Stream input, Stream output, byte[] key, int keyLength);
 
         /// <summary>
-        /// Decrypts the given stream.
+        ///     Decrypts the given stream.
         /// </summary>
         /// <param name="input">The input stream to read from.</param>
         /// <param name="output">The output stream to write decrypted data to.</param>

@@ -17,14 +17,14 @@ namespace vFrame.Core
         public static int PresetLength = 64;
 
         /// <summary>
-        /// Allocates a new Queue with the preset capacity.
+        ///     Allocates a new Queue with the preset capacity.
         /// </summary>
         public Queue<T> Alloc() {
             return new Queue<T>(PresetLength);
         }
 
         /// <summary>
-        /// Resets the Queue by clearing all elements.
+        ///     Resets the Queue by clearing all elements.
         /// </summary>
         public void Reset(Queue<T> obj) {
             obj.Clear();

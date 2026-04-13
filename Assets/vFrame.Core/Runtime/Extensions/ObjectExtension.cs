@@ -16,7 +16,7 @@ namespace vFrame.Core
     public static class ObjectExtensions
     {
         /// <summary>
-        /// Determines whether the type is a primitive type (including string).
+        ///     Determines whether the type is a primitive type (including string).
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <returns><c>true</c> if the type is a primitive type; otherwise, <c>false</c>.</returns>
@@ -24,11 +24,12 @@ namespace vFrame.Core
             if (type == typeof(string)) {
                 return true;
             }
+
             return type.IsValueType & type.IsPrimitive;
         }
 
         /// <summary>
-        /// Creates a deep copy of the object.
+        ///     Creates a deep copy of the object.
         /// </summary>
         /// <param name="original">The original object.</param>
         /// <typeparam name="T">The object type.</typeparam>
@@ -38,7 +39,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Deep copies values from the original object into the target object.
+        ///     Deep copies values from the original object into the target object.
         /// </summary>
         /// <param name="original">The source object.</param>
         /// <param name="target">The target object to copy into.</param>
@@ -49,7 +50,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Deeply compares two objects for equality.
+        ///     Deeply compares two objects for equality.
         /// </summary>
         /// <param name="original">The first object.</param>
         /// <param name="target">The second object.</param>
@@ -61,7 +62,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Deeply compares two objects for equality using a custom comparer factory.
+        ///     Deeply compares two objects for equality using a custom comparer factory.
         /// </summary>
         /// <param name="original">The first object.</param>
         /// <param name="target">The second object.</param>
@@ -74,7 +75,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Deeply compares two objects and outputs the list of differences.
+        ///     Deeply compares two objects and outputs the list of differences.
         /// </summary>
         /// <param name="original">The first object.</param>
         /// <param name="target">The second object.</param>
@@ -87,7 +88,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Deeply compares two objects using a custom comparer factory and outputs the list of differences.
+        ///     Deeply compares two objects using a custom comparer factory and outputs the list of differences.
         /// </summary>
         /// <param name="original">The first object.</param>
         /// <param name="target">The second object.</param>

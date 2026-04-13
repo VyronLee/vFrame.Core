@@ -12,5 +12,6 @@ using System.Collections.Generic;
 
 namespace vFrame.Core
 {
-    public class ListPool<T> : ObjectPool<List<T>, ListAllocator<T>> { }
+    public class ListPool<T> : ObjectPool<List<T>, ListAllocator<T>>
+    { }
 }

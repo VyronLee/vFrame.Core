@@ -11,27 +11,24 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
-
 namespace System.Runtime.CompilerServices
 {
     /// <summary>
-    /// Marks a ref struct as an interpolated string handler.
-    /// The compiler generates handler construction calls instead
-    /// of string concatenation, enabling short-circuit evaluation.
+    ///     Marks a ref struct as an interpolated string handler.
+    ///     The compiler generates handler construction calls instead
+    ///     of string concatenation, enabling short-circuit evaluation.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    internal sealed class InterpolatedStringHandlerAttribute : Attribute { }
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
+    internal sealed class InterpolatedStringHandlerAttribute : Attribute
+    { }
 
     /// <summary>
-    /// Specifies which method parameters should be forwarded to
-    /// the interpolated string handler constructor.
+    ///     Specifies which method parameters should be forwarded to
+    ///     the interpolated string handler constructor.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Parameter)]
     internal sealed class InterpolatedStringHandlerArgumentAttribute : Attribute
     {
-        public string[] Arguments { get; }
-
         public InterpolatedStringHandlerArgumentAttribute(string argument) {
             Arguments = new[] { argument };
         }
@@ -39,5 +36,7 @@ namespace System.Runtime.CompilerServices
         public InterpolatedStringHandlerArgumentAttribute(params string[] arguments) {
             Arguments = arguments;
         }
+
+        public string[] Arguments { get; }
     }
 }

@@ -13,7 +13,7 @@ namespace vFrame.Core
     public class LZMACompressorOptions : CompressorOptions
     {
         /// <summary>
-        /// LZMA dictionary size levels, ranging from 64 KiB to 64 MiB.
+        ///     LZMA dictionary size levels, ranging from 64 KiB to 64 MiB.
         /// </summary>
         public enum LZMADictionarySize
         {
@@ -26,7 +26,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// LZMA compression speed levels.
+        ///     LZMA compression speed levels.
         /// </summary>
         public enum LZMASpeed
         {
@@ -39,12 +39,12 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets or sets the LZMA compression speed.
+        ///     Gets or sets the LZMA compression speed.
         /// </summary>
         public LZMASpeed Speed { get; set; }
 
         /// <summary>
-        /// Gets or sets the LZMA dictionary size.
+        ///     Gets or sets the LZMA dictionary size.
         /// </summary>
         public LZMADictionarySize DictionarySize { get; set; }
     }

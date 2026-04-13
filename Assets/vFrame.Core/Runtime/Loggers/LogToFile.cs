@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
@@ -27,21 +26,21 @@ namespace vFrame.Core
         private readonly object _lockObject = new object();
         private readonly ConcurrentQueue<string> _logQueue = new ConcurrentQueue<string>();
         private CancellationTokenSource _cancellationTokenSource;
-        private string _logPath;
-        private FileStream _fileStream;
-        private StreamWriter _writer;
-        private Task _task;
-        private LogToFileOptions _options;
         private DateTime _currentFileDate;
         private long _currentFileSize;
         private int _fileIndex;
+        private FileStream _fileStream;
+        private string _logPath;
+        private LogToFileOptions _options;
+        private Task _task;
+        private StreamWriter _writer;
 
         public bool AppendTimestamp { get; set; }
         public string AppendTimestampFormat { get; set; } = "[yyyy-MM-dd HH:mm:ss.fff] ";
 
         /// <summary>
-        /// Called when the log file is created. Ensures the target directory exists,
-        /// opens the file handle, and starts the background flush task.
+        ///     Called when the log file is created. Ensures the target directory exists,
+        ///     opens the file handle, and starts the background flush task.
         /// </summary>
         /// <param name="path">The file path for the log output.</param>
         protected override void OnCreate(string path) {
@@ -55,8 +54,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Called when the log file is destroyed. Cancels the background task,
-        /// flushes remaining entries, and releases resources.
+        ///     Called when the log file is destroyed. Cancels the background task,
+        ///     flushes remaining entries, and releases resources.
         /// </summary>
         protected override void OnDestroy() {
             if (_cancellationTokenSource != null) {
@@ -70,6 +69,7 @@ namespace vFrame.Core
                 catch (AggregateException) {
                     // Task may throw if cancellation race with WriteAllText
                 }
+
                 _task.Dispose();
                 _task = null;
             }
@@ -83,7 +83,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Configures rolling file options. Can be called after Create.
+        ///     Configures rolling file options. Can be called after Create.
         /// </summary>
         /// <param name="options">The rolling file configuration.</param>
         public void Configure(LogToFileOptions options) {
@@ -94,7 +94,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Creates the directory for the given file path if it does not already exist.
+        ///     Creates the directory for the given file path if it does not already exist.
         /// </summary>
         private static void CreateDirectory(string filePath) {
             var dirPath = Path.GetDirectoryName(filePath);
@@ -104,8 +104,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Opens the file handle for appending. The handle stays open for the
-        /// lifetime of this object to avoid repeated open/close overhead.
+        ///     Opens the file handle for appending. The handle stays open for the
+        ///     lifetime of this object to avoid repeated open/close overhead.
         /// </summary>
         private void OpenFileHandle() {
             _fileStream = new FileStream(_logPath, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -114,7 +114,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Closes and disposes the file handle.
+        ///     Closes and disposes the file handle.
         /// </summary>
         private void CloseFileHandle() {
             try {
@@ -125,6 +125,7 @@ namespace vFrame.Core
             catch (Exception ex) {
                 Debug.WriteLine($"[LogToFile] Error disposing writer: {ex.Message}");
             }
+
             _writer = null;
 
             try {
@@ -134,11 +135,12 @@ namespace vFrame.Core
             catch (Exception ex) {
                 Debug.WriteLine($"[LogToFile] Error disposing file stream: {ex.Message}");
             }
+
             _fileStream = null;
         }
 
         /// <summary>
-        /// Enqueues a log entry for asynchronous writing to the file.
+        ///     Enqueues a log entry for asynchronous writing to the file.
         /// </summary>
         /// <param name="value">The log text to append.</param>
         /// <param name="urgent">If true, flushes to disk immediately (for Error/Fatal).</param>
@@ -146,6 +148,7 @@ namespace vFrame.Core
             if (AppendTimestamp) {
                 value = DateTime.Now.ToString(AppendTimestampFormat) + value;
             }
+
             _logQueue.Enqueue(value);
 
             if (urgent) {
@@ -154,8 +157,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Background loop that flushes queued log entries to disk at a fixed interval.
-        /// Exits when the cancellation token is triggered.
+        ///     Background loop that flushes queued log entries to disk at a fixed interval.
+        ///     Exits when the cancellation token is triggered.
         /// </summary>
         private void Update() {
             var interval = _options?.FlushIntervalSeconds > 0
@@ -176,14 +179,15 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Dequeues all pending log entries and writes them to the log file.
-        /// Checks for rolling conditions before writing.
+        ///     Dequeues all pending log entries and writes them to the log file.
+        ///     Checks for rolling conditions before writing.
         /// </summary>
         private void WriteAllText() {
             lock (_lockObject) {
                 if (_writer == null) {
                     // File handle not available — drain queue to prevent unbounded growth
                     while (_logQueue.TryDequeue(out _)) { }
+
                     return;
                 }
 
@@ -193,6 +197,7 @@ namespace vFrame.Core
                         _writer.WriteLine(value);
                         _currentFileSize += value.Length + Environment.NewLine.Length;
                     }
+
                     _writer.Flush();
                 }
                 catch (ObjectDisposedException) {
@@ -206,7 +211,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Checks if the current log file needs rolling based on the configured strategy.
+        ///     Checks if the current log file needs rolling based on the configured strategy.
         /// </summary>
         private void CheckRolling() {
             if (_options == null || _options.Strategy == RollingStrategy.None) {
@@ -228,8 +233,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Rolls the current log file: closes the handle, renames the file with a
-        /// timestamp or index suffix, and opens a fresh file.
+        ///     Rolls the current log file: closes the handle, renames the file with a
+        ///     timestamp or index suffix, and opens a fresh file.
         /// </summary>
         private void RollFile() {
             CloseFileHandle();
@@ -257,7 +262,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Generates the archive file path based on the rolling strategy.
+        ///     Generates the archive file path based on the rolling strategy.
         /// </summary>
         private string GenerateArchivePath() {
             var dir = Path.GetDirectoryName(_logPath) ?? "";
@@ -274,8 +279,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Removes old archive files when the count exceeds <see cref="LogToFileOptions.MaxFileCount"/>.
-        /// Only considers files matching the base name pattern.
+        ///     Removes old archive files when the count exceeds <see cref="LogToFileOptions.MaxFileCount" />.
+        ///     Only considers files matching the base name pattern.
         /// </summary>
         private void CleanupOldArchives() {
             if (_options == null || _options.MaxFileCount <= 0) {

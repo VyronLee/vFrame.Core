@@ -13,21 +13,20 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A structured log sink that formats log contexts as JSON strings
-    /// and stores them in a thread-safe queue for retrieval.
+    ///     A structured log sink that formats log contexts as JSON strings
+    ///     and stores them in a thread-safe queue for retrieval.
     /// </summary>
     public class JsonLogSink : Logger.IStructuredLogSink
     {
         private readonly ConcurrentQueue<string> _outputQueue = new ConcurrentQueue<string>();
 
         /// <summary>
-        /// Called when a new log context is received. Formats the context as JSON
-        /// and enqueues it.
+        ///     Called when a new log context is received. Formats the context as JSON
+        ///     and enqueues it.
         /// </summary>
         /// <param name="context">The log context to format.</param>
         public void OnLogReceived(Logger.LogContext context) {
@@ -36,7 +35,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns all JSON strings that have been output by this sink.
+        ///     Returns all JSON strings that have been output by this sink.
         /// </summary>
         /// <returns>A list of JSON formatted log entries.</returns>
         public List<string> GetOutput() {
@@ -44,7 +43,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Clears all output from the queue.
+        ///     Clears all output from the queue.
         /// </summary>
         public void Clear() {
             while (_outputQueue.TryDequeue(out _)) { }
@@ -75,6 +74,7 @@ namespace vFrame.Core
                         if (i > 0) {
                             sb.Append(',');
                         }
+
                         var arg = context.Args[i];
                         if (arg == null) {
                             sb.Append("null");
@@ -85,14 +85,16 @@ namespace vFrame.Core
                             sb.Append('"');
                         }
                         else {
-                            sb.Append(arg.ToString());
+                            sb.Append(arg);
                         }
                     }
+
                     sb.Append(']');
                 }
                 else {
                     sb.Append("null");
                 }
+
                 sb.Append(',');
 
                 AppendKeyValue(sb, "content", context.Content);
@@ -107,6 +109,7 @@ namespace vFrame.Core
                 else {
                     sb.Append("null");
                 }
+
                 sb.Append(',');
 
                 AppendKeyValue(sb, "time", DateTime.Now.ToString("O"));
@@ -165,9 +168,11 @@ namespace vFrame.Core
                             else {
                                 sb.Append(c);
                             }
+
                             break;
                     }
                 }
+
                 return sb.ToString();
             }
             finally {

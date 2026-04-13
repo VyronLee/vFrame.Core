@@ -15,7 +15,7 @@ namespace vFrame.Core
     public interface IEventDispatcher
     {
         /// <summary>
-        /// Subscribes to events of the specified type with default priority (0).
+        ///     Subscribes to events of the specified type with default priority (0).
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
@@ -24,7 +24,7 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Subscribes to events of the specified type, bound to the owner's lifetime.
+        ///     Subscribes to events of the specified type, bound to the owner's lifetime.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="owner">The subscription owner; the subscription is automatically cancelled when the owner is destroyed.</param>
@@ -34,7 +34,7 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Subscribes to events of the specified type, bound to the given lifetime.
+        ///     Subscribes to events of the specified type, bound to the given lifetime.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="lifetime">The lifetime boundary; the subscription is automatically cancelled when the lifetime ends.</param>
@@ -44,8 +44,8 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Subscribes to events of the specified type with explicit priority.
-        /// Higher priority subscribers are invoked first during Publish.
+        ///     Subscribes to events of the specified type with explicit priority.
+        ///     Higher priority subscribers are invoked first during Publish.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -55,7 +55,7 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Subscribes to events of the specified type with explicit priority and lifetime binding.
+        ///     Subscribes to events of the specified type with explicit priority and lifetime binding.
         /// </summary>
         /// <param name="action">The event handler callback.</param>
         /// <param name="priority">The dispatch priority. Higher values are invoked first.</param>
@@ -66,13 +66,13 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Cancels the specified event subscription.
+        ///     Cancels the specified event subscription.
         /// </summary>
         /// <param name="subscription">The subscription handle to cancel.</param>
         void Unsubscribe(ISubscription subscription);
 
         /// <summary>
-        /// Publishes an event of the specified type, notifying all subscribers in priority order.
+        ///     Publishes an event of the specified type, notifying all subscribers in priority order.
         /// </summary>
         /// <param name="payload">The event payload.</param>
         /// <typeparam name="TEvent">The event type.</typeparam>
@@ -80,7 +80,7 @@ namespace vFrame.Core
             where TEvent : IEvent;
 
         /// <summary>
-        /// Gets the current total number of event subscriptions.
+        ///     Gets the current total number of event subscriptions.
         /// </summary>
         /// <returns>The number of event subscriptions.</returns>
         int GetEventSubscriptionCount();

@@ -18,7 +18,7 @@ namespace vFrame.Core
     public static class StringExtension
     {
         /// <summary>
-        /// Converts the string to a byte sequence using the default encoding.
+        ///     Converts the string to a byte sequence using the default encoding.
         /// </summary>
         /// <param name="str">The source string.</param>
         /// <returns>A byte sequence.</returns>
@@ -28,7 +28,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts the string to a byte array using the default encoding.
+        ///     Converts the string to a byte array using the default encoding.
         /// </summary>
         /// <param name="str">The source string.</param>
         /// <returns>A byte array.</returns>
@@ -38,7 +38,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts the string to a byte array using UTF-8 encoding.
+        ///     Converts the string to a byte array using UTF-8 encoding.
         /// </summary>
         /// <param name="str">The source string.</param>
         /// <returns>A UTF-8 encoded byte array.</returns>
@@ -48,7 +48,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Converts a hexadecimal string to a byte array.
+        ///     Converts a hexadecimal string to a byte array.
         /// </summary>
         /// <param name="hexString">The hexadecimal string, whose length must be even.</param>
         /// <returns>A byte array.</returns>
@@ -69,19 +69,28 @@ namespace vFrame.Core
             for (var index = 0; index < hexAsBytes.Length; index++) {
                 var high = ParseHexChar(hexString[index * 2]);
                 var low = ParseHexChar(hexString[index * 2 + 1]);
-                hexAsBytes[index] = (byte)(high << 4 | low);
+                hexAsBytes[index] = (byte)((high << 4) | low);
             }
 
             return hexAsBytes;
         }
 
         /// <summary>
-        /// Parses a single hex character to its numeric value.
+        ///     Parses a single hex character to its numeric value.
         /// </summary>
         private static int ParseHexChar(char c) {
-            if (c >= '0' && c <= '9') return c - '0';
-            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            if (c >= '0' && c <= '9') {
+                return c - '0';
+            }
+
+            if (c >= 'a' && c <= 'f') {
+                return c - 'a' + 10;
+            }
+
+            if (c >= 'A' && c <= 'F') {
+                return c - 'A' + 10;
+            }
+
             ThrowHelper.ThrowArgumentException($"Invalid hex character: {c}");
             return 0;
         }

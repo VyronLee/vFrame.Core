@@ -8,48 +8,31 @@ namespace vFrame.Core
 {
     internal class DynamicObjectComparer : AbstractDynamicObjectsComprer<DynamicObject>
     {
-        private class FakeGetMemberBinder : GetMemberBinder
-        {
-            public FakeGetMemberBinder(string name, bool ignoreCase) : base(name, ignoreCase)
-            {
-            }
+        public DynamicObjectComparer(ComparisonSettings settings, BaseComparer parentComparer,
+            IComparersFactory factory)
+            : base(settings, parentComparer, factory) { }
 
-            public override DynamicMetaObject FallbackGetMember(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        public DynamicObjectComparer(ComparisonSettings settings, BaseComparer parentComparer, IComparersFactory factory)
-            : base(settings, parentComparer, factory)
-        {
-        }
-
-        public override bool IsMatch(Type type, object obj1, object obj2)
-        {
+        public override bool IsMatch(Type type, object obj1, object obj2) {
             return type.InheritsFrom(typeof(DynamicObject)) ||
-                   (obj1 != null && obj2 != null && type == typeof(object) && obj1.GetType().InheritsFrom(typeof(DynamicObject)) && obj2.GetType().InheritsFrom(typeof(DynamicObject)));
+                   (obj1 != null && obj2 != null && type == typeof(object) &&
+                    obj1.GetType().InheritsFrom(typeof(DynamicObject)) &&
+                    obj2.GetType().InheritsFrom(typeof(DynamicObject)));
         }
 
-        public override bool IsStopComparison(Type type, object obj1, object obj2)
-        {
+        public override bool IsStopComparison(Type type, object obj1, object obj2) {
             return obj1 == null || obj2 == null;
         }
 
-        public override bool SkipMember(Type type, MemberInfo member)
-        {
+        public override bool SkipMember(Type type, MemberInfo member) {
             return false;
         }
 
-        protected override IList<string> GetProperties(DynamicObject obj)
-        {
+        protected override IList<string> GetProperties(DynamicObject obj) {
             return obj?.GetDynamicMemberNames().ToList() ?? new List<string>();
         }
 
-        protected override bool TryGetMemberValue(DynamicObject obj, string propertyName, out object value)
-        {
-            if (obj == null)
-            {
+        protected override bool TryGetMemberValue(DynamicObject obj, string propertyName, out object value) {
+            if (obj == null) {
                 value = null;
                 return false;
             }
@@ -57,6 +40,16 @@ namespace vFrame.Core
             var getBinder = new FakeGetMemberBinder(propertyName, false);
 
             return obj.TryGetMember(getBinder, out value);
+        }
+
+        private class FakeGetMemberBinder : GetMemberBinder
+        {
+            public FakeGetMemberBinder(string name, bool ignoreCase) : base(name, ignoreCase) { }
+
+            public override DynamicMetaObject FallbackGetMember(DynamicMetaObject target,
+                DynamicMetaObject errorSuggestion) {
+                throw new NotSupportedException();
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ namespace vFrame.Core
         public static int PresetLength = 64;
 
         /// <summary>
-        /// Allocates a new <see cref="Dictionary{TKey,TValue}"/> with the configured preset capacity.
+        ///     Allocates a new <see cref="Dictionary{TKey,TValue}" /> with the configured preset capacity.
         /// </summary>
         /// <returns>A new dictionary instance.</returns>
         public Dictionary<T1, T2> Alloc() {
@@ -25,7 +25,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Resets the given dictionary by clearing all entries.
+        ///     Resets the given dictionary by clearing all entries.
         /// </summary>
         /// <param name="obj">The dictionary to reset.</param>
         public void Reset(Dictionary<T1, T2> obj) {

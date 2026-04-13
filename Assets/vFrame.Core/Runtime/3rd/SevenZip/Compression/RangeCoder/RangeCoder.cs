@@ -33,8 +33,9 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         }
 
         public void FlushData() {
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++) {
                 ShiftLow();
+            }
         }
 
         public void FlushStream() {
@@ -55,25 +56,28 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         }
 
         public void ShiftLow() {
-            if ((uint) Low < 0xFF000000 || (uint) (Low >> 32) == 1) {
+            if ((uint)Low < 0xFF000000 || (uint)(Low >> 32) == 1) {
                 var temp = _cache;
                 do {
-                    Stream.WriteByte((byte) (temp + (Low >> 32)));
+                    Stream.WriteByte((byte)(temp + (Low >> 32)));
                     temp = 0xFF;
-                } while (--_cacheSize != 0);
+                }
+                while (--_cacheSize != 0);
 
-                _cache = (byte) ((uint) Low >> 24);
+                _cache = (byte)((uint)Low >> 24);
             }
 
             _cacheSize++;
-            Low = (uint) Low << 8;
+            Low = (uint)Low << 8;
         }
 
         public void EncodeDirectBits(uint v, int numTotalBits) {
             for (var i = numTotalBits - 1; i >= 0; i--) {
                 Range >>= 1;
-                if (((v >> i) & 1) == 1)
+                if (((v >> i) & 1) == 1) {
                     Low += Range;
+                }
+
                 if (Range < kTopValue) {
                     Range <<= 8;
                     ShiftLow();
@@ -99,7 +103,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
 
         public long GetProcessedSizeAdd() {
             return _cacheSize +
-                   Stream.Position - StartPosition + 4;
+                Stream.Position - StartPosition + 4;
             // (long)Stream.GetProcessedSize();
         }
     }
@@ -120,8 +124,9 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
 
             Code = 0;
             Range = 0xFFFFFFFF;
-            for (var i = 0; i < 5; i++)
-                Code = (Code << 8) | (byte) Stream.ReadByte();
+            for (var i = 0; i < 5; i++) {
+                Code = (Code << 8) | (byte)Stream.ReadByte();
+            }
         }
 
         public void ReleaseStream() {
@@ -135,14 +140,14 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
 
         public void Normalize() {
             while (Range < kTopValue) {
-                Code = (Code << 8) | (byte) Stream.ReadByte();
+                Code = (Code << 8) | (byte)Stream.ReadByte();
                 Range <<= 8;
             }
         }
 
         public void Normalize2() {
             if (Range < kTopValue) {
-                Code = (Code << 8) | (byte) Stream.ReadByte();
+                Code = (Code << 8) | (byte)Stream.ReadByte();
                 Range <<= 8;
             }
         }
@@ -176,7 +181,7 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
                 result = (result << 1) | (1 - t);
 
                 if (range < kTopValue) {
-                    code = (code << 8) | (byte) Stream.ReadByte();
+                    code = (code << 8) | (byte)Stream.ReadByte();
                     range <<= 8;
                 }
             }

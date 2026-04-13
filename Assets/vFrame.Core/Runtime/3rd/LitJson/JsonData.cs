@@ -23,13 +23,17 @@ namespace vFrame.Core
     public class JsonData : IJsonWrapper, IEquatable<JsonData>
     {
         public bool Equals(JsonData x) {
-            if (x == null)
+            if (x == null) {
                 return false;
+            }
 
             if (x.type != type) // further check to see if this is a long to int comparison
-                if (x.type != JsonType.Int && x.type != JsonType.Long
-                    || type != JsonType.Int && type != JsonType.Long)
+            {
+                if ((x.type != JsonType.Int && x.type != JsonType.Long)
+                    || (type != JsonType.Int && type != JsonType.Long)) {
                     return false;
+                }
+            }
 
             switch (type) {
                 case JsonType.None:
@@ -46,9 +50,11 @@ namespace vFrame.Core
 
                 case JsonType.Int: {
                     if (x.IsLong) {
-                        if (x.inst_long < int.MinValue || x.inst_long > int.MaxValue)
+                        if (x.inst_long < int.MinValue || x.inst_long > int.MaxValue) {
                             return false;
-                        return inst_int.Equals((int) x.inst_long);
+                        }
+
+                        return inst_int.Equals((int)x.inst_long);
                     }
 
                     return inst_int.Equals(x.inst_int);
@@ -56,9 +62,11 @@ namespace vFrame.Core
 
                 case JsonType.Long: {
                     if (x.IsInt) {
-                        if (inst_long < int.MinValue || inst_long > int.MaxValue)
+                        if (inst_long < int.MinValue || inst_long > int.MaxValue) {
                             return false;
-                        return x.inst_int.Equals((int) inst_long);
+                        }
+
+                        return x.inst_int.Equals((int)inst_long);
                     }
 
                     return inst_long.Equals(x.inst_long);
@@ -81,13 +89,14 @@ namespace vFrame.Core
             get => EnsureDictionary()[key];
 
             set {
-                if (!(key is string))
+                if (!(key is string)) {
                     throw new ArgumentException(
                         "The key has to be a string");
+                }
 
                 var data = ToJsonData(value);
 
-                this[(string) key] = data;
+                this[(string)key] = data;
             }
         }
 
@@ -158,8 +167,9 @@ namespace vFrame.Core
         }
 
         public void SetJsonType(JsonType type) {
-            if (this.type == type)
+            if (this.type == type) {
                 return;
+            }
 
             switch (type) {
                 case JsonType.None:
@@ -211,13 +221,17 @@ namespace vFrame.Core
             json = null;
             if (IsObject) {
                 JsonData value = null;
-                if (inst_object.TryGetValue((string) obj, out value))
-                    return inst_object.Remove((string) obj) &&
-                           object_list.Remove(new KeyValuePair<string, JsonData>((string) obj, value));
+                if (inst_object.TryGetValue((string)obj, out value)) {
+                    return inst_object.Remove((string)obj) &&
+                           object_list.Remove(new KeyValuePair<string, JsonData>((string)obj, value));
+                }
+
                 throw new KeyNotFoundException("The specified key was not found in the JsonData object.");
             }
 
-            if (IsArray) return inst_array.Remove(ToJsonData(obj));
+            if (IsArray) {
+                return inst_array.Remove(ToJsonData(obj));
+            }
 
             throw new InvalidOperationException(
                 "Instance of JsonData is not an object or a list.");
@@ -225,16 +239,19 @@ namespace vFrame.Core
 
         public void Clear() {
             if (IsObject) {
-                ((IDictionary) this).Clear();
+                ((IDictionary)this).Clear();
                 return;
             }
 
-            if (IsArray) ((IList) this).Clear();
+            if (IsArray) {
+                ((IList)this).Clear();
+            }
         }
 
         public string ToJson() {
-            if (json != null)
+            if (json != null) {
                 return json;
+            }
 
             var sw = new StringWriter();
             var writer = new JsonWriter(sw);
@@ -285,12 +302,12 @@ namespace vFrame.Core
 
         #region Fields
 
-        private IList<JsonData> inst_array;
+        private System.Collections.Generic.IList<JsonData> inst_array;
         private bool inst_boolean;
         private double inst_double;
         private int inst_int;
         private long inst_long;
-        private IDictionary<string, JsonData> inst_object;
+        private System.Collections.Generic.IDictionary<string, JsonData> inst_object;
         private string inst_string;
         private string json;
         private JsonType type;
@@ -362,10 +379,11 @@ namespace vFrame.Core
                 IList<string> keys = new List<string>();
 
                 foreach (var entry in
-                    object_list)
+                         object_list) {
                     keys.Add(entry.Key);
+                }
 
-                return (ICollection) keys;
+                return (ICollection)keys;
             }
         }
 
@@ -375,10 +393,11 @@ namespace vFrame.Core
                 IList<JsonData> values = new List<JsonData>();
 
                 foreach (var entry in
-                    object_list)
+                         object_list) {
                     values.Add(entry.Value);
+                }
 
-                return (ICollection) values;
+                return (ICollection)values;
             }
         }
 
@@ -428,11 +447,12 @@ namespace vFrame.Core
                     new KeyValuePair<string, JsonData>(prop_name, value);
 
                 if (inst_object.ContainsKey(prop_name)) {
-                    for (var i = 0; i < object_list.Count; i++)
+                    for (var i = 0; i < object_list.Count; i++) {
                         if (object_list[i].Key == prop_name) {
                             object_list[i] = entry;
                             break;
                         }
+                    }
                 }
                 else {
                     object_list.Add(entry);
@@ -448,8 +468,9 @@ namespace vFrame.Core
             get {
                 EnsureCollection();
 
-                if (type == JsonType.Array)
+                if (type == JsonType.Array) {
                     return inst_array[index];
+                }
 
                 return object_list[index].Value;
             }
@@ -478,8 +499,7 @@ namespace vFrame.Core
 
         #region Constructors
 
-        public JsonData() {
-        }
+        public JsonData() { }
 
         public JsonData(bool boolean) {
             type = JsonType.Boolean;
@@ -504,31 +524,31 @@ namespace vFrame.Core
         public JsonData(object obj) {
             if (obj is bool) {
                 type = JsonType.Boolean;
-                inst_boolean = (bool) obj;
+                inst_boolean = (bool)obj;
                 return;
             }
 
             if (obj is double) {
                 type = JsonType.Double;
-                inst_double = (double) obj;
+                inst_double = (double)obj;
                 return;
             }
 
             if (obj is int) {
                 type = JsonType.Int;
-                inst_int = (int) obj;
+                inst_int = (int)obj;
                 return;
             }
 
             if (obj is long) {
                 type = JsonType.Long;
-                inst_long = (long) obj;
+                inst_long = (long)obj;
                 return;
             }
 
             if (obj is string) {
                 type = JsonType.String;
-                inst_string = (string) obj;
+                inst_string = (string)obj;
                 return;
             }
 
@@ -572,42 +592,47 @@ namespace vFrame.Core
         #region Explicit Conversions
 
         public static explicit operator bool(JsonData data) {
-            if (data.type != JsonType.Boolean)
+            if (data.type != JsonType.Boolean) {
                 throw new InvalidCastException(
                     "Instance of JsonData doesn't hold a double");
+            }
 
             return data.inst_boolean;
         }
 
         public static explicit operator double(JsonData data) {
-            if (data.type != JsonType.Double)
+            if (data.type != JsonType.Double) {
                 throw new InvalidCastException(
                     "Instance of JsonData doesn't hold a double");
+            }
 
             return data.inst_double;
         }
 
         public static explicit operator int(JsonData data) {
-            if (data.type != JsonType.Int && data.type != JsonType.Long)
+            if (data.type != JsonType.Int && data.type != JsonType.Long) {
                 throw new InvalidCastException(
                     "Instance of JsonData doesn't hold an int");
+            }
 
             // cast may truncate data... but that's up to the user to consider
-            return data.type == JsonType.Int ? data.inst_int : (int) data.inst_long;
+            return data.type == JsonType.Int ? data.inst_int : (int)data.inst_long;
         }
 
         public static explicit operator long(JsonData data) {
-            if (data.type != JsonType.Long && data.type != JsonType.Int)
+            if (data.type != JsonType.Long && data.type != JsonType.Int) {
                 throw new InvalidCastException(
                     "Instance of JsonData doesn't hold a long");
+            }
 
             return data.type == JsonType.Long ? data.inst_long : data.inst_int;
         }
 
         public static explicit operator string(JsonData data) {
-            if (data.type != JsonType.String)
+            if (data.type != JsonType.String) {
                 throw new InvalidCastException(
                     "Instance of JsonData doesn't hold a string");
+            }
 
             return data.inst_string;
         }
@@ -623,7 +648,7 @@ namespace vFrame.Core
             EnsureDictionary().Add(key, data);
 
             var entry =
-                new KeyValuePair<string, JsonData>((string) key, data);
+                new KeyValuePair<string, JsonData>((string)key, data);
             object_list.Add(entry);
 
             json = null;
@@ -640,17 +665,18 @@ namespace vFrame.Core
         }
 
         IDictionaryEnumerator IDictionary.GetEnumerator() {
-            return ((IOrderedDictionary) this).GetEnumerator();
+            return ((IOrderedDictionary)this).GetEnumerator();
         }
 
         void IDictionary.Remove(object key) {
             EnsureDictionary().Remove(key);
 
-            for (var i = 0; i < object_list.Count; i++)
-                if (object_list[i].Key == (string) key) {
+            for (var i = 0; i < object_list.Count; i++) {
+                if (object_list[i].Key == (string)key) {
                     object_list.RemoveAt(i);
                     break;
                 }
+            }
 
             json = null;
         }
@@ -661,41 +687,46 @@ namespace vFrame.Core
         #region IJsonWrapper Methods
 
         bool IJsonWrapper.GetBoolean() {
-            if (type != JsonType.Boolean)
+            if (type != JsonType.Boolean) {
                 throw new InvalidOperationException(
                     "JsonData instance doesn't hold a boolean");
+            }
 
             return inst_boolean;
         }
 
         double IJsonWrapper.GetDouble() {
-            if (type != JsonType.Double)
+            if (type != JsonType.Double) {
                 throw new InvalidOperationException(
                     "JsonData instance doesn't hold a double");
+            }
 
             return inst_double;
         }
 
         int IJsonWrapper.GetInt() {
-            if (type != JsonType.Int)
+            if (type != JsonType.Int) {
                 throw new InvalidOperationException(
                     "JsonData instance doesn't hold an int");
+            }
 
             return inst_int;
         }
 
         long IJsonWrapper.GetLong() {
-            if (type != JsonType.Long)
+            if (type != JsonType.Long) {
                 throw new InvalidOperationException(
                     "JsonData instance doesn't hold a long");
+            }
 
             return inst_long;
         }
 
         string IJsonWrapper.GetString() {
-            if (type != JsonType.String)
+            if (type != JsonType.String) {
                 throw new InvalidOperationException(
                     "JsonData instance doesn't hold a string");
+            }
 
             return inst_string;
         }
@@ -788,7 +819,7 @@ namespace vFrame.Core
         }
 
         void IOrderedDictionary.Insert(int idx, object key, object value) {
-            var property = (string) key;
+            var property = (string)key;
             var data = ToJsonData(value);
 
             this[property] = data;
@@ -812,51 +843,59 @@ namespace vFrame.Core
         #region Private Methods
 
         private ICollection EnsureCollection() {
-            if (type == JsonType.Array)
-                return (ICollection) inst_array;
+            if (type == JsonType.Array) {
+                return (ICollection)inst_array;
+            }
 
-            if (type == JsonType.Object)
-                return (ICollection) inst_object;
+            if (type == JsonType.Object) {
+                return (ICollection)inst_object;
+            }
 
             throw new InvalidOperationException(
                 "The JsonData instance has to be initialized first");
         }
 
         private IDictionary EnsureDictionary() {
-            if (type == JsonType.Object)
-                return (IDictionary) inst_object;
+            if (type == JsonType.Object) {
+                return (IDictionary)inst_object;
+            }
 
-            if (type != JsonType.None)
+            if (type != JsonType.None) {
                 throw new InvalidOperationException(
                     "Instance of JsonData is not a dictionary");
+            }
 
             type = JsonType.Object;
             inst_object = new Dictionary<string, JsonData>();
             object_list = new List<KeyValuePair<string, JsonData>>();
 
-            return (IDictionary) inst_object;
+            return (IDictionary)inst_object;
         }
 
         private IList EnsureList() {
-            if (type == JsonType.Array)
-                return (IList) inst_array;
+            if (type == JsonType.Array) {
+                return (IList)inst_array;
+            }
 
-            if (type != JsonType.None)
+            if (type != JsonType.None) {
                 throw new InvalidOperationException(
                     "Instance of JsonData is not a list");
+            }
 
             type = JsonType.Array;
             inst_array = new List<JsonData>();
 
-            return (IList) inst_array;
+            return (IList)inst_array;
         }
 
         private JsonData ToJsonData(object obj) {
-            if (obj == null)
+            if (obj == null) {
                 return null;
+            }
 
-            if (obj is JsonData)
-                return (JsonData) obj;
+            if (obj is JsonData) {
+                return (JsonData)obj;
+            }
 
             return new JsonData(obj);
         }
@@ -894,8 +933,10 @@ namespace vFrame.Core
 
             if (obj.IsArray) {
                 writer.WriteArrayStart();
-                foreach (var elem in (IList) obj)
-                    WriteJson((JsonData) elem, writer);
+                foreach (var elem in (IList)obj) {
+                    WriteJson((JsonData)elem, writer);
+                }
+
                 writer.WriteArrayEnd();
 
                 return;
@@ -904,9 +945,9 @@ namespace vFrame.Core
             if (obj.IsObject) {
                 writer.WriteObjectStart();
 
-                foreach (DictionaryEntry entry in (IDictionary) obj) {
-                    writer.WritePropertyName((string) entry.Key);
-                    WriteJson((JsonData) entry.Value, writer);
+                foreach (DictionaryEntry entry in (IDictionary)obj) {
+                    writer.WritePropertyName((string)entry.Key);
+                    WriteJson((JsonData)entry.Value, writer);
                 }
 
                 writer.WriteObjectEnd();

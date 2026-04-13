@@ -13,7 +13,7 @@ namespace vFrame.Core
     public class CompressorOptions
     {
         /// <summary>
-        /// Gets or sets the internal buffer size in bytes used during compression and decompression.
+        ///     Gets or sets the internal buffer size in bytes used during compression and decompression.
         /// </summary>
         public int BuffSize { get; set; } = 81920;
     }

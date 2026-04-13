@@ -12,5 +12,6 @@ using System.Collections.Generic;
 
 namespace vFrame.Core
 {
-    public class HashSetPool<T> : ObjectPool<HashSet<T>, HashSetAllocator<T>> { }
+    public class HashSetPool<T> : ObjectPool<HashSet<T>, HashSetAllocator<T>>
+    { }
 }

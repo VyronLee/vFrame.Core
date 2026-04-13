@@ -17,7 +17,7 @@ namespace vFrame.Core
         protected readonly LogTag LogTag = new LogTag("ObjectPool");
 
         /// <summary>
-        /// Starts a new pooled use cycle.
+        ///     Starts a new pooled use cycle.
         /// </summary>
         /// <returns>An object from the pool.</returns>
         public object Get() {
@@ -25,7 +25,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Ends the current pooled use cycle and applies pool-managed return policy.
+        ///     Ends the current pooled use cycle and applies pool-managed return policy.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         public void Return(object obj) {
@@ -33,27 +33,29 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns observable pool statistics.
+        ///     Returns observable pool statistics.
         /// </summary>
         /// <returns>Current pool statistics snapshot.</returns>
         public abstract ObjectPoolStatistics GetStatistics();
 
         /// <summary>
-        /// Removes excess inactive objects from the pool. Default implementation returns 0.
-        /// Override in derived pools to implement actual trimming.
+        ///     Removes excess inactive objects from the pool. Default implementation returns 0.
+        ///     Override in derived pools to implement actual trimming.
         /// </summary>
         /// <param name="maxRetained">Maximum number of inactive objects to retain.</param>
         /// <returns>The number of objects removed.</returns>
-        public virtual int Trim(int maxRetained) => 0;
+        public virtual int Trim(int maxRetained) {
+            return 0;
+        }
 
         /// <summary>
-        /// Internal typed get logic implemented by derived pools.
+        ///     Internal typed get logic implemented by derived pools.
         /// </summary>
         /// <returns>An object from the pool.</returns>
         protected abstract object OnGetInternal();
 
         /// <summary>
-        /// Internal typed return logic implemented by derived pools.
+        ///     Internal typed return logic implemented by derived pools.
         /// </summary>
         /// <param name="obj">The object to return.</param>
         protected abstract void OnReturnInternal(object obj);
@@ -72,12 +74,12 @@ namespace vFrame.Core
         private ObjectPoolStatistics _statistics;
 
         /// <summary>
-        /// Creates a pool with default options.
+        ///     Creates a pool with default options.
         /// </summary>
         public ObjectPool() : this(null) { }
 
         /// <summary>
-        /// Creates a pool with the specified options.
+        ///     Creates a pool with the specified options.
         /// </summary>
         /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
         public ObjectPool(ObjectPoolOptions<TClass> options) {
@@ -85,7 +87,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the lazily-initialized shared singleton instance.
+        ///     Gets the lazily-initialized shared singleton instance.
         /// </summary>
         public static ObjectPool<TClass> Shared {
             get {
@@ -98,15 +100,16 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
 
         /// <summary>
-        /// Returns an object to the pool, applying destroy and overflow policies.
+        ///     Returns an object to the pool, applying destroy and overflow policies.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
         public void Return(TClass obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
 
@@ -137,7 +140,8 @@ namespace vFrame.Core
 
                 _statistics.TotalReturnCount++;
 
-                if (_objects.Count >= _options.MaxSize && _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
+                if (_objects.Count >= _options.MaxSize &&
+                    _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
                     _statistics.TotalDestroyedCount++;
                     _statistics.CountAll--;
                     _options.OnDestroy?.Invoke(obj);
@@ -150,9 +154,9 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets an object from the pool, creating a new instance if none is available.
+        ///     Gets an object from the pool, creating a new instance if none is available.
         /// </summary>
-        /// <returns>A pooled or newly created instance of <typeparamref name="TClass"/>.</returns>
+        /// <returns>A pooled or newly created instance of <typeparamref name="TClass" />.</returns>
         public new TClass Get() {
             TClass item;
             lock (_lockObject) {
@@ -174,12 +178,15 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Removes excess inactive objects from the pool, releasing them for garbage collection.
+        ///     Removes excess inactive objects from the pool, releasing them for garbage collection.
         /// </summary>
-        /// <param name="maxRetained">Maximum number of inactive objects to retain. If the pool holds more, the excess are discarded.</param>
+        /// <param name="maxRetained">
+        ///     Maximum number of inactive objects to retain. If the pool holds more, the excess are
+        ///     discarded.
+        /// </param>
         /// <returns>The number of objects removed.</returns>
         public int Trim(int maxRetained) {
-            int removed = 0;
+            var removed = 0;
             lock (_lockObject) {
                 while (_objects.Count > maxRetained) {
                     var item = _objects.Pop();
@@ -189,11 +196,25 @@ namespace vFrame.Core
                     removed++;
                 }
             }
+
             return removed;
         }
 
         /// <summary>
-        /// Initializes the pool storage and pre-populates with <see cref="ObjectPoolOptions{TClass}.InitialCapacity"/> instances.
+        ///     Returns a snapshot of current pool statistics.
+        /// </summary>
+        /// <returns>Current pool statistics.</returns>
+        public override ObjectPoolStatistics GetStatistics() {
+            lock (_lockObject) {
+                _statistics.CountInactive = _objects?.Count ?? 0;
+                _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
+                return _statistics;
+            }
+        }
+
+        /// <summary>
+        ///     Initializes the pool storage and pre-populates with <see cref="ObjectPoolOptions{TClass}.InitialCapacity" />
+        ///     instances.
         /// </summary>
         protected override void OnCreate() {
             lock (_lockObject) {
@@ -211,7 +232,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Clears and releases all pooled instances.
+        ///     Clears and releases all pooled instances.
         /// </summary>
         protected override void OnDestroy() {
             lock (_lockObject) {
@@ -223,19 +244,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns a snapshot of current pool statistics.
-        /// </summary>
-        /// <returns>Current pool statistics.</returns>
-        public override ObjectPoolStatistics GetStatistics() {
-            lock (_lockObject) {
-                _statistics.CountInactive = _objects?.Count ?? 0;
-                _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
-                return _statistics;
-            }
-        }
-
-        /// <summary>
-        /// Delegates to the typed <see cref="Get"/> method.
+        ///     Delegates to the typed <see cref="Get" /> method.
         /// </summary>
         /// <returns>An object from the pool.</returns>
         protected override object OnGetInternal() {
@@ -243,11 +252,14 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Validates type and delegates to the typed <see cref="Return(TClass)"/> method.
+        ///     Validates type and delegates to the typed <see cref="Return(TClass)" /> method.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Thrown when <paramref name="obj"/> type does not match <typeparamref name="TClass"/>.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
+        /// <exception cref="InvalidOperationException">
+        ///     Thrown when <paramref name="obj" /> type does not match
+        ///     <typeparamref name="TClass" />.
+        /// </exception>
         protected override void OnReturnInternal(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
             ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
@@ -271,12 +283,12 @@ namespace vFrame.Core
         private ObjectPoolStatistics _statistics;
 
         /// <summary>
-        /// Creates a pool with default options.
+        ///     Creates a pool with default options.
         /// </summary>
         public ObjectPool() : this(null) { }
 
         /// <summary>
-        /// Creates a pool with the specified options.
+        ///     Creates a pool with the specified options.
         /// </summary>
         /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
         public ObjectPool(ObjectPoolOptions<TClass> options) {
@@ -284,7 +296,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Gets the lazily-initialized shared singleton instance.
+        ///     Gets the lazily-initialized shared singleton instance.
         /// </summary>
         public static ObjectPool<TClass, TAllocator> Shared {
             get {
@@ -297,14 +309,15 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
 
         /// <summary>
-        /// Gets an object from the pool, allocating via <typeparamref name="TAllocator"/> if none is available.
+        ///     Gets an object from the pool, allocating via <typeparamref name="TAllocator" /> if none is available.
         /// </summary>
-        /// <returns>A pooled or newly allocated instance of <typeparamref name="TClass"/>.</returns>
+        /// <returns>A pooled or newly allocated instance of <typeparamref name="TClass" />.</returns>
         public new TClass Get() {
             TClass item;
             lock (_lockObject) {
@@ -326,10 +339,10 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns an object to the pool, applying reset, destroy, and overflow policies.
+        ///     Returns an object to the pool, applying reset, destroy, and overflow policies.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
         public void Return(TClass obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
 
@@ -361,7 +374,8 @@ namespace vFrame.Core
 
                 _statistics.TotalReturnCount++;
 
-                if (_objects.Count >= _options.MaxSize && _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
+                if (_objects.Count >= _options.MaxSize &&
+                    _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
                     _statistics.TotalDestroyedCount++;
                     _statistics.CountAll--;
                     _options.OnDestroy?.Invoke(obj);
@@ -374,12 +388,15 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Removes excess inactive objects from the pool, releasing them for garbage collection.
+        ///     Removes excess inactive objects from the pool, releasing them for garbage collection.
         /// </summary>
-        /// <param name="maxRetained">Maximum number of inactive objects to retain. If the pool holds more, the excess are discarded.</param>
+        /// <param name="maxRetained">
+        ///     Maximum number of inactive objects to retain. If the pool holds more, the excess are
+        ///     discarded.
+        /// </param>
         /// <returns>The number of objects removed.</returns>
         public int Trim(int maxRetained) {
-            int removed = 0;
+            var removed = 0;
             lock (_lockObject) {
                 while (_objects.Count > maxRetained) {
                     var item = _objects.Pop();
@@ -389,11 +406,24 @@ namespace vFrame.Core
                     removed++;
                 }
             }
+
             return removed;
         }
 
         /// <summary>
-        /// Initializes the allocator, pool storage, and pre-populates with instances.
+        ///     Returns a snapshot of current pool statistics.
+        /// </summary>
+        /// <returns>Current pool statistics.</returns>
+        public override ObjectPoolStatistics GetStatistics() {
+            lock (_lockObject) {
+                _statistics.CountInactive = _objects?.Count ?? 0;
+                _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
+                return _statistics;
+            }
+        }
+
+        /// <summary>
+        ///     Initializes the allocator, pool storage, and pre-populates with instances.
         /// </summary>
         protected override void OnCreate() {
             _allocator = new TAllocator();
@@ -412,7 +442,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Clears and releases all pooled instances.
+        ///     Clears and releases all pooled instances.
         /// </summary>
         protected override void OnDestroy() {
             lock (_lockObject) {
@@ -424,19 +454,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Returns a snapshot of current pool statistics.
-        /// </summary>
-        /// <returns>Current pool statistics.</returns>
-        public override ObjectPoolStatistics GetStatistics() {
-            lock (_lockObject) {
-                _statistics.CountInactive = _objects?.Count ?? 0;
-                _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
-                return _statistics;
-            }
-        }
-
-        /// <summary>
-        /// Delegates to the typed <see cref="Get"/> method.
+        ///     Delegates to the typed <see cref="Get" /> method.
         /// </summary>
         /// <returns>An object from the pool.</returns>
         protected override object OnGetInternal() {
@@ -444,11 +462,14 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Validates type and delegates to the typed <see cref="Return(TClass)"/> method.
+        ///     Validates type and delegates to the typed <see cref="Return(TClass)" /> method.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">Thrown when <paramref name="obj"/> type does not match <typeparamref name="TClass"/>.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
+        /// <exception cref="InvalidOperationException">
+        ///     Thrown when <paramref name="obj" /> type does not match
+        ///     <typeparamref name="TClass" />.
+        /// </exception>
         protected override void OnReturnInternal(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
             ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));

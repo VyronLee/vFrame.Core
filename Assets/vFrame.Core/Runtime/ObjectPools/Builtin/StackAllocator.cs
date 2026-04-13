@@ -17,14 +17,14 @@ namespace vFrame.Core
         public static int PresetLength = 64;
 
         /// <summary>
-        /// Allocates a new Stack with the preset capacity.
+        ///     Allocates a new Stack with the preset capacity.
         /// </summary>
         public Stack<T> Alloc() {
             return new Stack<T>(PresetLength);
         }
 
         /// <summary>
-        /// Resets the Stack by clearing all elements.
+        ///     Resets the Stack by clearing all elements.
         /// </summary>
         public void Reset(Stack<T> obj) {
             obj.Clear();

@@ -15,12 +15,12 @@ using System.Linq;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Provides static helper methods for throwing common vFrame exception types.
+    ///     Provides static helper methods for throwing common vFrame exception types.
     /// </summary>
     public static class ThrowHelper
     {
         /// <summary>
-        /// Throws an <see cref="ArgumentException"/> with the specified message.
+        ///     Throws an <see cref="ArgumentException" /> with the specified message.
         /// </summary>
         /// <param name="message">The error message.</param>
         public static void ThrowArgumentException(string message) {
@@ -28,7 +28,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws an <see cref="ArgumentNullException"/> if the parameter is null.
+        ///     Throws an <see cref="ArgumentNullException" /> if the parameter is null.
         /// </summary>
         /// <param name="param">The value to check for null.</param>
         /// <param name="variable">The name of the parameter.</param>
@@ -36,11 +36,12 @@ namespace vFrame.Core
             if (null != param) {
                 return;
             }
+
             throw new ArgumentNullException(variable);
         }
 
         /// <summary>
-        /// Throws an <see cref="ArgumentException"/> if the collection is null or empty.
+        ///     Throws an <see cref="ArgumentException" /> if the collection is null or empty.
         /// </summary>
         /// <typeparam name="T">The element type of the collection.</typeparam>
         /// <param name="param">The collection to check.</param>
@@ -49,11 +50,12 @@ namespace vFrame.Core
             if (null != param && param.Any()) {
                 return;
             }
+
             throw new ArgumentException($"Variable ${variable} cannot be null or empty!");
         }
 
         /// <summary>
-        /// Throws an <see cref="UnsupportedEnumException"/> for the given enum value.
+        ///     Throws an <see cref="UnsupportedEnumException" /> for the given enum value.
         /// </summary>
         /// <typeparam name="T">The enum type.</typeparam>
         /// <param name="value">The unsupported enum value.</param>
@@ -62,7 +64,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws an <see cref="InvalidDataException"/> with the specified message.
+        ///     Throws an <see cref="InvalidDataException" /> with the specified message.
         /// </summary>
         /// <param name="message">The error message.</param>
         public static void ThrowInvalidDataException(string message) {
@@ -70,7 +72,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws a generic <see cref="vFrameException"/> with the specified message.
+        ///     Throws a generic <see cref="vFrameException" /> with the specified message.
         /// </summary>
         /// <param name="message">The error message.</param>
         public static void ThrowUndesiredException(string message) {
@@ -78,7 +80,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws an <see cref="ArgumentException"/> if the string is null or empty.
+        ///     Throws an <see cref="ArgumentException" /> if the string is null or empty.
         /// </summary>
         /// <param name="value">The string to check.</param>
         /// <param name="paramName">The name of the parameter.</param>
@@ -86,11 +88,12 @@ namespace vFrame.Core
             if (!string.IsNullOrEmpty(value)) {
                 return;
             }
+
             throw new ArgumentException($"Parameter '{paramName}' cannot be null or empty!");
         }
 
         /// <summary>
-        /// Throws an <see cref="ArgumentException"/> if the value is outside the specified range.
+        ///     Throws an <see cref="ArgumentException" /> if the value is outside the specified range.
         /// </summary>
         /// <param name="paramName">The name of the parameter.</param>
         /// <param name="value">The value to check.</param>
@@ -100,12 +103,13 @@ namespace vFrame.Core
             if (value >= min && value <= max) {
                 return;
             }
+
             throw new ArgumentException(
                 $"Parameter '{paramName}' value {value} is out of range [{min}, {max}].");
         }
 
         /// <summary>
-        /// Throws an <see cref="ArgumentException"/> if the enum value is not defined in the enum type.
+        ///     Throws an <see cref="ArgumentException" /> if the enum value is not defined in the enum type.
         /// </summary>
         /// <typeparam name="T">The enum type.</typeparam>
         /// <param name="value">The enum value to check.</param>
@@ -114,12 +118,13 @@ namespace vFrame.Core
             if (Enum.IsDefined(typeof(T), value)) {
                 return;
             }
+
             throw new ArgumentException(
                 $"Parameter '{paramName}' value '{value}' is not defined in enum '{typeof(T).Name}'.");
         }
 
         /// <summary>
-        /// Throws a <see cref="TypeMismatchException"/> if the input type does not match the desired type.
+        ///     Throws a <see cref="TypeMismatchException" /> if the input type does not match the desired type.
         /// </summary>
         /// <param name="inputType">The actual type to check.</param>
         /// <param name="desiredType">The expected type.</param>
@@ -127,11 +132,12 @@ namespace vFrame.Core
             if (inputType == desiredType) {
                 return;
             }
+
             throw new TypeMismatchException(inputType, desiredType);
         }
 
         /// <summary>
-        /// Throws an <see cref="IndexOutOfRangeException"/> for the given range and input value.
+        ///     Throws an <see cref="IndexOutOfRangeException" /> for the given range and input value.
         /// </summary>
         /// <param name="start">The start of the valid range.</param>
         /// <param name="end">The end of the valid range.</param>
@@ -141,7 +147,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Concatenates variable name segments into a dot-separated path string.
+        ///     Concatenates variable name segments into a dot-separated path string.
         /// </summary>
         /// <param name="args">Variable name segments to join.</param>
         /// <returns>A dot-separated string of the variable names, or an empty string if no args are provided.</returns>
@@ -149,6 +155,7 @@ namespace vFrame.Core
             if (null == args || args.Length <= 0) {
                 return "";
             }
+
             return string.Join(".", args);
         }
     }

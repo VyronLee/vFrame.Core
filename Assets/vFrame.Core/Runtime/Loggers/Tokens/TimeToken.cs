@@ -11,29 +11,27 @@
 
 using System;
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders the current timestamp.
-    /// Supports {time} (default format) and {time:format} (custom format string).
+    ///     A format token that renders the current timestamp.
+    ///     Supports {time} (default format) and {time:format} (custom format string).
     /// </summary>
     public class TimeToken : IToken
     {
+        private static readonly string DefaultFormat = "yyyy-MM-dd HH:mm:ss.fff";
         private readonly string _format;
 
-        private static readonly string DefaultFormat = "yyyy-MM-dd HH:mm:ss.fff";
-
         /// <summary>
-        /// Creates a new time token with the specified format string.
+        ///     Creates a new time token with the specified format string.
         /// </summary>
         /// <param name="format">The DateTime format string. Uses default format if null or empty.</param>
         public TimeToken(string format) {
             _format = string.IsNullOrEmpty(format) ? DefaultFormat : format;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append(DateTime.Now.ToString(_format));
         }

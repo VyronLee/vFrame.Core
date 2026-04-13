@@ -9,11 +9,11 @@
 // ============================================================
 
 using System;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
-    public abstract class RecycleOnDestroy<TC> : BaseObject<IObjectPoolManager> where TC : BaseObject<IObjectPoolManager>
+    public abstract class RecycleOnDestroy<TC> : BaseObject<IObjectPoolManager>
+        where TC : BaseObject<IObjectPoolManager>
     {
         protected IObjectPoolManager PoolManager { get; set; }
 
@@ -43,6 +43,5 @@ namespace vFrame.Core
             PoolManager?.Return(this);
             PoolManager = null;
         }
-
     }
 }

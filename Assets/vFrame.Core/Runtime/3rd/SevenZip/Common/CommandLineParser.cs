@@ -34,12 +34,10 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
         }
 
         public SwitchForm(string idString, SwitchType type, bool multi, int minLen) :
-            this(idString, type, multi, minLen, 0, "") {
-        }
+            this(idString, type, multi, minLen, 0, "") { }
 
         public SwitchForm(string idString, SwitchType type, bool multi) :
-            this(idString, type, multi, 0) {
-        }
+            this(idString, type, multi, 0) { }
     }
 
     public class SwitchResult
@@ -66,29 +64,38 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
 
         public Parser(int numSwitches) {
             _switches = new SwitchResult[numSwitches];
-            for (var i = 0; i < numSwitches; i++)
+            for (var i = 0; i < numSwitches; i++) {
                 _switches[i] = new SwitchResult();
+            }
         }
 
         public SwitchResult this[int index] => _switches[index];
 
         private bool ParseString(string srcString, SwitchForm[] switchForms) {
             var len = srcString.Length;
-            if (len == 0)
+            if (len == 0) {
                 return false;
+            }
+
             var pos = 0;
-            if (!IsItSwitchChar(srcString[pos]))
+            if (!IsItSwitchChar(srcString[pos])) {
                 return false;
+            }
+
             while (pos < len) {
-                if (IsItSwitchChar(srcString[pos]))
+                if (IsItSwitchChar(srcString[pos])) {
                     pos++;
+                }
+
                 const int kNoLen = -1;
                 var matchedSwitchIndex = 0;
                 var maxLen = kNoLen;
                 for (var switchIndex = 0; switchIndex < _switches.Length; switchIndex++) {
                     var switchLen = switchForms[switchIndex].IDString.Length;
-                    if (switchLen <= maxLen || pos + switchLen > len)
+                    if (switchLen <= maxLen || pos + switchLen > len) {
                         continue;
+                    }
+
                     if (string.Compare(switchForms[switchIndex].IDString, 0,
                             srcString, pos, switchLen, true) == 0) {
                         matchedSwitchIndex = switchIndex;
@@ -96,12 +103,16 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
                     }
                 }
 
-                if (maxLen == kNoLen)
+                if (maxLen == kNoLen) {
                     throw new Exception("maxLen == kNoLen");
+                }
+
                 var matchedSwitch = _switches[matchedSwitchIndex];
                 var switchForm = switchForms[matchedSwitchIndex];
-                if (!switchForm.Multi && matchedSwitch.ThereIs)
+                if (!switchForm.Multi && matchedSwitch.ThereIs) {
                     throw new Exception("switch must be single");
+                }
+
                 matchedSwitch.ThereIs = true;
                 pos += maxLen;
                 var tailSize = len - pos;
@@ -113,15 +124,18 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
                         }
                         else {
                             matchedSwitch.WithMinus = srcString[pos] == kSwitchMinus;
-                            if (matchedSwitch.WithMinus)
+                            if (matchedSwitch.WithMinus) {
                                 pos++;
+                            }
                         }
 
                         break;
                     }
                     case SwitchType.PostChar: {
-                        if (tailSize < switchForm.MinLen)
+                        if (tailSize < switchForm.MinLen) {
                             throw new Exception("switch is not full");
+                        }
+
                         var charSet = switchForm.PostCharSet;
                         const int kEmptyCharValue = -1;
                         if (tailSize == 0) {
@@ -143,8 +157,10 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
                     case SwitchType.LimitedPostString:
                     case SwitchType.UnLimitedPostString: {
                         var minLen = switchForm.MinLen;
-                        if (tailSize < minLen)
+                        if (tailSize < minLen) {
                             throw new Exception("switch is not full");
+                        }
+
                         if (type == SwitchType.UnLimitedPostString) {
                             matchedSwitch.PostStrings.Add(srcString.Substring(pos));
                             return true;
@@ -154,8 +170,10 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
                         pos += minLen;
                         for (var i = minLen; i < switchForm.MaxLen && pos < len; i++, pos++) {
                             var c = srcString[pos];
-                            if (IsItSwitchChar(c))
+                            if (IsItSwitchChar(c)) {
                                 break;
+                            }
+
                             stringSwitch += c;
                         }
 
@@ -173,12 +191,15 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
             var stopSwitch = false;
             for (var i = 0; i < numCommandStrings; i++) {
                 var s = commandStrings[i];
-                if (stopSwitch)
+                if (stopSwitch) {
                     NonSwitchStrings.Add(s);
-                else if (s == kStopSwitchParsing)
+                }
+                else if (s == kStopSwitchParsing) {
                     stopSwitch = true;
-                else if (!ParseString(s, switchForms))
+                }
+                else if (!ParseString(s, switchForms)) {
                     NonSwitchStrings.Add(s);
+                }
             }
         }
 
@@ -214,17 +235,23 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
                     var c = charsSet.Chars[j];
                     var newIndex = commandString.IndexOf(c);
                     if (newIndex >= 0) {
-                        if (currentIndex >= 0)
+                        if (currentIndex >= 0) {
                             return false;
-                        if (commandString.IndexOf(c, newIndex + 1) >= 0)
+                        }
+
+                        if (commandString.IndexOf(c, newIndex + 1) >= 0) {
                             return false;
+                        }
+
                         currentIndex = j;
                         numUsedChars++;
                     }
                 }
 
-                if (currentIndex == -1 && !charsSet.EmptyAllowed)
+                if (currentIndex == -1 && !charsSet.EmptyAllowed) {
                     return false;
+                }
+
                 indices.Add(currentIndex);
             }
 

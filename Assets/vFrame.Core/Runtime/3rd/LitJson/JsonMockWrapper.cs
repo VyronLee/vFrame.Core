@@ -58,30 +58,23 @@ namespace vFrame.Core
             return "";
         }
 
-        public void SetBoolean(bool val) {
-        }
+        public void SetBoolean(bool val) { }
 
-        public void SetDouble(double val) {
-        }
+        public void SetDouble(double val) { }
 
-        public void SetInt(int val) {
-        }
+        public void SetInt(int val) { }
 
-        public void SetJsonType(JsonType type) {
-        }
+        public void SetJsonType(JsonType type) { }
 
-        public void SetLong(long val) {
-        }
+        public void SetLong(long val) { }
 
-        public void SetString(string val) {
-        }
+        public void SetString(string val) { }
 
         public string ToJson() {
             return "";
         }
 
-        public void ToJson(JsonWriter writer) {
-        }
+        public void ToJson(JsonWriter writer) { }
 
 
         bool IList.IsFixedSize => true;
@@ -97,8 +90,7 @@ namespace vFrame.Core
             return 0;
         }
 
-        void IList.Clear() {
-        }
+        void IList.Clear() { }
 
         bool IList.Contains(object value) {
             return false;
@@ -108,14 +100,11 @@ namespace vFrame.Core
             return -1;
         }
 
-        void IList.Insert(int i, object v) {
-        }
+        void IList.Insert(int i, object v) { }
 
-        void IList.Remove(object value) {
-        }
+        void IList.Remove(object value) { }
 
-        void IList.RemoveAt(int index) {
-        }
+        void IList.RemoveAt(int index) { }
 
 
         int ICollection.Count => 0;
@@ -124,8 +113,7 @@ namespace vFrame.Core
 
         object ICollection.SyncRoot => null;
 
-        void ICollection.CopyTo(Array array, int index) {
-        }
+        void ICollection.CopyTo(Array array, int index) { }
 
 
         IEnumerator IEnumerable.GetEnumerator() {
@@ -146,18 +134,15 @@ namespace vFrame.Core
             set { }
         }
 
-        void IDictionary.Add(object k, object v) {
-        }
+        void IDictionary.Add(object k, object v) { }
 
-        void IDictionary.Clear() {
-        }
+        void IDictionary.Clear() { }
 
         bool IDictionary.Contains(object key) {
             return false;
         }
 
-        void IDictionary.Remove(object key) {
-        }
+        void IDictionary.Remove(object key) { }
 
         IDictionaryEnumerator IDictionary.GetEnumerator() {
             return null;
@@ -173,10 +158,8 @@ namespace vFrame.Core
             return null;
         }
 
-        void IOrderedDictionary.Insert(int i, object k, object v) {
-        }
+        void IOrderedDictionary.Insert(int i, object k, object v) { }
 
-        void IOrderedDictionary.RemoveAt(int i) {
-        }
+        void IOrderedDictionary.RemoveAt(int i) { }
     }
 }

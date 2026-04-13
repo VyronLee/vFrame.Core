@@ -12,5 +12,6 @@ using System.Collections.Generic;
 
 namespace vFrame.Core
 {
-    public class DictionaryPool<T1, T2> : ObjectPool<Dictionary<T1, T2>, DictionaryAllocator<T1, T2>> { }
+    public class DictionaryPool<T1, T2> : ObjectPool<Dictionary<T1, T2>, DictionaryAllocator<T1, T2>>
+    { }
 }

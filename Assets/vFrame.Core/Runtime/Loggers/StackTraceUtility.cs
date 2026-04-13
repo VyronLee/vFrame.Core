@@ -21,7 +21,7 @@ namespace vFrame.Core
         private static string projectFolder = string.Empty;
 
         /// <summary>
-        /// Sets the project root folder used to strip absolute paths from stack traces.
+        ///     Sets the project root folder used to strip absolute paths from stack traces.
         /// </summary>
         /// <param name="folder">The absolute path of the project root folder.</param>
         internal static void SetProjectFolder(string folder) {
@@ -29,7 +29,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Extracts a formatted stack trace from the current call site.
+        ///     Extracts a formatted stack trace from the current call site.
         /// </summary>
         /// <returns>A formatted string representation of the stack trace.</returns>
         [SecuritySafeCritical]
@@ -38,7 +38,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Determines whether the given type name belongs to a system or engine namespace.
+        ///     Determines whether the given type name belongs to a system or engine namespace.
         /// </summary>
         /// <param name="name">The type name to check.</param>
         /// <returns><c>true</c> if the name is a system stack trace type; otherwise, <c>false</c>.</returns>
@@ -48,11 +48,12 @@ namespace vFrame.Core
                 !str.StartsWith("UnityScript.Lang.") && !str.StartsWith("Boo.Lang.")) {
                 return str.StartsWith("UnityEngine.SetupCoroutine");
             }
+
             return true;
         }
 
         /// <summary>
-        /// Extracts the exception message and stack trace from an exception object.
+        ///     Extracts the exception message and stack trace from an exception object.
         /// </summary>
         /// <param name="exception">The exception to extract from.</param>
         /// <returns>A combined string of the message and stack trace separated by a newline.</returns>
@@ -64,24 +65,29 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Internal method that extracts message and stack trace from an exception,
-        /// walking the inner exception chain.
+        ///     Internal method that extracts message and stack trace from an exception,
+        ///     walking the inner exception chain.
         /// </summary>
         /// <param name="exceptiono">The exception object to extract from.</param>
         /// <param name="message">The combined exception message.</param>
         /// <param name="stackTrace">The combined stack trace string.</param>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="exceptiono"/> is null or not an <see cref="Exception"/>.</exception>
+        /// <exception cref="ArgumentException">
+        ///     Thrown when <paramref name="exceptiono" /> is null or not an
+        ///     <see cref="Exception" />.
+        /// </exception>
         [SecuritySafeCritical]
         internal static void ExtractStringFromExceptionInternal(object exceptiono, out string message,
             out string stackTrace) {
             if (exceptiono == null) {
                 throw new ArgumentException("ExtractStringFromExceptionInternal called with null exception");
             }
+
             var exception = exceptiono as Exception;
             if (exception == null) {
                 throw new ArgumentException(
                     "ExtractStringFromExceptionInternal called with an exceptoin that was not of type System.Exception");
             }
+
             var stringBuilder = new StringBuilder(exception.StackTrace != null ? exception.StackTrace.Length * 2 : 512);
             message = string.Empty;
             var str1 = string.Empty;
@@ -92,9 +98,11 @@ namespace vFrame.Core
                 if (exception.Message != null) {
                     str3 = exception.Message;
                 }
+
                 if (str3.Trim().Length != 0) {
                     str2 = str2 + ": " + str3;
                 }
+
                 message = str2;
                 if (exception.InnerException != null) {
                     str1 = "Rethrow as " + str2 + "\n" + str1;
@@ -108,8 +116,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Post-processes a raw stack trace string, stripping engine-internal frames
-        /// and normalizing path separators.
+        ///     Post-processes a raw stack trace string, stripping engine-internal frames
+        ///     and normalizing path separators.
         /// </summary>
         /// <param name="oldString">The raw stack trace string.</param>
         /// <param name="stripEngineInternalInformation">Whether to remove engine-internal frames.</param>
@@ -118,11 +126,13 @@ namespace vFrame.Core
             if (oldString == null) {
                 return string.Empty;
             }
+
             var strArray = oldString.Split('\n');
             var stringBuilder = new StringBuilder(oldString.Length);
             for (var index = 0; index < strArray.Length; ++index) {
                 strArray[index] = strArray[index].Trim();
             }
+
             for (var index = 0; index < strArray.Length; ++index) {
                 var str1 = strArray[index];
                 if (str1.Length != 0 && str1[0] != 10 && !str1.StartsWith("in (unmanaged)")) {
@@ -148,14 +158,17 @@ namespace vFrame.Core
                             if (str1.StartsWith("at ")) {
                                 str1 = str1.Remove(0, 3);
                             }
+
                             var startIndex1 = str1.IndexOf("[0x");
                             var num = -1;
                             if (startIndex1 != -1) {
                                 num = str1.IndexOf("]", startIndex1);
                             }
+
                             if (startIndex1 != -1 && num > startIndex1) {
                                 str1 = str1.Remove(startIndex1, num - startIndex1 + 1);
                             }
+
                             var str2 = str1.Replace("  in <filename unknown>:0", string.Empty)
                                 .Replace(projectFolder, string.Empty).Replace('\\', '/');
                             var startIndex2 = str2.LastIndexOf("  in ");
@@ -177,8 +190,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Formats a <see cref="StackTrace"/> into a human-readable string with
-        /// namespace, class, method, parameters, and file location.
+        ///     Formats a <see cref="StackTrace" /> into a human-readable string with
+        ///     namespace, class, method, parameters, and file location.
         /// </summary>
         /// <param name="stackTrace">The stack trace to format.</param>
         /// <returns>A formatted string representation of the stack trace.</returns>
@@ -211,6 +224,7 @@ namespace vFrame.Core
                             else {
                                 flag = false;
                             }
+
                             stringBuilder.Append(parameters[index2].ParameterType.Name);
                         }
 
@@ -227,6 +241,7 @@ namespace vFrame.Core
                             if (str2.StartsWith(projectFolder)) {
                                 str2 = str2.Substring(projectFolder.Length, str2.Length - projectFolder.Length);
                             }
+
                             stringBuilder.Append(str2);
                             stringBuilder.Append(":");
                             stringBuilder.Append(frame.GetFileLineNumber().ToString());

@@ -14,15 +14,15 @@ using System;
 namespace vFrame.Core
 {
     /// <summary>
-    /// A disposable scope that pushes a named property onto the current
-    /// async-local log context and pops it on disposal.
+    ///     A disposable scope that pushes a named property onto the current
+    ///     async-local log context and pops it on disposal.
     /// </summary>
     public readonly struct LogScope : IDisposable
     {
         private readonly string _key;
 
         /// <summary>
-        /// Pushes a property onto the current log context scope.
+        ///     Pushes a property onto the current log context scope.
         /// </summary>
         /// <param name="key">The property key.</param>
         /// <param name="value">The property value.</param>
@@ -32,7 +32,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Pops the property from the current log context scope.
+        ///     Pops the property from the current log context scope.
         /// </summary>
         public void Dispose() {
             LogContextProperties.PopProperty(_key);

@@ -14,19 +14,19 @@ using System.IO;
 namespace vFrame.Core
 {
     /// <summary>
-    /// Provides compression and decompression operations on streams.
+    ///     Provides compression and decompression operations on streams.
     /// </summary>
     public interface ICompressor : IDisposable
     {
         /// <summary>
-        /// Compresses the input stream to the output stream.
+        ///     Compresses the input stream to the output stream.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
         void Compress(Stream input, Stream output);
 
         /// <summary>
-        /// Compresses the input stream to the output stream with progress reporting.
+        ///     Compresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
@@ -34,14 +34,14 @@ namespace vFrame.Core
         void Compress(Stream input, Stream output, Action<long, long> onProgress);
 
         /// <summary>
-        /// Decompresses the input stream to the output stream.
+        ///     Decompresses the input stream to the output stream.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream receiving decompressed data.</param>
         void Decompress(Stream input, Stream output);
 
         /// <summary>
-        /// Decompresses the input stream to the output stream with progress reporting.
+        ///     Decompresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="output">The output stream receiving decompressed data.</param>
         /// <param name="input">The compressed data stream.</param>

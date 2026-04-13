@@ -10,8 +10,7 @@ namespace vFrame.Core.ThirdParty.SevenZip
     /// </summary>
     internal class DataErrorException : ApplicationException
     {
-        public DataErrorException() : base("Data Error") {
-        }
+        public DataErrorException() : base("Data Error") { }
     }
 
     /// <summary>
@@ -19,8 +18,7 @@ namespace vFrame.Core.ThirdParty.SevenZip
     /// </summary>
     internal class InvalidParamException : ApplicationException
     {
-        public InvalidParamException() : base("Invalid Parameter") {
-        }
+        public InvalidParamException() : base("Invalid Parameter") { }
     }
 
     public interface ICodeProgress

@@ -10,26 +10,25 @@
 // ============================================================
 
 using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// A format token that renders a fixed literal string.
+    ///     A format token that renders a fixed literal string.
     /// </summary>
     public class LiteralToken : IToken
     {
         private readonly string _text;
 
         /// <summary>
-        /// Creates a new literal token with the specified text.
+        ///     Creates a new literal token with the specified text.
         /// </summary>
         /// <param name="text">The fixed text to render.</param>
         public LiteralToken(string text) {
             _text = text;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
             sb.Append(_text);
         }

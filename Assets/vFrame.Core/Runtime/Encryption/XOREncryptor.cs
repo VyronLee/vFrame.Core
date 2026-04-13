@@ -10,45 +10,44 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
-using System;
 using System.IO;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// XOR-based symmetric encryptor. Encrypt and Decrypt are identical operations.
+    ///     XOR-based symmetric encryptor. Encrypt and Decrypt are identical operations.
     /// </summary>
     /// <remarks>
-    /// WARNING: XOR encryption provides obfuscation only — it does NOT offer
-    /// cryptographic security. Use AES-based encryptors for sensitive data.
+    ///     WARNING: XOR encryption provides obfuscation only — it does NOT offer
+    ///     cryptographic security. Use AES-based encryptors for sensitive data.
     /// </remarks>
     public sealed class XOREncryptor : Encryptor
     {
         private const int DefaultStreamBufferSize = 8192;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             XORBuffer(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(byte[] input, byte[] output, byte[] key, int keyLength) {
             XORBuffer(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Encrypt(Stream input, Stream output, byte[] key, int keyLength) {
             XORStream(input, output, key, keyLength);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Decrypt(Stream input, Stream output, byte[] key, int keyLength) {
             XORStream(input, output, key, keyLength);
         }
 
         /// <summary>
-        /// Performs XOR operation on a byte array using the given key.
-        /// Processes data in-place style with key cycling.
+        ///     Performs XOR operation on a byte array using the given key.
+        ///     Processes data in-place style with key cycling.
         /// </summary>
         private static void XORBuffer(byte[] input, byte[] output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
@@ -57,6 +56,7 @@ namespace vFrame.Core
             if (keyLength <= 0 || keyLength > key.Length) {
                 ThrowHelper.ThrowArgumentException("keyLength must be between 1 and key.Length.");
             }
+
             if (output.Length < input.Length) {
                 ThrowHelper.ThrowArgumentException("Output buffer is too small.");
             }
@@ -82,8 +82,8 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Performs XOR operation on a stream using batched buffer reads.
-        /// Uses 8KB buffer instead of byte-by-byte ReadByte for ~10x throughput.
+        ///     Performs XOR operation on a stream using batched buffer reads.
+        ///     Uses 8KB buffer instead of byte-by-byte ReadByte for ~10x throughput.
         /// </summary>
         private static void XORStream(Stream input, Stream output, byte[] key, int keyLength) {
             ThrowHelper.ThrowIfNull(input, nameof(input));
@@ -104,6 +104,7 @@ namespace vFrame.Core
                     buffer[i] = (byte)(buffer[i] ^ key[globalIndex % keyLen]);
                     globalIndex++;
                 }
+
                 output.Write(buffer, 0, bytesRead);
             }
         }

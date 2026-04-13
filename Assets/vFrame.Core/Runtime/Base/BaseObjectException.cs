@@ -12,12 +12,14 @@
 namespace vFrame.Core
 {
     /// <summary>
-    /// Thrown when a <see cref="BaseObject"/> is used after being destroyed.
+    ///     Thrown when a <see cref="BaseObject" /> is used after being destroyed.
     /// </summary>
-    public class BaseObjectDestroyedException : vFrameException { }
+    public class BaseObjectDestroyedException : vFrameException
+    { }
 
     /// <summary>
-    /// Thrown when a <see cref="BaseObject"/> is used without being created first.
+    ///     Thrown when a <see cref="BaseObject" /> is used without being created first.
     /// </summary>
-    public class BaseObjectNotCreatedException : vFrameException { }
+    public class BaseObjectNotCreatedException : vFrameException
+    { }
 }

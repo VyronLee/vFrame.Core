@@ -18,7 +18,7 @@ namespace vFrame.Core
         protected CompressorOptions Options { get; private set; }
 
         /// <summary>
-        /// Compresses the input stream to the output stream without progress reporting.
+        ///     Compresses the input stream to the output stream without progress reporting.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
@@ -27,7 +27,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Compresses the input stream to the output stream with progress reporting.
+        ///     Compresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="input">The data stream to compress.</param>
         /// <param name="output">The output stream receiving compressed data.</param>
@@ -35,7 +35,7 @@ namespace vFrame.Core
         public abstract void Compress(Stream input, Stream output, Action<long, long> onProgress);
 
         /// <summary>
-        /// Decompresses the input stream to the output stream without progress reporting.
+        ///     Decompresses the input stream to the output stream without progress reporting.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream receiving decompressed data.</param>
@@ -44,7 +44,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Decompresses the input stream to the output stream with progress reporting.
+        ///     Decompresses the input stream to the output stream with progress reporting.
         /// </summary>
         /// <param name="input">The compressed data stream.</param>
         /// <param name="output">The output stream receiving decompressed data.</param>
@@ -52,7 +52,7 @@ namespace vFrame.Core
         public abstract void Decompress(Stream input, Stream output, Action<long, long> onProgress);
 
         /// <summary>
-        /// Stores the compressor options during creation.
+        ///     Stores the compressor options during creation.
         /// </summary>
         /// <param name="options">The compressor configuration options.</param>
         protected override void OnCreate(CompressorOptions options) {
@@ -60,7 +60,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Cleanup logic invoked during destruction.
+        ///     Cleanup logic invoked during destruction.
         /// </summary>
         protected override void OnDestroy() { }
     }

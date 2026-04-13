@@ -11,7 +11,6 @@
 #endregion
 
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -43,28 +42,30 @@ namespace vFrame.Core
     public class JsonReader
     {
         public void Close() {
-            if (EndOfInput)
+            if (EndOfInput) {
                 return;
+            }
 
             EndOfInput = true;
             EndOfJson = true;
 
-            if (reader_is_owned)
-                using (reader) {
-                }
+            if (reader_is_owned) {
+                using (reader) { }
+            }
 
             reader = null;
         }
 
         public bool Read() {
-            if (EndOfInput)
+            if (EndOfInput) {
                 return false;
+            }
 
             if (EndOfJson) {
                 EndOfJson = false;
                 automaton_stack.Clear();
-                automaton_stack.Push((int) ParserToken.End);
-                automaton_stack.Push((int) ParserToken.Text);
+                automaton_stack.Push((int)ParserToken.End);
+                automaton_stack.Push((int)ParserToken.Text);
             }
 
             parser_in_string = false;
@@ -76,8 +77,9 @@ namespace vFrame.Core
             if (!read_started) {
                 read_started = true;
 
-                if (!ReadToken())
+                if (!ReadToken()) {
                     return false;
+                }
             }
 
 
@@ -85,8 +87,9 @@ namespace vFrame.Core
 
             while (true) {
                 if (parser_return) {
-                    if (automaton_stack.Peek() == (int) ParserToken.End)
+                    if (automaton_stack.Peek() == (int)ParserToken.End) {
                         EndOfJson = true;
+                    }
 
                     return true;
                 }
@@ -97,12 +100,14 @@ namespace vFrame.Core
 
                 if (current_symbol == current_input) {
                     if (!ReadToken()) {
-                        if (automaton_stack.Peek() != (int) ParserToken.End)
+                        if (automaton_stack.Peek() != (int)ParserToken.End) {
                             throw new JsonException(
                                 "Input doesn't evaluate to proper JSON text");
+                        }
 
-                        if (parser_return)
+                        if (parser_return) {
                             return true;
+                        }
 
                         return false;
                     }
@@ -115,14 +120,16 @@ namespace vFrame.Core
                         parse_table[current_symbol][current_input];
                 }
                 catch (KeyNotFoundException e) {
-                    throw new JsonException((ParserToken) current_input, e);
+                    throw new JsonException((ParserToken)current_input, e);
                 }
 
-                if (entry_symbols[0] == (int) ParserToken.Epsilon)
+                if (entry_symbols[0] == (int)ParserToken.Epsilon) {
                     continue;
+                }
 
-                for (var i = entry_symbols.Length - 1; i >= 0; i--)
+                for (var i = entry_symbols.Length - 1; i >= 0; i--) {
                     automaton_stack.Push(entry_symbols[i]);
+                }
             }
         }
 
@@ -175,24 +182,23 @@ namespace vFrame.Core
         }
 
         public JsonReader(string json_text) :
-            this(new StringReader(json_text), true) {
-        }
+            this(new StringReader(json_text), true) { }
 
         public JsonReader(TextReader reader) :
-            this(reader, false) {
-        }
+            this(reader, false) { }
 
         private JsonReader(TextReader reader, bool owned) {
-            if (reader == null)
+            if (reader == null) {
                 throw new ArgumentNullException("reader");
+            }
 
             parser_in_string = false;
             parser_return = false;
 
             read_started = false;
             automaton_stack = new Stack<int>();
-            automaton_stack.Push((int) ParserToken.End);
-            automaton_stack.Push((int) ParserToken.Text);
+            automaton_stack.Push((int)ParserToken.End);
+            automaton_stack.Push((int)ParserToken.Text);
 
             lexer = new Lexer(reader);
 
@@ -217,113 +223,113 @@ namespace vFrame.Core
             TableAddRow(parse_table, ParserToken.Array);
             TableAddCol(parse_table, ParserToken.Array, '[',
                 '[',
-                (int) ParserToken.ArrayPrime);
+                (int)ParserToken.ArrayPrime);
 
             TableAddRow(parse_table, ParserToken.ArrayPrime);
             TableAddCol(parse_table, ParserToken.ArrayPrime, '"',
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
             TableAddCol(parse_table, ParserToken.ArrayPrime, '[',
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
             TableAddCol(parse_table, ParserToken.ArrayPrime, ']',
                 ']');
             TableAddCol(parse_table, ParserToken.ArrayPrime, '{',
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
-            TableAddCol(parse_table, ParserToken.ArrayPrime, (int) ParserToken.Number,
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+            TableAddCol(parse_table, ParserToken.ArrayPrime, (int)ParserToken.Number,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
-            TableAddCol(parse_table, ParserToken.ArrayPrime, (int) ParserToken.True,
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+            TableAddCol(parse_table, ParserToken.ArrayPrime, (int)ParserToken.True,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
-            TableAddCol(parse_table, ParserToken.ArrayPrime, (int) ParserToken.False,
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+            TableAddCol(parse_table, ParserToken.ArrayPrime, (int)ParserToken.False,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
-            TableAddCol(parse_table, ParserToken.ArrayPrime, (int) ParserToken.Null,
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest,
+            TableAddCol(parse_table, ParserToken.ArrayPrime, (int)ParserToken.Null,
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest,
                 ']');
 
             TableAddRow(parse_table, ParserToken.Object);
             TableAddCol(parse_table, ParserToken.Object, '{',
                 '{',
-                (int) ParserToken.ObjectPrime);
+                (int)ParserToken.ObjectPrime);
 
             TableAddRow(parse_table, ParserToken.ObjectPrime);
             TableAddCol(parse_table, ParserToken.ObjectPrime, '"',
-                (int) ParserToken.Pair,
-                (int) ParserToken.PairRest,
+                (int)ParserToken.Pair,
+                (int)ParserToken.PairRest,
                 '}');
             TableAddCol(parse_table, ParserToken.ObjectPrime, '}',
                 '}');
 
             TableAddRow(parse_table, ParserToken.Pair);
             TableAddCol(parse_table, ParserToken.Pair, '"',
-                (int) ParserToken.String,
+                (int)ParserToken.String,
                 ':',
-                (int) ParserToken.Value);
+                (int)ParserToken.Value);
 
             TableAddRow(parse_table, ParserToken.PairRest);
             TableAddCol(parse_table, ParserToken.PairRest, ',',
                 ',',
-                (int) ParserToken.Pair,
-                (int) ParserToken.PairRest);
+                (int)ParserToken.Pair,
+                (int)ParserToken.PairRest);
             TableAddCol(parse_table, ParserToken.PairRest, '}',
-                (int) ParserToken.Epsilon);
+                (int)ParserToken.Epsilon);
 
             TableAddRow(parse_table, ParserToken.String);
             TableAddCol(parse_table, ParserToken.String, '"',
                 '"',
-                (int) ParserToken.CharSeq,
+                (int)ParserToken.CharSeq,
                 '"');
 
             TableAddRow(parse_table, ParserToken.Text);
             TableAddCol(parse_table, ParserToken.Text, '[',
-                (int) ParserToken.Array);
+                (int)ParserToken.Array);
             TableAddCol(parse_table, ParserToken.Text, '{',
-                (int) ParserToken.Object);
+                (int)ParserToken.Object);
 
             TableAddRow(parse_table, ParserToken.Value);
             TableAddCol(parse_table, ParserToken.Value, '"',
-                (int) ParserToken.String);
+                (int)ParserToken.String);
             TableAddCol(parse_table, ParserToken.Value, '[',
-                (int) ParserToken.Array);
+                (int)ParserToken.Array);
             TableAddCol(parse_table, ParserToken.Value, '{',
-                (int) ParserToken.Object);
-            TableAddCol(parse_table, ParserToken.Value, (int) ParserToken.Number,
-                (int) ParserToken.Number);
-            TableAddCol(parse_table, ParserToken.Value, (int) ParserToken.True,
-                (int) ParserToken.True);
-            TableAddCol(parse_table, ParserToken.Value, (int) ParserToken.False,
-                (int) ParserToken.False);
-            TableAddCol(parse_table, ParserToken.Value, (int) ParserToken.Null,
-                (int) ParserToken.Null);
+                (int)ParserToken.Object);
+            TableAddCol(parse_table, ParserToken.Value, (int)ParserToken.Number,
+                (int)ParserToken.Number);
+            TableAddCol(parse_table, ParserToken.Value, (int)ParserToken.True,
+                (int)ParserToken.True);
+            TableAddCol(parse_table, ParserToken.Value, (int)ParserToken.False,
+                (int)ParserToken.False);
+            TableAddCol(parse_table, ParserToken.Value, (int)ParserToken.Null,
+                (int)ParserToken.Null);
 
             TableAddRow(parse_table, ParserToken.ValueRest);
             TableAddCol(parse_table, ParserToken.ValueRest, ',',
                 ',',
-                (int) ParserToken.Value,
-                (int) ParserToken.ValueRest);
+                (int)ParserToken.Value,
+                (int)ParserToken.ValueRest);
             TableAddCol(parse_table, ParserToken.ValueRest, ']',
-                (int) ParserToken.Epsilon);
+                (int)ParserToken.Epsilon);
 
             return parse_table;
         }
 
         private static void TableAddCol(IDictionary<int, IDictionary<int, int[]>> parse_table, ParserToken row, int col,
             params int[] symbols) {
-            parse_table[(int) row].Add(col, symbols);
+            parse_table[(int)row].Add(col, symbols);
         }
 
         private static void TableAddRow(IDictionary<int, IDictionary<int, int[]>> parse_table, ParserToken rule) {
-            parse_table.Add((int) rule, new Dictionary<int, int[]>());
+            parse_table.Add((int)rule, new Dictionary<int, int[]>());
         }
 
         #endregion
@@ -397,33 +403,34 @@ namespace vFrame.Core
                     parser_return = true;
                 }
                 else {
-                    if (Token == JsonToken.None)
+                    if (Token == JsonToken.None) {
                         Token = JsonToken.String;
+                    }
 
                     parser_in_string = true;
                 }
             }
-            else if (current_symbol == (int) ParserToken.CharSeq) {
+            else if (current_symbol == (int)ParserToken.CharSeq) {
                 Value = lexer.StringValue;
             }
-            else if (current_symbol == (int) ParserToken.False) {
+            else if (current_symbol == (int)ParserToken.False) {
                 Token = JsonToken.Boolean;
                 Value = false;
                 parser_return = true;
             }
-            else if (current_symbol == (int) ParserToken.Null) {
+            else if (current_symbol == (int)ParserToken.Null) {
                 Token = JsonToken.Null;
                 parser_return = true;
             }
-            else if (current_symbol == (int) ParserToken.Number) {
+            else if (current_symbol == (int)ParserToken.Number) {
                 ProcessNumber(lexer.StringValue);
 
                 parser_return = true;
             }
-            else if (current_symbol == (int) ParserToken.Pair) {
+            else if (current_symbol == (int)ParserToken.Pair) {
                 Token = JsonToken.PropertyName;
             }
-            else if (current_symbol == (int) ParserToken.True) {
+            else if (current_symbol == (int)ParserToken.True) {
                 Token = JsonToken.Boolean;
                 Value = true;
                 parser_return = true;
@@ -431,8 +438,9 @@ namespace vFrame.Core
         }
 
         private bool ReadToken() {
-            if (EndOfInput)
+            if (EndOfInput) {
                 return false;
+            }
 
             lexer.NextToken();
 

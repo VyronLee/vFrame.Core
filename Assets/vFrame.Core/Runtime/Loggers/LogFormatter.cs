@@ -11,21 +11,19 @@
 // ============================================================
 
 using System.Collections.Generic;
-using System.Text;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
     /// <summary>
-    /// Template-based log formatter that parses format strings containing
-    /// <c>{token}</c> and <c>{token:format}</c> placeholders into renderable tokens.
+    ///     Template-based log formatter that parses format strings containing
+    ///     <c>{token}</c> and <c>{token:format}</c> placeholders into renderable tokens.
     /// </summary>
     public class LogFormatter
     {
         private readonly List<IToken> _tokens = new List<IToken>();
 
         /// <summary>
-        /// Creates a new log formatter by parsing the specified template string.
+        ///     Creates a new log formatter by parsing the specified template string.
         /// </summary>
         /// <param name="template">The format template (e.g., "[{time}] [{level:u3}] {tag}: {message}").</param>
         public LogFormatter(string template) {
@@ -33,7 +31,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Formats the given log context using the parsed template tokens.
+        ///     Formats the given log context using the parsed template tokens.
         /// </summary>
         /// <param name="context">The log context to format.</param>
         /// <returns>The formatted log string.</returns>
@@ -43,6 +41,7 @@ namespace vFrame.Core
                 foreach (var token in _tokens) {
                     token.Render(sb, context);
                 }
+
                 return sb.ToString();
             }
             finally {
@@ -127,6 +126,7 @@ namespace vFrame.Core
                             sb.Append(':');
                             sb.Append(format);
                         }
+
                         sb.Append('}');
                         return new LiteralToken(sb.ToString());
                     }

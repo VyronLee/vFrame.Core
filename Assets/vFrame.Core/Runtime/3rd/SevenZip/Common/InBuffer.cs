@@ -28,12 +28,14 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
         }
 
         public bool ReadBlock() {
-            if (m_StreamWasExhausted)
+            if (m_StreamWasExhausted) {
                 return false;
+            }
+
             m_ProcessedSize += m_Pos;
-            var aNumProcessedBytes = m_Stream.Read(m_Buffer, 0, (int) m_BufferSize);
+            var aNumProcessedBytes = m_Stream.Read(m_Buffer, 0, (int)m_BufferSize);
             m_Pos = 0;
-            m_Limit = (uint) aNumProcessedBytes;
+            m_Limit = (uint)aNumProcessedBytes;
             m_StreamWasExhausted = aNumProcessedBytes == 0;
             return !m_StreamWasExhausted;
         }
@@ -46,18 +48,24 @@ namespace vFrame.Core.ThirdParty.SevenZip.Common
 
         public bool ReadByte(byte b) // check it
         {
-            if (m_Pos >= m_Limit)
-                if (!ReadBlock())
+            if (m_Pos >= m_Limit) {
+                if (!ReadBlock()) {
                     return false;
+                }
+            }
+
             b = m_Buffer[m_Pos++];
             return true;
         }
 
         public byte ReadByte() {
             // return (byte)m_Stream.ReadByte();
-            if (m_Pos >= m_Limit)
-                if (!ReadBlock())
+            if (m_Pos >= m_Limit) {
+                if (!ReadBlock()) {
                     return 0xFF;
+                }
+            }
+
             return m_Buffer[m_Pos++];
         }
 

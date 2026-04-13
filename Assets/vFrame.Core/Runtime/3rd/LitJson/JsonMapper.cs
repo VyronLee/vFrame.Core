@@ -35,8 +35,9 @@ namespace vFrame.Core
 
         public Type ElementType {
             get {
-                if (element_type == null)
+                if (element_type == null) {
                     return typeof(JsonData);
+                }
 
                 return element_type;
             }
@@ -57,8 +58,9 @@ namespace vFrame.Core
 
         public Type ElementType {
             get {
-                if (element_type == null)
+                if (element_type == null) {
                     return typeof(JsonData);
+                }
 
                 return element_type;
             }
@@ -130,36 +132,36 @@ namespace vFrame.Core
         }
 
         public static JsonData ToObject(JsonReader reader) {
-            return (JsonData) ToWrapper(
+            return (JsonData)ToWrapper(
                 delegate { return new JsonData(); }, reader);
         }
 
         public static JsonData ToObject(TextReader reader) {
             var json_reader = new JsonReader(reader);
 
-            return (JsonData) ToWrapper(
+            return (JsonData)ToWrapper(
                 delegate { return new JsonData(); }, json_reader);
         }
 
         public static JsonData ToObject(string json) {
-            return (JsonData) ToWrapper(
+            return (JsonData)ToWrapper(
                 delegate { return new JsonData(); }, json);
         }
 
         public static T ToObject<T>(JsonReader reader) {
-            return (T) ReadValue(typeof(T), reader);
+            return (T)ReadValue(typeof(T), reader);
         }
 
         public static T ToObject<T>(TextReader reader) {
             var json_reader = new JsonReader(reader);
 
-            return (T) ReadValue(typeof(T), json_reader);
+            return (T)ReadValue(typeof(T), json_reader);
         }
 
         public static T ToObject<T>(string json) {
             var reader = new JsonReader(json);
 
-            return (T) ReadValue(typeof(T), reader);
+            return (T)ReadValue(typeof(T), reader);
         }
 
         public static object ToObject(string json, Type ConvertType) {
@@ -182,7 +184,7 @@ namespace vFrame.Core
 
         public static void RegisterExporter<T>(ExporterFunc<T> exporter) {
             ExporterFunc exporter_wrapper =
-                delegate(object obj, JsonWriter writer) { exporter((T) obj, writer); };
+                delegate(object obj, JsonWriter writer) { exporter((T)obj, writer); };
 
             custom_exporters_table[typeof(T)] = exporter_wrapper;
         }
@@ -190,7 +192,7 @@ namespace vFrame.Core
         public static void RegisterImporter<TJson, TValue>(
             ImporterFunc<TJson, TValue> importer) {
             ImporterFunc importer_wrapper =
-                delegate(object input) { return importer((TJson) input); };
+                delegate(object input) { return importer((TJson)input); };
 
             RegisterImporter(custom_importers_table, typeof(TJson),
                 typeof(TValue), importer_wrapper);
@@ -244,46 +246,52 @@ namespace vFrame.Core
         #region Private Methods
 
         private static void AddArrayMetadata(Type type) {
-            if (array_metadata.ContainsKey(type))
+            if (array_metadata.ContainsKey(type)) {
                 return;
+            }
 
             var data = new ArrayMetadata();
 
             data.IsArray = type.IsArray;
 
-            if (type.GetInterface("System.Collections.IList") != null)
+            if (type.GetInterface("System.Collections.IList") != null) {
                 data.IsList = true;
+            }
 
             foreach (var p_info in type.GetProperties()) {
-                if (p_info.Name != "Item")
+                if (p_info.Name != "Item") {
                     continue;
+                }
 
                 var parameters = p_info.GetIndexParameters();
 
-                if (parameters.Length != 1)
+                if (parameters.Length != 1) {
                     continue;
+                }
 
-                if (parameters[0].ParameterType == typeof(int))
+                if (parameters[0].ParameterType == typeof(int)) {
                     data.ElementType = p_info.PropertyType;
+                }
             }
 
             lock (array_metadata_lock) {
                 try {
                     array_metadata.Add(type, data);
                 }
-                catch (ArgumentException) {
-                }
+                catch (ArgumentException) { }
             }
         }
 
         private static void AddObjectMetadata(Type type) {
-            if (object_metadata.ContainsKey(type))
+            if (object_metadata.ContainsKey(type)) {
                 return;
+            }
 
             var data = new ObjectMetadata();
 
-            if (type.GetInterface("System.Collections.IDictionary") != null)
+            if (type.GetInterface("System.Collections.IDictionary") != null) {
                 data.IsDictionary = true;
+            }
 
             data.Properties = new Dictionary<string, PropertyMetadata>();
 
@@ -291,11 +299,13 @@ namespace vFrame.Core
                 if (p_info.Name == "Item") {
                     var parameters = p_info.GetIndexParameters();
 
-                    if (parameters.Length != 1)
+                    if (parameters.Length != 1) {
                         continue;
+                    }
 
-                    if (parameters[0].ParameterType == typeof(string))
+                    if (parameters[0].ParameterType == typeof(string)) {
                         data.ElementType = p_info.PropertyType;
+                    }
 
                     continue;
                 }
@@ -320,20 +330,21 @@ namespace vFrame.Core
                 try {
                     object_metadata.Add(type, data);
                 }
-                catch (ArgumentException) {
-                }
+                catch (ArgumentException) { }
             }
         }
 
         private static void AddTypeProperties(Type type) {
-            if (type_properties.ContainsKey(type))
+            if (type_properties.ContainsKey(type)) {
                 return;
+            }
 
             IList<PropertyMetadata> props = new List<PropertyMetadata>();
 
             foreach (var p_info in type.GetProperties()) {
-                if (p_info.Name == "Item")
+                if (p_info.Name == "Item") {
                     continue;
+                }
 
                 var p_data = new PropertyMetadata();
                 p_data.Info = p_info;
@@ -353,22 +364,23 @@ namespace vFrame.Core
                 try {
                     type_properties.Add(type, props);
                 }
-                catch (ArgumentException) {
-                }
+                catch (ArgumentException) { }
             }
         }
 
         private static MethodInfo GetConvOp(Type t1, Type t2) {
             lock (conv_ops_lock) {
-                if (!conv_ops.ContainsKey(t1))
+                if (!conv_ops.ContainsKey(t1)) {
                     conv_ops.Add(t1, new Dictionary<Type, MethodInfo>());
+                }
             }
 
-            if (conv_ops[t1].ContainsKey(t2))
+            if (conv_ops[t1].ContainsKey(t2)) {
                 return conv_ops[t1][t2];
+            }
 
             var op = t1.GetMethod(
-                "op_Implicit", new[] {t2});
+                "op_Implicit", new[] { t2 });
 
             lock (conv_ops_lock) {
                 try {
@@ -385,8 +397,9 @@ namespace vFrame.Core
         private static object ReadValue(Type inst_type, JsonReader reader) {
             reader.Read();
 
-            if (reader.Token == JsonToken.ArrayEnd)
+            if (reader.Token == JsonToken.ArrayEnd) {
                 return null;
+            }
 
             var underlying_type = Nullable.GetUnderlyingType(inst_type);
             var value_type = underlying_type ?? inst_type;
@@ -397,7 +410,9 @@ namespace vFrame.Core
                     return null;
                 }
 #else
-                if (inst_type.IsClass || underlying_type != null) return null;
+                if (inst_type.IsClass || underlying_type != null) {
+                    return null;
+                }
 #endif
 
                 throw new JsonException(string.Format(
@@ -412,8 +427,9 @@ namespace vFrame.Core
                 reader.Token == JsonToken.Boolean) {
                 var json_type = reader.Value.GetType();
 
-                if (value_type.IsAssignableFrom(json_type))
+                if (value_type.IsAssignableFrom(json_type)) {
                     return reader.Value;
+                }
 
                 // If there's a custom importer that fits, use it
                 if (custom_importers_table.ContainsKey(json_type) &&
@@ -440,15 +456,17 @@ namespace vFrame.Core
                 if (value_type.IsEnum())
                     return Enum.ToObject (value_type, reader.Value);
 #else
-                if (value_type.IsEnum)
+                if (value_type.IsEnum) {
                     return Enum.ToObject(value_type, reader.Value);
+                }
 #endif
                 // Try using an implicit conversion operator
                 var conv_op = GetConvOp(value_type, json_type);
 
-                if (conv_op != null)
+                if (conv_op != null) {
                     return conv_op.Invoke(null,
-                        new[] {reader.Value});
+                        new[] { reader.Value });
+                }
 
                 // No luck
                 throw new JsonException(string.Format(
@@ -462,16 +480,17 @@ namespace vFrame.Core
                 AddArrayMetadata(inst_type);
                 var t_data = array_metadata[inst_type];
 
-                if (!t_data.IsArray && !t_data.IsList)
+                if (!t_data.IsArray && !t_data.IsList) {
                     throw new JsonException(string.Format(
                         "Type {0} can't act as an array",
                         inst_type));
+                }
 
                 IList list;
                 Type elem_type;
 
                 if (!t_data.IsArray) {
-                    list = (IList) Activator.CreateInstance(inst_type);
+                    list = (IList)Activator.CreateInstance(inst_type);
                     elem_type = t_data.ElementType;
                 }
                 else {
@@ -481,8 +500,9 @@ namespace vFrame.Core
 
                 while (true) {
                     var item = ReadValue(elem_type, reader);
-                    if (item == null && reader.Token == JsonToken.ArrayEnd)
+                    if (item == null && reader.Token == JsonToken.ArrayEnd) {
                         break;
+                    }
 
                     list.Add(item);
                 }
@@ -491,8 +511,9 @@ namespace vFrame.Core
                     var n = list.Count;
                     instance = Array.CreateInstance(elem_type, n);
 
-                    for (var i = 0; i < n; i++)
-                        ((Array) instance).SetValue(list[i], i);
+                    for (var i = 0; i < n; i++) {
+                        ((Array)instance).SetValue(list[i], i);
+                    }
                 }
                 else {
                     instance = list;
@@ -507,30 +528,33 @@ namespace vFrame.Core
                 while (true) {
                     reader.Read();
 
-                    if (reader.Token == JsonToken.ObjectEnd)
+                    if (reader.Token == JsonToken.ObjectEnd) {
                         break;
+                    }
 
-                    var property = (string) reader.Value;
+                    var property = (string)reader.Value;
 
                     if (t_data.Properties.ContainsKey(property)) {
                         var prop_data =
                             t_data.Properties[property];
 
                         if (prop_data.IsField) {
-                            ((FieldInfo) prop_data.Info).SetValue(
+                            ((FieldInfo)prop_data.Info).SetValue(
                                 instance, ReadValue(prop_data.Type, reader));
                         }
                         else {
                             var p_info =
-                                (PropertyInfo) prop_data.Info;
+                                (PropertyInfo)prop_data.Info;
 
-                            if (p_info.CanWrite)
+                            if (p_info.CanWrite) {
                                 p_info.SetValue(
                                     instance,
                                     ReadValue(prop_data.Type, reader),
                                     null);
-                            else
+                            }
+                            else {
                                 ReadValue(prop_data.Type, reader);
+                            }
                         }
                     }
                     else {
@@ -546,7 +570,7 @@ namespace vFrame.Core
                             continue;
                         }
 
-                        ((IDictionary) instance).Add(
+                        ((IDictionary)instance).Add(
                             property, ReadValue(
                                 t_data.ElementType, reader));
                     }
@@ -561,33 +585,34 @@ namespace vFrame.Core
             reader.Read();
 
             if (reader.Token == JsonToken.ArrayEnd ||
-                reader.Token == JsonToken.Null)
+                reader.Token == JsonToken.Null) {
                 return null;
+            }
 
             var instance = factory();
 
             if (reader.Token == JsonToken.String) {
-                instance.SetString((string) reader.Value);
+                instance.SetString((string)reader.Value);
                 return instance;
             }
 
             if (reader.Token == JsonToken.Double) {
-                instance.SetDouble((double) reader.Value);
+                instance.SetDouble((double)reader.Value);
                 return instance;
             }
 
             if (reader.Token == JsonToken.Int) {
-                instance.SetInt((int) reader.Value);
+                instance.SetInt((int)reader.Value);
                 return instance;
             }
 
             if (reader.Token == JsonToken.Long) {
-                instance.SetLong((long) reader.Value);
+                instance.SetLong((long)reader.Value);
                 return instance;
             }
 
             if (reader.Token == JsonToken.Boolean) {
-                instance.SetBoolean((bool) reader.Value);
+                instance.SetBoolean((bool)reader.Value);
                 return instance;
             }
 
@@ -596,8 +621,9 @@ namespace vFrame.Core
 
                 while (true) {
                     var item = ReadValue(factory, reader);
-                    if (item == null && reader.Token == JsonToken.ArrayEnd)
+                    if (item == null && reader.Token == JsonToken.ArrayEnd) {
                         break;
+                    }
 
                     instance.Add(item);
                 }
@@ -608,10 +634,11 @@ namespace vFrame.Core
                 while (true) {
                     reader.Read();
 
-                    if (reader.Token == JsonToken.ObjectEnd)
+                    if (reader.Token == JsonToken.ObjectEnd) {
                         break;
+                    }
 
-                    var property = (string) reader.Value;
+                    var property = (string)reader.Value;
 
                     instance[property] = ReadValue(
                         factory, reader);
@@ -628,98 +655,98 @@ namespace vFrame.Core
 
         private static void RegisterBaseExporters() {
             base_exporters_table[typeof(byte)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((byte) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((byte)obj)); };
 
             base_exporters_table[typeof(char)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToString((char) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToString((char)obj)); };
 
             base_exporters_table[typeof(DateTime)] =
                 delegate(object obj, JsonWriter writer) {
-                    writer.Write(Convert.ToString((DateTime) obj,
+                    writer.Write(Convert.ToString((DateTime)obj,
                         datetime_format));
                 };
 
             base_exporters_table[typeof(decimal)] =
-                delegate(object obj, JsonWriter writer) { writer.Write((decimal) obj); };
+                delegate(object obj, JsonWriter writer) { writer.Write((decimal)obj); };
 
             base_exporters_table[typeof(sbyte)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((sbyte) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((sbyte)obj)); };
 
             base_exporters_table[typeof(short)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((short) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((short)obj)); };
 
             base_exporters_table[typeof(ushort)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((ushort) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToInt32((ushort)obj)); };
 
             base_exporters_table[typeof(uint)] =
-                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToUInt64((uint) obj)); };
+                delegate(object obj, JsonWriter writer) { writer.Write(Convert.ToUInt64((uint)obj)); };
 
             base_exporters_table[typeof(ulong)] =
-                delegate(object obj, JsonWriter writer) { writer.Write((ulong) obj); };
+                delegate(object obj, JsonWriter writer) { writer.Write((ulong)obj); };
 
             base_exporters_table[typeof(DateTimeOffset)] =
                 delegate(object obj, JsonWriter writer) {
-                    writer.Write(((DateTimeOffset) obj).ToString("yyyy-MM-ddTHH:mm:ss.fffffffzzz", datetime_format));
+                    writer.Write(((DateTimeOffset)obj).ToString("yyyy-MM-ddTHH:mm:ss.fffffffzzz", datetime_format));
                 };
         }
 
         private static void RegisterBaseImporters() {
             ImporterFunc importer;
 
-            importer = delegate(object input) { return Convert.ToByte((int) input); };
+            importer = delegate(object input) { return Convert.ToByte((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(byte), importer);
 
-            importer = delegate(object input) { return Convert.ToUInt64((int) input); };
+            importer = delegate(object input) { return Convert.ToUInt64((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(ulong), importer);
 
-            importer = delegate(object input) { return Convert.ToInt64((int) input); };
+            importer = delegate(object input) { return Convert.ToInt64((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(long), importer);
 
-            importer = delegate(object input) { return Convert.ToSByte((int) input); };
+            importer = delegate(object input) { return Convert.ToSByte((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(sbyte), importer);
 
-            importer = delegate(object input) { return Convert.ToInt16((int) input); };
+            importer = delegate(object input) { return Convert.ToInt16((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(short), importer);
 
-            importer = delegate(object input) { return Convert.ToUInt16((int) input); };
+            importer = delegate(object input) { return Convert.ToUInt16((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(ushort), importer);
 
-            importer = delegate(object input) { return Convert.ToUInt32((int) input); };
+            importer = delegate(object input) { return Convert.ToUInt32((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(uint), importer);
 
-            importer = delegate(object input) { return Convert.ToSingle((int) input); };
+            importer = delegate(object input) { return Convert.ToSingle((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(float), importer);
 
-            importer = delegate(object input) { return Convert.ToDouble((int) input); };
+            importer = delegate(object input) { return Convert.ToDouble((int)input); };
             RegisterImporter(base_importers_table, typeof(int),
                 typeof(double), importer);
 
-            importer = delegate(object input) { return Convert.ToDecimal((double) input); };
+            importer = delegate(object input) { return Convert.ToDecimal((double)input); };
             RegisterImporter(base_importers_table, typeof(double),
                 typeof(decimal), importer);
 
 
-            importer = delegate(object input) { return Convert.ToUInt32((long) input); };
+            importer = delegate(object input) { return Convert.ToUInt32((long)input); };
             RegisterImporter(base_importers_table, typeof(long),
                 typeof(uint), importer);
 
-            importer = delegate(object input) { return Convert.ToChar((string) input); };
+            importer = delegate(object input) { return Convert.ToChar((string)input); };
             RegisterImporter(base_importers_table, typeof(string),
                 typeof(char), importer);
 
-            importer = delegate(object input) { return Convert.ToDateTime((string) input, datetime_format); };
+            importer = delegate(object input) { return Convert.ToDateTime((string)input, datetime_format); };
             RegisterImporter(base_importers_table, typeof(string),
                 typeof(DateTime), importer);
 
-            importer = delegate(object input) { return DateTimeOffset.Parse((string) input, datetime_format); };
+            importer = delegate(object input) { return DateTimeOffset.Parse((string)input, datetime_format); };
             RegisterImporter(base_importers_table, typeof(string),
                 typeof(DateTimeOffset), importer);
         }
@@ -727,8 +754,9 @@ namespace vFrame.Core
         private static void RegisterImporter(
             IDictionary<Type, IDictionary<Type, ImporterFunc>> table,
             Type json_type, Type value_type, ImporterFunc importer) {
-            if (!table.ContainsKey(json_type))
+            if (!table.ContainsKey(json_type)) {
                 table.Add(json_type, new Dictionary<Type, ImporterFunc>());
+            }
 
             table[json_type][value_type] = importer;
         }
@@ -736,11 +764,12 @@ namespace vFrame.Core
         private static void WriteValue(object obj, JsonWriter writer,
             bool writer_is_private,
             int depth) {
-            if (depth > max_nesting_depth)
+            if (depth > max_nesting_depth) {
                 throw new JsonException(
                     string.Format("Max allowed object depth reached while " +
                                   "trying to export from type {0}",
                         obj.GetType()));
+            }
 
             if (obj == null) {
                 writer.Write(null);
@@ -748,44 +777,47 @@ namespace vFrame.Core
             }
 
             if (obj is IJsonWrapper) {
-                if (writer_is_private)
-                    writer.TextWriter.Write(((IJsonWrapper) obj).ToJson());
-                else
-                    ((IJsonWrapper) obj).ToJson(writer);
+                if (writer_is_private) {
+                    writer.TextWriter.Write(((IJsonWrapper)obj).ToJson());
+                }
+                else {
+                    ((IJsonWrapper)obj).ToJson(writer);
+                }
 
                 return;
             }
 
             if (obj is string) {
-                writer.Write((string) obj);
+                writer.Write((string)obj);
                 return;
             }
 
             if (obj is double) {
-                writer.Write((double) obj);
+                writer.Write((double)obj);
                 return;
             }
 
             if (obj is int) {
-                writer.Write((int) obj);
+                writer.Write((int)obj);
                 return;
             }
 
             if (obj is bool) {
-                writer.Write((bool) obj);
+                writer.Write((bool)obj);
                 return;
             }
 
             if (obj is long) {
-                writer.Write((long) obj);
+                writer.Write((long)obj);
                 return;
             }
 
             if (obj is Array) {
                 writer.WriteArrayStart();
 
-                foreach (var elem in (Array) obj)
+                foreach (var elem in (Array)obj) {
                     WriteValue(elem, writer, writer_is_private, depth + 1);
+                }
 
                 writer.WriteArrayEnd();
 
@@ -794,8 +826,10 @@ namespace vFrame.Core
 
             if (obj is IList) {
                 writer.WriteArrayStart();
-                foreach (var elem in (IList) obj)
+                foreach (var elem in (IList)obj) {
                     WriteValue(elem, writer, writer_is_private, depth + 1);
+                }
+
                 writer.WriteArrayEnd();
 
                 return;
@@ -803,8 +837,8 @@ namespace vFrame.Core
 
             if (obj is IDictionary) {
                 writer.WriteObjectStart();
-                foreach (DictionaryEntry entry in (IDictionary) obj) {
-                    writer.WritePropertyName((string) entry.Key);
+                foreach (DictionaryEntry entry in (IDictionary)obj) {
+                    writer.WritePropertyName((string)entry.Key);
                     WriteValue(entry.Value, writer, writer_is_private,
                         depth + 1);
                 }
@@ -838,10 +872,12 @@ namespace vFrame.Core
 
                 if (e_type == typeof(long)
                     || e_type == typeof(uint)
-                    || e_type == typeof(ulong))
-                    writer.Write((ulong) obj);
-                else
-                    writer.Write((int) obj);
+                    || e_type == typeof(ulong)) {
+                    writer.Write((ulong)obj);
+                }
+                else {
+                    writer.Write((int)obj);
+                }
 
                 return;
             }
@@ -852,14 +888,14 @@ namespace vFrame.Core
             var props = type_properties[obj_type];
 
             writer.WriteObjectStart();
-            foreach (var p_data in props)
+            foreach (var p_data in props) {
                 if (p_data.IsField) {
                     writer.WritePropertyName(p_data.Info.Name);
-                    WriteValue(((FieldInfo) p_data.Info).GetValue(obj),
+                    WriteValue(((FieldInfo)p_data.Info).GetValue(obj),
                         writer, writer_is_private, depth + 1);
                 }
                 else {
-                    var p_info = (PropertyInfo) p_data.Info;
+                    var p_info = (PropertyInfo)p_data.Info;
 
                     if (p_info.CanRead) {
                         writer.WritePropertyName(p_data.Info.Name);
@@ -867,6 +903,7 @@ namespace vFrame.Core
                             writer, writer_is_private, depth + 1);
                     }
                 }
+            }
 
             writer.WriteObjectEnd();
         }

@@ -11,7 +11,6 @@
 
 using System;
 
-
 namespace vFrame.Core
 {
     public abstract class Object : IDestroyable
@@ -19,20 +18,34 @@ namespace vFrame.Core
         private ILifetime _lifetime;
 
         /// <summary>
-        /// Gets whether the instance has successfully completed its one-shot create transition.
+        ///     Gets whether the instance has successfully completed its one-shot create transition.
         /// </summary>
         public bool Created { get; protected set; }
-
-        /// <summary>
-        /// Gets whether the instance has crossed its terminal destroy boundary.
-        /// Destroyed instances do not support recreation.
-        /// </summary>
-        public bool Destroyed { get; protected set; }
 
         private bool Destroying { get; set; }
 
         /// <summary>
-        /// Executes the unified, terminal teardown boundary for owned state and custom cleanup.
+        ///     Gets the lazy-initialized lifetime scope used to track owned resources.
+        ///     Throws if the object has already been destroyed.
+        /// </summary>
+        /// <exception cref="BaseObjectDestroyedException">Thrown when the object is already destroyed.</exception>
+        protected ILifetime Lifetime {
+            get {
+                ThrowIfDestroyed();
+
+                _lifetime ??= new Lifetime();
+                return _lifetime;
+            }
+        }
+
+        /// <summary>
+        ///     Gets whether the instance has crossed its terminal destroy boundary.
+        ///     Destroyed instances do not support recreation.
+        /// </summary>
+        public bool Destroyed { get; protected set; }
+
+        /// <summary>
+        ///     Executes the unified, terminal teardown boundary for owned state and custom cleanup.
         /// </summary>
         public void Destroy() {
             if (Destroyed || Destroying) {
@@ -66,55 +79,41 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Releases all resources by invoking <see cref="Destroy"/>.
+        ///     Releases all resources by invoking <see cref="Destroy" />.
         /// </summary>
         public void Dispose() {
             Destroy();
         }
 
         /// <summary>
-        /// Override to perform custom teardown logic when the object is destroyed.
+        ///     Override to perform custom teardown logic when the object is destroyed.
         /// </summary>
         protected abstract void OnDestroy();
 
         /// <summary>
-        /// Gets the lazy-initialized lifetime scope used to track owned resources.
-        /// Throws if the object has already been destroyed.
-        /// </summary>
-        /// <exception cref="BaseObjectDestroyedException">Thrown when the object is already destroyed.</exception>
-        protected ILifetime Lifetime {
-            get {
-                ThrowIfDestroyed();
-
-                _lifetime ??= new Lifetime();
-                return _lifetime;
-            }
-        }
-
-        /// <summary>
-        /// Registers an owned destroyable that should terminate when this object crosses its
-        /// destroy boundary.
+        ///     Registers an owned destroyable that should terminate when this object crosses its
+        ///     destroy boundary.
         /// </summary>
         /// <param name="destroyable">The destroyable to own.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="destroyable"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="destroyable" /> is null.</exception>
         protected void Own(IDestroyable destroyable) {
             ThrowHelper.ThrowIfNull(destroyable, nameof(destroyable));
             Lifetime.Add(destroyable);
         }
 
         /// <summary>
-        /// Registers an owned cleanup action that should run when this object is destroyed.
+        ///     Registers an owned cleanup action that should run when this object is destroyed.
         /// </summary>
         /// <param name="action">The cleanup action to own.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="action"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="action" /> is null.</exception>
         protected void Own(Action action) {
             ThrowHelper.ThrowIfNull(action, nameof(action));
             Lifetime.Add(action);
         }
 
         /// <summary>
-        /// Binds a destroyable to this object's lifetime without implying direct field ownership.
-        /// Use this for lifetime-bound resources that should end with the object.
+        ///     Binds a destroyable to this object's lifetime without implying direct field ownership.
+        ///     Use this for lifetime-bound resources that should end with the object.
         /// </summary>
         /// <param name="destroyable">The destroyable to bind.</param>
         protected internal void OwnLifetime(IDestroyable destroyable) {
@@ -122,7 +121,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Binds a cleanup action to this object's lifetime without introducing a separate scope model.
+        ///     Binds a cleanup action to this object's lifetime without introducing a separate scope model.
         /// </summary>
         /// <param name="action">The cleanup action to bind.</param>
         protected internal void OwnLifetime(Action action) {
@@ -130,7 +129,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws <see cref="BaseObjectDestroyedException"/> if the object has been destroyed.
+        ///     Throws <see cref="BaseObjectDestroyedException" /> if the object has been destroyed.
         /// </summary>
         /// <exception cref="BaseObjectDestroyedException">Thrown when the object is already destroyed.</exception>
         protected void ThrowIfDestroyed() {
@@ -140,7 +139,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws <see cref="BaseObjectNotCreatedException"/> if the object has not been created.
+        ///     Throws <see cref="BaseObjectNotCreatedException" /> if the object has not been created.
         /// </summary>
         /// <exception cref="BaseObjectNotCreatedException">Thrown when the object has not been created.</exception>
         protected void ThrowIfNotCreated() {
@@ -150,7 +149,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Throws if the object has been destroyed or has not yet been created.
+        ///     Throws if the object has been destroyed or has not yet been created.
         /// </summary>
         /// <exception cref="BaseObjectDestroyedException">Thrown when the object is already destroyed.</exception>
         /// <exception cref="BaseObjectNotCreatedException">Thrown when the object has not been created.</exception>
@@ -163,7 +162,7 @@ namespace vFrame.Core
     public abstract class BaseObject : Object, IBaseObject
     {
         /// <summary>
-        /// Transitions the object into its usable state once. Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once. Destroyed instances stay terminal.
         /// </summary>
         public void Create() {
             ThrowIfDestroyed();
@@ -178,7 +177,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created.
+        ///     Override to perform custom initialization logic when the object is created.
         /// </summary>
         protected abstract void OnCreate();
     }
@@ -186,8 +185,8 @@ namespace vFrame.Core
     public abstract class BaseObject<T1> : Object, IBaseObject<T1>
     {
         /// <summary>
-        /// Transitions the object into its usable state once with one argument.
-        /// Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once with one argument.
+        ///     Destroyed instances stay terminal.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         public void Create(T1 arg1) {
@@ -203,7 +202,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created with one argument.
+        ///     Override to perform custom initialization logic when the object is created with one argument.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         protected abstract void OnCreate(T1 arg1);
@@ -212,8 +211,8 @@ namespace vFrame.Core
     public abstract class BaseObject<T1, T2> : Object, IBaseObject<T1, T2>
     {
         /// <summary>
-        /// Transitions the object into its usable state once with two arguments.
-        /// Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once with two arguments.
+        ///     Destroyed instances stay terminal.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -230,7 +229,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created with two arguments.
+        ///     Override to perform custom initialization logic when the object is created with two arguments.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -240,8 +239,8 @@ namespace vFrame.Core
     public abstract class BaseObject<T1, T2, T3> : Object, IBaseObject<T1, T2, T3>
     {
         /// <summary>
-        /// Transitions the object into its usable state once with three arguments.
-        /// Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once with three arguments.
+        ///     Destroyed instances stay terminal.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -259,7 +258,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created with three arguments.
+        ///     Override to perform custom initialization logic when the object is created with three arguments.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -270,8 +269,8 @@ namespace vFrame.Core
     public abstract class BaseObject<T1, T2, T3, T4> : Object, IBaseObject<T1, T2, T3, T4>
     {
         /// <summary>
-        /// Transitions the object into its usable state once with four arguments.
-        /// Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once with four arguments.
+        ///     Destroyed instances stay terminal.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -290,7 +289,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created with four arguments.
+        ///     Override to perform custom initialization logic when the object is created with four arguments.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -302,8 +301,8 @@ namespace vFrame.Core
     public abstract class BaseObject<T1, T2, T3, T4, T5> : Object, IBaseObject<T1, T2, T3, T4, T5>
     {
         /// <summary>
-        /// Transitions the object into its usable state once with five arguments.
-        /// Destroyed instances stay terminal.
+        ///     Transitions the object into its usable state once with five arguments.
+        ///     Destroyed instances stay terminal.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>
@@ -323,7 +322,7 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        /// Override to perform custom initialization logic when the object is created with five arguments.
+        ///     Override to perform custom initialization logic when the object is created with five arguments.
         /// </summary>
         /// <param name="arg1">The first creation argument.</param>
         /// <param name="arg2">The second creation argument.</param>

@@ -15,7 +15,7 @@ namespace vFrame.Core
     public class ZlibCompressorOptions : CompressorOptions
     {
         /// <summary>
-        /// Gets or sets the Zlib compression level. Defaults to <see cref="CompressionLevel.BestCompression"/>.
+        ///     Gets or sets the Zlib compression level. Defaults to <see cref="CompressionLevel.BestCompression" />.
         /// </summary>
         public CompressionLevel Level { get; set; } = CompressionLevel.BestCompression;
     }

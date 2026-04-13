@@ -11,8 +11,9 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         }
 
         public void Init() {
-            for (uint i = 1; i < 1 << NumBitLevels; i++)
+            for (uint i = 1; i < 1 << NumBitLevels; i++) {
                 Models[i].Init();
+            }
         }
 
         public void Encode(Encoder rangeEncoder, uint symbol) {
@@ -98,15 +99,18 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.RangeCoder
         }
 
         public void Init() {
-            for (uint i = 1; i < 1 << NumBitLevels; i++)
+            for (uint i = 1; i < 1 << NumBitLevels; i++) {
                 Models[i].Init();
+            }
         }
 
         public uint Decode(Decoder rangeDecoder) {
             uint m = 1;
-            for (var bitIndex = NumBitLevels; bitIndex > 0; bitIndex--)
+            for (var bitIndex = NumBitLevels; bitIndex > 0; bitIndex--) {
                 m = (m << 1) + Models[m].Decode(rangeDecoder);
-            return m - ((uint) 1 << NumBitLevels);
+            }
+
+            return m - ((uint)1 << NumBitLevels);
         }
 
         public uint ReverseDecode(Decoder rangeDecoder) {
