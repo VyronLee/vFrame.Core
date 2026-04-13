@@ -78,6 +78,47 @@ namespace vFrame.Core
         }
 
         /// <summary>
+        /// Throws an <see cref="ArgumentException"/> if the string is null or empty.
+        /// </summary>
+        /// <param name="value">The string to check.</param>
+        /// <param name="paramName">The name of the parameter.</param>
+        public static void ThrowIfEmpty(string value, string paramName) {
+            if (!string.IsNullOrEmpty(value)) {
+                return;
+            }
+            throw new ArgumentException($"Parameter '{paramName}' cannot be null or empty!");
+        }
+
+        /// <summary>
+        /// Throws an <see cref="ArgumentException"/> if the value is outside the specified range.
+        /// </summary>
+        /// <param name="paramName">The name of the parameter.</param>
+        /// <param name="value">The value to check.</param>
+        /// <param name="min">The minimum valid value (inclusive).</param>
+        /// <param name="max">The maximum valid value (inclusive).</param>
+        public static void ThrowIfOutOfRange(string paramName, int value, int min, int max) {
+            if (value >= min && value <= max) {
+                return;
+            }
+            throw new ArgumentException(
+                $"Parameter '{paramName}' value {value} is out of range [{min}, {max}].");
+        }
+
+        /// <summary>
+        /// Throws an <see cref="ArgumentException"/> if the enum value is not defined in the enum type.
+        /// </summary>
+        /// <typeparam name="T">The enum type.</typeparam>
+        /// <param name="value">The enum value to check.</param>
+        /// <param name="paramName">The name of the parameter.</param>
+        public static void ThrowIfEnumDefined<T>(T value, string paramName) {
+            if (Enum.IsDefined(typeof(T), value)) {
+                return;
+            }
+            throw new ArgumentException(
+                $"Parameter '{paramName}' value '{value}' is not defined in enum '{typeof(T).Name}'.");
+        }
+
+        /// <summary>
         /// Throws a <see cref="TypeMismatchException"/> if the input type does not match the desired type.
         /// </summary>
         /// <param name="inputType">The actual type to check.</param>
