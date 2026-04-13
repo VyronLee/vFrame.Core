@@ -8,6 +8,7 @@
 //    Copyright: Copyright (c) 2024, VyronLee
 // ============================================================
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace vFrame.Core.Unity
@@ -20,10 +21,15 @@ namespace vFrame.Core.Unity
         /// <param name="go">The GameObject whose layer to set.</param>
         /// <param name="layer">The layer index to assign.</param>
         public static void SetLayerRecursive(this GameObject go, int layer) {
-            for (var i = 0; i < go.transform.childCount; ++i) {
-                SetLayerRecursive(go.transform.GetChild(i).gameObject, layer);
+            var stack = new Stack<GameObject>();
+            stack.Push(go);
+            while (stack.Count > 0) {
+                var current = stack.Pop();
+                current.layer = layer;
+                for (int i = current.transform.childCount - 1; i >= 0; i--) {
+                    stack.Push(current.transform.GetChild(i).gameObject);
+                }
             }
-            go.layer = layer;
         }
 
         /// <summary>
@@ -32,10 +38,15 @@ namespace vFrame.Core.Unity
         /// <param name="go">The GameObject whose tag to set.</param>
         /// <param name="tag">The tag string to assign.</param>
         public static void SetTagRecursive(this GameObject go, string tag) {
-            for (var i = 0; i < go.transform.childCount; ++i) {
-                SetTagRecursive(go.transform.GetChild(i).gameObject, tag);
+            var stack = new Stack<GameObject>();
+            stack.Push(go);
+            while (stack.Count > 0) {
+                var current = stack.Pop();
+                current.tag = tag;
+                for (int i = current.transform.childCount - 1; i >= 0; i--) {
+                    stack.Push(current.transform.GetChild(i).gameObject);
+                }
             }
-            go.tag = tag;
         }
 
         /// <summary>

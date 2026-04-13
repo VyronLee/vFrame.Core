@@ -164,6 +164,11 @@ namespace vFrame.Core.Unity
         /// <param name="transform">The target RectTransform.</param>
         /// <param name="width">The width value.</param>
         public static void SetWidth(this RectTransform transform, float width) {
+            if (!Mathf.Approximately(transform.anchorMin.x, transform.anchorMax.x)) {
+                var parent = transform.parent as RectTransform;
+                var parentWidth = parent != null ? parent.rect.width : 0;
+                width -= parentWidth * (transform.anchorMax.x - transform.anchorMin.x);
+            }
             transform.sizeDelta = new Vector2(width, transform.sizeDelta.y);
         }
 
@@ -182,6 +187,11 @@ namespace vFrame.Core.Unity
         /// <param name="transform">The target RectTransform.</param>
         /// <param name="height">The height value.</param>
         public static void SetHeight(this RectTransform transform, float height) {
+            if (!Mathf.Approximately(transform.anchorMin.y, transform.anchorMax.y)) {
+                var parent = transform.parent as RectTransform;
+                var parentHeight = parent != null ? parent.rect.height : 0;
+                height -= parentHeight * (transform.anchorMax.y - transform.anchorMin.y);
+            }
             transform.sizeDelta = new Vector2(transform.sizeDelta.x, height);
         }
 

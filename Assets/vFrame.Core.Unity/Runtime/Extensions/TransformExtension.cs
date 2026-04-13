@@ -250,19 +250,14 @@ namespace vFrame.Core.Unity
         /// <param name="transform">The root transform.</param>
         /// <returns>A <see cref="Bounds"/> struct enclosing all renderers.</returns>
         public static Bounds CalculateBounds(this Transform transform) {
-            var bounds = new Bounds();
-            transform.TraverseSelfAndChildren<Transform>(v => {
-                var renderer = v.GetComponent<Renderer>();
-                if (null == renderer) {
-                    return;
-                }
-                var scale = v.transform.lossyScale;
-                var b = renderer.bounds;
-                b.center = new Vector3(b.center.x * scale.x, b.center.y * scale.y, b.center.z * scale.z);
-                b.extents = new Vector3(b.extents.x * scale.x, b.extents.y * scale.y, b.extents.z * scale.z);
+            var hasBounds = false;
+            var bounds = new Bounds(transform.position, Vector3.zero);
+            transform.TraverseSelfAndChildren<Renderer>(v => {
+                var b = v.bounds;
                 bounds.Encapsulate(b);
+                hasBounds = true;
             });
-            return bounds;
+            return hasBounds ? bounds : new Bounds(transform.position, Vector3.zero);
         }
 
         /// <summary>
