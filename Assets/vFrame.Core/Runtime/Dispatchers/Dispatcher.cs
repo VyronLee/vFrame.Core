@@ -11,11 +11,10 @@
 
 using System;
 using System.Collections.Generic;
-using vFrame.Core;
 
 namespace vFrame.Core
 {
-    public class Dispatcher : Component, IDispatcher
+    public class Dispatcher : BaseObject, IDispatcher
     {
         /// <summary>
         /// Immutable diagnostics snapshot of subscription counts across all dispatching categories.

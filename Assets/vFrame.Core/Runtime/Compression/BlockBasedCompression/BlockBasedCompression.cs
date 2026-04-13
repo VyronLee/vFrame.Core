@@ -187,8 +187,6 @@ namespace vFrame.Core
         /// <param name="output">The output stream for compressed data.</param>
         /// <param name="options">Compression configuration options.</param>
         protected void BeginCompress(Stream input, Stream output, BlockBasedCompressionOptions options) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("BeginCompress", id);
             lock (_inputLock) {
                 _inputStart = input.Position;
                 _header = CreateHeader(input, options);
@@ -199,7 +197,6 @@ namespace vFrame.Core
                 _outputStart = output.Position;
                 output.Seek(_outputStart + BlockBasedCompressionHeader.GetStructSize(), SeekOrigin.Begin);
             }
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
@@ -207,8 +204,6 @@ namespace vFrame.Core
         /// </summary>
         /// <param name="output">The output stream containing compressed data.</param>
         protected void EndCompress(Stream output) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("EndCompress", id);
             _header.BlockTableOffset = BlockBasedCompressionHeader.GetStructSize();
 
             lock (_blockTable) {
@@ -220,7 +215,6 @@ namespace vFrame.Core
                 WriteHeader(output, _header);
                 WriteBlockTable(output, _blockTable);
             }
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
@@ -311,8 +305,6 @@ namespace vFrame.Core
             Stream output,
             BlockBasedCompressionOptions options,
             int blockIndex) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("SafeCompress, blockIndex: " + blockIndex, id);
 
             var dataBuffer = _buffers.Rent(options.BlockSize);
             var outBuffer = _buffers.Rent(options.BlockSize);
@@ -324,8 +316,6 @@ namespace vFrame.Core
 
             _buffers.Return(dataBuffer);
             _buffers.Return(outBuffer);
-
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
@@ -445,9 +435,6 @@ namespace vFrame.Core
         /// <param name="input">The compressed input stream.</param>
         /// <param name="output">The output stream for decompressed data.</param>
         protected void BeginDecompress(Stream input, Stream output) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("BeginDecompress", id);
-
             lock (_inputLock) {
                 _inputStart = input.Position;
                 _header = ReadHeader(input);
@@ -458,8 +445,6 @@ namespace vFrame.Core
                 _outputStart = output.Position;
                 output.Seek(_outputStart, SeekOrigin.Begin);
             }
-
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
@@ -468,9 +453,6 @@ namespace vFrame.Core
         /// <param name="output">The output stream containing decompressed data.</param>
         /// <exception cref="HashNotMatchException">Thrown when MD5 validation fails and <see cref="SkipValidation"/> is <c>false</c>.</exception>
         protected void EndDecompress(Stream output) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("EndDecompress", id);
-
             lock (_outputLock) {
                 output.Seek(_outputStart, SeekOrigin.Begin);
 
@@ -481,8 +463,6 @@ namespace vFrame.Core
                     }
                 }
             }
-
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
@@ -521,9 +501,6 @@ namespace vFrame.Core
         /// <param name="output">The output stream for decompressed data.</param>
         /// <param name="blockIndex">Zero-based index of the block to decompress.</param>
         protected void SafeDecompress(Stream input, Stream output, int blockIndex) {
-            PerfProfile.Start(out var id);
-            PerfProfile.Pin("SafeDecompress, blockIndex: " + blockIndex, id);
-
             var dataBuffer = _buffers.Rent(_header.BlockSize);
             var outBuffer = _buffers.Rent(_header.BlockSize);
 
@@ -533,8 +510,6 @@ namespace vFrame.Core
 
             _buffers.Return(dataBuffer);
             _buffers.Return(outBuffer);
-
-            PerfProfile.Unpin(id);
         }
 
         /// <summary>
