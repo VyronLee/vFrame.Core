@@ -9,6 +9,8 @@
 //============================================================
 
 using System;
+using System.Threading;
+using UnityEngine;
 using vFrame.Core;
 
 namespace vFrame.Core.Unity
@@ -24,6 +26,11 @@ namespace vFrame.Core.Unity
         public AsyncState State { get; private set; }
 
         /// <summary>
+        /// Gets the exception that caused the error state, or null if no error.
+        /// </summary>
+        public Exception LastError { get; private set; }
+
+        /// <summary>
         /// Registers this request with the shared controller for automatic per-frame updates.
         /// </summary>
         public void WithSharedCtrl() {
@@ -37,26 +44,41 @@ namespace vFrame.Core.Unity
             if (State != AsyncState.NotStarted) {
                 return;
             }
+            _elapsedTime = 0f;
+            LastError = null;
             State = AsyncState.Processing;
             OnStart();
         }
 
         /// <summary>
         /// Stops the request, resetting it to NotStarted.
+        /// Only valid from Processing state to prevent re-using finished requests.
         /// </summary>
         public void Stop() {
-            if (State != AsyncState.Processing && State != AsyncState.Finished) {
+            if (State != AsyncState.Processing) {
                 return;
             }
             State = AsyncState.NotStarted;
+            LastError = null;
             OnStop();
         }
 
         /// <summary>
         /// Advances the request by one frame while in the Processing state.
+        /// Checks cancellation and timeout before delegating to OnUpdate.
         /// </summary>
         public void Update() {
             if (State != AsyncState.Processing) {
+                return;
+            }
+            if (CancellationToken.IsCancellationRequested) {
+                SetError(new OperationCanceledException("Async request was cancelled."));
+                return;
+            }
+            _elapsedTime += Time.deltaTime;
+            if (TimeoutSeconds > 0f && _elapsedTime >= TimeoutSeconds) {
+                SetError(new TimeoutException(
+                    $"Async request timed out after {TimeoutSeconds}s."));
                 return;
             }
             OnUpdate();
@@ -71,6 +93,42 @@ namespace vFrame.Core.Unity
         /// Indicates whether the request has encountered an error.
         /// </summary>
         public bool IsError => State == AsyncState.Error;
+
+        /// <summary>
+        /// Gets the cancellation token associated with this request.
+        /// </summary>
+        public CancellationToken CancellationToken { get; private set; }
+
+        /// <summary>
+        /// Gets the timeout duration in seconds. A value of 0 means no timeout.
+        /// </summary>
+        public float TimeoutSeconds { get; private set; } = 0f;
+
+        /// <summary>
+        /// Gets the priority of the request. Lower values indicate higher priority.
+        /// </summary>
+        public int Priority { get; protected set; } = 0;
+
+        /// <summary>
+        /// Sets the cancellation token for this request.
+        /// </summary>
+        public void SetCancellationToken(CancellationToken token) {
+            CancellationToken = token;
+        }
+
+        /// <summary>
+        /// Sets the timeout duration in seconds. A value of 0 disables timeout.
+        /// </summary>
+        public void SetTimeout(float timeoutSeconds) {
+            TimeoutSeconds = timeoutSeconds;
+        }
+
+        /// <summary>
+        /// Sets the priority of the request. Lower values indicate higher priority.
+        /// </summary>
+        public void SetPriority(int priority) {
+            Priority = priority;
+        }
 
         /// <summary>
         /// Gets the current progress of the request, from 0 to 1.
@@ -106,11 +164,18 @@ namespace vFrame.Core.Unity
         /// </summary>
         public object Current => null;
 
+        private float _elapsedTime;
+
         protected override void OnCreate() {
 
         }
 
         protected override void OnDestroy() {
+            // Notify error listeners if the request is still processing
+            if (State == AsyncState.Processing) {
+                SetError(new ObjectDisposedException(GetType().Name,
+                    "Async request was destroyed while still processing."));
+            }
             Stop();
         }
 
@@ -121,8 +186,17 @@ namespace vFrame.Core.Unity
             if (State == AsyncState.Error) {
                 return;
             }
-            State = AsyncState.Error;
-            OnError?.Invoke();
+            SetError(null);
+        }
+
+        /// <summary>
+        /// Transitions the request to the Error state with a specific exception.
+        /// </summary>
+        protected void Abort(Exception exception) {
+            if (State == AsyncState.Error) {
+                return;
+            }
+            SetError(exception);
         }
 
         /// <summary>
@@ -133,6 +207,7 @@ namespace vFrame.Core.Unity
                 return;
             }
             State = AsyncState.Finished;
+            LastError = null;
             OnFinish?.Invoke();
         }
 
@@ -159,5 +234,17 @@ namespace vFrame.Core.Unity
         /// Called each frame while the request is processing.
         /// </summary>
         protected abstract void OnUpdate();
+
+        /// <summary>
+        /// Sets the error state with an optional exception and raises OnError.
+        /// </summary>
+        private void SetError(Exception exception) {
+            if (State == AsyncState.Error) {
+                return;
+            }
+            State = AsyncState.Error;
+            LastError = exception;
+            OnError?.Invoke();
+        }
     }
 }

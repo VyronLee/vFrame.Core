@@ -76,9 +76,19 @@ namespace vFrame.Core.Unity
         bool IsError { get; }
 
         /// <summary>
+        /// Gets the priority of the request. Lower values indicate higher priority.
+        /// </summary>
+        int Priority { get; }
+
+        /// <summary>
         /// Gets the current progress of the request, from 0 to 1.
         /// </summary>
         float Progress { get; }
+
+        /// <summary>
+        /// Gets the exception that caused the error state, or null if no error.
+        /// </summary>
+        Exception LastError { get; }
 
         /// <summary>
         /// Raised when the request finishes successfully.

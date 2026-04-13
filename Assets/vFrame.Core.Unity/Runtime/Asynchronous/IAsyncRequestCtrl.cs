@@ -44,6 +44,21 @@ namespace vFrame.Core.Unity
         void AddRequest(IAsyncRequest request);
 
         /// <summary>
+        /// Removes a previously registered async request.
+        /// </summary>
+        void RemoveRequest(IAsyncRequest request);
+
+        /// <summary>
+        /// Gets the number of currently registered requests.
+        /// </summary>
+        int RequestCount { get; }
+
+        /// <summary>
+        /// Cancels and removes all registered requests.
+        /// </summary>
+        void CancelAll();
+
+        /// <summary>
         /// Raised when a request completes successfully.
         /// </summary>
         event Action<IAsyncRequest> OnRequestFinish;

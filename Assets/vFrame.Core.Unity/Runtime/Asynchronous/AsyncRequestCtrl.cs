@@ -23,21 +23,29 @@ namespace vFrame.Core.Unity
     {
         private List<IAsyncRequest> _requests;
         private UpdateDriver _driver;
+        private readonly object _lock = new object();
 
-        private static AsyncRequestCtrl _shared;
+        private static volatile AsyncRequestCtrl _shared;
+        private static readonly object _sharedLock = new object();
 
         /// <summary>
         /// Gets the shared singleton instance, creating and self-driving it on first access.
+        /// Thread-safe via double-check locking.
         /// </summary>
         public static AsyncRequestCtrl Shared {
             get {
                 if (_shared != null) {
                     return _shared;
                 }
-                _shared = new AsyncRequestCtrl();
-                _shared.Create();
-                _shared.SelfDrive();
-                return _shared;
+                lock (_sharedLock) {
+                    if (_shared != null) {
+                        return _shared;
+                    }
+                    _shared = new AsyncRequestCtrl();
+                    _shared.Create();
+                    _shared.SelfDrive();
+                    return _shared;
+                }
             }
         }
 
@@ -46,8 +54,12 @@ namespace vFrame.Core.Unity
         }
 
         protected override void OnDestroy() {
-            _requests?.Clear();
-            _requests = null;
+            lock (_lock) {
+                if (_requests != null) {
+                    _requests.Clear();
+                    _requests = null;
+                }
+            }
 
             if (null != _driver) {
                 _driver.gameObject.DestroyEx();
@@ -71,31 +83,77 @@ namespace vFrame.Core.Unity
 
         /// <summary>
         /// Advances all registered requests by one frame, handling state transitions.
+        /// Uses deferred cleanup to avoid modifying the list inside callbacks.
         /// </summary>
         public void Update() {
             ThrowIfNotCreatedOrDestroyed();
 
-            for (var i = _requests.Count - 1; i >= 0; i--) {
-                var request = _requests[i];
-                if (request.Destroyed) {
-                    _requests.RemoveAt(i);
-                    continue;
+            List<IAsyncRequest> finished = null;
+            List<IAsyncRequest> errored = null;
+            List<IAsyncRequest> destroyed = null;
+
+            // Phase 1: drive all requests, collect completed ones
+            lock (_lock) {
+                for (var i = _requests.Count - 1; i >= 0; i--) {
+                    var request = _requests[i];
+                    if (request.Destroyed) {
+                        if (destroyed == null) {
+                            destroyed = new List<IAsyncRequest>();
+                        }
+                        destroyed.Add(request);
+                        _requests.RemoveAt(i);
+                        continue;
+                    }
+                    switch (request.State) {
+                        case AsyncState.NotStarted:
+                            request.Start();
+                            break;
+                        case AsyncState.Processing:
+                            request.Update();
+                            // Re-check state after update — may have transitioned
+                            if (request.State == AsyncState.Finished) {
+                                if (finished == null) {
+                                    finished = new List<IAsyncRequest>();
+                                }
+                                finished.Add(request);
+                                _requests.RemoveAt(i);
+                            }
+                            else if (request.State == AsyncState.Error) {
+                                if (errored == null) {
+                                    errored = new List<IAsyncRequest>();
+                                }
+                                errored.Add(request);
+                                _requests.RemoveAt(i);
+                            }
+                            break;
+                        case AsyncState.Finished:
+                            if (finished == null) {
+                                finished = new List<IAsyncRequest>();
+                            }
+                            finished.Add(request);
+                            _requests.RemoveAt(i);
+                            break;
+                        case AsyncState.Error:
+                            if (errored == null) {
+                                errored = new List<IAsyncRequest>();
+                            }
+                            errored.Add(request);
+                            _requests.RemoveAt(i);
+                            break;
+                    }
                 }
-                switch (request.State) {
-                    case AsyncState.NotStarted:
-                        request.Start();
-                        break;
-                    case AsyncState.Processing:
-                        request.Update();
-                        break;
-                    case AsyncState.Finished:
-                        _requests.RemoveAt(i);
-                        OnRequestFinish?.Invoke(request);
-                        break;
-                    case AsyncState.Error:
-                        _requests.RemoveAt(i);
-                        OnRequestError?.Invoke(request);
-                        break;
+            }
+
+            // Phase 2: fire callbacks outside the lock
+            // Callbacks may call AddRequest/RemoveRequest — safe because we're not iterating _requests
+            if (finished != null) {
+                for (var i = 0; i < finished.Count; i++) {
+                    OnRequestFinish?.Invoke(finished[i]);
+                }
+            }
+            if (errored != null) {
+                for (var i = 0; i < errored.Count; i++) {
+                    OnRequestError?.Invoke(errored[i]);
                 }
             }
         }
@@ -123,11 +181,22 @@ namespace vFrame.Core.Unity
 
         /// <summary>
         /// Registers an async request for lifecycle management.
+        /// Inserted in priority order (lower value = higher priority = processed first).
         /// </summary>
         public void AddRequest(IAsyncRequest request) {
             ThrowIfNotCreatedOrDestroyed();
             ThrowHelper.ThrowIfNull(request, nameof(request));
-            _requests.Add(request);
+            lock (_lock) {
+                var priority = request.Priority;
+                var index = _requests.Count;
+                for (var i = 0; i < _requests.Count; i++) {
+                    if (_requests[i].Priority < priority) {
+                        index = i;
+                        break;
+                    }
+                }
+                _requests.Insert(index, request);
+            }
         }
 
         /// <summary>
@@ -136,7 +205,33 @@ namespace vFrame.Core.Unity
         public void RemoveRequest(IAsyncRequest request) {
             ThrowIfNotCreatedOrDestroyed();
             ThrowHelper.ThrowIfNull(request, nameof(request));
-            _requests.Remove(request);
+            lock (_lock) {
+                _requests.Remove(request);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of currently registered requests.
+        /// </summary>
+        public int RequestCount {
+            get {
+                lock (_lock) {
+                    return _requests?.Count ?? 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stops and removes all registered requests.
+        /// </summary>
+        public void CancelAll() {
+            ThrowIfNotCreatedOrDestroyed();
+            lock (_lock) {
+                for (var i = _requests.Count - 1; i >= 0; i--) {
+                    _requests[i].Stop();
+                }
+                _requests.Clear();
+            }
         }
 
         /// <summary>
