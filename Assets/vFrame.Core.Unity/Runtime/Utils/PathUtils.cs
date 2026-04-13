@@ -15,6 +15,11 @@ namespace vFrame.Core.Unity
 {
     public static class PathUtils
     {
+        private const string AssetsPrefix = "Assets/";
+        private const string AssetsResourcesPrefix = "Assets/Resources/";
+        private const string ResourcesPrefix = "Resources/";
+        private const string DataPathSuffix = "/Assets";
+
         private static string _dataPath;
 
         private static string _streamingAssetsPath;
@@ -231,8 +236,7 @@ namespace vFrame.Core.Unity
         /// <param name="relativePath">The project-relative path.</param>
         /// <returns>The absolute path on disk.</returns>
         public static string RelativeProjectPathToAbsolutePath(this string relativePath) {
-            var dataPath = DataPath;
-            var projectPath = dataPath.Remove(dataPath.Length - 6, 6);
+            var projectPath = DataPath.Remove(DataPath.Length - DataPathSuffix.Length, DataPathSuffix.Length);
             return Combine(projectPath, relativePath);
         }
 
@@ -262,7 +266,7 @@ namespace vFrame.Core.Unity
         /// <param name="relativePath">The project-relative path.</param>
         /// <returns>A path relative to <see cref="Application.dataPath"/>.</returns>
         public static string RelativeProjectPathToRelativeDataPath(this string relativePath) {
-            return relativePath.Remove(0, 7);
+            return relativePath.Remove(0, AssetsPrefix.Length);
         }
 
         /// <summary>
@@ -272,7 +276,7 @@ namespace vFrame.Core.Unity
         /// <param name="relativePath">The project-relative path.</param>
         /// <returns>A path relative to the Resources folder.</returns>
         public static string RelativeProjectPathToRelativeResourcesPath(this string relativePath) {
-            return relativePath.Remove(0, 17);
+            return relativePath.Remove(0, AssetsResourcesPrefix.Length);
         }
 
         /// <summary>
@@ -292,7 +296,7 @@ namespace vFrame.Core.Unity
         /// <param name="relativePath">The data-path-relative path.</param>
         /// <returns>A path relative to the Resources folder.</returns>
         public static string RelativeDataPathToRelativeResourcesPath(this string relativePath) {
-            return relativePath.Remove(0, 10);
+            return relativePath.Remove(0, ResourcesPrefix.Length);
         }
 
         /// <summary>

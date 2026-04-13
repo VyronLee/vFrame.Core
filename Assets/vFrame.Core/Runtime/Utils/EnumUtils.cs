@@ -21,6 +21,10 @@ namespace vFrame.Core
         /// <typeparam name="T">The enum type.</typeparam>
         /// <returns>The zero-based index, or -1 if not found.</returns>
         public static int EnumIndex<T>(int value) {
+            if (!typeof(T).IsEnum) {
+                ThrowHelper.ThrowArgumentException(
+                    $"Type {typeof(T).Name} is not an enum type.");
+            }
             return EnumIndex(typeof(T), value);
         }
 
