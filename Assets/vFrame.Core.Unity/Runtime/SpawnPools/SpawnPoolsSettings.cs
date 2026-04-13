@@ -43,6 +43,19 @@ namespace vFrame.Core.Unity
         public int GCInterval { get; set; } = 600;
 
         /// <summary>
+        /// Gets or sets the maximum number of objects a single pool may retain.
+        /// A value of 0 means no per-pool limit.
+        /// When exceeded, <c>Spawn</c> will return null for that pool.
+        /// </summary>
+        public int MaxObjectsPerPool { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of instances to pre-create when a pool is first accessed.
+        /// A value of 0 means no warmup (default).
+        /// </summary>
+        public int WarmupCount { get; set; }
+
+        /// <summary>
         /// Gets or sets whether spawn pool diagnostics logging is enabled.
         /// </summary>
         public bool EnableDiagnostics { get; set; }

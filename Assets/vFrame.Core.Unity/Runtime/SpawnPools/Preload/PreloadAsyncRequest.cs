@@ -49,9 +49,12 @@ namespace vFrame.Core.Unity
         }
 
         /// <summary>
-        /// Clears pending requests and resets the stopwatch when the operation is stopped.
+        /// Stops and clears all pending load requests, resetting the stopwatch.
         /// </summary>
         protected override void OnStop() {
+            for (var i = 0; i < _requests.Count; i++) {
+                _requests[i].Stop();
+            }
             _requests.Clear();
             _stopWatch.Reset();
         }

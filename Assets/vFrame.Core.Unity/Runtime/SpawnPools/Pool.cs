@@ -46,6 +46,14 @@ namespace vFrame.Core.Unity
             if (!parent) {
                 parent = _context.Parent;
             }
+
+            // Enforce per-pool object limit when configured.
+            var maxObjects = _context.Settings.MaxObjectsPerPool;
+            if (maxObjects > 0 && _objects.Count >= maxObjects) {
+                SpawnPoolsDebug.Warning("Pool({0}) reached MaxObjectsPerPool limit ({1}), cannot spawn.", _poolName, maxObjects);
+                return null;
+            }
+
             var obj = TryGetFromPool();
             if (!obj) {
                 SpawnPoolsDebug.Log("No objects in pool({0}), spawning new one..", _poolName);
@@ -53,6 +61,12 @@ namespace vFrame.Core.Unity
             }
             obj.transform.SetParent(parent, false);
             OnSpawned(obj);
+            obj.SetActive(true);
+
+            // Notify IPoolable components that the object has been spawned.
+            var poolable = obj.GetComponent<IPoolable>();
+            poolable?.OnSpawned();
+
             return obj;
         }
 
@@ -107,6 +121,13 @@ namespace vFrame.Core.Unity
                 obj.DestroyEx();
                 return;
             }
+
+            // Notify IPoolable components that the object has been recycled.
+            var poolable = obj.GetComponent<IPoolable>();
+            poolable?.OnRecycled();
+
+            obj.SetActive(false);
+            obj.transform.SetParent(_context.Parent, false);
             _objects.Enqueue(obj);
         }
 
@@ -252,6 +273,11 @@ namespace vFrame.Core.Unity
                 var go = Request.GameObject;
                 go.transform.SetParent(Parent);
                 Pool.OnSpawned(go);
+                go.SetActive(true);
+
+                // Notify IPoolable components that the object has been spawned.
+                var poolable = go.GetComponent<IPoolable>();
+                poolable?.OnSpawned();
             }
 
             /// <summary>
