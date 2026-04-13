@@ -19,6 +19,7 @@ namespace vFrame.Core
         public SingletonException(string message) : base(message) { }
     }
 
+    [Obsolete("This exception is no longer thrown.")]
     public class SingletonDuplicatedException : SingletonException
     {
         public SingletonDuplicatedException() { }

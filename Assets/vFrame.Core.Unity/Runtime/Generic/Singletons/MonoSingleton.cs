@@ -26,6 +26,12 @@ namespace vFrame.Core.Unity
         private static bool _instanceCreated;
 
         /// <summary>
+        /// Gets whether the singleton instance should be preserved across scene loads.
+        /// Override in derived classes to return <c>false</c> and allow scene-based lifecycle.
+        /// </summary>
+        protected virtual bool DontDestroyOnLoadEnabled => true;
+
+        /// <summary>
         /// Gets the singleton instance, creating it on first access.
         /// </summary>
         public static T Instance {
@@ -50,6 +56,9 @@ namespace vFrame.Core.Unity
             }
             _instance = this as T;
             _instanceCreated = true;
+            if (DontDestroyOnLoadEnabled) {
+                UnityEngine.Object.DontDestroyOnLoad(gameObject);
+            }
         }
 
         /// <summary>
