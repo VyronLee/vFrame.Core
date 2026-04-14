@@ -12,6 +12,24 @@ using System.Text;
 
 namespace vFrame.Core
 {
-    public class StringBuilderPool : ObjectPool<StringBuilder, StringBuilderAllocator>
-    { }
+    public class StringBuilderPool : ObjectPool<StringBuilder>
+    {
+        private static readonly object _lock = new object();
+        private static StringBuilderPool _shared;
+
+        public new static StringBuilderPool Shared {
+            get {
+                if (_shared == null) {
+                    lock (_lock) {
+                        if (_shared == null) {
+                            _shared = new StringBuilderPool();
+                        }
+                    }
+                }
+                return _shared;
+            }
+        }
+
+        public StringBuilderPool() : base(new AllocatorPooledObjectPolicy<StringBuilder, StringBuilderAllocator>()) { }
+    }
 }
