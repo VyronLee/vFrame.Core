@@ -58,8 +58,9 @@ namespace vFrame.Core
     /// </summary>
     public sealed class ObjectPoolOptions<TClass> where TClass : class
     {
-        public int InitialCapacity { get; set; } = 128;
-        public int MaxSize { get; set; } = 128;
+        public int InitialCapacity { get; set; } = 16;
+        public int MaxSize { get; set; } = 1024;
+        public bool CollectionCheckEnabled { get; set; }
 
         /// <summary>
         ///     Applies when a returned item would exceed retained capacity.
