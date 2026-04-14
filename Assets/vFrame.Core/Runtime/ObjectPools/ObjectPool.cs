@@ -1,479 +1,266 @@
 // ------------------------------------------------------------
 //         File: ObjectPool.cs
-//        Brief: Generic object pool implementation supporting default construction and custom allocator modes
+//        Brief: Unified object pool with policy-based creation and optional duplicate detection
 //
 //       Author: VyronLee, lwz_jz@hotmail.com
 //
 //      Created: 2019-07-09 19:09:00
-//    Copyright: Copyright (c) 2024, VyronLee
+//    Copyright: Copyright (c) 2026, VyronLee
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 
 namespace vFrame.Core
 {
-    public abstract class ObjectPool : BaseObject, IObjectPool
+    /// <summary>
+    ///     Thread-safe generic object pool with policy-based object creation and optional duplicate detection.
+    /// </summary>
+    /// <typeparam name="T">The pooled object type, must be a reference type.</typeparam>
+    public class ObjectPool<T> : IObjectPool<T>, IDisposable where T : class
     {
-        protected readonly LogTag LogTag = new LogTag("ObjectPool");
+        private static readonly object _instanceLockObject = new object();
+        private static ObjectPool<T> _shared;
+
+        private readonly object _lockObject = new object();
+        private readonly IPooledObjectPolicy<T> _policy;
+        private readonly ObjectPoolOptions<T> _options;
+        private readonly HashSet<T> _inactiveLookup;  // null when CollectionCheckEnabled = false
+        private Stack<T> _objects;
+        private ObjectPoolStatistics _statistics;
 
         /// <summary>
-        ///     Starts a new pooled use cycle.
+        ///     Creates a pool with default policy and options.
         /// </summary>
-        /// <returns>An object from the pool.</returns>
-        public object Get() {
-            return OnGetInternal();
+        public ObjectPool() : this(default(IPooledObjectPolicy<T>)) { }
+
+        /// <summary>
+        ///     Creates a pool with a factory function and optional configuration.
+        /// </summary>
+        /// <param name="factory">Function to create new instances, or null for default construction.</param>
+        /// <param name="options">Pool configuration options, or null for defaults.</param>
+        public ObjectPool(Func<T> factory, ObjectPoolOptions<T> options = null)
+            : this(new DefaultPooledObjectPolicy<T>(factory), options) { }
+
+        /// <summary>
+        ///     Creates a pool with a custom policy and optional configuration.
+        /// </summary>
+        /// <param name="policy">Object creation and return policy, or null for default policy.</param>
+        /// <param name="options">Pool configuration options, or null for defaults.</param>
+        public ObjectPool(IPooledObjectPolicy<T> policy, ObjectPoolOptions<T> options = null) {
+            _policy = policy ?? new DefaultPooledObjectPolicy<T>();
+            _options = options ?? new ObjectPoolOptions<T>();
+            _objects = new Stack<T>(_options.InitialCapacity);
+            if (_options.CollectionCheckEnabled) {
+                _inactiveLookup = new HashSet<T>();
+            }
+            else {
+                _inactiveLookup = null;
+            }
         }
 
         /// <summary>
-        ///     Ends the current pooled use cycle and applies pool-managed return policy.
+        ///     Gets the lazily-initialized shared singleton instance.
+        ///     Uses double-check lock pattern without calling Create().
+        /// </summary>
+        public static ObjectPool<T> Shared {
+            get {
+                if (null == _shared) {
+                    lock (_instanceLockObject) {
+                        if (null == _shared) {
+                            _shared = new ObjectPool<T>();
+                        }
+                    }
+                }
+                return _shared;
+            }
+        }
+
+        /// <summary>
+        ///     Gets an object from the pool, creating a new instance via policy if none is available.
+        /// </summary>
+        /// <returns>A pooled or newly created instance.</returns>
+        public T Get() {
+            T item;
+            lock (_lockObject) {
+                if (_objects.Count > 0) {
+                    item = _objects.Pop();
+                    if (_inactiveLookup != null) {
+                        _inactiveLookup.Remove(item);
+                    }
+                }
+                else {
+                    item = _policy.Create();
+                    _statistics.CountAll++;
+                    _statistics.TotalCreatedCount++;
+                }
+                _statistics.TotalGetCount++;
+            }
+
+            _options.OnGet?.Invoke(item);
+            return item;
+        }
+
+        /// <summary>
+        ///     Gets an object from the pool wrapped in an auto-returning disposable.
+        /// </summary>
+        /// <param name="item">The pooled object.</param>
+        /// <returns>A PooledObject that returns the item to the pool when disposed.</returns>
+        public PooledObject<T> Get(out T item) {
+            item = Get();
+            return new PooledObject<T>(this, item);
+        }
+
+        /// <summary>
+        ///     Returns an object to the pool, applying policy checks, reset callbacks, and overflow handling.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        public void Return(object obj) {
-            OnReturnInternal(obj);
+        public void Return(T obj) {
+            ThrowHelper.ThrowIfNull(obj, nameof(obj));
+
+            // Step 1: Policy validation - if policy rejects, discard immediately
+            if (!_policy.Return(obj)) {
+                lock (_lockObject) {
+                    _statistics.TotalReturnCount++;
+                    _statistics.TotalDestroyedCount++;
+                    _statistics.CountAll--;
+                }
+                _options.OnDestroy?.Invoke(obj);
+                return;
+            }
+
+            // Step 2: Reset object state if it supports the interface
+            if (obj is IPoolObjectResetable resetable) {
+                resetable.Reset();
+            }
+
+            // Step 3: Invoke user return callback
+            _options.OnReturn?.Invoke(obj);
+
+            // Step 4: Check if object was destroyed during return callbacks
+            if (obj is Object pooledObject && pooledObject.Destroyed) {
+                lock (_lockObject) {
+                    _statistics.TotalReturnCount++;
+                    _statistics.TotalDestroyedCount++;
+                    _statistics.CountAll--;
+                }
+                _options.OnDestroy?.Invoke(obj);
+                return;
+            }
+
+            // Step 5: Add back to pool with duplicate and overflow checks
+            lock (_lockObject) {
+                // Duplicate detection (only when CollectionCheckEnabled is true)
+                if (_inactiveLookup != null) {
+                    if (_inactiveLookup.Contains(obj)) {
+                        _statistics.TotalReturnCount++;
+                        _statistics.TotalDuplicateReturnCount++;
+                        return;
+                    }
+                    _inactiveLookup.Add(obj);
+                }
+
+                _statistics.TotalReturnCount++;
+
+                // Overflow policy: destroy returned object if pool is at max capacity
+                if (_objects.Count >= _options.MaxSize &&
+                    _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
+                    _statistics.TotalDestroyedCount++;
+                    _statistics.CountAll--;
+                    if (_inactiveLookup != null) {
+                        _inactiveLookup.Remove(obj);
+                    }
+                    _options.OnDestroy?.Invoke(obj);
+                    return;
+                }
+
+                _objects.Push(obj);
+            }
         }
 
         /// <summary>
-        ///     Returns observable pool statistics.
-        /// </summary>
-        /// <returns>Current pool statistics snapshot.</returns>
-        public abstract ObjectPoolStatistics GetStatistics();
-
-        /// <summary>
-        ///     Removes excess inactive objects from the pool. Default implementation returns 0.
-        ///     Override in derived pools to implement actual trimming.
+        ///     Removes excess inactive objects from the pool, releasing them for garbage collection.
         /// </summary>
         /// <param name="maxRetained">Maximum number of inactive objects to retain.</param>
         /// <returns>The number of objects removed.</returns>
-        public virtual int Trim(int maxRetained) {
-            return 0;
-        }
-
-        /// <summary>
-        ///     Internal typed get logic implemented by derived pools.
-        /// </summary>
-        /// <returns>An object from the pool.</returns>
-        protected abstract object OnGetInternal();
-
-        /// <summary>
-        ///     Internal typed return logic implemented by derived pools.
-        /// </summary>
-        /// <param name="obj">The object to return.</param>
-        protected abstract void OnReturnInternal(object obj);
-    }
-
-    public class ObjectPool<TClass> : ObjectPool, IObjectPool<TClass> where TClass : class, new()
-    {
-        private static readonly object _instanceLockObject = new object();
-
-        private static ObjectPool<TClass> _shared;
-
-        private readonly object _lockObject = new object();
-        private readonly ObjectPoolOptions<TClass> _options;
-        private HashSet<TClass> _inactiveLookup;
-        private Stack<TClass> _objects;
-        private ObjectPoolStatistics _statistics;
-
-        /// <summary>
-        ///     Creates a pool with default options.
-        /// </summary>
-        public ObjectPool() : this(null) { }
-
-        /// <summary>
-        ///     Creates a pool with the specified options.
-        /// </summary>
-        /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
-        public ObjectPool(ObjectPoolOptions<TClass> options) {
-            _options = options ?? new ObjectPoolOptions<TClass>();
-        }
-
-        /// <summary>
-        ///     Gets the lazily-initialized shared singleton instance.
-        /// </summary>
-        public static ObjectPool<TClass> Shared {
-            get {
-                if (null == _shared) {
-                    lock (_instanceLockObject) {
-                        if (null == _shared) {
-                            var instance = new ObjectPool<TClass>();
-                            instance.Create();
-                            _shared = instance;
-                        }
-                    }
-                }
-
-                return _shared;
-            }
-        }
-
-        /// <summary>
-        ///     Returns an object to the pool, applying destroy and overflow policies.
-        /// </summary>
-        /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
-        public void Return(TClass obj) {
-            ThrowHelper.ThrowIfNull(obj, nameof(obj));
-
-            // Returning an item always ends its current use cycle before retention policy is applied.
-            if (obj is IDestroyable destroyable) {
-                destroyable.Destroy();
-            }
-
-            _options.OnReturn?.Invoke(obj);
-
-            if (obj is IPoolObjectResetable resetable) {
-                resetable.Reset();
-            }
-
-            if (obj is Object pooledObject && pooledObject.Destroyed) {
-                _statistics.TotalReturnCount++;
-                _statistics.TotalDestroyedCount++;
-                _statistics.CountAll--;
-                _options.OnDestroy?.Invoke(obj);
-                return;
-            }
-
-            lock (_lockObject) {
-                if (_inactiveLookup.Contains(obj)) {
-                    _statistics.TotalDuplicateReturnCount++;
-                    return;
-                }
-
-                _statistics.TotalReturnCount++;
-
-                if (_objects.Count >= _options.MaxSize &&
-                    _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
-                    _statistics.TotalDestroyedCount++;
-                    _statistics.CountAll--;
-                    _options.OnDestroy?.Invoke(obj);
-                    return;
-                }
-
-                _objects.Push(obj);
-                _inactiveLookup.Add(obj);
-            }
-        }
-
-        /// <summary>
-        ///     Gets an object from the pool, creating a new instance if none is available.
-        /// </summary>
-        /// <returns>A pooled or newly created instance of <typeparamref name="TClass" />.</returns>
-        public new TClass Get() {
-            TClass item;
-            lock (_lockObject) {
-                if (_objects.Count > 0) {
-                    item = _objects.Pop();
-                    _inactiveLookup.Remove(item);
-                }
-                else {
-                    item = new TClass();
-                    _statistics.CountAll++;
-                    _statistics.TotalCreatedCount++;
-                }
-
-                _statistics.TotalGetCount++;
-            }
-
-            _options.OnGet?.Invoke(item);
-            return item;
-        }
-
-        /// <summary>
-        ///     Removes excess inactive objects from the pool, releasing them for garbage collection.
-        /// </summary>
-        /// <param name="maxRetained">
-        ///     Maximum number of inactive objects to retain. If the pool holds more, the excess are
-        ///     discarded.
-        /// </param>
-        /// <returns>The number of objects removed.</returns>
         public int Trim(int maxRetained) {
             var removed = 0;
             lock (_lockObject) {
                 while (_objects.Count > maxRetained) {
                     var item = _objects.Pop();
-                    _inactiveLookup.Remove(item);
+                    if (_inactiveLookup != null) {
+                        _inactiveLookup.Remove(item);
+                    }
                     _statistics.CountAll--;
                     _statistics.TotalDestroyedCount++;
                     removed++;
                 }
             }
-
             return removed;
+        }
+
+        /// <summary>
+        ///     Pre-populates the pool with a specified number of objects.
+        /// </summary>
+        /// <param name="count">Number of objects to create and add to the pool.</param>
+        public void Prewarm(int count) {
+            lock (_lockObject) {
+                for (var i = 0; i < count; i++) {
+                    var item = _policy.Create();
+                    _objects.Push(item);
+                    if (_inactiveLookup != null) {
+                        _inactiveLookup.Add(item);
+                    }
+                    _statistics.CountAll++;
+                    _statistics.TotalCreatedCount++;
+                }
+            }
         }
 
         /// <summary>
         ///     Returns a snapshot of current pool statistics.
         /// </summary>
         /// <returns>Current pool statistics.</returns>
-        public override ObjectPoolStatistics GetStatistics() {
+        public ObjectPoolStatistics GetStatistics() {
             lock (_lockObject) {
-                _statistics.CountInactive = _objects?.Count ?? 0;
+                _statistics.CountInactive = _objects.Count;
                 _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
                 return _statistics;
             }
         }
 
         /// <summary>
-        ///     Initializes the pool storage and pre-populates with <see cref="ObjectPoolOptions{TClass}.InitialCapacity" />
-        ///     instances.
+        ///     Clears all pooled objects, releasing them for garbage collection.
         /// </summary>
-        protected override void OnCreate() {
+        public void Clear() {
             lock (_lockObject) {
-                _objects = new Stack<TClass>(_options.InitialCapacity);
-                _inactiveLookup = new HashSet<TClass>();
-                _statistics = default;
-                for (var i = 0; i < _options.InitialCapacity; i++) {
-                    var item = new TClass();
-                    _objects.Push(item);
-                    _inactiveLookup.Add(item);
-                    _statistics.CountAll++;
-                    _statistics.TotalCreatedCount++;
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Clears and releases all pooled instances.
-        /// </summary>
-        protected override void OnDestroy() {
-            lock (_lockObject) {
-                _objects?.Clear();
+                _objects.Clear();
                 _inactiveLookup?.Clear();
-                _objects = null;
-                _inactiveLookup = null;
             }
         }
 
         /// <summary>
-        ///     Delegates to the typed <see cref="Get" /> method.
+        ///     Releases all resources used by the pool.
         /// </summary>
-        /// <returns>An object from the pool.</returns>
-        protected override object OnGetInternal() {
-            return Get();
+        public void Dispose() {
+            Clear();
+            _objects = null;
         }
 
+        // IObjectPool explicit implementations
+
         /// <summary>
-        ///     Validates type and delegates to the typed <see cref="Return(TClass)" /> method.
+        ///     Non-generic get that boxes the result.
         /// </summary>
-        /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
-        /// <exception cref="InvalidOperationException">
-        ///     Thrown when <paramref name="obj" /> type does not match
-        ///     <typeparamref name="TClass" />.
-        /// </exception>
-        protected override void OnReturnInternal(object obj) {
+        object IObjectPool.Get() => Get();
+
+        /// <summary>
+        ///     Non-generic return with type validation.
+        /// </summary>
+        void IObjectPool.Return(object obj) {
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
-            Return(obj as TClass);
-        }
-    }
-
-    public class ObjectPool<TClass, TAllocator> : ObjectPool, IObjectPool<TClass>
-        where TClass : class, new()
-        where TAllocator : IPoolObjectAllocator<TClass>, new()
-    {
-        private static readonly object _instanceLockObject = new object();
-
-        private static ObjectPool<TClass, TAllocator> _shared;
-
-        private readonly object _lockObject = new object();
-        private readonly ObjectPoolOptions<TClass> _options;
-        private TAllocator _allocator;
-        private HashSet<TClass> _inactiveLookup;
-        private Stack<TClass> _objects;
-        private ObjectPoolStatistics _statistics;
-
-        /// <summary>
-        ///     Creates a pool with default options.
-        /// </summary>
-        public ObjectPool() : this(null) { }
-
-        /// <summary>
-        ///     Creates a pool with the specified options.
-        /// </summary>
-        /// <param name="options">Pool configuration options, or <c>null</c> for defaults.</param>
-        public ObjectPool(ObjectPoolOptions<TClass> options) {
-            _options = options ?? new ObjectPoolOptions<TClass>();
-        }
-
-        /// <summary>
-        ///     Gets the lazily-initialized shared singleton instance.
-        /// </summary>
-        public static ObjectPool<TClass, TAllocator> Shared {
-            get {
-                if (null == _shared) {
-                    lock (_instanceLockObject) {
-                        if (null == _shared) {
-                            var instance = new ObjectPool<TClass, TAllocator>();
-                            instance.Create();
-                            _shared = instance;
-                        }
-                    }
-                }
-
-                return _shared;
-            }
-        }
-
-        /// <summary>
-        ///     Gets an object from the pool, allocating via <typeparamref name="TAllocator" /> if none is available.
-        /// </summary>
-        /// <returns>A pooled or newly allocated instance of <typeparamref name="TClass" />.</returns>
-        public new TClass Get() {
-            TClass item;
-            lock (_lockObject) {
-                if (_objects.Count > 0) {
-                    item = _objects.Pop();
-                    _inactiveLookup.Remove(item);
-                }
-                else {
-                    item = _allocator.Alloc();
-                    _statistics.CountAll++;
-                    _statistics.TotalCreatedCount++;
-                }
-
-                _statistics.TotalGetCount++;
-            }
-
-            _options.OnGet?.Invoke(item);
-            return item;
-        }
-
-        /// <summary>
-        ///     Returns an object to the pool, applying reset, destroy, and overflow policies.
-        /// </summary>
-        /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
-        public void Return(TClass obj) {
-            ThrowHelper.ThrowIfNull(obj, nameof(obj));
-
-            // Returning an item always ends its current use cycle before retention policy is applied.
-            if (obj is IDestroyable destroyable) {
-                destroyable.Destroy();
-            }
-
-            _options.OnReturn?.Invoke(obj);
-            _allocator.Reset(obj);
-
-            if (obj is IPoolObjectResetable resetable) {
-                resetable.Reset();
-            }
-
-            if (obj is Object pooledObject && pooledObject.Destroyed) {
-                _statistics.TotalReturnCount++;
-                _statistics.TotalDestroyedCount++;
-                _statistics.CountAll--;
-                _options.OnDestroy?.Invoke(obj);
-                return;
-            }
-
-            lock (_lockObject) {
-                if (_inactiveLookup.Contains(obj)) {
-                    _statistics.TotalDuplicateReturnCount++;
-                    return;
-                }
-
-                _statistics.TotalReturnCount++;
-
-                if (_objects.Count >= _options.MaxSize &&
-                    _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
-                    _statistics.TotalDestroyedCount++;
-                    _statistics.CountAll--;
-                    _options.OnDestroy?.Invoke(obj);
-                    return;
-                }
-
-                _objects.Push(obj);
-                _inactiveLookup.Add(obj);
-            }
-        }
-
-        /// <summary>
-        ///     Removes excess inactive objects from the pool, releasing them for garbage collection.
-        /// </summary>
-        /// <param name="maxRetained">
-        ///     Maximum number of inactive objects to retain. If the pool holds more, the excess are
-        ///     discarded.
-        /// </param>
-        /// <returns>The number of objects removed.</returns>
-        public int Trim(int maxRetained) {
-            var removed = 0;
-            lock (_lockObject) {
-                while (_objects.Count > maxRetained) {
-                    var item = _objects.Pop();
-                    _inactiveLookup.Remove(item);
-                    _statistics.CountAll--;
-                    _statistics.TotalDestroyedCount++;
-                    removed++;
-                }
-            }
-
-            return removed;
-        }
-
-        /// <summary>
-        ///     Returns a snapshot of current pool statistics.
-        /// </summary>
-        /// <returns>Current pool statistics.</returns>
-        public override ObjectPoolStatistics GetStatistics() {
-            lock (_lockObject) {
-                _statistics.CountInactive = _objects?.Count ?? 0;
-                _statistics.CountActive = _statistics.CountAll - _statistics.CountInactive;
-                return _statistics;
-            }
-        }
-
-        /// <summary>
-        ///     Initializes the allocator, pool storage, and pre-populates with instances.
-        /// </summary>
-        protected override void OnCreate() {
-            _allocator = new TAllocator();
-            lock (_lockObject) {
-                _objects = new Stack<TClass>(_options.InitialCapacity);
-                _inactiveLookup = new HashSet<TClass>();
-                _statistics = default;
-                for (var i = 0; i < _options.InitialCapacity; i++) {
-                    var item = _allocator.Alloc();
-                    _objects.Push(item);
-                    _inactiveLookup.Add(item);
-                    _statistics.CountAll++;
-                    _statistics.TotalCreatedCount++;
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Clears and releases all pooled instances.
-        /// </summary>
-        protected override void OnDestroy() {
-            lock (_lockObject) {
-                _objects?.Clear();
-                _inactiveLookup?.Clear();
-                _objects = null;
-                _inactiveLookup = null;
-            }
-        }
-
-        /// <summary>
-        ///     Delegates to the typed <see cref="Get" /> method.
-        /// </summary>
-        /// <returns>An object from the pool.</returns>
-        protected override object OnGetInternal() {
-            return Get();
-        }
-
-        /// <summary>
-        ///     Validates type and delegates to the typed <see cref="Return(TClass)" /> method.
-        /// </summary>
-        /// <param name="obj">The object to return.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="obj" /> is null.</exception>
-        /// <exception cref="InvalidOperationException">
-        ///     Thrown when <paramref name="obj" /> type does not match
-        ///     <typeparamref name="TClass" />.
-        /// </exception>
-        protected override void OnReturnInternal(object obj) {
-            ThrowHelper.ThrowIfNull(obj, nameof(obj));
-            ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(TClass));
-            Return(obj as TClass);
+            ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(T));
+            Return(obj as T);
         }
     }
 }
