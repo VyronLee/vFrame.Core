@@ -20,9 +20,9 @@ namespace vFrame.Core
     public static class LoggerExtensions
     {
         public static void Trace(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Trace,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
@@ -32,9 +32,9 @@ namespace vFrame.Core
         }
 
         public static void Debug(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Debug,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
@@ -44,9 +44,9 @@ namespace vFrame.Core
         }
 
         public static void Info(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Info,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
@@ -56,9 +56,9 @@ namespace vFrame.Core
         }
 
         public static void Warning(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Warning,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
@@ -68,9 +68,9 @@ namespace vFrame.Core
         }
 
         public static void Error(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Error,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
@@ -80,9 +80,9 @@ namespace vFrame.Core
         }
 
         public static void Fatal(this ILogger logger,
-            LogLevelDef level,
+            LogLevelDef level = LogLevelDef.Fatal,
             [InterpolatedStringHandlerArgument("logger", "level")]
-            LogInterpolatedStringHandler handler) {
+            LogInterpolatedStringHandler handler = default) {
             var text = handler.GetFormattedText();
             if (text == null) {
                 return;
