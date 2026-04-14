@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using vFrame.Core;
 
@@ -236,6 +237,106 @@ namespace vFrame.Core.Tests.EditMode.Dispatchers
 
             protected override void OnDestroy() {
             }
+        }
+
+        // --- Additional coverage for untested overloads and edge cases ---
+
+        [Test]
+        public void Listen_WithPriorityAndLifetime_BoundAndOrdered() {
+            var dispatcher = CreateDispatcher();
+            var owner = new LifetimeDecisionOwner();
+            owner.Create();
+            var order = new List<int>();
+
+            dispatcher.Listen<TestDecision>(_ => { order.Add(1); return true; }, priority: 10, owner.Group);
+            dispatcher.Listen<TestDecision>(_ => { order.Add(2); return true; }, priority: 0);
+
+            var pass1 = dispatcher.Decide(new TestDecision());
+            Assert.That(pass1, Is.True);
+            Assert.That(order, Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(dispatcher.GetDecisionSubscriptionCount(), Is.EqualTo(2));
+
+            owner.Group.Destroy();
+            order.Clear();
+
+            var pass2 = dispatcher.Decide(new TestDecision());
+            Assert.That(pass2, Is.True);
+            Assert.That(order, Is.EqualTo(new[] { 2 }));
+            Assert.That(dispatcher.GetDecisionSubscriptionCount(), Is.EqualTo(1));
+
+            owner.Destroy();
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Decide_ExceptionInHandler_DoesNotVeto() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.Listen<TestDecision>(_ => throw new Exception("boom"));
+
+            var pass = dispatcher.Decide(new TestDecision());
+
+            Assert.That(pass, Is.True);
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Decide_ThrowingHandlerFollowedByVeto_ReturnsFalse() {
+            var dispatcher = CreateDispatcher();
+            var vetoReached = false;
+
+            dispatcher.Listen<TestDecision>(_ => throw new Exception("boom"));
+            dispatcher.Listen<TestDecision>(_ => { vetoReached = true; return false; });
+
+            var pass = dispatcher.Decide(new TestDecision());
+
+            Assert.That(vetoReached, Is.True);
+            Assert.That(pass, Is.False);
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Decide_MultipleListenersAllApprove_ReturnsTrue() {
+            var dispatcher = CreateDispatcher();
+            var callCount = 0;
+
+            dispatcher.Listen<TestDecision>(_ => { callCount++; return true; });
+            dispatcher.Listen<TestDecision>(_ => { callCount++; return true; });
+            dispatcher.Listen<TestDecision>(_ => { callCount++; return true; });
+
+            var pass = dispatcher.Decide(new TestDecision());
+
+            Assert.That(pass, Is.True);
+            Assert.That(callCount, Is.EqualTo(3));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Decide_PriorityVeto_StopsChain() {
+            var dispatcher = CreateDispatcher();
+            var order = new List<int>();
+
+            dispatcher.Listen<TestDecision>(_ => { order.Add(3); return true; }, priority: 0);
+            dispatcher.Listen<TestDecision>(_ => { order.Add(1); return false; }, priority: 10);
+            dispatcher.Listen<TestDecision>(_ => { order.Add(2); return true; }, priority: 5);
+
+            var pass = dispatcher.Decide(new TestDecision());
+
+            Assert.That(pass, Is.False);
+            Assert.That(order, Is.EqualTo(new[] { 1 }));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Listen_DefaultPriority_IsZero() {
+            var dispatcher = CreateDispatcher();
+            var sub = dispatcher.Listen<TestDecision>(_ => true);
+            Assert.That(sub.Priority, Is.EqualTo(0));
+            dispatcher.Destroy();
         }
     }
 }

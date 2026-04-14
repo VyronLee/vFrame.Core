@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using vFrame.Core;
 
@@ -239,6 +240,83 @@ namespace vFrame.Core.Tests.EditMode.Dispatchers
 
             protected override void OnDestroy() {
             }
+        }
+
+        // --- Additional coverage for untested overloads and edge cases ---
+
+        [Test]
+        public void HandleRequest_IgnoreMode_ReturnsNullOnDuplicate() {
+            var dispatcher = CreateDispatcher();
+
+            var first = dispatcher.HandleRequest<TestRequest, int>(r => 42);
+            var second = dispatcher.HandleRequest<TestRequest, int>(r => 99, RegisterMode.Ignore);
+
+            Assert.That(first, Is.Not.Null);
+            Assert.That(second, Is.Null);
+
+            var result = dispatcher.Request<TestRequest, int>(new TestRequest { Value = 1 });
+            Assert.That(result, Is.EqualTo(42));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void HandleRequest_ReplacingDestroyedHandler_RegistersNew() {
+            var dispatcher = CreateDispatcher();
+
+            var first = dispatcher.HandleRequest<TestRequest, int>(r => 0);
+            dispatcher.UnhandleRequest(first);
+
+            var second = dispatcher.HandleRequest<TestRequest, int>(r => r.Value * 3);
+
+            Assert.That(second, Is.Not.Null);
+            var result = dispatcher.Request<TestRequest, int>(new TestRequest { Value = 7 });
+            Assert.That(result, Is.EqualTo(21));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void HandleRequest_OwnerBoundSubscription_RemovedOnOwnerDestroy() {
+            var dispatcher = CreateDispatcher();
+            var owner = new RequestOwner();
+            owner.Create();
+
+            dispatcher.HandleRequest<TestRequest, int>(owner.OnRequest, owner);
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(1));
+
+            owner.Destroy();
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(0));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void HandleRequest_LifetimeBoundSubscription_RemovedOnLifetimeEnd() {
+            var dispatcher = CreateDispatcher();
+            var owner = new LifetimeRequestOwner();
+            owner.Create();
+
+            dispatcher.HandleRequest<TestRequest, int>(owner.OnRequest, owner.Group);
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(1));
+
+            owner.Group.Destroy();
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(0));
+
+            owner.Destroy();
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void GetRequestSubscriptionCount_AfterReplacement_StillOne() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.HandleRequest<TestRequest, int>(_ => 1);
+            dispatcher.HandleRequest<TestRequest, int>(_ => 2);
+
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(1));
+
+            dispatcher.Destroy();
         }
     }
 }

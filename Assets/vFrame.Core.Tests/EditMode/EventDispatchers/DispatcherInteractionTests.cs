@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using vFrame.Core;
 
@@ -207,6 +208,156 @@ namespace vFrame.Core.Tests.EditMode.Dispatchers
 
             protected override void OnDestroy() {
             }
+        }
+
+        // --- Additional coverage for cross-cutting edge cases ---
+
+        [Test]
+        public void RemoveAllSubscriptions_ClearsAllFourChannels() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Handle<TestCommand>(_ => { });
+            dispatcher.HandleRequest<TestRequest, int>(_ => 0);
+            dispatcher.Listen<TestDecision>(_ => true);
+
+            Assert.That(dispatcher.GetTotalSubscriptionCount(), Is.EqualTo(4));
+
+            dispatcher.RemoveAllSubscriptions();
+
+            Assert.That(dispatcher.GetEventSubscriptionCount(), Is.EqualTo(0));
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(0));
+            Assert.That(dispatcher.GetRequestSubscriptionCount(), Is.EqualTo(0));
+            Assert.That(dispatcher.GetDecisionSubscriptionCount(), Is.EqualTo(0));
+            Assert.That(dispatcher.GetTotalSubscriptionCount(), Is.EqualTo(0));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void GetTotalSubscriptionCount_SumsAllFourChannels() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Handle<TestCommand>(_ => { });
+            dispatcher.HandleRequest<TestRequest, int>(_ => 0);
+            dispatcher.Listen<TestDecision>(_ => true);
+            dispatcher.Listen<TestDecision>(_ => true);
+            dispatcher.Listen<TestDecision>(_ => true);
+
+            Assert.That(dispatcher.GetTotalSubscriptionCount(), Is.EqualTo(7));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void GetDiagnostics_ReflectsAllFourChannels() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Handle<TestCommand>(_ => { });
+            dispatcher.HandleRequest<TestRequest, int>(_ => 0);
+            dispatcher.Listen<TestDecision>(_ => true);
+
+            var diag = dispatcher.GetDiagnostics();
+
+            Assert.That(diag.EventSubscriptionCount, Is.EqualTo(2));
+            Assert.That(diag.CommandSubscriptionCount, Is.EqualTo(1));
+            Assert.That(diag.RequestSubscriptionCount, Is.EqualTo(1));
+            Assert.That(diag.DecisionSubscriptionCount, Is.EqualTo(1));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Unsubscribe_NullSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            Assert.DoesNotThrow(() => dispatcher.Unsubscribe(null));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Unhandle_NullSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            Assert.DoesNotThrow(() => dispatcher.Unhandle(null));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void UnhandleRequest_NullSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            Assert.DoesNotThrow(() => dispatcher.UnhandleRequest(null));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Unlisten_NullSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            Assert.DoesNotThrow(() => dispatcher.Unlisten(null));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Subscription_Dispose_MarksAsDestroyed() {
+            var dispatcher = CreateDispatcher();
+            var subscription = dispatcher.Subscribe<TestEvent>(_ => { });
+
+            Assert.That(subscription.Destroyed, Is.False);
+            subscription.Dispose();
+            Assert.That(subscription.Destroyed, Is.True);
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Unsubscribe_AlreadyDestroyedSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            var sub = dispatcher.Subscribe<TestEvent>(_ => { });
+            dispatcher.Unsubscribe(sub);
+            Assert.DoesNotThrow(() => dispatcher.Unsubscribe(sub));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Unlisten_AlreadyDestroyedSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            var sub = dispatcher.Listen<TestDecision>(_ => true);
+            dispatcher.Unlisten(sub);
+            Assert.DoesNotThrow(() => dispatcher.Unlisten(sub));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void UnhandleRequest_AlreadyDestroyedSubscription_IsNoOp() {
+            var dispatcher = CreateDispatcher();
+            var sub = dispatcher.HandleRequest<TestRequest, int>(_ => 0);
+            dispatcher.UnhandleRequest(sub);
+            Assert.DoesNotThrow(() => dispatcher.UnhandleRequest(sub));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Subscription_Handles_AreUniqueAndIncreasing() {
+            var dispatcher = CreateDispatcher();
+
+            var sub1 = dispatcher.Subscribe<TestEvent>(_ => { });
+            var sub2 = dispatcher.Subscribe<TestEvent>(_ => { });
+            var sub3 = dispatcher.Handle<TestCommand>(_ => { });
+
+            Assert.That(sub2.Handle, Is.GreaterThan(sub1.Handle));
+            Assert.That(sub3.Handle, Is.GreaterThan(sub2.Handle));
+
+            dispatcher.Destroy();
+        }
+
+        private sealed class TestCommand : ICommand
+        {
+        }
+
+        private sealed class TestRequest : IRequest<int>
+        {
         }
     }
 }

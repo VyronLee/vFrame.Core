@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using vFrame.Core;
 
@@ -158,6 +159,86 @@ namespace vFrame.Core.Tests.EditMode.Dispatchers
 
             protected override void OnDestroy() {
             }
+        }
+
+        // --- Additional coverage for untested overloads and edge cases ---
+
+        [Test]
+        public void Subscribe_WithPriorityAndLifetime_BoundAndOrdered() {
+            var dispatcher = CreateDispatcher();
+            var owner = new GroupOwner();
+            owner.Create();
+            var order = new List<int>();
+
+            dispatcher.Subscribe<TestEvent>(_ => order.Add(99), priority: -1);
+            dispatcher.Subscribe<TestEvent>(_ => order.Add(1), priority: 10, owner.Group);
+            dispatcher.Subscribe<TestEvent>(_ => order.Add(2), priority: 0);
+
+            dispatcher.Publish(new TestEvent());
+            Assert.That(order, Is.EqualTo(new[] { 1, 2, 99 }));
+            Assert.That(dispatcher.GetEventSubscriptionCount(), Is.EqualTo(3));
+
+            owner.Group.Destroy();
+            order.Clear();
+
+            dispatcher.Publish(new TestEvent());
+            Assert.That(order, Is.EqualTo(new[] { 2, 99 }));
+            Assert.That(dispatcher.GetEventSubscriptionCount(), Is.EqualTo(2));
+
+            owner.Destroy();
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Publish_NoSubscribers_DoesNotThrow() {
+            var dispatcher = CreateDispatcher();
+            Assert.DoesNotThrow(() => dispatcher.Publish(new TestEvent()));
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Publish_MultipleSubscribers_AllInvoked() {
+            var dispatcher = CreateDispatcher();
+            var count = 0;
+
+            dispatcher.Subscribe<TestEvent>(_ => count++);
+            dispatcher.Subscribe<TestEvent>(_ => count++);
+            dispatcher.Subscribe<TestEvent>(_ => count++);
+
+            dispatcher.Publish(new TestEvent());
+
+            Assert.That(count, Is.EqualTo(3));
+            Assert.That(dispatcher.GetEventSubscriptionCount(), Is.EqualTo(3));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Subscribe_DifferentEventTypes_DoNotInterfere() {
+            var dispatcher = CreateDispatcher();
+            var countA = 0;
+            var countB = 0;
+
+            dispatcher.Subscribe<TestEvent>(_ => countA++);
+            dispatcher.Subscribe<OtherEvent>(_ => countB++);
+            dispatcher.Publish(new TestEvent());
+
+            Assert.That(countA, Is.EqualTo(1));
+            Assert.That(countB, Is.EqualTo(0));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Subscribe_DefaultPriority_IsZero() {
+            var dispatcher = CreateDispatcher();
+            var sub = dispatcher.Subscribe<TestEvent>(_ => { });
+            Assert.That(sub.Priority, Is.EqualTo(0));
+            dispatcher.Destroy();
+        }
+
+        private sealed class OtherEvent : IEvent
+        {
         }
     }
 }

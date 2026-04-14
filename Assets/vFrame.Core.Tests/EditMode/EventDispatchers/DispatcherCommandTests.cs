@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using vFrame.Core;
 
@@ -196,6 +197,69 @@ namespace vFrame.Core.Tests.EditMode.Dispatchers
 
             protected override void OnDestroy() {
             }
+        }
+
+        // --- Additional coverage for untested overloads and edge cases ---
+
+        [Test]
+        public void Handle_ReplacingDestroyedHandler_RegistersNew() {
+            var dispatcher = CreateDispatcher();
+
+            var first = dispatcher.Handle<TestCommand>(c => { });
+            dispatcher.Unhandle(first);
+
+            var secondCalled = false;
+            var second = dispatcher.Handle<TestCommand>(c => secondCalled = true);
+
+            Assert.That(second, Is.Not.Null);
+            dispatcher.Send(new TestCommand());
+            Assert.That(secondCalled, Is.True);
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(1));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Handle_OwnerBoundSubscription_RemovedOnOwnerDestroy() {
+            var dispatcher = CreateDispatcher();
+            var owner = new CommandOwner();
+            owner.Create();
+
+            dispatcher.Handle<TestCommand>(owner.OnCommand, owner);
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(1));
+
+            owner.Destroy();
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(0));
+
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void Handle_LifetimeBoundSubscription_RemovedOnLifetimeEnd() {
+            var dispatcher = CreateDispatcher();
+            var owner = new LifetimeCommandOwner();
+            owner.Create();
+
+            dispatcher.Handle<TestCommand>(owner.OnCommand, owner.Group);
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(1));
+
+            owner.Group.Destroy();
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(0));
+
+            owner.Destroy();
+            dispatcher.Destroy();
+        }
+
+        [Test]
+        public void GetCommandSubscriptionCount_AfterReplacement_StillOne() {
+            var dispatcher = CreateDispatcher();
+
+            dispatcher.Handle<TestCommand>(_ => { });
+            dispatcher.Handle<TestCommand>(_ => { });
+
+            Assert.That(dispatcher.GetCommandSubscriptionCount(), Is.EqualTo(1));
+
+            dispatcher.Destroy();
         }
     }
 }

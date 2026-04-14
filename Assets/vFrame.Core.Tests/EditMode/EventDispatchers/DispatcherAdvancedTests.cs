@@ -320,17 +320,268 @@ namespace vFrame.Core.Tests.EditMode.EventDispatchers
         {
             private readonly bool _canPublish;
             public int LastSubscriberCount { get; private set; }
+            public int BeforeCallCount { get; private set; }
+            public int AfterCallCount { get; private set; }
+            public Type LastEventType { get; private set; }
 
             public TestEventInterceptor(bool canPublish) {
                 _canPublish = canPublish;
             }
 
             public bool OnBeforePublish(Type eventType, ref IEvent eventData) {
+                BeforeCallCount++;
+                LastEventType = eventType;
                 return _canPublish;
             }
 
             public void OnAfterPublish(Type eventType, IEvent eventData, int subscriberCount) {
+                AfterCallCount++;
                 LastSubscriberCount = subscriberCount;
+                LastEventType = eventType;
+            }
+        }
+
+        // --- Additional coverage for interceptor pipeline and diagnostics edge cases ---
+
+        [Test]
+        public void MultipleInterceptors_InvokedInRegistrationOrder() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var beforeOrder = new List<int>();
+                var afterOrder = new List<int>();
+
+                dispatcher.AddInterceptor(new SplitInterceptor(1, beforeOrder, afterOrder));
+                dispatcher.AddInterceptor(new SplitInterceptor(2, beforeOrder, afterOrder));
+                dispatcher.AddInterceptor(new SplitInterceptor(3, beforeOrder, afterOrder));
+
+                dispatcher.Subscribe<TestEvent>(_ => { });
+                dispatcher.Publish(new TestEvent());
+
+                Assert.That(beforeOrder, Is.EqualTo(new[] { 1, 2, 3 }));
+                Assert.That(afterOrder, Is.EqualTo(new[] { 1, 2, 3 }));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void MultipleInterceptors_SecondCancels_StopsPublish() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var beforeOrder = new List<int>();
+                var afterOrder = new List<int>();
+                var handlerCalled = false;
+
+                dispatcher.AddInterceptor(new SplitInterceptor(1, beforeOrder, afterOrder, true));
+                dispatcher.AddInterceptor(new SplitInterceptor(2, beforeOrder, afterOrder, false));
+                dispatcher.AddInterceptor(new SplitInterceptor(3, beforeOrder, afterOrder, true));
+
+                dispatcher.Subscribe<TestEvent>(_ => handlerCalled = true);
+                dispatcher.Publish(new TestEvent());
+
+                Assert.That(beforeOrder, Is.EqualTo(new[] { 1, 2 }));
+                Assert.That(afterOrder, Is.Empty, "OnAfterPublish should not be called when cancelled");
+                Assert.That(handlerCalled, Is.False);
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void RemoveInterceptor_Found_ReturnsTrue() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var interceptor = new TestEventInterceptor(true);
+                dispatcher.AddInterceptor(interceptor);
+                var result = dispatcher.RemoveInterceptor(interceptor);
+
+                Assert.That(result, Is.True);
+                Assert.That(dispatcher.GetInterceptorCount(), Is.EqualTo(0));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void RemoveInterceptor_NotFound_ReturnsFalse() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var result = dispatcher.RemoveInterceptor(new TestEventInterceptor(true));
+                Assert.That(result, Is.False);
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void RemoveInterceptor_Null_ReturnsFalse() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                Assert.That(dispatcher.RemoveInterceptor(null), Is.False);
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void RemoveInterceptor_AlreadyRemoved_ReturnsFalse() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var interceptor = new TestEventInterceptor(true);
+                dispatcher.AddInterceptor(interceptor);
+                dispatcher.RemoveInterceptor(interceptor);
+                Assert.That(dispatcher.RemoveInterceptor(interceptor), Is.False);
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void Interceptor_OnAfterPublish_NotCalledWhenNoSubscribers() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var interceptor = new TestEventInterceptor(true);
+                dispatcher.AddInterceptor(interceptor);
+                dispatcher.Publish(new TestEvent());
+
+                Assert.That(interceptor.BeforeCallCount, Is.EqualTo(1));
+                Assert.That(interceptor.AfterCallCount, Is.EqualTo(0));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void Interceptor_ReceivesCorrectEventType() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var interceptor = new TestEventInterceptor(true);
+                dispatcher.AddInterceptor(interceptor);
+                dispatcher.Subscribe<TestEvent>(_ => { });
+                dispatcher.Publish(new TestEvent());
+
+                Assert.That(interceptor.LastEventType, Is.EqualTo(typeof(TestEvent)));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void DiagnosticsSnapshot_StoresCorrectValues() {
+            var snapshot = new Dispatcher.DiagnosticsSnapshot(
+                eventCount: 10, commandCount: 20, requestCount: 30, decisionCount: 40);
+
+            Assert.That(snapshot.EventSubscriptionCount, Is.EqualTo(10));
+            Assert.That(snapshot.CommandSubscriptionCount, Is.EqualTo(20));
+            Assert.That(snapshot.RequestSubscriptionCount, Is.EqualTo(30));
+            Assert.That(snapshot.DecisionSubscriptionCount, Is.EqualTo(40));
+        }
+
+        [Test]
+        public void AddInterceptor_AfterDestroy_ThrowsBaseObjectDestroyedException() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            dispatcher.Destroy();
+            Assert.Throws<BaseObjectDestroyedException>(() =>
+                dispatcher.AddInterceptor(new TestEventInterceptor(true)));
+        }
+
+        [Test]
+        public void MultipleInterceptors_AllOnAfterPublishCalled() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var afterCount = new List<int>();
+
+                dispatcher.AddInterceptor(new AfterCountingInterceptor(1, afterCount));
+                dispatcher.AddInterceptor(new AfterCountingInterceptor(2, afterCount));
+                dispatcher.Subscribe<TestEvent>(_ => { });
+                dispatcher.Publish(new TestEvent());
+
+                Assert.That(afterCount, Is.EqualTo(new[] { 1, 2 }));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        [Test]
+        public void RemoveAllSubscriptions_DoesNotRemoveInterceptors() {
+            var dispatcher = new Dispatcher();
+            dispatcher.Create();
+            try {
+                var interceptor = new TestEventInterceptor(true);
+                dispatcher.AddInterceptor(interceptor);
+                dispatcher.Subscribe<TestEvent>(_ => { });
+                dispatcher.RemoveAllSubscriptions();
+
+                Assert.That(dispatcher.GetInterceptorCount(), Is.EqualTo(1));
+
+                dispatcher.Subscribe<TestEvent>(_ => { });
+                dispatcher.Publish(new TestEvent());
+                Assert.That(interceptor.AfterCallCount, Is.EqualTo(1));
+            }
+            finally {
+                dispatcher.Destroy();
+            }
+        }
+
+        // --- Additional interceptor helpers ---
+
+        private class SplitInterceptor : IEventInterceptor
+        {
+            private readonly int _id;
+            private readonly List<int> _beforeOrder;
+            private readonly List<int> _afterOrder;
+            private readonly bool _canPublish;
+
+            public SplitInterceptor(int id, List<int> beforeOrder, List<int> afterOrder, bool canPublish = true) {
+                _id = id;
+                _beforeOrder = beforeOrder;
+                _afterOrder = afterOrder;
+                _canPublish = canPublish;
+            }
+
+            public bool OnBeforePublish(Type eventType, ref IEvent eventData) {
+                _beforeOrder.Add(_id);
+                return _canPublish;
+            }
+
+            public void OnAfterPublish(Type eventType, IEvent eventData, int subscriberCount) {
+                _afterOrder.Add(_id);
+            }
+        }
+
+        private class AfterCountingInterceptor : IEventInterceptor
+        {
+            private readonly int _id;
+            private readonly List<int> _log;
+
+            public AfterCountingInterceptor(int id, List<int> log) {
+                _id = id;
+                _log = log;
+            }
+
+            public bool OnBeforePublish(Type eventType, ref IEvent eventData) => true;
+
+            public void OnAfterPublish(Type eventType, IEvent eventData, int subscriberCount) {
+                _log.Add(_id);
             }
         }
     }
