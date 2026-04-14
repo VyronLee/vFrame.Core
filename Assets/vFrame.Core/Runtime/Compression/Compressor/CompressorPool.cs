@@ -22,14 +22,13 @@ namespace vFrame.Core
         /// </summary>
         protected override void OnCreate() {
             _poolManager = new ObjectPoolManager();
-            _poolManager.Create();
         }
 
         /// <summary>
         ///     Tears down the pool manager during destruction.
         /// </summary>
         protected override void OnDestroy() {
-            _poolManager?.Destroy();
+            _poolManager?.Dispose();
             _poolManager = null;
         }
 

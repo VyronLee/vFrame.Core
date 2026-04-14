@@ -12,8 +12,7 @@ namespace vFrame.Core.Benchmarks.Editor
         }
 
         private static CoreBenchmarkRunner.BenchmarkResult RunGenericPoolBenchmark() {
-            var pool = new ObjectPool<PooledPayload, PooledPayloadAllocator>();
-            pool.Create();
+            var pool = new ObjectPool<PooledPayload>(new AllocatorPooledObjectPolicy<PooledPayload, PooledPayloadAllocator>());
 
             var result = CoreBenchmarkRunner.Measure(
                 "pool.generic.get-return",
@@ -25,7 +24,7 @@ namespace vFrame.Core.Benchmarks.Editor
                     pool.Return(payload);
                 });
 
-            pool.Destroy();
+            pool.Dispose();
             return result;
         }
 

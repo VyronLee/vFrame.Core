@@ -722,7 +722,6 @@ namespace vFrame.Core
             _dirtyDecisionTypes = new HashSet<Type>();
 
             _subscriptionPool = new SubscriptionPool();
-            _subscriptionPool.Create();
         }
 
         /// <summary>
@@ -734,7 +733,7 @@ namespace vFrame.Core
             ClearSingleSubscriptions(_requestSubscriptions);
             ClearListSubscriptions(_decisionSubscriptions);
 
-            _subscriptionPool?.Destroy();
+            _subscriptionPool?.Dispose();
 
             _eventSubscriptions = null;
             _commandSubscriptions = null;
