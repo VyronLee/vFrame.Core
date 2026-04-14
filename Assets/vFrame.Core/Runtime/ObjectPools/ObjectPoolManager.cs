@@ -201,13 +201,7 @@ namespace vFrame.Core
             var totalRemoved = 0;
             lock (_lockObject) {
                 foreach (var kvp in _pools) {
-                    if (kvp.Value is ObjectPool op) {
-                        // Use reflection-safe trim via statistics check
-                        var stats = kvp.Value.GetStatistics();
-                        if (stats.CountInactive > maxRetainedPerPool) {
-                            totalRemoved += stats.CountInactive - maxRetainedPerPool;
-                        }
-                    }
+                    totalRemoved += kvp.Value.Trim(maxRetainedPerPool);
                 }
             }
 
@@ -221,6 +215,44 @@ namespace vFrame.Core
         public int GetPoolCount() {
             lock (_lockObject) {
                 return _pools.Count;
+            }
+        }
+
+        public void Register<T>(IObjectPool<T> pool) where T : class {
+            ThrowHelper.ThrowIfNull(pool, nameof(pool));
+            lock (_lockObject) {
+                _pools[typeof(T)] = pool;
+            }
+        }
+
+        public void Register(Type type, IObjectPool pool) {
+            ThrowHelper.ThrowIfNull(type, nameof(type));
+            ThrowHelper.ThrowIfNull(pool, nameof(pool));
+            lock (_lockObject) {
+                _pools[type] = pool;
+            }
+        }
+
+        public bool Unregister<T>() where T : class {
+            lock (_lockObject) {
+                return _pools.Remove(typeof(T));
+            }
+        }
+
+        public bool Unregister(Type type) {
+            ThrowHelper.ThrowIfNull(type, nameof(type));
+            lock (_lockObject) {
+                return _pools.Remove(type);
+            }
+        }
+
+        public IEnumerable<(Type Type, IObjectPool Pool)> GetAllPools() {
+            lock (_lockObject) {
+                var result = new List<(Type, IObjectPool)>(_pools.Count);
+                foreach (var kvp in _pools) {
+                    result.Add((kvp.Key, kvp.Value));
+                }
+                return result;
             }
         }
 
