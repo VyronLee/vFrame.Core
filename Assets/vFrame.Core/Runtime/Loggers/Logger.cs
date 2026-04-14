@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace vFrame.Core
@@ -323,19 +324,8 @@ namespace vFrame.Core
         /// </summary>
         /// <returns>The trimmed stack trace string.</returns>
         private static string GetLogStack() {
-            var stackTrace = StackTraceUtility.ExtractStackTrace();
-            // Skip the first 3 internal frames (GetLogStack → Log → public method)
-            const int skip = 3;
-            for (var i = 0; i < skip; i++) {
-                var idx = stackTrace.IndexOf("\n", StringComparison.Ordinal);
-                if (idx < 0) {
-                    break;
-                }
-
-                stackTrace = stackTrace.Substring(idx + 1);
-            }
-
-            return stackTrace;
+            // Skip: GetLogStack → Log → public method
+            return new StackTrace(3, true).ToString();
         }
 
         // ── Buffered log access ──

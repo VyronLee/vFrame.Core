@@ -12,6 +12,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using vFrame.Core;
 using Object = UnityEngine.Object;
@@ -121,7 +122,7 @@ namespace vFrame.Core.Unity
 
             var context = new CoroutineTask { Handle = handle, Task = task };
 #if DEBUG_COROUTINE_POOL
-            context.Stack = StackTraceUtility.ExtractStackTrace();
+            context.Stack = new StackTrace(1, true).ToString();
 #endif
 
             var runner = FindIdleRunner();
