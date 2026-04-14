@@ -114,6 +114,27 @@ namespace vFrame.Core
 
                 AppendKeyValue(sb, "time", DateTime.Now.ToString("O"));
 
+                sb.Append(',');
+
+                sb.Append("\"properties\":");
+                if (context.Properties != null && context.Properties.Count > 0) {
+                    sb.Append('{');
+                    var first = true;
+                    foreach (var kvp in context.Properties) {
+                        if (!first) {
+                            sb.Append(',');
+                        }
+
+                        first = false;
+                        AppendKeyValue(sb, kvp.Key, kvp.Value?.ToString() ?? "null");
+                    }
+
+                    sb.Append('}');
+                }
+                else {
+                    sb.Append("null");
+                }
+
                 sb.Append('}');
                 return sb.ToString();
             }

@@ -12,8 +12,10 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         public void SetUp() {
             Logger.Close();
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogTagFormatter = Logger.DefaultTagFormatter;
-            Logger.LogFormatMask = 0;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = "{message}"
+            });
         }
 
         [TearDown]

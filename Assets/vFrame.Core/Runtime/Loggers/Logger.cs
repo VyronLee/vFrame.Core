@@ -18,10 +18,6 @@ namespace vFrame.Core
     public static class Logger
     {
         public const int DefaultCapacity = 1000;
-        public const string DefaultTagFormatter = "{0}";
-
-        public const int DefaultLogFormatMask =
-            LogFormatType.Tag | LogFormatType.Time | LogFormatType.Class | LogFormatType.Function;
 
         private static readonly Queue<LogContext> _logQueue;
 
@@ -34,15 +30,21 @@ namespace vFrame.Core
         private static readonly Dictionary<string, LoggerCategory> _categories =
             new Dictionary<string, LoggerCategory>();
 
+        private static readonly Dictionary<string, LogLevelDef> _pendingCategoryLevels =
+            new Dictionary<string, LogLevelDef>();
+
         private static readonly object _queueLock;
         private static string _logFilePath;
         private static LogToFile _logFile;
 
         private static readonly LogTag EmptyLogTag = new LogTag("__EMPTY__");
 
+        private static LogFormatter _formatter;
+
         static Logger() {
             _logQueue = new Queue<LogContext>(LogCapacity);
             _queueLock = new object();
+            _formatter = new LogFormatter(LogTemplates.Default);
         }
 
         public static string LogFilePath {
@@ -161,6 +163,7 @@ namespace vFrame.Core
         public static void Close() {
             _logFile?.Destroy();
             _logFile = null;
+            _formatter = new LogFormatter(LogTemplates.Default);
         }
 
         // ── Core log methods ──
@@ -175,7 +178,7 @@ namespace vFrame.Core
                 return;
             }
 
-            var content = GetFormattedLogText(tag, formattedText, memberName, filePath, lineNumber);
+            var content = GetFormattedLogText(level, tag, formattedText, memberName, filePath, lineNumber);
             var stack = CaptureStackTrace && level >= LogLevelDef.Error
                 ? GetLogStack()
                 : null;
@@ -198,14 +201,36 @@ namespace vFrame.Core
             var message = string.IsNullOrEmpty(text)
                 ? exception.Message
                 : $"{text} — {exception.Message}";
+            var content = GetFormattedLogText(level, tag, message, memberName, filePath, lineNumber);
             var stack = CaptureStackTrace
                 ? GetLogStack()
                 : exception?.StackTrace;
 
-            var context = new LogContext(level, tag, message, message, null,
+            var context = new LogContext(level, tag, content, message, null,
                 stack, exception, memberName, filePath, lineNumber);
             EnqueueAndDispatch(context);
             _logFile?.AppendText(exception.ToString(), level >= LogLevelDef.Error);
+        }
+
+        /// <summary>
+        ///     Core logging method for structured messages with separate template and args.
+        ///     Formats the message via <c>string.Format</c>, populates <see cref="LogContext.Args" />,
+        ///     enqueues, writes to file, and dispatches to sinks.
+        /// </summary>
+        private static void Log(LogLevelDef level, LogTag tag, string messageTemplate,
+            object[] args, string memberName, string filePath, int lineNumber) {
+            if (LogLevel > level) {
+                return;
+            }
+
+            var formatted = args != null && args.Length > 0
+                ? string.Format(messageTemplate, args)
+                : messageTemplate;
+            var content = GetFormattedLogText(level, tag, formatted, memberName, filePath, lineNumber);
+
+            var context = new LogContext(level, tag, content, messageTemplate, args, null, null,
+                memberName, filePath, lineNumber);
+            EnqueueAndDispatch(context);
         }
 
         /// <summary>
@@ -260,68 +285,13 @@ namespace vFrame.Core
         // ── Formatting ──
 
         /// <summary>
-        ///     Builds a formatted log string based on the current <see cref="LogFormatMask" />.
-        ///     Uses compiler-injected caller info instead of StackFrame reflection.
+        ///     Builds a formatted log string by delegating to the active <see cref="LogFormatter" />.
         /// </summary>
-        /// <returns>The formatted log text.</returns>
-        private static string GetFormattedLogText(LogTag tag, string log,
+        private static string GetFormattedLogText(LogLevelDef level, LogTag tag, string log,
             string memberName, string filePath, int lineNumber) {
-            var builder = StringBuilderPool.Shared.Get();
-            if ((LogFormatMask & LogFormatType.Tag) > 0 && !string.IsNullOrEmpty(LogTagFormatter) &&
-                !tag.Equals(EmptyLogTag)) {
-                try {
-                    builder.Append(string.Format(LogTagFormatter, tag.ToString()));
-                }
-                catch (FormatException) { }
-
-                builder.Append(" ");
-            }
-
-            if ((LogFormatMask & LogFormatType.Time) > 0) {
-                builder.Append(DateTime.Now.ToString("[HH:mm:ss:fff]"));
-                builder.Append(" ");
-            }
-
-            if ((LogFormatMask & LogFormatType.Class) > 0 && !string.IsNullOrEmpty(filePath)) {
-                var className = ExtractClassName(filePath);
-                if ((LogFormatMask & LogFormatType.Function) > 0) {
-                    builder.Append("[");
-                    builder.Append(className);
-                    builder.Append("::");
-                    builder.Append(memberName);
-                    builder.Append("]");
-                }
-                else {
-                    builder.Append("[");
-                    builder.Append(className);
-                    builder.Append("]");
-                }
-            }
-            else if ((LogFormatMask & LogFormatType.Function) > 0) {
-                builder.Append("[");
-                builder.Append(memberName);
-                builder.Append("]");
-            }
-
-            if ((LogFormatMask & LogFormatType.Thread) > 0) {
-                builder.Append(" [T:");
-                builder.Append(Environment.CurrentManagedThreadId);
-                builder.Append("]");
-            }
-
-            if ((LogFormatMask & LogFormatType.Line) > 0 && lineNumber > 0) {
-                builder.Append(" [L:");
-                builder.Append(lineNumber);
-                builder.Append("]");
-            }
-
-            builder.Append(" ");
-            builder.Append(log);
-
-            var text = builder.ToString();
-            StringBuilderPool.Shared.Return(builder);
-
-            return text;
+            var ctx = new LogContext(level, tag, log, log, null, null, null,
+                memberName, filePath, lineNumber);
+            return _formatter.Format(ctx);
         }
 
         /// <summary>
@@ -412,6 +382,14 @@ namespace vFrame.Core
                 if (!_categories.TryGetValue(categoryName, out var logger)) {
                     logger = new LoggerCategory(categoryName);
                     _categories[categoryName] = logger;
+
+                    // Apply pending category level if a matching prefix was configured
+                    foreach (var kvp in _pendingCategoryLevels) {
+                        if (categoryName.StartsWith(kvp.Key, StringComparison.Ordinal)) {
+                            logger.MinimumLevel = kvp.Value;
+                            break;
+                        }
+                    }
                 }
 
                 return logger;
@@ -458,14 +436,21 @@ namespace vFrame.Core
             LogLevel = config.GlobalMinimumLevel;
 
             if (config.CategoryLevels != null) {
+                _pendingCategoryLevels.Clear();
+                foreach (var kvp in config.CategoryLevels) {
+                    _pendingCategoryLevels[kvp.Key] = kvp.Value;
+                }
+
                 foreach (var kvp in config.CategoryLevels) {
                     SetLevel(kvp.Key, kvp.Value);
                 }
             }
 
             if (!string.IsNullOrEmpty(config.FormatTemplate)) {
-                var formatter = new LogFormatter(config.FormatTemplate);
-                LogFormatMask = 0; // Disable legacy bitmask when template is active
+                _formatter = new LogFormatter(config.FormatTemplate);
+            }
+            else {
+                _formatter = new LogFormatter(LogTemplates.Default);
             }
 
             if (!string.IsNullOrEmpty(config.FileLogPath)) {
@@ -510,13 +495,17 @@ namespace vFrame.Core
             public string MemberName;
             public string FilePath;
             public int LineNumber;
+            public IReadOnlyDictionary<string, object> Properties;
 
             /// <summary>
             ///     Creates a new log context with all fields.
+            ///     When <paramref name="properties" /> is null, captures the current
+            ///     <see cref="LogContextProperties" /> snapshot automatically.
             /// </summary>
             public LogContext(LogLevelDef level, LogTag tag, string content,
                 string messageTemplate, object[] args, string stackTrace,
-                Exception exception, string memberName, string filePath, int lineNumber) : this() {
+                Exception exception, string memberName, string filePath, int lineNumber,
+                IReadOnlyDictionary<string, object> properties = null) : this() {
                 Level = level;
                 Tag = tag;
                 Content = content;
@@ -527,6 +516,7 @@ namespace vFrame.Core
                 MemberName = memberName;
                 FilePath = filePath;
                 LineNumber = lineNumber;
+                Properties = properties ?? LogContextProperties.GetCurrentProperties();
             }
         }
 
@@ -970,6 +960,71 @@ namespace vFrame.Core
 
         #endregion
 
+        #region Structured Logging
+
+        /// <summary>
+        ///     Logs a trace-level structured message with the specified tag, message template, and arguments.
+        ///     The message template is formatted via <c>string.Format</c>.
+        /// </summary>
+        public static void Trace(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Trace, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>
+        ///     Logs a debug-level structured message with the specified tag, message template, and arguments.
+        /// </summary>
+        public static void Debug(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Debug, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>
+        ///     Logs an info-level structured message with the specified tag, message template, and arguments.
+        /// </summary>
+        public static void Info(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Info, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>
+        ///     Logs a warning-level structured message with the specified tag, message template, and arguments.
+        /// </summary>
+        public static void Warning(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Warning, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>
+        ///     Logs an error-level structured message with the specified tag, message template, and arguments.
+        /// </summary>
+        public static void Error(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Error, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        /// <summary>
+        ///     Logs a fatal-level structured message with the specified tag, message template, and arguments.
+        /// </summary>
+        public static void Fatal(LogTag tag, string messageTemplate, object[] args,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0) {
+            Log(LogLevelDef.Fatal, tag, messageTemplate, args, memberName, filePath, lineNumber);
+        }
+
+        #endregion
+
         #region Properties
 
         public static LogLevelDef LogLevel { get; set; } = LogLevelDef.Error;
@@ -983,10 +1038,6 @@ namespace vFrame.Core
         public static bool IsEnabled(LogLevelDef level) {
             return LogLevel <= level;
         }
-
-        public static int LogFormatMask { get; set; } = DefaultLogFormatMask;
-
-        public static string LogTagFormatter { get; set; } = DefaultTagFormatter;
 
         public static int LogCapacity { get; set; } = DefaultCapacity;
 

@@ -234,7 +234,7 @@ namespace vFrame.Core
 
         /// <summary>
         ///     Rolls the current log file: closes the handle, renames the file with a
-        ///     timestamp or index suffix, and opens a fresh file.
+        ///     timestamp or index suffix, optionally compresses it, and opens a fresh file.
         /// </summary>
         private void RollFile() {
             CloseFileHandle();
@@ -250,6 +250,11 @@ namespace vFrame.Core
                 Debug.WriteLine($"[LogToFile] Failed to roll file: {ex.Message}");
             }
 
+            // Compress archive if enabled
+            if (_options?.CompressArchives == true) {
+                CompressArchive(archivePath);
+            }
+
             // Cleanup old archives if exceeding MaxFileCount
             CleanupOldArchives();
 
@@ -259,6 +264,54 @@ namespace vFrame.Core
 
             // Reopen fresh file
             OpenFileHandle();
+        }
+
+        /// <summary>
+        ///     Compresses the specified archive file using the configured compression algorithm
+        ///     and deletes the original. On failure, keeps the uncompressed file to prevent data loss.
+        /// </summary>
+        private void CompressArchive(string archivePath) {
+            if (!File.Exists(archivePath)) {
+                return;
+            }
+
+            var compressionType = _options?.CompressionType ?? CompressorType.ZStd;
+            var ext = GetCompressionExtension(compressionType);
+            var compressedPath = archivePath + ext;
+            try {
+                using (var input = new FileStream(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var output = new FileStream(compressedPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var compressor = CompressorPool.Instance.Rent(compressionType)) {
+                    compressor.Compress(input, output);
+                }
+
+                File.Delete(archivePath);
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"[LogToFile] Compression failed, keeping uncompressed: {ex.Message}");
+                // Clean up partial compressed file if it exists
+                try {
+                    if (File.Exists(compressedPath)) {
+                        File.Delete(compressedPath);
+                    }
+                }
+                catch {
+                    // Best effort cleanup
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the file extension for the given compressor type.
+        /// </summary>
+        private static string GetCompressionExtension(CompressorType type) {
+            switch (type) {
+                case CompressorType.LZMA: return ".lzma";
+                case CompressorType.LZ4: return ".lz4";
+                case CompressorType.ZStd: return ".zst";
+                case CompressorType.Zlib: return ".gz";
+                default: return ".zst";
+            }
         }
 
         /// <summary>
@@ -292,8 +345,17 @@ namespace vFrame.Core
                 var fileName = Path.GetFileNameWithoutExtension(_logPath);
                 var ext = Path.GetExtension(_logPath);
 
+                // Match both uncompressed and compressed archive patterns
                 var archives = Directory.GetFiles(dir, $"{fileName}_*{ext}")
                     .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}_*{ext}.lzma"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}.lzma"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}_*{ext}.lz4"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}.lz4"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}_*{ext}.zst"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}.zst"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}_*{ext}.gz"))
+                    .Concat(Directory.GetFiles(dir, $"{fileName}.*{ext}.gz"))
                     .OrderBy(f => f)
                     .ToList();
 

@@ -25,8 +25,10 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         public void SetUp() {
             Logger.Close();
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogTagFormatter = Logger.DefaultTagFormatter;
-            Logger.LogFormatMask = Logger.DefaultLogFormatMask;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Default
+            });
             Logger.LogCapacity = Logger.DefaultCapacity;
             Logger.CaptureStackTrace = false;
         }
@@ -126,9 +128,12 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         // ── Format Output ──────────────────────────────────────
 
         [Test]
-        public void DefaultFormatContainsTagAndTimeAndClass() {
+        public void DefaultFormatContainsTagAndTimeAndLevel() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = Logger.DefaultLogFormatMask;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Default
+            });
             var sink = RegisterSink();
 
             Logger.Info(new LogTag("TestTag"), "hello");
@@ -136,46 +141,42 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             Assert.That(sink.Entries.Count, Is.EqualTo(1));
             var content = sink.Entries[0].Content;
             Assert.That(content, Does.Contain("TestTag"));
-            // Time format is [HH:mm:ss:fff]
-            Assert.That(content, Does.Match(@"\[\d{2}:\d{2}:\d{2}:\d{3}\]"));
+            Assert.That(content, Does.Match(@"\[\d{4}-\d{2}-\d{2}"));
+            Assert.That(content, Does.Contain("INF"));
             Assert.That(content, Does.Contain("hello"));
         }
 
         [Test]
-        public void FormatWithOnlyTagDoesNotIncludeTime() {
+        public void CompactFormatOnlyContainsLevelAndMessage() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = LogFormatType.Tag;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Compact
+            });
             var sink = RegisterSink();
 
             Logger.Info(new LogTag("OnlyTag"), "msg");
 
             var content = sink.Entries[0].Content;
-            Assert.That(content, Does.Contain("OnlyTag"));
-            Assert.That(content, Does.Not.Match(@"\[\d{2}:\d{2}:\d{2}:\d{3}\]"));
-        }
-
-        [Test]
-        public void FormatWithZeroMaskOnlyContainsMessage() {
-            Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
-            var sink = RegisterSink();
-
-            Logger.Info("bare-msg");
-
-            var content = sink.Entries[0].Content.Trim();
-            Assert.That(content, Is.EqualTo("bare-msg"));
+            Assert.That(content, Does.Contain("INF"));
+            Assert.That(content, Does.Contain("msg"));
+            // Compact format does not include time or tag
+            Assert.That(content, Does.Not.Match(@"\[\d{4}-\d{2}-\d{2}"));
         }
 
         [Test]
         public void StringFormatAppliedToArgs() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = "{message}"
+            });
             var sink = RegisterSink();
 
             var name = "test";
             Logger.Info($"count={42}, name={name}");
 
-            var content = sink.Entries[0].Content.Trim();
+            var content = sink.Entries[0].Content;
             Assert.That(content, Does.Contain("count=42"));
             Assert.That(content, Does.Contain("name=test"));
         }
@@ -185,7 +186,10 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogWithTagIncludesTagInOutput() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = LogFormatType.Tag;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Default
+            });
             var sink = RegisterSink();
 
             Logger.Warning(new LogTag("MyModule"), "issue");
@@ -197,12 +201,15 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogWithoutTagOmitsTagFromOutput() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = LogFormatType.Tag;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Default
+            });
             var sink = RegisterSink();
 
             Logger.Info("no-tag-msg");
 
-            var content = sink.Entries[0].Content.Trim();
+            var content = sink.Entries[0].Content;
             Assert.That(content, Does.Not.Contain("__EMPTY__"));
         }
 
@@ -211,7 +218,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContextContainsCorrectLevelAndContent() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Error("err-msg");
@@ -261,7 +267,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void OnLogReceivedEventFires() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             Logger.LogContext received = default;
             Logger.OnLogReceived += ctx => received = ctx;
 
@@ -271,12 +276,11 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             Assert.That(received.Content, Does.Contain("event-test"));
         }
 
-        // ── Phase 2: Caller Info Injection ─────────────────────
+        // ── Caller Info Injection ─────────────────────────────
 
         [Test]
         public void LogContext_ContainsFormattedMessage() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Info($"value={42}");
@@ -287,7 +291,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_ContainsFormattedText() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Info("plain message");
@@ -298,7 +301,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_StackTraceNullByDefault() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             Logger.CaptureStackTrace = false;
             var sink = RegisterSink();
 
@@ -314,7 +316,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_StackTraceCapturedWhenCaptureStackTraceEnabled() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             Logger.CaptureStackTrace = true;
             var sink = RegisterSink();
 
@@ -326,7 +327,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_MemberNameAndFilePathInjected() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Info("caller-info-test");
@@ -339,7 +339,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_MemberNameContainsTestMethodName() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Info("method-name-check");
@@ -351,7 +350,6 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         [Test]
         public void LogContext_FilePathContainsFileName() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = 0;
             var sink = RegisterSink();
 
             Logger.Info("file-path-check");
@@ -360,9 +358,12 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
-        public void FormatWithThreadIncludesThreadId() {
+        public void VerboseFormatWithThreadIncludesThreadId() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = LogFormatType.Thread;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Verbose
+            });
             var sink = RegisterSink();
 
             Logger.Info("thread-test");
@@ -372,9 +373,12 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
-        public void FormatWithLineIncludesLineNumber() {
+        public void VerboseFormatWithLineIncludesLineNumber() {
             Logger.LogLevel = LogLevelDef.Debug;
-            Logger.LogFormatMask = LogFormatType.Line;
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = LogTemplates.Verbose
+            });
             var sink = RegisterSink();
 
             Logger.Info("line-test");

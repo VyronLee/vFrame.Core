@@ -39,8 +39,15 @@ namespace vFrame.Core
 
         /// <summary>
         ///     Whether to compress archived log files. Defaults to false.
+        ///     When true, uses the algorithm specified by <see cref="CompressionType" />.
         /// </summary>
         public bool CompressArchives { get; set; } = false;
+
+        /// <summary>
+        ///     The compression algorithm to use when <see cref="CompressArchives" /> is true.
+        ///     Defaults to <see cref="CompressorType.ZStd" />.
+        /// </summary>
+        public CompressorType CompressionType { get; set; } = CompressorType.ZStd;
 
         /// <summary>
         ///     Interval in seconds between automatic flushes to disk. Defaults to 1 second.
