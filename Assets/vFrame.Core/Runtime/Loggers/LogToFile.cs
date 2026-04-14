@@ -281,7 +281,7 @@ namespace vFrame.Core
             try {
                 using (var input = new FileStream(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 using (var output = new FileStream(compressedPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                using (var compressor = CompressorPool.Instance.Rent(compressionType)) {
+                using (var compressor = CompressorPool.Instance().Rent(compressionType)) {
                     compressor.Compress(input, output);
                 }
 
