@@ -111,7 +111,6 @@ namespace vFrame.Core
                 }
 
                 var objPool = new ObjectPool<T>();
-                objPool.Create();
                 _pools.Add(typeof(T), objPool);
                 return objPool;
             }
@@ -129,13 +128,12 @@ namespace vFrame.Core
                 }
 
                 var objectPoolType = typeof(ObjectPool<>).MakeGenericType(type);
-                var objPool = Activator.CreateInstance(objectPoolType) as ObjectPool;
+                var objPool = Activator.CreateInstance(objectPoolType) as IObjectPool;
                 if (null == objPool) {
                     ThrowHelper.ThrowUndesiredException("Create object pool failed, type: " + type.FullName);
                     return null;
                 }
 
-                objPool.Create();
                 _pools.Add(type, objPool);
                 return objPool;
             }
@@ -155,8 +153,8 @@ namespace vFrame.Core
                     return (IObjectPool<TClass>)pool;
                 }
 
-                var objPool = new ObjectPool<TClass, TAllocator>();
-                objPool.Create();
+                var objPool = new ObjectPool<TClass>(
+                    new AllocatorPooledObjectPolicy<TClass, TAllocator>());
                 _pools.Add(typeof(TClass), objPool);
                 return objPool;
             }
@@ -272,6 +270,9 @@ namespace vFrame.Core
                     foreach (var pool in _pools.Values) {
                         if (pool is BaseObject bo) {
                             bo.Destroy();
+                        }
+                        else if (pool is IDisposable disposable) {
+                            disposable.Dispose();
                         }
                     }
 
