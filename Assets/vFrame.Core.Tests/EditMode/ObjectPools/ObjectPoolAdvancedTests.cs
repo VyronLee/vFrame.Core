@@ -75,7 +75,9 @@ namespace vFrame.Core.Tests.EditMode.ObjectPools
         [Test]
         public void ConcurrentObjectPool_Trim() {
             var pool = new ConcurrentObjectPool<PooledPayload>();
-            for (var i = 0; i < 5; i++) pool.Return(pool.Get());
+            var items = new List<PooledPayload>();
+            for (var i = 0; i < 5; i++) items.Add(pool.Get());
+            foreach (var item in items) pool.Return(item);
             var removed = pool.Trim(2);
             Assert.That(removed, Is.GreaterThanOrEqualTo(3));
         }

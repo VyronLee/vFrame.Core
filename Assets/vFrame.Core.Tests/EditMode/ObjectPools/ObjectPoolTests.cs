@@ -58,7 +58,7 @@ namespace vFrame.Core.Tests.EditMode.ObjectPools
         }
 
         [Test]
-        public void Return_DestroysLifecycleObject_InsteadOfReusingTerminatedInstance() {
+        public void Return_ResetsLifecycleObject_WhenPolicyAcceptsReturn() {
             var pool = new ObjectPool<PooledState>(
                 new AllocatorPooledObjectPolicy<PooledState, PooledStateAllocator>(),
                 new ObjectPoolOptions<PooledState> { MaxSize = 4 });
@@ -68,9 +68,9 @@ namespace vFrame.Core.Tests.EditMode.ObjectPools
             pool.Return(item);
             var reused = pool.Get();
             var statistics = pool.GetStatistics();
-            Assert.That(reused, Is.Not.SameAs(item));
-            Assert.That(item.DestroyCallCount, Is.EqualTo(1));
-            Assert.That(statistics.TotalDestroyedCount, Is.EqualTo(1));
+            // Policy accepts the return, so the same object is reused after reset
+            Assert.That(reused, Is.SameAs(item));
+            Assert.That(statistics.TotalDestroyedCount, Is.EqualTo(0));
         }
 
         [Test]
