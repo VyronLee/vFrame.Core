@@ -111,7 +111,6 @@ namespace vFrame.Core
                 }
 
                 var objPool = new ObjectPool<T>();
-                objPool.Create();
                 _pools.Add(typeof(T), objPool);
                 return objPool;
             }
@@ -129,13 +128,12 @@ namespace vFrame.Core
                 }
 
                 var objectPoolType = typeof(ObjectPool<>).MakeGenericType(type);
-                var objPool = Activator.CreateInstance(objectPoolType) as ObjectPool;
+                var objPool = Activator.CreateInstance(objectPoolType) as IObjectPool;
                 if (null == objPool) {
                     ThrowHelper.ThrowUndesiredException("Create object pool failed, type: " + type.FullName);
                     return null;
                 }
 
-                objPool.Create();
                 _pools.Add(type, objPool);
                 return objPool;
             }
@@ -155,8 +153,8 @@ namespace vFrame.Core
                     return (IObjectPool<TClass>)pool;
                 }
 
-                var objPool = new ObjectPool<TClass, TAllocator>();
-                objPool.Create();
+                var objPool = new ObjectPool<TClass>(
+                    new AllocatorPooledObjectPolicy<TClass, TAllocator>());
                 _pools.Add(typeof(TClass), objPool);
                 return objPool;
             }
@@ -201,13 +199,7 @@ namespace vFrame.Core
             var totalRemoved = 0;
             lock (_lockObject) {
                 foreach (var kvp in _pools) {
-                    if (kvp.Value is ObjectPool op) {
-                        // Use reflection-safe trim via statistics check
-                        var stats = kvp.Value.GetStatistics();
-                        if (stats.CountInactive > maxRetainedPerPool) {
-                            totalRemoved += stats.CountInactive - maxRetainedPerPool;
-                        }
-                    }
+                    totalRemoved += kvp.Value.Trim(maxRetainedPerPool);
                 }
             }
 
@@ -221,6 +213,44 @@ namespace vFrame.Core
         public int GetPoolCount() {
             lock (_lockObject) {
                 return _pools.Count;
+            }
+        }
+
+        public void Register<T>(IObjectPool<T> pool) where T : class {
+            ThrowHelper.ThrowIfNull(pool, nameof(pool));
+            lock (_lockObject) {
+                _pools[typeof(T)] = pool;
+            }
+        }
+
+        public void Register(Type type, IObjectPool pool) {
+            ThrowHelper.ThrowIfNull(type, nameof(type));
+            ThrowHelper.ThrowIfNull(pool, nameof(pool));
+            lock (_lockObject) {
+                _pools[type] = pool;
+            }
+        }
+
+        public bool Unregister<T>() where T : class {
+            lock (_lockObject) {
+                return _pools.Remove(typeof(T));
+            }
+        }
+
+        public bool Unregister(Type type) {
+            ThrowHelper.ThrowIfNull(type, nameof(type));
+            lock (_lockObject) {
+                return _pools.Remove(type);
+            }
+        }
+
+        public IEnumerable<(Type Type, IObjectPool Pool)> GetAllPools() {
+            lock (_lockObject) {
+                var result = new List<(Type, IObjectPool)>(_pools.Count);
+                foreach (var kvp in _pools) {
+                    result.Add((kvp.Key, kvp.Value));
+                }
+                return result;
             }
         }
 
@@ -240,6 +270,9 @@ namespace vFrame.Core
                     foreach (var pool in _pools.Values) {
                         if (pool is BaseObject bo) {
                             bo.Destroy();
+                        }
+                        else if (pool is IDisposable disposable) {
+                            disposable.Dispose();
                         }
                     }
 

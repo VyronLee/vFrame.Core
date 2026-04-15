@@ -105,5 +105,32 @@ namespace vFrame.Core
         ///     Gets the number of registered pools.
         /// </summary>
         int GetPoolCount();
+
+        /// <summary>
+        ///     Registers a custom pool for type <typeparamref name="T" />.
+        ///     Replaces any existing registration.
+        /// </summary>
+        void Register<T>(IObjectPool<T> pool) where T : class;
+
+        /// <summary>
+        ///     Registers a custom pool for the specified type.
+        /// </summary>
+        void Register(Type type, IObjectPool pool);
+
+        /// <summary>
+        ///     Unregisters the pool for <typeparamref name="T" />.
+        /// </summary>
+        /// <returns>true if a pool was removed; false if none was registered.</returns>
+        bool Unregister<T>() where T : class;
+
+        /// <summary>
+        ///     Unregisters the pool for the specified type.
+        /// </summary>
+        bool Unregister(Type type);
+
+        /// <summary>
+        ///     Gets all registered pools with their associated types.
+        /// </summary>
+        System.Collections.Generic.IEnumerable<(System.Type Type, IObjectPool Pool)> GetAllPools();
     }
 }

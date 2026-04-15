@@ -43,7 +43,7 @@ namespace vFrame.Core
         int Trim(int maxRetained);
     }
 
-    public interface IObjectPool<T> : IObjectPool
+    public interface IObjectPool<T> : IObjectPool where T : class
     {
         /// <summary>
         ///     Gets an instance for a new use cycle.
@@ -52,9 +52,21 @@ namespace vFrame.Core
         new T Get();
 
         /// <summary>
+        ///     Gets an instance wrapped in an auto-return disposable for using-pattern convenience.
+        /// </summary>
+        /// <param name="item">The pooled object instance.</param>
+        /// <returns>A wrapper that returns the item to the pool on disposal.</returns>
+        PooledObject<T> Get(out T item);
+
+        /// <summary>
         ///     Ends the current use cycle for an instance and lets the pool apply return policy.
         /// </summary>
         /// <param name="obj">The typed object to return to the pool.</param>
         void Return(T obj);
+
+        /// <summary>
+        ///     Clears all inactive objects from the pool, releasing them without returning to the pool.
+        /// </summary>
+        void Clear();
     }
 }

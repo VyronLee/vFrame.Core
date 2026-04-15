@@ -10,6 +10,9 @@
 
 namespace vFrame.Core
 {
-    public class BoxPool<T> : ObjectPool<Box<T>, BoxAllocator<T>>
-    { }
+    public class BoxPool<T> : ObjectPool<Box<T>>
+    {
+        public BoxPool() : base(new AllocatorPooledObjectPolicy<Box<T>, BoxAllocator<T>>())
+        { }
+    }
 }

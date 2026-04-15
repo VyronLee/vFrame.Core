@@ -12,6 +12,24 @@ using System.Collections.Generic;
 
 namespace vFrame.Core
 {
-    public class DictionaryPool<T1, T2> : ObjectPool<Dictionary<T1, T2>, DictionaryAllocator<T1, T2>>
-    { }
+    public class DictionaryPool<TKey, TValue> : ObjectPool<Dictionary<TKey, TValue>>
+    {
+        private static readonly object _lock = new object();
+        private static DictionaryPool<TKey, TValue> _shared;
+
+        public new static DictionaryPool<TKey, TValue> Shared {
+            get {
+                if (_shared == null) {
+                    lock (_lock) {
+                        if (_shared == null) {
+                            _shared = new DictionaryPool<TKey, TValue>();
+                        }
+                    }
+                }
+                return _shared;
+            }
+        }
+
+        public DictionaryPool() : base(new AllocatorPooledObjectPolicy<Dictionary<TKey, TValue>, DictionaryAllocator<TKey, TValue>>()) { }
+    }
 }
