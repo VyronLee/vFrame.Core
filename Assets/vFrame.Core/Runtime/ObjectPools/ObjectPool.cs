@@ -35,6 +35,12 @@ namespace vFrame.Core
         public ObjectPool() : this(default(IPooledObjectPolicy<T>)) { }
 
         /// <summary>
+        ///     Creates a pool with default policy and custom configuration.
+        /// </summary>
+        /// <param name="options">Pool configuration options, or null for defaults.</param>
+        public ObjectPool(ObjectPoolOptions<T> options) : this(default(IPooledObjectPolicy<T>), options) { }
+
+        /// <summary>
         ///     Creates a pool with a factory function and optional configuration.
         /// </summary>
         /// <param name="factory">Function to create new instances, or null for default construction.</param>

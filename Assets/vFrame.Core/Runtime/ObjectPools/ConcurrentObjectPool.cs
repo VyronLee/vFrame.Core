@@ -39,6 +39,15 @@ namespace vFrame.Core
         }
 
         /// <summary>
+        ///     Initializes a new instance with default policy and custom options.
+        /// </summary>
+        /// <param name="options">Optional pool configuration.</param>
+        public ConcurrentObjectPool(ObjectPoolOptions<T> options)
+            : this(default(IPooledObjectPolicy<T>), options)
+        {
+        }
+
+        /// <summary>
         ///     Initializes a new instance with a factory function and optional options.
         /// </summary>
         /// <param name="factory">Function to create new instances when pool is empty.</param>
