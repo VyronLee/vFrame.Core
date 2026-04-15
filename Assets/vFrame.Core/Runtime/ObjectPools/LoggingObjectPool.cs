@@ -39,8 +39,7 @@ namespace vFrame.Core
             var item = base.Get();
             var stats = Inner.GetStatistics();
             Logger.Info(_logTag, "Get() -> {0}, stats: [all={1} active={2} inactive={3}]",
-                item?.GetHashCode().ToString() ?? "null",
-                stats.CountAll, stats.CountActive, stats.CountInactive);
+                new object[] { item?.GetHashCode().ToString() ?? "null", stats.CountAll, stats.CountActive, stats.CountInactive });
             return item;
         }
 
@@ -49,7 +48,7 @@ namespace vFrame.Core
         /// </summary>
         /// <param name="obj">The object to return.</param>
         public override void Return(T obj) {
-            Logger.Info(_logTag, "Return({0})", obj?.GetHashCode().ToString() ?? "null");
+            Logger.Info(_logTag, "Return({0})", new object[] { obj?.GetHashCode().ToString() ?? "null" });
             base.Return(obj);
         }
 
@@ -63,7 +62,7 @@ namespace vFrame.Core
             var removed = base.Trim(maxRetained);
             var after = Inner.GetStatistics().CountInactive;
             Logger.Info(_logTag, "Trim({0}): {1} -> {2}, removed {3}",
-                maxRetained, before, after, removed);
+                new object[] { maxRetained, before, after, removed });
             return removed;
         }
     }
