@@ -209,8 +209,8 @@ namespace vFrame.Core
 
         void IObjectPool<T>.Clear() => Clear();
 
-        ObjectPoolStatistics IObjectPool<T>.GetStatistics() => GetStatistics();
+        ObjectPoolStatistics IObjectPool.GetStatistics() => GetStatistics();
 
-        int IObjectPool<T>.Trim(int maxRetained) => Trim(maxRetained);
+        int IObjectPool.Trim(int maxRetained) => Trim(maxRetained);
     }
 }

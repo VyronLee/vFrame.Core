@@ -43,7 +43,7 @@ namespace vFrame.Core
         int Trim(int maxRetained);
     }
 
-    public interface IObjectPool<T> : IObjectPool
+    public interface IObjectPool<T> : IObjectPool where T : class
     {
         /// <summary>
         ///     Gets an instance for a new use cycle.

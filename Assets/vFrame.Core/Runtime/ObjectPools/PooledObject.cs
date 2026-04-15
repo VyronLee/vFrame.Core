@@ -8,6 +8,8 @@
 //    Copyright: Copyright (c) 2026, VyronLee
 // ============================================================
 
+using System;
+
 namespace vFrame.Core
 {
     /// <summary>
