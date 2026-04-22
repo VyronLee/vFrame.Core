@@ -1,7 +1,9 @@
 {
-    "name": "vFrame.Core.Benchmarks.Editor",
+    "name": "vFrame.Core.Unity.Benchmarks.Editor",
     "references": [
-        "vFrame.Core"
+        "vFrame.Core",
+        "vFrame.Core.Unity",
+        "vFrame.Core.Benchmarks.Editor"
     ],
     "includePlatforms": [
         "Editor"
