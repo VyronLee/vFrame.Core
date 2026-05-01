@@ -17,6 +17,8 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static ListPool<T> _shared;
 
+        public ListPool() : base(new AllocatorPooledObjectPolicy<List<T>, ListAllocator<T>>()) { }
+
         public new static ListPool<T> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +28,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public ListPool() : base(new AllocatorPooledObjectPolicy<List<T>, ListAllocator<T>>()) { }
     }
 }

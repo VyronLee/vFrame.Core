@@ -17,6 +17,8 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static QueuePool<T> _shared;
 
+        public QueuePool() : base(new AllocatorPooledObjectPolicy<Queue<T>, QueueAllocator<T>>()) { }
+
         public new static QueuePool<T> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +28,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public QueuePool() : base(new AllocatorPooledObjectPolicy<Queue<T>, QueueAllocator<T>>()) { }
     }
 }

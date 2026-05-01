@@ -9,11 +9,6 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZMA
 {
     public class Decoder : ICoder, ISetDecoderProperties // ,System.IO.Stream
     {
-        private bool _solid;
-
-        private uint m_DictionarySize;
-        private uint m_DictionarySizeCheck;
-
         private readonly BitDecoder[] m_IsMatchDecoders = new BitDecoder[Base.kNumStates << Base.kNumPosStatesBitsMax];
 
         private readonly BitDecoder[] m_IsRep0LongDecoders =
@@ -29,15 +24,19 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZMA
         private readonly LiteralDecoder m_LiteralDecoder = new LiteralDecoder();
 
         private readonly OutWindow m_OutWindow = new OutWindow();
-
-        private BitTreeDecoder m_PosAlignDecoder = new BitTreeDecoder(Base.kNumAlignBits);
         private readonly BitDecoder[] m_PosDecoders = new BitDecoder[Base.kNumFullDistances - Base.kEndPosModelIndex];
 
         private readonly BitTreeDecoder[] m_PosSlotDecoder = new BitTreeDecoder[Base.kNumLenToPosStates];
-
-        private uint m_PosStateMask;
         private readonly RangeCoder.Decoder m_RangeDecoder = new RangeCoder.Decoder();
         private readonly LenDecoder m_RepLenDecoder = new LenDecoder();
+        private bool _solid;
+
+        private uint m_DictionarySize;
+        private uint m_DictionarySizeCheck;
+
+        private BitTreeDecoder m_PosAlignDecoder = new BitTreeDecoder(Base.kNumAlignBits);
+
+        private uint m_PosStateMask;
 
         public Decoder() {
             m_DictionarySize = 0xFFFFFFFF;
@@ -262,11 +261,11 @@ namespace vFrame.Core.ThirdParty.SevenZip.Compression.LZMA
 
         private class LenDecoder
         {
+            private readonly BitTreeDecoder[] m_LowCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
+            private readonly BitTreeDecoder[] m_MidCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
             private BitDecoder m_Choice;
             private BitDecoder m_Choice2;
             private BitTreeDecoder m_HighCoder = new BitTreeDecoder(Base.kNumHighLenBits);
-            private readonly BitTreeDecoder[] m_LowCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
-            private readonly BitTreeDecoder[] m_MidCoder = new BitTreeDecoder[Base.kNumPosStatesMax];
             private uint m_NumPosStates;
 
             public void Create(uint numPosStates) {

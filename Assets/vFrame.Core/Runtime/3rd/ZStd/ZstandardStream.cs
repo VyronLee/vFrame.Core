@@ -154,7 +154,7 @@ namespace vFrame.Core.ThirdParty.ZStd
                     ReleaseResources(false);
                 }
 
-                arrayPool.Return(data, false);
+                arrayPool.Return(data);
                 isDisposed = true;
                 data = null;
             }

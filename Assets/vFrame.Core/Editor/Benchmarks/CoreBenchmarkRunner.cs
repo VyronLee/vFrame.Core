@@ -2,29 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEditor;
-using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace vFrame.Core.Benchmarks.Editor
 {
     public static class CoreBenchmarkRunner
     {
-        public sealed class BenchmarkResult
-        {
-            public string Name;
-            public int Iterations;
-            public long ElapsedMilliseconds;
-
-            public double AverageNanosecondsPerOperation {
-                get {
-                    if (Iterations <= 0) {
-                        return 0d;
-                    }
-
-                    return ElapsedMilliseconds * 1000000d / Iterations;
-                }
-            }
-        }
-
         private static readonly List<Func<BenchmarkResult>> _benchmarks = new List<Func<BenchmarkResult>>();
 
         public static IReadOnlyList<Func<BenchmarkResult>> Benchmarks => _benchmarks;
@@ -52,7 +35,7 @@ namespace vFrame.Core.Benchmarks.Editor
             var results = RunAll();
 
             foreach (var result in results) {
-                UnityEngine.Debug.LogFormat(
+                Debug.LogFormat(
                     "[vFrame.Core.Benchmark] {0}: {1} iterations in {2} ms ({3:F2} ns/op)",
                     result.Name,
                     result.Iterations,
@@ -65,12 +48,15 @@ namespace vFrame.Core.Benchmarks.Editor
             if (string.IsNullOrEmpty(name)) {
                 throw new ArgumentException("Value cannot be null or empty: " + nameof(name));
             }
+
             if (action == null) {
                 throw new ArgumentNullException(nameof(action));
             }
+
             if (warmupIterations < 0) {
                 throw new ArgumentOutOfRangeException(nameof(warmupIterations));
             }
+
             if (measureIterations <= 0) {
                 throw new ArgumentOutOfRangeException(nameof(measureIterations));
             }
@@ -87,6 +73,7 @@ namespace vFrame.Core.Benchmarks.Editor
             for (var i = 0; i < measureIterations; i++) {
                 action();
             }
+
             stopwatch.Stop();
 
             return new BenchmarkResult {
@@ -94,6 +81,23 @@ namespace vFrame.Core.Benchmarks.Editor
                 Iterations = measureIterations,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
             };
+        }
+
+        public sealed class BenchmarkResult
+        {
+            public long ElapsedMilliseconds;
+            public int Iterations;
+            public string Name;
+
+            public double AverageNanosecondsPerOperation {
+                get {
+                    if (Iterations <= 0) {
+                        return 0d;
+                    }
+
+                    return ElapsedMilliseconds * 1000000d / Iterations;
+                }
+            }
         }
     }
 }

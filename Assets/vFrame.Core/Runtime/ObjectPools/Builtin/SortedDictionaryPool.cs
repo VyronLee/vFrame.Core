@@ -17,6 +17,10 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static SortedDictionaryPool<TKey, TValue> _shared;
 
+        public SortedDictionaryPool() : base(
+            new AllocatorPooledObjectPolicy<SortedDictionary<TKey, TValue>,
+                SortedDictionaryAllocator<TKey, TValue>>()) { }
+
         public new static SortedDictionaryPool<TKey, TValue> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +30,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public SortedDictionaryPool() : base(new AllocatorPooledObjectPolicy<SortedDictionary<TKey, TValue>, SortedDictionaryAllocator<TKey, TValue>>()) { }
     }
 }

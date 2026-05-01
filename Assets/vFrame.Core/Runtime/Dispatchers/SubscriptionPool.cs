@@ -13,8 +13,7 @@ namespace vFrame.Core
 {
     internal class SubscriptionPool : ObjectPool<Subscription>
     {
-        public SubscriptionPool() : base(new AllocatorPooledObjectPolicy<Subscription, SubscriptionAllocator>())
-        { }
+        public SubscriptionPool() : base(new AllocatorPooledObjectPolicy<Subscription, SubscriptionAllocator>()) { }
     }
 
     internal class SubscriptionAllocator : IPoolObjectAllocator<Subscription>

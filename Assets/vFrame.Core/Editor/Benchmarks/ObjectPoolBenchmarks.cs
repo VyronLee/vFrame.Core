@@ -1,8 +1,8 @@
-using vFrame.Core;
+using UnityEditor;
 
 namespace vFrame.Core.Benchmarks.Editor
 {
-    [UnityEditor.InitializeOnLoad]
+    [InitializeOnLoad]
     public static class ObjectPoolBenchmarks
     {
         private const int PoolIterations = 200000;
@@ -12,7 +12,8 @@ namespace vFrame.Core.Benchmarks.Editor
         }
 
         private static CoreBenchmarkRunner.BenchmarkResult RunGenericPoolBenchmark() {
-            var pool = new ObjectPool<PooledPayload>(new AllocatorPooledObjectPolicy<PooledPayload, PooledPayloadAllocator>());
+            var pool = new ObjectPool<PooledPayload>(
+                new AllocatorPooledObjectPolicy<PooledPayload, PooledPayloadAllocator>());
 
             var result = CoreBenchmarkRunner.Measure(
                 "pool.generic.get-return",

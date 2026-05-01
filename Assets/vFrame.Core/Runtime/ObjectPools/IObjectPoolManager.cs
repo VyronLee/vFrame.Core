@@ -9,6 +9,7 @@
 // ============================================================
 
 using System;
+using System.Collections.Generic;
 
 namespace vFrame.Core
 {
@@ -131,6 +132,6 @@ namespace vFrame.Core
         /// <summary>
         ///     Gets all registered pools with their associated types.
         /// </summary>
-        System.Collections.Generic.IEnumerable<(System.Type Type, IObjectPool Pool)> GetAllPools();
+        IEnumerable<(Type Type, IObjectPool Pool)> GetAllPools();
     }
 }

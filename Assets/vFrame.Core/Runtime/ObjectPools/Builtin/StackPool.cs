@@ -17,6 +17,8 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static StackPool<T> _shared;
 
+        public StackPool() : base(new AllocatorPooledObjectPolicy<Stack<T>, StackAllocator<T>>()) { }
+
         public new static StackPool<T> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +28,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public StackPool() : base(new AllocatorPooledObjectPolicy<Stack<T>, StackAllocator<T>>()) { }
     }
 }

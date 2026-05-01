@@ -17,6 +17,8 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static StringBuilderPool _shared;
 
+        public StringBuilderPool() : base(new AllocatorPooledObjectPolicy<StringBuilder, StringBuilderAllocator>()) { }
+
         public new static StringBuilderPool Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +28,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public StringBuilderPool() : base(new AllocatorPooledObjectPolicy<StringBuilder, StringBuilderAllocator>()) { }
     }
 }

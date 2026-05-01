@@ -21,11 +21,11 @@ namespace vFrame.Core
     {
         private static readonly object _instanceLockObject = new object();
         private static ObjectPool<T> _shared;
+        private readonly HashSet<T> _inactiveLookup; // null when CollectionCheckEnabled = false
 
         private readonly object _lockObject = new object();
-        private readonly IPooledObjectPolicy<T> _policy;
         private readonly ObjectPoolOptions<T> _options;
-        private readonly HashSet<T> _inactiveLookup;  // null when CollectionCheckEnabled = false
+        private readonly IPooledObjectPolicy<T> _policy;
         private Stack<T> _objects;
         private ObjectPoolStatistics _statistics;
 
@@ -78,8 +78,17 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
+        }
+
+        /// <summary>
+        ///     Releases all resources used by the pool.
+        /// </summary>
+        public void Dispose() {
+            Clear();
+            _objects = null;
         }
 
         /// <summary>
@@ -100,6 +109,7 @@ namespace vFrame.Core
                     _statistics.CountAll++;
                     _statistics.TotalCreatedCount++;
                 }
+
                 _statistics.TotalGetCount++;
             }
 
@@ -131,6 +141,7 @@ namespace vFrame.Core
                     _statistics.TotalDestroyedCount++;
                     _statistics.CountAll--;
                 }
+
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -150,6 +161,7 @@ namespace vFrame.Core
                     _statistics.TotalDestroyedCount++;
                     _statistics.CountAll--;
                 }
+
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -163,6 +175,7 @@ namespace vFrame.Core
                         _statistics.TotalDuplicateReturnCount++;
                         return;
                     }
+
                     _inactiveLookup.Add(obj);
                 }
 
@@ -176,6 +189,7 @@ namespace vFrame.Core
                     if (_inactiveLookup != null) {
                         _inactiveLookup.Remove(obj);
                     }
+
                     _options.OnDestroy?.Invoke(obj);
                     return;
                 }
@@ -197,30 +211,14 @@ namespace vFrame.Core
                     if (_inactiveLookup != null) {
                         _inactiveLookup.Remove(item);
                     }
+
                     _statistics.CountAll--;
                     _statistics.TotalDestroyedCount++;
                     removed++;
                 }
             }
-            return removed;
-        }
 
-        /// <summary>
-        ///     Pre-populates the pool with a specified number of objects.
-        /// </summary>
-        /// <param name="count">Number of objects to create and add to the pool.</param>
-        public void Prewarm(int count) {
-            lock (_lockObject) {
-                for (var i = 0; i < count; i++) {
-                    var item = _policy.Create();
-                    _objects.Push(item);
-                    if (_inactiveLookup != null) {
-                        _inactiveLookup.Add(item);
-                    }
-                    _statistics.CountAll++;
-                    _statistics.TotalCreatedCount++;
-                }
-            }
+            return removed;
         }
 
         /// <summary>
@@ -245,20 +243,14 @@ namespace vFrame.Core
             }
         }
 
-        /// <summary>
-        ///     Releases all resources used by the pool.
-        /// </summary>
-        public void Dispose() {
-            Clear();
-            _objects = null;
-        }
-
         // IObjectPool explicit implementations
 
         /// <summary>
         ///     Non-generic get that boxes the result.
         /// </summary>
-        object IObjectPool.Get() => Get();
+        object IObjectPool.Get() {
+            return Get();
+        }
 
         /// <summary>
         ///     Non-generic return with type validation.
@@ -267,6 +259,25 @@ namespace vFrame.Core
             ThrowHelper.ThrowIfNull(obj, nameof(obj));
             ThrowHelper.ThrowIfTypeMismatch(obj.GetType(), typeof(T));
             Return(obj as T);
+        }
+
+        /// <summary>
+        ///     Pre-populates the pool with a specified number of objects.
+        /// </summary>
+        /// <param name="count">Number of objects to create and add to the pool.</param>
+        public void Prewarm(int count) {
+            lock (_lockObject) {
+                for (var i = 0; i < count; i++) {
+                    var item = _policy.Create();
+                    _objects.Push(item);
+                    if (_inactiveLookup != null) {
+                        _inactiveLookup.Add(item);
+                    }
+
+                    _statistics.CountAll++;
+                    _statistics.TotalCreatedCount++;
+                }
+            }
         }
     }
 }

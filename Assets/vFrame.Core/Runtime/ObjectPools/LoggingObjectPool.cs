@@ -8,8 +8,6 @@
 //    Copyright: Copyright (c) 2026, VyronLee
 // ============================================================
 
-using System;
-
 namespace vFrame.Core
 {
     /// <summary>
@@ -39,7 +37,9 @@ namespace vFrame.Core
             var item = base.Get();
             var stats = Inner.GetStatistics();
             Logger.Info(_logTag, "Get() -> {0}, stats: [all={1} active={2} inactive={3}]",
-                new object[] { item?.GetHashCode().ToString() ?? "null", stats.CountAll, stats.CountActive, stats.CountInactive });
+                new object[] {
+                    item?.GetHashCode().ToString() ?? "null", stats.CountAll, stats.CountActive, stats.CountInactive
+                });
             return item;
         }
 

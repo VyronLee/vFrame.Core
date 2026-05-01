@@ -34,49 +34,65 @@ namespace vFrame.Core
         ///     Gets an instance from the inner pool.
         /// </summary>
         /// <returns>A pooled object instance.</returns>
-        public virtual T Get() => Inner.Get();
+        public virtual T Get() {
+            return Inner.Get();
+        }
 
         /// <summary>
         ///     Returns an instance to the inner pool.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        public virtual void Return(T obj) => Inner.Return(obj);
+        public virtual void Return(T obj) {
+            Inner.Return(obj);
+        }
 
         /// <summary>
         ///     Gets an instance wrapped in an auto-return disposable.
         /// </summary>
         /// <param name="item">The pooled object instance.</param>
         /// <returns>A wrapper that returns the item to the pool on disposal.</returns>
-        public virtual PooledObject<T> Get(out T item) => Inner.Get(out item);
+        public virtual PooledObject<T> Get(out T item) {
+            return Inner.Get(out item);
+        }
 
         /// <summary>
         ///     Returns statistics from the inner pool.
         /// </summary>
         /// <returns>Current pool statistics.</returns>
-        public virtual ObjectPoolStatistics GetStatistics() => Inner.GetStatistics();
+        public virtual ObjectPoolStatistics GetStatistics() {
+            return Inner.GetStatistics();
+        }
 
         /// <summary>
         ///     Removes excess inactive objects from the inner pool.
         /// </summary>
         /// <param name="maxRetained">Maximum inactive objects to retain.</param>
         /// <returns>The number of objects removed.</returns>
-        public virtual int Trim(int maxRetained) => Inner.Trim(maxRetained);
+        public virtual int Trim(int maxRetained) {
+            return Inner.Trim(maxRetained);
+        }
 
         /// <summary>
         ///     Clears all inactive objects from the inner pool.
         /// </summary>
-        public virtual void Clear() => Inner.Clear();
+        public virtual void Clear() {
+            Inner.Clear();
+        }
 
         /// <summary>
         ///     Non-generic get that delegates to the typed implementation.
         /// </summary>
         /// <returns>An object from the pool.</returns>
-        object IObjectPool.Get() => Get();
+        object IObjectPool.Get() {
+            return Get();
+        }
 
         /// <summary>
         ///     Non-generic return that delegates to the typed implementation.
         /// </summary>
         /// <param name="obj">The object to return.</param>
-        void IObjectPool.Return(object obj) => Inner.Return(obj);
+        void IObjectPool.Return(object obj) {
+            Inner.Return(obj);
+        }
     }
 }

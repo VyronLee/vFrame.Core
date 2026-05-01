@@ -17,6 +17,9 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static DictionaryPool<TKey, TValue> _shared;
 
+        public DictionaryPool() : base(
+            new AllocatorPooledObjectPolicy<Dictionary<TKey, TValue>, DictionaryAllocator<TKey, TValue>>()) { }
+
         public new static DictionaryPool<TKey, TValue> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +29,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public DictionaryPool() : base(new AllocatorPooledObjectPolicy<Dictionary<TKey, TValue>, DictionaryAllocator<TKey, TValue>>()) { }
     }
 }

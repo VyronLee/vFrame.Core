@@ -43,6 +43,7 @@ namespace vFrame.Core
                 }
                 // Discard invalid - don't return to pool
             }
+
             // Fallback: return whatever we get on the last attempt
             return base.Get();
         }
@@ -55,6 +56,7 @@ namespace vFrame.Core
             if (obj != null && !_validator(obj)) {
                 return; // Discard invalid
             }
+
             base.Return(obj);
         }
     }

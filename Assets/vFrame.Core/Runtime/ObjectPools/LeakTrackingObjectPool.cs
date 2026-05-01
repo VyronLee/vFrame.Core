@@ -39,6 +39,7 @@ namespace vFrame.Core
                 _leakTracker.Remove(item);
                 _leakTracker.Add(item, new LeakInfo<T>(item, DateTime.Now, new StackTrace(true).ToString()));
             }
+
             return item;
         }
 
@@ -50,6 +51,7 @@ namespace vFrame.Core
             if (obj != null) {
                 _leakTracker.Remove(obj);
             }
+
             base.Return(obj);
         }
 
@@ -57,7 +59,9 @@ namespace vFrame.Core
         ///     Gets the number of objects currently rented from the pool (potential leaks).
         /// </summary>
         /// <returns>The count of active objects.</returns>
-        public int GetLeakCount() => Inner.GetStatistics().CountActive;
+        public int GetLeakCount() {
+            return Inner.GetStatistics().CountActive;
+        }
     }
 
     /// <summary>

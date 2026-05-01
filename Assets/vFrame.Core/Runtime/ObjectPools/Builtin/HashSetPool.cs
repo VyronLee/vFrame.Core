@@ -17,6 +17,8 @@ namespace vFrame.Core
         private static readonly object _lock = new object();
         private static HashSetPool<T> _shared;
 
+        public HashSetPool() : base(new AllocatorPooledObjectPolicy<HashSet<T>, HashSetAllocator<T>>()) { }
+
         public new static HashSetPool<T> Shared {
             get {
                 if (_shared == null) {
@@ -26,10 +28,9 @@ namespace vFrame.Core
                         }
                     }
                 }
+
                 return _shared;
             }
         }
-
-        public HashSetPool() : base(new AllocatorPooledObjectPolicy<HashSet<T>, HashSetAllocator<T>>()) { }
     }
 }

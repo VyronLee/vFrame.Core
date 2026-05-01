@@ -20,30 +20,27 @@ namespace vFrame.Core
     public readonly struct PooledObject<T> : IDisposable where T : class
     {
         private readonly IObjectPool<T> _pool;
-        private readonly T _item;
 
         /// <summary>
         ///     Internal constructor used by object pools to create a pooled wrapper.
         /// </summary>
         /// <param name="pool">The pool that owns this item.</param>
         /// <param name="item">The pooled object instance.</param>
-        internal PooledObject(IObjectPool<T> pool, T item)
-        {
+        internal PooledObject(IObjectPool<T> pool, T item) {
             _pool = pool;
-            _item = item;
+            Item = item;
         }
 
         /// <summary>
         ///     Gets the pooled object instance.
         /// </summary>
-        public T Item => _item;
+        public T Item { get; }
 
         /// <summary>
         ///     Returns the pooled object to its pool. Safe to call on default struct instances.
         /// </summary>
-        public void Dispose()
-        {
-            _pool?.Return(_item);
+        public void Dispose() {
+            _pool?.Return(Item);
         }
     }
 }
