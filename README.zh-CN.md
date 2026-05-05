@@ -2,36 +2,36 @@
 
 # vFrame.Core
 
-`vFrame.Core` is the foundational capability library in the vFrame workspace. It is split into the Unity-free `vFrame.Core` assembly and the Unity-dependent `vFrame.Core.Unity` assembly, providing a shared lifecycle model, typed dispatching, object pools, logging, compression and encryption, plus Unity-side coroutine, instance reuse, and download helpers.
+`vFrame.Core` 是 vFrame 工作区中的基础能力库，按程序集拆分为不依赖 Unity 的 `vFrame.Core` 和依赖 Unity 的 `vFrame.Core.Unity`。它提供统一生命周期、类型化消息派发、对象池、日志、压缩加密，以及 Unity 侧的协程池、实例复用与下载辅助能力。
 
-## Features
+## 特性
 
-- Keeps the core assembly `vFrame.Core` free of Unity dependencies for plain C# usage
-- Builds a unified lifecycle model around `BaseObject`, `ILifetime`, and `Lifetime`
-- Exposes four typed interaction styles through `Dispatcher`: Event, Command, Request, and Decision
-- Includes pooling primitives such as `ObjectPool<T>`, `ListPool<T>`, and `StringBuilderPool`
-- Provides logging infrastructure through `Logger`, `ILogger`, and `LogConfiguration`
-- Ships compression and encryption entry points such as `CompressorPool`, `SynchronousBlockBasedCompression`, and `EncryptorPool`
-- Adds Unity runtime helpers including `SpawnPools`, `CoroutinePool`, and `Downloader`
-- Separates runtime and test code with dedicated asmdef boundaries
+- 核心程序集 `vFrame.Core` 不依赖 Unity，可用于纯 C# 场景
+- 以 `BaseObject`、`ILifetime`、`Lifetime` 为中心的统一生命周期模型
+- `Dispatcher` 提供 Event、Command、Request、Decision 四种类型化交互模式
+- 提供 `ObjectPool<T>`、`ListPool<T>`、`StringBuilderPool` 等对象池能力
+- 内置 `Logger`、`ILogger`、`LogConfiguration` 等日志基础设施
+- 提供 `CompressorPool`、`SynchronousBlockBasedCompression`、`EncryptorPool` 等压缩加密入口
+- Unity 扩展程序集提供 `SpawnPools`、`CoroutinePool`、`Downloader` 等运行时辅助组件
+- 使用独立 asmdef 划分运行时与测试程序集
 
-## Prerequisites
+## 前置要求
 
-- Unity `2022.3.62f3` or newer
-- If you only need the core abstractions, install `vFrame.Core`
-- If you need the Unity runtime extensions, also install `vFrame.Core.Unity`
-- The package metadata still declares a minimum Unity version of `2018.4`, but this repository is currently developed and verified on `2022.3.62f3`
+- Unity `2022.3.62f3` 或更高版本
+- 如果只使用核心能力，可只引入 `vFrame.Core`
+- 如果需要 Unity 运行时扩展，再额外引入 `vFrame.Core.Unity`
+- 包自身的 `package.json` 最低 Unity 字段为 `2018.4`，但本仓库当前实际开发与验证版本为 `2022.3.62f3`
 
-## Installation
+## 安装
 
-### Install via UPM Git URL
+### 通过 UPM Git URL 安装
 
-This repository publishes two UPM packages:
+本仓库发布两个 UPM 包：
 
 - `Assets/vFrame.Core`
 - `Assets/vFrame.Core.Unity`
 
-Add them to your project's `Packages/manifest.json`:
+在项目的 `Packages/manifest.json` 中添加：
 
 ```json
 {
@@ -42,23 +42,23 @@ Add them to your project's `Packages/manifest.json`:
 }
 ```
 
-You can also add them manually through `Window > Package Manager > Add package from git URL...`.
+也可以通过 Unity Package Manager 菜单 `Window > Package Manager > Add package from git URL...` 手动添加。
 
-### Version Information
+### 版本信息
 
 - `com.vyronlee.vframe.core` `1.1.1`
 - `com.vyronlee.vframe.core.unity` `1.1.1`
 - License: `Apache-2.0`
 
-If you want to pin a tagged version, append `#tag` to the URL, for example:
+如果需要锁定标签版本，可在 URL 末尾追加 `#tag`，例如：
 
 ```text
 https://github.com/VyronLee/vFrame.Core.git?path=/Assets/vFrame.Core#v1.1.5
 ```
 
-## Quick Start
+## 快速开始
 
-### 1. Create a lifecycle-bound object
+### 1. 创建一个带生命周期边界的对象
 
 ```csharp
 using vFrame.Core;
@@ -83,7 +83,7 @@ session.Create("Game");
 session.Destroy();
 ```
 
-### 2. Publish typed events with `Dispatcher`
+### 2. 使用 `Dispatcher` 发布类型化事件
 
 ```csharp
 using vFrame.Core;
@@ -111,7 +111,7 @@ dispatcher.Unsubscribe(subscription);
 dispatcher.Destroy();
 ```
 
-### 3. Use object pools and collection pools
+### 3. 使用对象池与集合池
 
 ```csharp
 using System.Text;
@@ -128,16 +128,16 @@ builder.Append("vFrame.Core");
 builders.Return(builder);
 ```
 
-## Usage
+## 用法
 
-### Lifecycle and ownership
+### 生命周期与资源所有权
 
-`BaseObject` is the central lifecycle primitive in the library:
+`BaseObject` 是本库最核心的生命周期基类：
 
-- `Create(...)` transitions an instance into the usable state once
-- `Destroy()` is terminal and the instance cannot be `Create()`-d again
-- `Own(...)` means the current object owns the resource and is responsible for teardown
-- `OwnLifetime(...)` means the resource is bound to the current lifetime boundary
+- `Create(...)` 只会成功进入一次已创建状态
+- `Destroy()` 是终态操作，销毁后不能再次 `Create()`
+- `Own(...)` 表示当前对象拥有该资源并负责销毁
+- `OwnLifetime(...)` 表示资源绑定到当前生命周期边界结束
 
 ```csharp
 using vFrame.Core;
@@ -172,22 +172,22 @@ public class Child : BaseObject
 }
 ```
 
-These three semantics are useful when you describe resource relationships:
+这里可以用三种语义理解资源关系：
 
-- `owned`
-- `borrowed`
-- `lifetime-bound`
+- `owned`：当前对象负责释放
+- `borrowed`：当前对象使用该资源，但不接管生命周期
+- `lifetime-bound`：资源跟随某个 `ILifetime` 边界结束
 
-### Typed dispatching
+### 类型化消息派发
 
-`Dispatcher` implements `IDispatcher`, which aggregates four public interfaces:
+`Dispatcher` 实现了 `IDispatcher`，聚合了四类接口：
 
-- `IEventDispatcher`: `Subscribe<TEvent>()` / `Publish<TEvent>()`
-- `ICommandDispatcher`: `Handle<TCommand>()` / `Send<TCommand>()`
-- `IRequestDispatcher`: `HandleRequest<TRequest, TResponse>()` / `Request<TRequest, TResponse>()`
-- `IDecisionDispatcher`: `Listen<TDecision>()` / `Decide<TDecision>()`
+- `IEventDispatcher`：`Subscribe<TEvent>()` / `Publish<TEvent>()`
+- `ICommandDispatcher`：`Handle<TCommand>()` / `Send<TCommand>()`
+- `IRequestDispatcher`：`HandleRequest<TRequest, TResponse>()` / `Request<TRequest, TResponse>()`
+- `IDecisionDispatcher`：`Listen<TDecision>()` / `Decide<TDecision>()`
 
-Example: request/response dispatching.
+示例：请求/响应模式。
 
 ```csharp
 using vFrame.Core;
@@ -213,11 +213,11 @@ var result = dispatcher.Request<SumRequest, int>(new SumRequest(2, 3));
 dispatcher.Destroy();
 ```
 
-Prefer typed messages in new code. The older `int eventId` path is better treated as a compatibility surface than a new API design target.
+新代码优先使用类型化消息。基于 `int eventId` 的旧路径更适合兼容场景，而不是新接口设计。
 
-### Logging
+### 日志系统
 
-The logging entry point is the static `Logger` class. Category loggers are created through `Logger.GetLogger(string)` or `Logger.GetLogger<T>()`.
+日志入口是静态类 `Logger`。分类日志可通过 `Logger.GetLogger(string)` 或 `Logger.GetLogger<T>()` 获取。
 
 ```csharp
 using vFrame.Core;
@@ -235,9 +235,9 @@ Logger.Warning("fallback warning");
 Logger.Error(new System.Exception("boom"), "startup failed");
 ```
 
-### Compression and encryption
+### 压缩与加密
 
-The regular stream compression entry point is `CompressorPool`:
+常规流压缩入口是 `CompressorPool`：
 
 ```csharp
 using System.IO;
@@ -250,7 +250,7 @@ compressor.Compress(input, output);
 compressor.Destroy();
 ```
 
-The block-based compression entry point is `SynchronousBlockBasedCompression`:
+分块压缩入口是 `SynchronousBlockBasedCompression`：
 
 ```csharp
 using System.IO;
@@ -269,7 +269,7 @@ compression.Compress(
 compression.Destroy();
 ```
 
-The encryption entry point is `EncryptorPool`:
+加密入口是 `EncryptorPool`：
 
 ```csharp
 using vFrame.Core;
@@ -283,11 +283,11 @@ encryptor.Encrypt(input, output, key, key.Length);
 encryptor.Destroy();
 ```
 
-### Unity extension APIs
+### Unity 扩展 API
 
 #### `SpawnPools`
 
-`SpawnPools` handles Unity-side instance reuse. Its main public entry points are:
+`SpawnPools` 负责 Unity 侧的实例复用，关键公开入口包括：
 
 - `Create(IGameObjectLoaderFactory, SpawnPoolsSettings)`
 - `Spawn(string assetPath, Transform parent = null)`
@@ -312,7 +312,7 @@ pools.Destroy();
 
 #### `CoroutinePool`
 
-`CoroutinePool` is created directly through its constructor and does not derive from `BaseObject`:
+`CoroutinePool` 通过构造函数直接创建，不继承 `BaseObject`：
 
 ```csharp
 using System.Collections;
@@ -333,7 +333,7 @@ IEnumerator Run()
 
 #### `Downloader`
 
-`Downloader` is a `MonoBehaviour` component that can be created through `Downloader.Create()`:
+`Downloader` 是 `MonoBehaviour` 组件，可通过 `Downloader.Create()` 快速生成：
 
 ```csharp
 using vFrame.Core.Unity;
@@ -343,11 +343,11 @@ downloader.Timeout = 120;
 downloader.AddDownload("D:/Temp/config.json", "https://example.com/config.json");
 ```
 
-## Architecture Overview
+## 架构概览
 
-### Assembly Layout
+### 程序集结构
 
-The main asmdef files in this sub-repository are:
+当前子仓库的主要 asmdef：
 
 - `Assets/vFrame.Core/Runtime/vFrame.Core.asmdef`
 - `Assets/vFrame.Core.Unity/Runtime/vFrame.Core.Unity.asmdef`
@@ -355,15 +355,15 @@ The main asmdef files in this sub-repository are:
 - `Assets/vFrame.Core.Tests/EditMode/Asynchronous/vFrame.Core.Tests.EditMode.Unity.asmdef`
 - `Assets/vFrame.Core.Tests/PlayMode/vFrame.Core.Tests.PlayMode.asmdef`
 
-Dependency direction:
+依赖方向如下：
 
-- `vFrame.Core`: no assembly references
-- `vFrame.Core.Unity`: references `vFrame.Core`
-- `vFrame.Core.Tests.EditMode`: references `vFrame.Core`
-- `vFrame.Core.Tests.EditMode.Unity`: references `vFrame.Core` and `vFrame.Core.Unity`
-- `vFrame.Core.Tests.PlayMode`: references `vFrame.Core` and `vFrame.Core.Unity`
+- `vFrame.Core`：无程序集依赖
+- `vFrame.Core.Unity`：依赖 `vFrame.Core`
+- `vFrame.Core.Tests.EditMode`：依赖 `vFrame.Core`
+- `vFrame.Core.Tests.EditMode.Unity`：依赖 `vFrame.Core` 与 `vFrame.Core.Unity`
+- `vFrame.Core.Tests.PlayMode`：依赖 `vFrame.Core` 与 `vFrame.Core.Unity`
 
-### Directory Layers
+### 目录分层
 
 ```text
 Assets/
@@ -400,44 +400,44 @@ Assets/
     └── PlayMode/
 ```
 
-## Notes and Gotchas
+## 注意事项
 
-### `System` type collisions
+### `System` 类型冲突
 
-`vFrame.Core` defines types that can collide with `System` names. When there is ambiguity, use explicit prefixes such as:
+`vFrame.Core` 自身定义了一些可能与 `System` 命名空间冲突的类型。出现歧义时请显式加前缀，例如：
 
 ```csharp
 System.ArgumentNullException
 System.InvalidOperationException
 ```
 
-### `ILogger` ambiguity
+### `ILogger` 歧义
 
-If you reference both `UnityEngine` and `vFrame.Core`, `ILogger` can be ambiguous. Prefer an explicit alias:
+如果同时引用 `UnityEngine` 与 `vFrame.Core`，`ILogger` 可能冲突，建议显式使用别名：
 
 ```csharp
 using vFrameCore = vFrame.Core;
 ```
 
-Then refer to `vFrameCore.ILogger`.
+随后写成 `vFrameCore.ILogger`。
 
-### Lifecycle semantics
+### 生命周期语义
 
-This library encourages explicitly distinguishing these ownership semantics:
+本库推荐显式区分三种资源关系：
 
 - `owned`
 - `borrowed`
 - `lifetime-bound`
 
-That keeps resource cleanup responsibilities clear within `BaseObject` and `ILifetime` boundaries.
+这有助于在 `BaseObject` 与 `ILifetime` 的边界内明确谁负责清理资源。
 
-### `BaseObject` is terminal after `Destroy()`
+### `BaseObject` 是终态生命周期
 
-After `Destroy()`, an instance cannot be `Create()`-d again. If you need reuse, use an object pool instead of reactivating the same `BaseObject` instance.
+`Destroy()` 之后对象不能再次 `Create()`。如果需要复用对象，请使用对象池，而不是重新激活同一个 `BaseObject` 实例。
 
-### `Dispatcher` requires explicit `Create()` / `Destroy()`
+### `Dispatcher` 需要显式 `Create()` / `Destroy()`
 
-`Dispatcher` derives from `BaseObject`, so call `Create()` before use and `Destroy()` when finished:
+`Dispatcher` 继承自 `BaseObject`，使用前必须先 `Create()`，结束后应调用 `Destroy()`：
 
 ```csharp
 var dispatcher = new Dispatcher();
@@ -446,9 +446,9 @@ dispatcher.Create();
 dispatcher.Destroy();
 ```
 
-### Retired modules
+### 退役模块
 
-The repository still carries a few historical modules for compatibility, but they are not recommended for new feature work:
+仓库中仍保留一些历史模块用于兼容，但不建议在新功能中继续扩展：
 
 - `Container/Component`
 - `Profiles`
@@ -457,6 +457,6 @@ The repository still carries a few historical modules for compatibility, but the
 - `Patch`
 - `Download`
 
-## License
+## 许可证
 
-This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+本项目基于 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 许可协议发布。
