@@ -19,7 +19,7 @@ namespace vFrame.Core.Unity
     /// This surface intentionally manages spawned instance reuse only; resource location,
     /// download, patching, and dependency ownership stay outside of <see cref="ISpawnPools"/>.
     /// </summary>
-    public interface ISpawnPools
+    public interface ISpawnPools : IBaseObject<IGameObjectLoaderFactory, SpawnPoolsSettings>
     {
         /// <summary>
         /// Advances background async requests and scheduled pool cleanup work.
