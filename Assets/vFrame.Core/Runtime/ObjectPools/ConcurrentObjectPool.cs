@@ -100,6 +100,7 @@ namespace vFrame.Core
             // 2. Policy validation
             if (!_policy.Return(obj)) {
                 Interlocked.Increment(ref _totalDestroyedCount);
+                Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -115,6 +116,7 @@ namespace vFrame.Core
             // 5. Unity Object destroyed check
             if (obj is Object unityObj && unityObj.Destroyed) {
                 Interlocked.Increment(ref _totalDestroyedCount);
+                Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -123,6 +125,7 @@ namespace vFrame.Core
             if (_options.MaxSize > 0 && _objects.Count >= _options.MaxSize &&
                 _options.OverflowPolicy == ObjectPoolOverflowPolicy.DestroyReturned) {
                 Interlocked.Increment(ref _totalDestroyedCount);
+                Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);
                 return;
             }
@@ -177,6 +180,7 @@ namespace vFrame.Core
 
             while (_objects.Count > maxRetained && _objects.TryPop(out var obj)) {
                 Interlocked.Increment(ref _totalDestroyedCount);
+                Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);
                 destroyed++;
             }
@@ -206,6 +210,7 @@ namespace vFrame.Core
         public void Clear() {
             while (_objects.TryPop(out var obj)) {
                 Interlocked.Increment(ref _totalDestroyedCount);
+                Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);
             }
         }
