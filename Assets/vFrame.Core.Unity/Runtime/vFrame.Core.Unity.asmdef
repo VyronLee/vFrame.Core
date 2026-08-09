@@ -1,7 +1,8 @@
 {
     "name": "vFrame.Core.Unity",
     "references": [
-        "vFrame.Core"
+        "vFrame.Core",
+        "Cysharp.Threading.UniTask"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

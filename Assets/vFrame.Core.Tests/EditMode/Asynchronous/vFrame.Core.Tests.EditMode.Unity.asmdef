@@ -2,7 +2,8 @@
     "name": "vFrame.Core.Tests.EditMode.Unity",
     "references": [
         "vFrame.Core",
-        "vFrame.Core.Unity"
+        "vFrame.Core.Unity",
+        "Cysharp.Threading.UniTask"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
