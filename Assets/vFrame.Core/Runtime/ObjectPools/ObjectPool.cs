@@ -155,7 +155,7 @@ namespace vFrame.Core
             _options.OnReturn?.Invoke(obj);
 
             // Step 4: Check if object was destroyed during return callbacks
-            if (obj is Object pooledObject && pooledObject.Destroyed) {
+            if (obj is DisposableObject pooledObject && pooledObject.Destroyed) {
                 lock (_lockObject) {
                     _statistics.TotalReturnCount++;
                     _statistics.TotalDestroyedCount++;

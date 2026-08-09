@@ -114,7 +114,7 @@ namespace vFrame.Core
             _options.OnReturn?.Invoke(obj);
 
             // 5. Unity Object destroyed check
-            if (obj is Object unityObj && unityObj.Destroyed) {
+            if (obj is DisposableObject unityObj && unityObj.Destroyed) {
                 Interlocked.Increment(ref _totalDestroyedCount);
                 Interlocked.Decrement(ref _countAll);
                 _options.OnDestroy?.Invoke(obj);

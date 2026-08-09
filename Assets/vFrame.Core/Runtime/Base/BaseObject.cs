@@ -13,7 +13,12 @@ using System;
 
 namespace vFrame.Core
 {
-    public abstract class Object : IDestroyable
+    /// <summary>
+    ///     Lifecycle root for create/destroy resources with <see cref="ILifetime" /> ownership tracking.
+    ///     Derive from <see cref="BaseObject" /> (which adds the one-shot <see cref="BaseObject.Create()" />
+    ///     transition) rather than this class directly.
+    /// </summary>
+    public abstract class DisposableObject : IDestroyable
     {
         private ILifetime _lifetime;
 
@@ -159,7 +164,7 @@ namespace vFrame.Core
         }
     }
 
-    public abstract class BaseObject : Object, IBaseObject
+    public abstract class BaseObject : DisposableObject, IBaseObject
     {
         /// <summary>
         ///     Transitions the object into its usable state once. Destroyed instances stay terminal.
@@ -182,7 +187,7 @@ namespace vFrame.Core
         protected abstract void OnCreate();
     }
 
-    public abstract class BaseObject<T1> : Object, IBaseObject<T1>
+    public abstract class BaseObject<T1> : DisposableObject, IBaseObject<T1>
     {
         /// <summary>
         ///     Transitions the object into its usable state once with one argument.
@@ -208,7 +213,7 @@ namespace vFrame.Core
         protected abstract void OnCreate(T1 arg1);
     }
 
-    public abstract class BaseObject<T1, T2> : Object, IBaseObject<T1, T2>
+    public abstract class BaseObject<T1, T2> : DisposableObject, IBaseObject<T1, T2>
     {
         /// <summary>
         ///     Transitions the object into its usable state once with two arguments.
@@ -236,7 +241,7 @@ namespace vFrame.Core
         protected abstract void OnCreate(T1 arg1, T2 arg2);
     }
 
-    public abstract class BaseObject<T1, T2, T3> : Object, IBaseObject<T1, T2, T3>
+    public abstract class BaseObject<T1, T2, T3> : DisposableObject, IBaseObject<T1, T2, T3>
     {
         /// <summary>
         ///     Transitions the object into its usable state once with three arguments.
@@ -266,7 +271,7 @@ namespace vFrame.Core
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3);
     }
 
-    public abstract class BaseObject<T1, T2, T3, T4> : Object, IBaseObject<T1, T2, T3, T4>
+    public abstract class BaseObject<T1, T2, T3, T4> : DisposableObject, IBaseObject<T1, T2, T3, T4>
     {
         /// <summary>
         ///     Transitions the object into its usable state once with four arguments.
@@ -298,7 +303,7 @@ namespace vFrame.Core
         protected abstract void OnCreate(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
     }
 
-    public abstract class BaseObject<T1, T2, T3, T4, T5> : Object, IBaseObject<T1, T2, T3, T4, T5>
+    public abstract class BaseObject<T1, T2, T3, T4, T5> : DisposableObject, IBaseObject<T1, T2, T3, T4, T5>
     {
         /// <summary>
         ///     Transitions the object into its usable state once with five arguments.
