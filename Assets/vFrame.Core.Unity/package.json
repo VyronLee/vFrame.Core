@@ -5,7 +5,7 @@
   "description": "vFrame Core Unity Libraries.",
   "unity": "2018.4",
   "dependencies": {
-    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11"
+    "com.cysharp.unitask": "2.5.11"
   },
   "keywords": [
     "vFrame",
