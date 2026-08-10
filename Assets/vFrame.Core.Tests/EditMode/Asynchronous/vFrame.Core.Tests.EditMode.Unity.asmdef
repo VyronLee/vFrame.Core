@@ -3,7 +3,7 @@
     "references": [
         "vFrame.Core",
         "vFrame.Core.Unity",
-        "Cysharp.Threading.UniTask"
+        "UniTask"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

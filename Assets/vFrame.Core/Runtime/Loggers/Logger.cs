@@ -159,9 +159,17 @@ namespace vFrame.Core
         }
 
         /// <summary>
-        ///     Closes and disposes the current log file.
+        ///     Closes and disposes the current log file and clears the buffered
+        ///     log queue. Callers (including test setup) treat <see cref="Close" />
+        ///     as a full reset: failing to clear <c>_logQueue</c> here left stale
+        ///     entries accumulating across fixtures when many tests share one
+        ///     process, inflating buffered counts (runner-exposed, C-Logger).
         /// </summary>
         public static void Close() {
+            lock (_queueLock) {
+                _logQueue.Clear();
+            }
+
             _logFile?.Destroy();
             _logFile = null;
             _formatter = new LogFormatter(LogTemplates.Default);

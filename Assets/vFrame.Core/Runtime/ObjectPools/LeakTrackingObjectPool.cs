@@ -30,6 +30,15 @@ namespace vFrame.Core
         public LeakTrackingObjectPool(IObjectPool<T> inner) : base(inner) { }
 
         /// <summary>
+        ///     When <c>true</c>, <see cref="Get"/> captures a full stack trace at the
+        ///     rental site for leak diagnostics. Defaults to <c>false</c>: the hot path
+        ///     stays allocation-light — only count-based leak detection runs (C8).
+        ///     A stack walk on every rental is expensive, so enable it only while
+        ///     actively hunting a leak, then disable.
+        /// </summary>
+        public bool CaptureStackTrace { get; set; }
+
+        /// <summary>
         ///     Gets an instance from the pool and tracks it for leak detection.
         /// </summary>
         /// <returns>A pooled object instance.</returns>
@@ -37,7 +46,10 @@ namespace vFrame.Core
             var item = base.Get();
             if (item != null) {
                 _leakTracker.Remove(item);
-                _leakTracker.Add(item, new LeakInfo<T>(item, DateTime.Now, new StackTrace(true).ToString()));
+                _leakTracker.Add(item, new LeakInfo<T>(
+                    item,
+                    DateTime.Now,
+                    CaptureStackTrace ? new StackTrace(true).ToString() : null));
             }
 
             return item;
@@ -94,6 +106,8 @@ namespace vFrame.Core
 
         /// <summary>
         ///     The stack trace at the time of rental, showing where the object was rented.
+        ///     <c>null</c> when <see cref="LeakTrackingObjectPool{T}.CaptureStackTrace" />
+        ///     is <c>false</c> (the default) — only count-based detection runs then (C8).
         /// </summary>
         public string RentStackTrace { get; }
     }

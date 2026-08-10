@@ -45,7 +45,9 @@ namespace vFrame.Core.Tests.EditMode.Asynchronous
             IAsync op = new DoneImmediatelyAsync();
             // IsDone is already true -> the pump loop never runs, so the
             // await completes synchronously with no PlayerLoop dependency.
-            Assert.DoesNotThrowAsync(async () => await op.ToUniTask());
+            // NUnit shipped with Unity 2022.3 lacks the *Async assert helpers,
+            // so block on the synchronously-completing UniTask instead (C5).
+            Assert.DoesNotThrow(() => op.ToUniTask().GetAwaiter().GetResult());
         }
 
         [Test]
@@ -56,8 +58,9 @@ namespace vFrame.Core.Tests.EditMode.Asynchronous
             IAsync neverDone = new NeverDoneAsync();
             // The token is checked before the first UniTask.Yield, so a
             // pre-cancelled token throws synchronously (no PlayerLoop needed).
-            Assert.ThrowsAsync<System.OperationCanceledException>(
-                async () => await neverDone.ToUniTask(cts.Token));
+            // Block on the UniTask so the non-async NUnit assert can catch it (C5).
+            Assert.Throws<System.OperationCanceledException>(
+                () => neverDone.ToUniTask(cts.Token).GetAwaiter().GetResult());
         }
     }
 }

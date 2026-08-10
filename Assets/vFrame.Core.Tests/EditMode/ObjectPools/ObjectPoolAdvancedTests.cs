@@ -233,6 +233,20 @@ namespace vFrame.Core.Tests.EditMode.ObjectPools
         }
 
         [Test]
+        public void LeakTrackingObjectPool_CaptureStackTraceOffByDefault_StillTracksCount() {
+            var inner = new ObjectPool<PooledPayload>();
+            var pool = new LeakTrackingObjectPool<PooledPayload>(inner);
+
+            // CaptureStackTrace defaults to false — the hot path must NOT walk the
+            // stack on every Get (C8). Count-based leak detection still runs.
+            Assert.That(pool.CaptureStackTrace, Is.False);
+
+            pool.Get();
+            Assert.That(pool.GetLeakCount(), Is.GreaterThanOrEqualTo(1),
+                "count-based leak detection must work without stack capture (C8)");
+        }
+
+        [Test]
         public void ValidatingObjectPool_DiscardsInvalidOnReturn() {
             var inner = new ObjectPool<PooledPayload>();
             var pool = new ValidatingObjectPool<PooledPayload>(inner, _ => true);
