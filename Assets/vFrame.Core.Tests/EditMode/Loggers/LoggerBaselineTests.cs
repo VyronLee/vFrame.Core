@@ -314,14 +314,41 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
-        public void LogContext_StackTraceCapturedWhenCaptureStackTraceEnabled() {
-            Logger.LogLevel = LogLevelDef.Debug;
+        public void LogContext_StackTraceCapturedForPlainLogsAtAllLevels_WhenCaptureStackTraceEnabled() {
+            Logger.LogLevel = LogLevelDef.Trace;
             Logger.CaptureStackTrace = true;
             var sink = RegisterSink();
 
-            Logger.Info("with-stack");
+            Logger.Trace("trace-stack");
+            Logger.Debug("debug-stack");
+            Logger.Info("info-stack");
+            Logger.Warning("warning-stack");
+            Logger.Error("error-stack");
+            Logger.Fatal("fatal-stack");
 
-            Assert.That(sink.Entries[0].StackTrace, Is.Not.Null.And.Not.Empty);
+            Assert.That(sink.Entries.Count, Is.EqualTo(6));
+            foreach (var entry in sink.Entries) {
+                Assert.That(entry.StackTrace, Is.Not.Null.And.Not.Empty, entry.Level.ToString());
+            }
+        }
+
+        [Test]
+        public void LogContext_StackTraceCapturedForExceptionLogsAtAllLevels_WhenCaptureStackTraceEnabled() {
+            Logger.LogLevel = LogLevelDef.Trace;
+            Logger.CaptureStackTrace = true;
+            var sink = RegisterSink();
+
+            Logger.Trace(new Exception("trace-exception"));
+            Logger.Debug(new Exception("debug-exception"));
+            Logger.Info(new Exception("info-exception"));
+            Logger.Warning(new Exception("warning-exception"));
+            Logger.Error(new Exception("error-exception"));
+            Logger.Fatal(new Exception("fatal-exception"));
+
+            Assert.That(sink.Entries.Count, Is.EqualTo(6));
+            foreach (var entry in sink.Entries) {
+                Assert.That(entry.StackTrace, Is.Not.Null.And.Not.Empty, entry.Level.ToString());
+            }
         }
 
         [Test]

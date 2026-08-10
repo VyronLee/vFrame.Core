@@ -188,7 +188,7 @@ namespace vFrame.Core
             }
 
             var content = GetFormattedLogText(level, tag, formattedText, memberName, filePath, lineNumber);
-            var stack = CaptureStackTrace && level >= LogLevelDef.Error
+            var stack = CaptureStackTrace
                 ? GetLogStack()
                 : null;
 
@@ -236,8 +236,11 @@ namespace vFrame.Core
                 ? string.Format(messageTemplate, args)
                 : messageTemplate;
             var content = GetFormattedLogText(level, tag, formatted, memberName, filePath, lineNumber);
+            var stack = CaptureStackTrace
+                ? GetLogStack()
+                : null;
 
-            var context = new LogContext(level, tag, content, messageTemplate, args, null, null,
+            var context = new LogContext(level, tag, content, messageTemplate, args, stack, null,
                 memberName, filePath, lineNumber);
             EnqueueAndDispatch(context);
         }
@@ -328,7 +331,7 @@ namespace vFrame.Core
 
         /// <summary>
         ///     Extracts the current stack trace, skipping internal Logger frames.
-        ///     Only called when <see cref="CaptureStackTrace" /> is true or for Error/Fatal with exceptions.
+        ///     Called when <see cref="CaptureStackTrace" /> is true.
         /// </summary>
         /// <returns>The trimmed stack trace string.</returns>
         private static string GetLogStack() {
@@ -1040,7 +1043,7 @@ namespace vFrame.Core
         public static int LogCapacity { get; set; } = DefaultCapacity;
 
         /// <summary>
-        ///     When true, stack traces are captured for Error/Fatal log entries.
+        ///     When true, stack traces are captured for every log entry.
         ///     Defaults to false.
         /// </summary>
         public static bool CaptureStackTrace { get; set; }

@@ -142,6 +142,39 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             Assert.That(output[0], Does.Contain("\"args\":null"));
         }
 
+        [Test]
+        public void JsonLogSink_PreservesEmptyTagSentinelForUntaggedLogs() {
+            var jsonSink = new JsonLogSink();
+            Logger.AddStructuredSink(jsonSink);
+            _structuredSinks.Add(jsonSink);
+
+            Logger.Info("plain message");
+
+            var output = jsonSink.GetOutput();
+            Assert.That(output.Count, Is.EqualTo(1));
+            Assert.That(output[0], Does.Contain("\"tag\":\"__EMPTY__\""));
+        }
+
+        [Test]
+        public void StructuredLog_StackTraceCapturedAtAllLevels_WhenCaptureStackTraceEnabled() {
+            Logger.LogLevel = LogLevelDef.Trace;
+            Logger.CaptureStackTrace = true;
+            var sink = RegisterSink();
+            var tag = new LogTag("Stack");
+
+            Logger.Trace(tag, "trace {0}", new object[] { 1 });
+            Logger.Debug(tag, "debug {0}", new object[] { 2 });
+            Logger.Info(tag, "info {0}", new object[] { 3 });
+            Logger.Warning(tag, "warn {0}", new object[] { 4 });
+            Logger.Error(tag, "error {0}", new object[] { 5 });
+            Logger.Fatal(tag, "fatal {0}", new object[] { 6 });
+
+            Assert.That(sink.Entries.Count, Is.EqualTo(6));
+            foreach (var entry in sink.Entries) {
+                Assert.That(entry.StackTrace, Is.Not.Null.And.Not.Empty, entry.Level.ToString());
+            }
+        }
+
         private RecordingSink RegisterSink(LogLevelDef minLevel = LogLevelDef.Trace) {
             var sink = new RecordingSink();
             Logger.AddSink(sink, minLevel);

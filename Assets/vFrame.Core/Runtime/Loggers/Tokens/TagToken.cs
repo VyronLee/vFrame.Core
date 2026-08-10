@@ -13,13 +13,18 @@ using System.Text;
 namespace vFrame.Core
 {
     /// <summary>
-    ///     A format token that renders the log tag ({tag}).
+    ///     A format token that renders the log tag ({tag}), omitting the untagged sentinel.
     /// </summary>
     public class TagToken : IToken
     {
         /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
-            sb.Append(context.Tag.ToString());
+            var tag = context.Tag.ToString();
+            if (tag == "__EMPTY__") {
+                return;
+            }
+
+            sb.Append(tag);
         }
     }
 }

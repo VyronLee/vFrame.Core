@@ -43,7 +43,7 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
-        public void TemplateFormatter_OverridesBitMask_WhenFormatTemplateSet() {
+        public void CompactTemplate_OverridesDefaultTemplate_WhenFormatTemplateSet() {
             var config = new LogConfiguration {
                 GlobalMinimumLevel = LogLevelDef.Debug,
                 FormatTemplate = LogTemplates.Compact
@@ -55,27 +55,26 @@ namespace vFrame.Core.Tests.EditMode.Loggers
 
             Assert.That(sink.Entries.Count, Is.EqualTo(1));
             var content = sink.Entries[0].Content;
-            // Compact template: "{level:u3} {message}"
             Assert.That(content, Does.Contain("INF"));
             Assert.That(content, Does.Contain("hello"));
-            // Should NOT contain timestamp or tag (compact template)
-            Assert.That(content, Does.Not.Match(@"\[\d{2}:\d{2}:\d{2}:\d{3}\]"));
+            Assert.That(content, Does.Not.Match(@"\[\d{4}-\d{2}-\d{2}"));
+            Assert.That(content, Does.Not.Contain("MyTag"));
         }
 
         [Test]
-        public void LegacyBitMask_StillWorks_WhenNoTemplateSet() {
+        public void DefaultTemplate_IsUsed_WhenNoTemplateSet() {
             var config = new LogConfiguration {
                 GlobalMinimumLevel = LogLevelDef.Debug
             };
             Logger.ApplyConfiguration(config);
             var sink = RegisterSink();
 
-            Logger.Info(new LogTag("Tag1"), "legacy-test");
+            Logger.Info(new LogTag("Tag1"), "default-template-test");
 
             Assert.That(sink.Entries.Count, Is.EqualTo(1));
             var content = sink.Entries[0].Content;
             Assert.That(content, Does.Contain("Tag1"));
-            Assert.That(content, Does.Match(@"\[\d{2}:\d{2}:\d{2}:\d{3}\]"));
+            Assert.That(content, Does.Match(@"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]"));
         }
 
         [Test]
@@ -113,15 +112,13 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
-        public void ClearTemplate_RestoresLegacyBitMaskFormatting() {
-            // First apply template
+        public void ClearTemplate_RestoresDefaultTemplateFormatting() {
             var configWithTemplate = new LogConfiguration {
                 GlobalMinimumLevel = LogLevelDef.Debug,
                 FormatTemplate = LogTemplates.Compact
             };
             Logger.ApplyConfiguration(configWithTemplate);
 
-            // Then apply config without template — falls back to default template
             var configNoTemplate = new LogConfiguration {
                 GlobalMinimumLevel = LogLevelDef.Debug
             };
@@ -131,8 +128,8 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             Logger.Info(new LogTag("RestoreTag"), "restored");
 
             var content = sink.Entries[0].Content;
-            // Default template includes tag
             Assert.That(content, Does.Contain("RestoreTag"));
+            Assert.That(content, Does.Match(@"\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]"));
         }
 
         [Test]
@@ -169,6 +166,21 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             var content = sink.Entries[0].Content;
             Assert.That(content, Does.Contain("ERR"));
             Assert.That(content, Does.Contain("test-exception"));
+        }
+
+        [Test]
+        public void TagToken_OmitsEmptySentinelFromTemplateOutput() {
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = "[{tag}] {message}"
+            });
+            var sink = RegisterSink();
+
+            Logger.Info("untagged");
+
+            Assert.That(sink.Entries.Count, Is.EqualTo(1));
+            Assert.That(sink.Entries[0].Content, Is.EqualTo("[] untagged"));
+            Assert.That(sink.Entries[0].Tag.ToString(), Is.EqualTo("__EMPTY__"));
         }
 
         private RecordingSink RegisterSink(LogLevelDef minLevel = LogLevelDef.Trace) {

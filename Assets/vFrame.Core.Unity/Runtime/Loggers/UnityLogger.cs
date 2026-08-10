@@ -79,7 +79,8 @@ namespace vFrame.Core.Unity
         /// <inheritdoc />
         public void OnLogReceived(Logger.LogContext context) {
             // Include tag for console filtering
-            var tag = context.Tag.ToString() != "undefined"
+            var tagName = context.Tag.ToString();
+            var tag = tagName != "undefined" && tagName != "__EMPTY__"
                 ? $"[{context.Tag}] "
                 : "";
 

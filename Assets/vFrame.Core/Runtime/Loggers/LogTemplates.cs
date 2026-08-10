@@ -18,6 +18,7 @@ namespace vFrame.Core
     {
         /// <summary>
         ///     Default format: timestamp, level (3-char uppercase), tag, and message.
+        ///     Untagged logs render an empty tag bracket.
         ///     Example: [2026-04-11 21:18:00.123] [INF] [MyTag] Hello world
         /// </summary>
         public const string Default = "[{time}] [{level:u3}] [{tag}] {message}";
