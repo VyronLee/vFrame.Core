@@ -19,12 +19,11 @@ namespace vFrame.Core
     {
         /// <inheritdoc />
         public void Render(StringBuilder sb, Logger.LogContext context) {
-            var tag = context.Tag.ToString();
-            if (tag == "__EMPTY__") {
+            if (Logger.IsEmptyLogTag(context.Tag)) {
                 return;
             }
 
-            sb.Append(tag);
+            sb.Append(context.Tag);
         }
     }
 }

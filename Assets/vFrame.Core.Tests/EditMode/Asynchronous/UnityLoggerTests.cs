@@ -42,5 +42,13 @@ namespace vFrame.Core.Tests.EditMode.Asynchronous
 
             Logger.Info("console-message");
         }
+
+        [Test]
+        public void OnLogReceived_PrefixesCallerSuppliedTagNamedLikeEmptySentinel() {
+            UnityLogger.Open(LogLevelDef.Debug, formatTemplate: "{message}");
+            LogAssert.Expect(LogType.Log, new Regex(@"^\[__EMPTY__\].*console-message$"));
+
+            Logger.Info(new LogTag("__EMPTY__"), "console-message");
+        }
     }
 }

@@ -10,11 +10,15 @@
 // ============================================================
 
 using System;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("vFrame.Core.Unity")]
 
 namespace vFrame.Core
 {
     public struct LogTag : IEquatable<LogTag>
     {
+        private readonly object _identity;
         private readonly string _name;
 
         /// <summary>
@@ -22,7 +26,17 @@ namespace vFrame.Core
         /// </summary>
         /// <param name="name">The tag name. Defaults to "undefined".</param>
         public LogTag(string name = "undefined") {
+            _identity = null;
             _name = name;
+        }
+
+        internal LogTag(string name, object identity) {
+            _identity = identity;
+            _name = name;
+        }
+
+        internal bool HasSameIdentity(LogTag other) {
+            return _identity != null && ReferenceEquals(_identity, other._identity);
         }
 
         /// <summary>

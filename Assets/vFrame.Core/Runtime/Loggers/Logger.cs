@@ -38,7 +38,8 @@ namespace vFrame.Core
         private static string _logFilePath;
         private static LogToFile _logFile;
 
-        private static readonly LogTag EmptyLogTag = new LogTag("__EMPTY__");
+        private static readonly object EmptyLogTagIdentity = new object();
+        private static readonly LogTag EmptyLogTag = new LogTag("__EMPTY__", EmptyLogTagIdentity);
 
         private static LogFormatter _formatter;
 
@@ -330,13 +331,34 @@ namespace vFrame.Core
         }
 
         /// <summary>
+        ///     Returns whether the tag is the internal sentinel for untagged log calls.
+        /// </summary>
+        internal static bool IsEmptyLogTag(LogTag tag) {
+            return EmptyLogTag.HasSameIdentity(tag);
+        }
+
+        /// <summary>
         ///     Extracts the current stack trace, skipping internal Logger frames.
         ///     Called when <see cref="CaptureStackTrace" /> is true.
         /// </summary>
         /// <returns>The trimmed stack trace string.</returns>
         private static string GetLogStack() {
-            // Skip: GetLogStack → Log → public method
-            return new StackTrace(3, true).ToString();
+            var stackTrace = new StackTrace(true);
+            var frames = stackTrace.GetFrames();
+            var firstExternalFrame = 0;
+
+            if (frames != null) {
+                while (firstExternalFrame < frames.Length) {
+                    var declaringType = frames[firstExternalFrame].GetMethod()?.DeclaringType;
+                    if (declaringType != typeof(Logger) && declaringType != typeof(LoggerCategory)) {
+                        break;
+                    }
+
+                    firstExternalFrame++;
+                }
+            }
+
+            return new StackTrace(firstExternalFrame, true).ToString();
         }
 
         // ── Buffered log access ──

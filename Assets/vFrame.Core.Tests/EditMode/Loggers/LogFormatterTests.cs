@@ -183,6 +183,20 @@ namespace vFrame.Core.Tests.EditMode.Loggers
             Assert.That(sink.Entries[0].Tag.ToString(), Is.EqualTo("__EMPTY__"));
         }
 
+        [Test]
+        public void TagToken_RendersCallerSuppliedTagNamedLikeEmptySentinel() {
+            Logger.ApplyConfiguration(new LogConfiguration {
+                GlobalMinimumLevel = LogLevelDef.Debug,
+                FormatTemplate = "[{tag}] {message}"
+            });
+            var sink = RegisterSink();
+
+            Logger.Info(new LogTag("__EMPTY__"), "tagged");
+
+            Assert.That(sink.Entries.Count, Is.EqualTo(1));
+            Assert.That(sink.Entries[0].Content, Is.EqualTo("[__EMPTY__] tagged"));
+        }
+
         private RecordingSink RegisterSink(LogLevelDef minLevel = LogLevelDef.Trace) {
             var sink = new RecordingSink();
             Logger.AddSink(sink, minLevel);

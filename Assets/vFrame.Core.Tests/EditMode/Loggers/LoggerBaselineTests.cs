@@ -352,6 +352,22 @@ namespace vFrame.Core.Tests.EditMode.Loggers
         }
 
         [Test]
+        public void LogContext_CategoryStackTraceStartsAtCaller() {
+            Logger.LogLevel = LogLevelDef.Trace;
+            Logger.CaptureStackTrace = true;
+            var sink = RegisterSink();
+            var logger = Logger.GetLogger("Stack.Category");
+
+            logger.Info("category-stack");
+
+            Assert.That(sink.Entries, Has.Count.EqualTo(1));
+            var stackTrace = sink.Entries[0].StackTrace;
+            var firstLine = stackTrace.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[0];
+            Assert.That(firstLine, Does.Contain(nameof(LogContext_CategoryStackTraceStartsAtCaller)));
+            Assert.That(stackTrace, Does.Not.Contain("LoggerCategory.Info"));
+        }
+
+        [Test]
         public void LogContext_MemberNameAndFilePathInjected() {
             Logger.LogLevel = LogLevelDef.Debug;
             var sink = RegisterSink();
