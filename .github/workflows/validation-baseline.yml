@@ -1,5 +1,23 @@
 name: Validation-Baseline
 
+# vFrame.Core CI baseline — EditMode + PlayMode via Unity batchmode (issue #31).
+#
+# REQUIREMENTS BEFORE THIS GOES GREEN:
+#   1. Provision a Unity license: activate a free Unity Personal license in the
+#      Unity Hub/Editor on a machine, then export the resulting license file and
+#      store its contents in the repository secrets as `UNITY_LICENSE`
+#      (GameCI license-activation docs: https://game.ci/docs/github/activation).
+#   2. `UNITY_EMAIL` / `UNITY_PASSWORD` are the fallback path and require a
+#      `UNITY_SERIAL` as well; the `UNITY_LICENSE` secret alone is the supported
+#      personal-license route and must be present before the runner starts.
+#
+# game-ci/unity-test-runner notes (see the action.yml — authoritative):
+#   - `testFilter` is NOT a valid input. Test filtering is a Unity CLI argument
+#     and must be passed via `customParameters: -testFilter "<assembly>"`.
+#   - `projectPath` defaults to the workspace root; this repo is a standalone
+#     Unity project, so `.` is correct.
+#   - `testMode` accepts `editmode` / `playmode`.
+
 on:
   pull_request:
   push:
@@ -8,14 +26,14 @@ on:
 
 jobs:
   core-editmode-tests:
-    name: Core Compile And EditMode Tests
+    name: Core EditMode Tests (vFrame.Core.Tests.EditMode)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
 
-      - name: Run core EditMode tests
-        uses: game-ci/unity-test-runner@v4
+      - name: Run Core EditMode tests
+        uses: game-ci/unity-test-runner@v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -24,25 +42,52 @@ jobs:
           projectPath: .
           unityVersion: 2022.3.62f3
           testMode: editmode
-          testFilter: vFrame.Core.Tests.EditMode
+          customParameters: -testFilter "vFrame.Core.Tests.EditMode"
           artifactsPath: test-results/editmode
 
       - name: Upload EditMode results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: editmode-test-results
           path: test-results/editmode
+
+  core-editmode-unity-tests:
+    name: Core EditMode Tests (vFrame.Core.Tests.EditMode.Unity)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.4.0
+
+      - name: Run Core EditMode.Unity tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 2022.3.62f3
+          testMode: editmode
+          customParameters: -testFilter "vFrame.Core.Tests.EditMode.Unity"
+          artifactsPath: test-results/editmode-unity
+
+      - name: Upload EditMode.Unity results
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: editmode-unity-test-results
+          path: test-results/editmode-unity
 
   unity-playmode-tests:
     name: Unity PlayMode Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
 
       - name: Run Unity PlayMode tests
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -51,12 +96,12 @@ jobs:
           projectPath: .
           unityVersion: 2022.3.62f3
           testMode: playmode
-          testFilter: vFrame.Core.Tests.PlayMode
+          customParameters: -testFilter "vFrame.Core.Tests.PlayMode"
           artifactsPath: test-results/playmode
 
       - name: Upload PlayMode results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: playmode-test-results
           path: test-results/playmode
