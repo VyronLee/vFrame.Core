@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.4.0
+        with:
+          lfs: true
 
       - name: Run Core EditMode tests
         uses: game-ci/unity-test-runner@v4.3.1
@@ -59,6 +61,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.4.0
+        with:
+          lfs: true
 
       - name: Run Core EditMode.Unity tests
         uses: game-ci/unity-test-runner@v4.3.1
@@ -86,6 +90,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.4.0
+        with:
+          lfs: true
 
       - name: Run Unity PlayMode tests
         uses: game-ci/unity-test-runner@v4.3.1
