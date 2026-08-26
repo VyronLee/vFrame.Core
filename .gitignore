@@ -171,3 +171,4 @@ openspec/
 # Test output
 TestResults/
 test-run.log
+.codegraph/
