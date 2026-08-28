@@ -1,3 +1,6 @@
+# Repository Agent Guidance
+
+The workspace-level guidance in `../AGENTS.md` applies to this repository. Read its referenced rules when their trigger matches the task.
 # vFrame.Core
 
 Unity-free core C# library + Unity extension assembly for the vFrame workspace.
@@ -169,4 +172,4 @@ Do not use for new features: `Container/Component`, `Profiles`, `Localization`, 
 
 ---
 
-**Workspace conventions** (build, test, cross-package gotchas) live in the workspace-root `.claude/rules/`. This file covers vFrame.Core-specifics.
+**Workspace conventions** (build, test, cross-package gotchas) live in the workspace-root `../.agents/rules/`. This file covers vFrame.Core-specifics.
